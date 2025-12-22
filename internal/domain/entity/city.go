@@ -12,13 +12,13 @@ const (
 )
 
 type City struct {
-	ID              uuid.UUID `json:"id"`
-	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Status          string    `json:"status"`
-	Slug            string    `json:"slug"`
-	Name            string    `json:"name"`
-	Icon            *string   `json:"icon,omitempty"`
-	Banner          *string   `json:"banner,omitempty"`
+	ID              uuid.UUID  `json:"id"`
+	AgglomerationID *uuid.UUID `json:"agglomeration_id,omitempty"`
+	Status          string     `json:"status"`
+	Slug            *string    `json:"slug,omitempty"`
+	Name            string     `json:"name"`
+	Icon            *string    `json:"icon,omitempty"`
+	Banner          *string    `json:"banner,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

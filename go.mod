@@ -11,7 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.21.0
 	github.com/umisto/logium v0.1.4
-	github.com/umisto/pagi v0.2.0
+	github.com/umisto/pagi v0.2.1
 )
 
 require (

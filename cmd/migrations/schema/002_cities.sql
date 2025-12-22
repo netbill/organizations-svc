@@ -7,7 +7,7 @@ CREATE TYPE administration_status AS ENUM (
 );
 
 CREATE TABLE agglomerations (
-    id         UUID                  PRIMARY KEY,
+    id         UUID                  PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     status     administration_status NOT NULL DEFAULT 'active',
     name       VARCHAR(255)          NOT NULL,
     icon       TEXT,
@@ -22,7 +22,7 @@ CREATE TYPE cities_status AS ENUM (
 );
 
 CREATE TABLE cities (
-    id               UUID          PRIMARY KEY,
+    id               UUID          PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     agglomeration_id UUID          REFERENCES agglomerations(id) ON DELETE SET NULL,
     status           cities_status NOT NULL DEFAULT 'active',
     slug             VARCHAR(255)  UNIQUE,
@@ -43,7 +43,7 @@ CREATE TABLE profiles (
 );
 
 CREATE TABLE members (
-    id               UUID PRIMARY KEY,
+    id               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     account_id       UUID NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
     agglomeration_id UUID NOT NULL REFERENCES agglomerations(id) ON DELETE CASCADE,
     position         TEXT,
@@ -52,11 +52,11 @@ CREATE TABLE members (
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
 
-    UNIQUE(user_id, agglomeration_id)
+    UNIQUE(account_id, agglomeration_id)
 );
 
 CREATE TABLE roles (
-    id               UUID    PRIMARY KEY,
+    id               UUID    PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     agglomeration_id UUID    NOT NULL REFERENCES agglomerations(id) ON DELETE CASCADE,
     head             BOOLEAN NOT NULL DEFAULT false,
     editable         BOOLEAN NOT NULL DEFAULT true,
@@ -67,7 +67,7 @@ CREATE TABLE roles (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     UNIQUE(agglomeration_id, rank),
-    UNIQUE(agglomeration_id, name),
+    UNIQUE(agglomeration_id, name)
 );
 
 CREATE UNIQUE INDEX roles_one_head_per_agglomeration
@@ -100,14 +100,14 @@ CREATE TYPE invite_status AS ENUM (
     'accepted'
 );
 
-    CREATE TABLE invites (
-    id               UUID          PRIMARY KEY,
+CREATE TABLE invites (
+    id               UUID          PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     agglomeration_id UUID          NOT NULL REFERENCES agglomerations(id) ON DELETE CASCADE,
     status           invite_status NOT NULL DEFAULT 'sent',
 
     expires_at       TIMESTAMPTZ NOT NULL,
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'(now() at time zone 'utc');
-)
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
+);
 
 -- +migrate Down
 DROP TABLE IF EXISTS agglomerations CASCADE;

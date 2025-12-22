@@ -8,8 +8,8 @@ import (
 )
 
 type FilterParams struct {
-	NameContains *string `json:"name_contains,omitempty"`
-	Active       *bool   `json:"active,omitempty"`
+	NameLike *string `json:"name_likes,omitempty"`
+	Status   *string `json:"status,omitempty"`
 }
 
 func (s Service) FilterAgglomerations(
