@@ -15,25 +15,38 @@ import (
 const createProfile = `-- name: CreateProfile :one
 INSERT INTO profiles (
     account_id,
-    username
+    username,
+    official,
+    pseudonym
 ) VALUES (
     $1::uuid,
-    $2::varchar
+    $2::varchar,
+    $3::boolean,
+    $4::varchar
 )
-RETURNING account_id, username, updated_at, created_at
+RETURNING account_id, username, official, pseudonym, updated_at, created_at
 `
 
 type CreateProfileParams struct {
 	AccountID uuid.UUID
 	Username  string
+	Official  bool
+	Pseudonym sql.NullString
 }
 
 func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, createProfile, arg.AccountID, arg.Username)
+	row := q.db.QueryRowContext(ctx, createProfile,
+		arg.AccountID,
+		arg.Username,
+		arg.Official,
+		arg.Pseudonym,
+	)
 	var i Profile
 	err := row.Scan(
 		&i.AccountID,
 		&i.Username,
+		&i.Official,
+		&i.Pseudonym,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -51,7 +64,7 @@ func (q *Queries) DeleteProfile(ctx context.Context, accountID uuid.UUID) error 
 }
 
 const getProfileByAccountID = `-- name: GetProfileByAccountID :one
-SELECT account_id, username, updated_at, created_at
+SELECT account_id, username, official, pseudonym, updated_at, created_at
 FROM profiles
 WHERE account_id = $1::uuid
 `
@@ -62,6 +75,8 @@ func (q *Queries) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID
 	err := row.Scan(
 		&i.AccountID,
 		&i.Username,
+		&i.Official,
+		&i.Pseudonym,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -69,7 +84,7 @@ func (q *Queries) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID
 }
 
 const getProfileByUsername = `-- name: GetProfileByUsername :one
-SELECT account_id, username, updated_at, created_at
+SELECT account_id, username, official, pseudonym, updated_at, created_at
 FROM profiles
 WHERE username = $1::varchar
 `
@@ -80,73 +95,50 @@ func (q *Queries) GetProfileByUsername(ctx context.Context, username string) (Pr
 	err := row.Scan(
 		&i.AccountID,
 		&i.Username,
+		&i.Official,
+		&i.Pseudonym,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
-const listProfiles = `-- name: ListProfiles :many
-SELECT account_id, username, updated_at, created_at
-FROM profiles
-ORDER BY created_at DESC
-LIMIT $2::int
-OFFSET $1::int
-`
-
-type ListProfilesParams struct {
-	Offset int32
-	Limit  int32
-}
-
-func (q *Queries) ListProfiles(ctx context.Context, arg ListProfilesParams) ([]Profile, error) {
-	rows, err := q.db.QueryContext(ctx, listProfiles, arg.Offset, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Profile
-	for rows.Next() {
-		var i Profile
-		if err := rows.Scan(
-			&i.AccountID,
-			&i.Username,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updateProfile = `-- name: UpdateProfile :one
 UPDATE profiles
 SET
     username = COALESCE($1::varchar, username),
+    official = COALESCE($2::boolean, official),
+    pseudonym = CASE
+        WHEN $3::varchar IS NULL THEN pseudonym
+        WHEN $3::varchar = '' THEN NULL
+        ELSE $3::varchar
+    END,
+
     updated_at = now()
-WHERE account_id = $2::uuid
-RETURNING account_id, username, updated_at, created_at
+WHERE account_id = $4::uuid
+RETURNING account_id, username, official, pseudonym, updated_at, created_at
 `
 
 type UpdateProfileParams struct {
 	Username  sql.NullString
+	Official  sql.NullBool
+	Pseudonym sql.NullString
 	AccountID uuid.UUID
 }
 
 func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, updateProfile, arg.Username, arg.AccountID)
+	row := q.db.QueryRowContext(ctx, updateProfile,
+		arg.Username,
+		arg.Official,
+		arg.Pseudonym,
+		arg.AccountID,
+	)
 	var i Profile
 	err := row.Scan(
 		&i.AccountID,
 		&i.Username,
+		&i.Official,
+		&i.Pseudonym,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)

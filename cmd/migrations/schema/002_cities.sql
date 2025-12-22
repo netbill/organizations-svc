@@ -35,8 +35,10 @@ CREATE TABLE cities (
 );
 
 CREATE TABLE profiles (
-    account_id UUID        PRIMARY KEY,
-    username   VARCHAR(32) NOT NULL UNIQUE,
+    account_id  UUID        PRIMARY KEY,
+    username    VARCHAR(32) NOT NULL UNIQUE,
+    official    BOOLEAN NOT NULL DEFAULT FALSE,
+    pseudonym   VARCHAR(128),
 
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')

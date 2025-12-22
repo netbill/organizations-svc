@@ -8,7 +8,7 @@ SELECT *
 FROM permissions
 WHERE code = sqlc.arg('code')::varchar;
 
--- name: FilterPermissionsByCodeCursor :many
+-- name: FilterPermissions :many
 SELECT *
 FROM permissions
 WHERE
@@ -21,7 +21,7 @@ WHERE
 ORDER BY code ASC, id ASC
 LIMIT sqlc.arg('limit')::int;
 
--- name: CountPermissionsByCode :one
+-- name: CountPermissions :one
 SELECT COUNT(*)::bigint
 FROM permissions
 WHERE (sqlc.narg('description')::text IS NULL OR code ILIKE (sqlc.narg('description')::text || '%'));

@@ -8,22 +8,10 @@ package pgdb
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
-
-const countRolesByAgglomeration = `-- name: CountRolesByAgglomeration :one
-SELECT COUNT(*)::bigint
-FROM roles
-WHERE agglomeration_id = $1::uuid
-`
-
-func (q *Queries) CountRolesByAgglomeration(ctx context.Context, agglomerationID uuid.UUID) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countRolesByAgglomeration, agglomerationID)
-	var column_1 int64
-	err := row.Scan(&column_1)
-	return column_1, err
-}
 
 const createRole = `-- name: CreateRole :one
 INSERT INTO roles (
@@ -86,68 +74,72 @@ func (q *Queries) DeleteRole(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getRoleByID = `-- name: GetRoleByID :one
-SELECT id, agglomeration_id, head, editable, rank, name, created_at, updated_at
-FROM roles
-WHERE id = $1::uuid
-`
+const filterRole = `-- name: FilterRole :many
+SELECT
+    r.id,
+    r.agglomeration_id,
+    r.head,
+    r.editable,
+    r.rank,
+    r.name,
+    r.created_at,
+    r.updated_at,
 
-func (q *Queries) GetRoleByID(ctx context.Context, id uuid.UUID) (Role, error) {
-	row := q.db.QueryRowContext(ctx, getRoleByID, id)
-	var i Role
-	err := row.Scan(
-		&i.ID,
-		&i.AgglomerationID,
-		&i.Head,
-		&i.Editable,
-		&i.Rank,
-		&i.Name,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const listRolesByAgglomerationCursor = `-- name: ListRolesByAgglomerationCursor :many
-SELECT id, agglomeration_id, head, editable, rank, name, created_at, updated_at
-FROM roles
-WHERE
-    agglomeration_id = $1::uuid
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'permission_id', p.id,
+                'code', p.code
+            )
+        ) FILTER (WHERE p.id IS NOT NULL),
+        '[]'
+    ) AS permissions
+FROM roles r
+LEFT JOIN role_permissions rp ON rp.role_id = r.id
+LEFT JOIN permissions p ON p.id = rp.permission_id
+WHERE r.agglomeration_id = $1
     AND (
-        $2::int IS NULL
-        OR (rank, created_at, id) > (
-            $2::int,
-            $3::timestamptz,
-            $4::uuid
-        )
+        ($2 IS NULL AND $3 IS NULL)
+        OR (r.rank, r.id) > ($2, $3)
     )
-ORDER BY rank ASC, created_at ASC, id ASC
-LIMIT $5::int
+GROUP BY r.id
+ORDER BY r.rank ASC, r.id ASC
+LIMIT $4
 `
 
-type ListRolesByAgglomerationCursorParams struct {
+type FilterRoleParams struct {
 	AgglomerationID uuid.UUID
-	AfterRank       sql.NullInt32
-	AfterCreatedAt  sql.NullTime
-	AfterID         uuid.NullUUID
+	Column2         interface{}
+	Column3         interface{}
 	Limit           int32
 }
 
-func (q *Queries) ListRolesByAgglomerationCursor(ctx context.Context, arg ListRolesByAgglomerationCursorParams) ([]Role, error) {
-	rows, err := q.db.QueryContext(ctx, listRolesByAgglomerationCursor,
+type FilterRoleRow struct {
+	ID              uuid.UUID
+	AgglomerationID uuid.UUID
+	Head            bool
+	Editable        bool
+	Rank            int32
+	Name            string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Permissions     interface{}
+}
+
+func (q *Queries) FilterRole(ctx context.Context, arg FilterRoleParams) ([]FilterRoleRow, error) {
+	rows, err := q.db.QueryContext(ctx, filterRole,
 		arg.AgglomerationID,
-		arg.AfterRank,
-		arg.AfterCreatedAt,
-		arg.AfterID,
+		arg.Column2,
+		arg.Column3,
 		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Role
+	var items []FilterRoleRow
 	for rows.Next() {
-		var i Role
+		var i FilterRoleRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.AgglomerationID,
@@ -157,6 +149,7 @@ func (q *Queries) ListRolesByAgglomerationCursor(ctx context.Context, arg ListRo
 			&i.Name,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Permissions,
 		); err != nil {
 			return nil, err
 		}
@@ -171,37 +164,48 @@ func (q *Queries) ListRolesByAgglomerationCursor(ctx context.Context, arg ListRo
 	return items, nil
 }
 
-const updateRole = `-- name: UpdateRole :one
-UPDATE roles
-SET
-    head = COALESCE($1::boolean, head),
-    editable = COALESCE($2::boolean, editable),
-    rank = COALESCE($3::int, rank),
+const getRole = `-- name: GetRole :one
+SELECT
+    r.id,
+    r.agglomeration_id,
+    r.head,
+    r.editable,
+    r.rank,
+    r.name,
+    r.created_at,
+    r.updated_at,
 
-    name = COALESCE($4::text, name),
-
-    updated_at = now()
-WHERE id = $5::uuid
-RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_at
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'permission_id', p.id,
+                'code', p.code
+            )
+        ) FILTER (WHERE p.id IS NOT NULL),
+        '[]'
+    ) AS permissions
+FROM roles r
+LEFT JOIN role_permissions rp ON rp.role_id = r.id
+LEFT JOIN permissions p ON p.id = rp.permission_id
+WHERE r.id = $1
+GROUP BY r.id
 `
 
-type UpdateRoleParams struct {
-	Head     sql.NullBool
-	Editable sql.NullBool
-	Rank     sql.NullInt32
-	Name     sql.NullString
-	ID       uuid.UUID
+type GetRoleRow struct {
+	ID              uuid.UUID
+	AgglomerationID uuid.UUID
+	Head            bool
+	Editable        bool
+	Rank            int32
+	Name            string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Permissions     interface{}
 }
 
-func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
-	row := q.db.QueryRowContext(ctx, updateRole,
-		arg.Head,
-		arg.Editable,
-		arg.Rank,
-		arg.Name,
-		arg.ID,
-	)
-	var i Role
+func (q *Queries) GetRole(ctx context.Context, id uuid.UUID) (GetRoleRow, error) {
+	row := q.db.QueryRowContext(ctx, getRole, id)
+	var i GetRoleRow
 	err := row.Scan(
 		&i.ID,
 		&i.AgglomerationID,
@@ -211,6 +215,31 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, e
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Permissions,
 	)
 	return i, err
+}
+
+const updateRole = `-- name: UpdateRole :exec
+UPDATE roles
+SET
+    rank = COALESCE($1::int, rank),
+
+    name = COALESCE($2::text, name),
+
+    updated_at = now()
+WHERE id = $3::uuid
+`
+
+type UpdateRoleParams struct {
+	Rank sql.NullInt32
+	Name sql.NullString
+	ID   uuid.UUID
+}
+
+// head = COALESCE(sqlc.narg('head')::boolean, head),
+// editable = COALESCE(sqlc.narg('editable')::boolean, editable),
+func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) error {
+	_, err := q.db.ExecContext(ctx, updateRole, arg.Rank, arg.Name, arg.ID)
+	return err
 }

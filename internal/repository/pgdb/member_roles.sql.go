@@ -47,3 +47,32 @@ func (q *Queries) DeleteMemberRole(ctx context.Context, arg DeleteMemberRolePara
 	_, err := q.db.ExecContext(ctx, deleteMemberRole, arg.MemberID, arg.RoleID)
 	return err
 }
+
+const listMemberRoles = `-- name: ListMemberRoles :many
+SELECT member_id, role_id
+FROM member_roles
+WHERE member_id = $1::uuid
+`
+
+func (q *Queries) ListMemberRoles(ctx context.Context, memberID uuid.UUID) ([]MemberRole, error) {
+	rows, err := q.db.QueryContext(ctx, listMemberRoles, memberID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MemberRole
+	for rows.Next() {
+		var i MemberRole
+		if err := rows.Scan(&i.MemberID, &i.RoleID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

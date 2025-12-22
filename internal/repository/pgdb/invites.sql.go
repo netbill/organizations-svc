@@ -7,7 +7,6 @@ package pgdb
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,28 +33,6 @@ func (q *Queries) AcceptInvite(ctx context.Context, id uuid.UUID) (Invite, error
 		&i.CreatedAt,
 	)
 	return i, err
-}
-
-const countInvites = `-- name: CountInvites :one
-SELECT COUNT(*)::bigint
-FROM invites
-WHERE
-    ($1::uuid IS NULL OR agglomeration_id = $1::uuid)
-    AND ($2::invite_status IS NULL OR status = $2::invite_status)
-    AND ($3::boolean IS NULL OR (status = 'sent' AND expires_at > now()))
-`
-
-type CountInvitesParams struct {
-	AgglomerationID uuid.NullUUID
-	Status          NullInviteStatus
-	OnlyActive      sql.NullBool
-}
-
-func (q *Queries) CountInvites(ctx context.Context, arg CountInvitesParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countInvites, arg.AgglomerationID, arg.Status, arg.OnlyActive)
-	var column_1 int64
-	err := row.Scan(&column_1)
-	return column_1, err
 }
 
 const createInvite = `-- name: CreateInvite :one
@@ -113,16 +90,6 @@ func (q *Queries) DeclineInvite(ctx context.Context, id uuid.UUID) (Invite, erro
 	return i, err
 }
 
-const deleteExpiredSentInvites = `-- name: DeleteExpiredSentInvites :exec
-DELETE FROM invites
-WHERE status = 'sent' AND expires_at <= now()
-`
-
-func (q *Queries) DeleteExpiredSentInvites(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteExpiredSentInvites)
-	return err
-}
-
 const deleteInvite = `-- name: DeleteInvite :exec
 DELETE FROM invites
 WHERE id = $1::uuid
@@ -131,66 +98,6 @@ WHERE id = $1::uuid
 func (q *Queries) DeleteInvite(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteInvite, id)
 	return err
-}
-
-const filterInvitesCursor = `-- name: FilterInvitesCursor :many
-SELECT id, agglomeration_id, status, expires_at, created_at
-FROM invites
-WHERE
-    ($1::uuid IS NULL OR agglomeration_id = $1::uuid)
-    AND ($2::invite_status IS NULL OR status = $2::invite_status)
-    AND ($3::boolean IS NULL OR (status = 'sent' AND expires_at > now()))
-    AND (
-        $4::timestamptz IS NULL
-        OR (created_at, id) < ($4::timestamptz, $5::uuid)
-    )
-ORDER BY created_at DESC, id DESC
-    LIMIT $6::int
-`
-
-type FilterInvitesCursorParams struct {
-	AgglomerationID uuid.NullUUID
-	Status          NullInviteStatus
-	OnlyActive      sql.NullBool
-	AfterCreatedAt  sql.NullTime
-	AfterID         uuid.NullUUID
-	Limit           int32
-}
-
-func (q *Queries) FilterInvitesCursor(ctx context.Context, arg FilterInvitesCursorParams) ([]Invite, error) {
-	rows, err := q.db.QueryContext(ctx, filterInvitesCursor,
-		arg.AgglomerationID,
-		arg.Status,
-		arg.OnlyActive,
-		arg.AfterCreatedAt,
-		arg.AfterID,
-		arg.Limit,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Invite
-	for rows.Next() {
-		var i Invite
-		if err := rows.Scan(
-			&i.ID,
-			&i.AgglomerationID,
-			&i.Status,
-			&i.ExpiresAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getInviteByID = `-- name: GetInviteByID :one

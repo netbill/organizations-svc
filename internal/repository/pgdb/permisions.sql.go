@@ -12,20 +12,20 @@ import (
 	"github.com/google/uuid"
 )
 
-const countPermissionsByCode = `-- name: CountPermissionsByCode :one
+const countPermissions = `-- name: CountPermissions :one
 SELECT COUNT(*)::bigint
 FROM permissions
 WHERE ($1::text IS NULL OR code ILIKE ($1::text || '%'))
 `
 
-func (q *Queries) CountPermissionsByCode(ctx context.Context, description sql.NullString) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPermissionsByCode, description)
+func (q *Queries) CountPermissions(ctx context.Context, description sql.NullString) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPermissions, description)
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
 }
 
-const filterPermissionsByCodeCursor = `-- name: FilterPermissionsByCodeCursor :many
+const filterPermissions = `-- name: FilterPermissions :many
 SELECT id, code, description
 FROM permissions
 WHERE
@@ -39,15 +39,15 @@ ORDER BY code ASC, id ASC
 LIMIT $4::int
 `
 
-type FilterPermissionsByCodeCursorParams struct {
+type FilterPermissionsParams struct {
 	Description sql.NullString
 	AfterCode   sql.NullString
 	AfterID     uuid.NullUUID
 	Limit       int32
 }
 
-func (q *Queries) FilterPermissionsByCodeCursor(ctx context.Context, arg FilterPermissionsByCodeCursorParams) ([]Permission, error) {
-	rows, err := q.db.QueryContext(ctx, filterPermissionsByCodeCursor,
+func (q *Queries) FilterPermissions(ctx context.Context, arg FilterPermissionsParams) ([]Permission, error) {
+	rows, err := q.db.QueryContext(ctx, filterPermissions,
 		arg.Description,
 		arg.AfterCode,
 		arg.AfterID,

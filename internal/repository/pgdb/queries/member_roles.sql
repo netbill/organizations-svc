@@ -12,3 +12,8 @@ ON CONFLICT DO NOTHING;
 DELETE FROM member_roles
 WHERE member_id = sqlc.arg('member_id')::uuid
   AND role_id = sqlc.arg('role_id')::uuid;
+
+-- name: ListMemberRoles :many
+SELECT *
+FROM member_roles
+WHERE member_id = sqlc.arg('member_id')::uuid;

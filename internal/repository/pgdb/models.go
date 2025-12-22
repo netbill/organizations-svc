@@ -313,6 +313,8 @@ type Permission struct {
 type Profile struct {
 	AccountID uuid.UUID
 	Username  string
+	Official  bool
+	Pseudonym sql.NullString
 	UpdatedAt time.Time
 	CreatedAt time.Time
 }
