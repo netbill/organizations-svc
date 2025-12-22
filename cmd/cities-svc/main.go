@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/chains-lab/cities-svc/cmd/cli"
+	"github.com/umisto/cities-svc/cmd/cli"
 )
 
 func main() {
