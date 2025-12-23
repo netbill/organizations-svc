@@ -1,6 +1,8 @@
 version: "2"
 sql:
-  - schema: cmd/migrations/schema
+  - schema:
+      - cmd/migrations/schema/001_events.sql
+      - cmd/migrations/schema/002_agglomerations.sql
     queries: internal/repository/pgdb/queries
     engine: postgresql
     gen:

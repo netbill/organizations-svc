@@ -85,7 +85,7 @@ CREATE TABLE member_roles (
 
 CREATE TABLE permissions (
     id          UUID          PRIMARY KEY,
-    code        VARCHAR(255)  NOT NULL,
+    code        VARCHAR(255)  UNIQUE NOT NULL,
     description VARCHAR(1024) NOT NULL
 );
 
@@ -119,10 +119,8 @@ DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS members CASCADE;
 DROP TABLE IF EXISTS member_roles CASCADE;
 DROP TABLE IF EXISTS invites CASCADE;
-DROP TABLE IF EXISTS role_permission CASCADE;
-DROP TABLE IF EXISTS city_permission CASCADE;
+DROP TABLE IF EXISTS permissions CASCADE;
 DROP TABLE IF EXISTS role_permissions CASCADE;
-DROP TABLE IF EXISTS role_city_permission CASCADE;
 
 DROP TYPE IF EXISTS administration_status;
 DROP TYPE IF EXISTS cities_status;
