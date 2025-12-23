@@ -42,17 +42,11 @@ func (s Service) UpdateAgglomeration(
 	return row.ToEntity(), nil
 }
 
-func (s Service) ActivateAgglomeration(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error) {
-	res, err := s.sql.ActivateAgglomeration(ctx, ID)
-	if err != nil {
-		return entity.Agglomeration{}, err
-	}
-
-	return res.ToEntity(), nil
-}
-
-func (s Service) DeactivateAgglomeration(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error) {
-	res, err := s.sql.DeactivateAgglomeration(ctx, ID)
+func (s Service) UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, status string) (entity.Agglomeration, error) {
+	res, err := s.sql.UpdateAgglomerationStatus(ctx, pgdb.UpdateAgglomerationStatusParams{
+		ID:     ID,
+		Status: pgdb.AdministrationStatus(status),
+	})
 	if err != nil {
 		return entity.Agglomeration{}, err
 	}

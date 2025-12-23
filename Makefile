@@ -25,7 +25,7 @@ generate-models:
 	find $(OUTPUT_DIR) -name '*.go' -exec mv {} $(RESOURCES_DIR)/ \;
 	find $(RESOURCES_DIR) -type f -name "*_test.go" -delete
 
-sqlc-build:
+sqlc-gen:
 	KV_VIPER_FILE=$(CONFIG_FILE) sqlc generate
 
 build:

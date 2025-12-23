@@ -12,6 +12,10 @@ func (p CodeRolePermission) IsNil() bool {
 	return p == ""
 }
 
+func (p CodeRolePermission) String() string {
+	return string(p)
+}
+
 func (p CodeRolePermission) split() []string {
 	return strings.Split(string(p), ".")
 }

@@ -44,3 +44,27 @@ func (s Service) CheckMemberHavePermissionByCode(ctx context.Context, memberID u
 
 	return has, nil
 }
+
+func (s Service) CheckAccountHavePermissionByCode(ctx context.Context, accountID uuid.UUID, permissionKey string) (bool, error) {
+	has, err := s.sql.CheckAccountHavePermissionByCode(ctx, pgdb.CheckAccountHavePermissionByCodeParams{
+		AccountID: accountID,
+		Code:      permissionKey,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return has, nil
+}
+
+func (s Service) CheckAccountHavePermissionByID(ctx context.Context, accountID, permissionID uuid.UUID) (bool, error) {
+	has, err := s.sql.CheckAccountHavePermissionByID(ctx, pgdb.CheckAccountHavePermissionByIDParams{
+		AccountID:    accountID,
+		PermissionID: permissionID,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return has, nil
+}

@@ -34,3 +34,27 @@ SELECT EXISTS (
         AND m.agglomeration_id = sqlc.arg('agglomeration_id')::uuid
         AND rp.permission_id = sqlc.arg('permission_id')::uuid
 );
+
+-- name: CheckAccountHavePermissionByCode :one
+SELECT EXISTS (
+    SELECT 1
+    FROM members m
+    JOIN member_roles mr ON mr.member_id = m.id
+    JOIN role_permissions rp ON rp.role_id = mr.role_id
+    JOIN permissions p ON p.id = rp.permission_id
+    WHERE m.account_id = sqlc.arg('account_id')::uuid
+        AND m.agglomeration_id = sqlc.arg('agglomeration_id')::uuid
+        AND p.code = sqlc.arg('code')::text
+);
+
+-- name: CheckAccountHavePermissionByID :one
+SELECT EXISTS (
+    SELECT 1
+    FROM members m
+    JOIN member_roles mr ON mr.member_id = m.id
+    JOIN role_permissions rp ON rp.role_id = mr.role_id
+    WHERE m.account_id = sqlc.arg('account_id')::uuid
+        AND m.agglomeration_id = sqlc.arg('agglomeration_id')::uuid
+        AND rp.permission_id = sqlc.arg('permission_id')::uuid
+);
+

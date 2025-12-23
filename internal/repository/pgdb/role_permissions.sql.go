@@ -11,6 +11,57 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkAccountHavePermissionByCode = `-- name: CheckAccountHavePermissionByCode :one
+SELECT EXISTS (
+    SELECT 1
+    FROM members m
+    JOIN member_roles mr ON mr.member_id = m.id
+    JOIN role_permissions rp ON rp.role_id = mr.role_id
+    JOIN permissions p ON p.id = rp.permission_id
+    WHERE m.account_id = $1::uuid
+        AND m.agglomeration_id = $2::uuid
+        AND p.code = $3::text
+)
+`
+
+type CheckAccountHavePermissionByCodeParams struct {
+	AccountID       uuid.UUID
+	AgglomerationID uuid.UUID
+	Code            string
+}
+
+func (q *Queries) CheckAccountHavePermissionByCode(ctx context.Context, arg CheckAccountHavePermissionByCodeParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkAccountHavePermissionByCode, arg.AccountID, arg.AgglomerationID, arg.Code)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const checkAccountHavePermissionByID = `-- name: CheckAccountHavePermissionByID :one
+SELECT EXISTS (
+    SELECT 1
+    FROM members m
+    JOIN member_roles mr ON mr.member_id = m.id
+    JOIN role_permissions rp ON rp.role_id = mr.role_id
+    WHERE m.account_id = $1::uuid
+        AND m.agglomeration_id = $2::uuid
+        AND rp.permission_id = $3::uuid
+)
+`
+
+type CheckAccountHavePermissionByIDParams struct {
+	AccountID       uuid.UUID
+	AgglomerationID uuid.UUID
+	PermissionID    uuid.UUID
+}
+
+func (q *Queries) CheckAccountHavePermissionByID(ctx context.Context, arg CheckAccountHavePermissionByIDParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkAccountHavePermissionByID, arg.AccountID, arg.AgglomerationID, arg.PermissionID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const checkMemberHavePermissionByCode = `-- name: CheckMemberHavePermissionByCode :one
 SELECT EXISTS (
     SELECT 1

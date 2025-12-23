@@ -12,29 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const activateAgglomeration = `-- name: ActivateAgglomeration :one
-UPDATE agglomerations
-SET
-    status = 'active',
-    updated_at = now()
-WHERE id = $1::uuid
-RETURNING id, status, name, icon, created_at, updated_at
-`
-
-func (q *Queries) ActivateAgglomeration(ctx context.Context, id uuid.UUID) (Agglomeration, error) {
-	row := q.db.QueryRowContext(ctx, activateAgglomeration, id)
-	var i Agglomeration
-	err := row.Scan(
-		&i.ID,
-		&i.Status,
-		&i.Name,
-		&i.Icon,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const countAgglomerations = `-- name: CountAgglomerations :one
 SELECT COUNT(*)::bigint
 FROM agglomerations
@@ -73,29 +50,6 @@ type CreateAgglomerationParams struct {
 
 func (q *Queries) CreateAgglomeration(ctx context.Context, arg CreateAgglomerationParams) (Agglomeration, error) {
 	row := q.db.QueryRowContext(ctx, createAgglomeration, arg.Name, arg.Icon)
-	var i Agglomeration
-	err := row.Scan(
-		&i.ID,
-		&i.Status,
-		&i.Name,
-		&i.Icon,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const deactivateAgglomeration = `-- name: DeactivateAgglomeration :one
-UPDATE agglomerations
-SET
-    status = 'inactive',
-    updated_at = now()
-WHERE id = $1::uuid
-RETURNING id, status, name, icon, created_at, updated_at
-`
-
-func (q *Queries) DeactivateAgglomeration(ctx context.Context, id uuid.UUID) (Agglomeration, error) {
-	row := q.db.QueryRowContext(ctx, deactivateAgglomeration, id)
 	var i Agglomeration
 	err := row.Scan(
 		&i.ID,
@@ -224,6 +178,34 @@ type UpdateAgglomerationParams struct {
 
 func (q *Queries) UpdateAgglomeration(ctx context.Context, arg UpdateAgglomerationParams) (Agglomeration, error) {
 	row := q.db.QueryRowContext(ctx, updateAgglomeration, arg.Name, arg.Icon, arg.ID)
+	var i Agglomeration
+	err := row.Scan(
+		&i.ID,
+		&i.Status,
+		&i.Name,
+		&i.Icon,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateAgglomerationStatus = `-- name: UpdateAgglomerationStatus :one
+UPDATE agglomerations
+SET
+    status = $1::administration_status,
+    updated_at = now()
+WHERE id = $2::uuid
+RETURNING id, status, name, icon, created_at, updated_at
+`
+
+type UpdateAgglomerationStatusParams struct {
+	Status AdministrationStatus
+	ID     uuid.UUID
+}
+
+func (q *Queries) UpdateAgglomerationStatus(ctx context.Context, arg UpdateAgglomerationStatusParams) (Agglomeration, error) {
+	row := q.db.QueryRowContext(ctx, updateAgglomerationStatus, arg.Status, arg.ID)
 	var i Agglomeration
 	err := row.Scan(
 		&i.ID,

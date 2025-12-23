@@ -27,18 +27,10 @@ SET
 WHERE id = sqlc.arg('id')::uuid
 RETURNING *;
 
--- name: ActivateAgglomeration :one
+-- name: UpdateAgglomerationStatus :one
 UPDATE agglomerations
 SET
-    status = 'active',
-    updated_at = now()
-WHERE id = sqlc.arg('id')::uuid
-RETURNING *;
-
--- name: DeactivateAgglomeration :one
-UPDATE agglomerations
-SET
-    status = 'inactive',
+    status = sqlc.arg('status')::administration_status,
     updated_at = now()
 WHERE id = sqlc.arg('id')::uuid
 RETURNING *;
