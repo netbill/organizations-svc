@@ -24,7 +24,7 @@ const (
 	RolePermissionManageMembers       CodeRolePermission = "members.manage"
 )
 
-type RolePermission struct {
+type Permission struct {
 	ID          uuid.UUID          `json:"id"`
 	Code        CodeRolePermission `json:"code"`
 	Description string             `json:"description"`

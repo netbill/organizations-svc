@@ -98,12 +98,12 @@ func (s Service) FilterCities(
 	}
 
 	if pagination.Cursor != nil {
-		createdAtStr, ok := pagination.Cursor["after_created_at"]
+		createdAtStr, ok := pagination.Cursor["created_at"]
 		if !ok || createdAtStr == "" {
 			return pagi.Page[entity.City]{}, fmt.Errorf("cursor missing after_created_at")
 		}
 
-		idStr, ok := pagination.Cursor["after_id"]
+		idStr, ok := pagination.Cursor["id"]
 		if !ok || idStr == "" {
 			return pagi.Page[entity.City]{}, fmt.Errorf("cursor missing after_id")
 		}
@@ -128,13 +128,7 @@ func (s Service) FilterCities(
 		}
 	}
 
-	limit := pagination.Limit
-	if limit <= 0 {
-		limit = 20
-	}
-	if limit > 100 {
-		limit = 100
-	}
+	limit := calculateLimit(pagination.Limit, 20, 100)
 	sqlParams.Limit = int32(limit)
 
 	rows, err := s.sql.FilterCities(ctx, sqlParams)
@@ -151,7 +145,7 @@ func (s Service) FilterCities(
 		return pagi.Page[entity.City]{}, err
 	}
 
-	var items []entity.City
+	items := make([]entity.City, 0, len(rows))
 	for _, r := range rows {
 		items = append(items, r.ToEntity())
 	}
@@ -160,8 +154,8 @@ func (s Service) FilterCities(
 	if len(items) == limit {
 		lastItem := items[len(items)-1]
 		nextCursor = map[string]string{
-			"after_created_at": lastItem.CreatedAt.Format(time.RFC3339Nano),
-			"after_id":         lastItem.ID.String(),
+			"created_at": lastItem.CreatedAt.Format(time.RFC3339Nano),
+			"id":         lastItem.ID.String(),
 		}
 	}
 

@@ -11,6 +11,57 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkMemberHavePermissionByCode = `-- name: CheckMemberHavePermissionByCode :one
+SELECT EXISTS (
+    SELECT 1
+    FROM members m
+    JOIN member_roles mr ON mr.member_id = m.id
+    JOIN role_permissions rp ON rp.role_id = mr.role_id
+    JOIN permissions p ON p.id = rp.permission_id
+    WHERE m.id = $1::uuid
+        AND m.agglomeration_id = $2::uuid
+        AND p.code = $3::text
+)
+`
+
+type CheckMemberHavePermissionByCodeParams struct {
+	MemberID        uuid.UUID
+	AgglomerationID uuid.UUID
+	Code            string
+}
+
+func (q *Queries) CheckMemberHavePermissionByCode(ctx context.Context, arg CheckMemberHavePermissionByCodeParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkMemberHavePermissionByCode, arg.MemberID, arg.AgglomerationID, arg.Code)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const checkMemberHavePermissionByID = `-- name: CheckMemberHavePermissionByID :one
+SELECT EXISTS (
+    SELECT 1
+    FROM members m
+    JOIN member_roles mr ON mr.member_id = m.id
+    JOIN role_permissions rp ON rp.role_id = mr.role_id
+    WHERE m.id = $1::uuid
+        AND m.agglomeration_id = $2::uuid
+        AND rp.permission_id = $3::uuid
+)
+`
+
+type CheckMemberHavePermissionByIDParams struct {
+	MemberID        uuid.UUID
+	AgglomerationID uuid.UUID
+	PermissionID    uuid.UUID
+}
+
+func (q *Queries) CheckMemberHavePermissionByID(ctx context.Context, arg CheckMemberHavePermissionByIDParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkMemberHavePermissionByID, arg.MemberID, arg.AgglomerationID, arg.PermissionID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createRolePermission = `-- name: CreateRolePermission :exec
 INSERT INTO role_permissions (
     role_id,
@@ -44,30 +95,4 @@ type DeleteRolePermissionParams struct {
 func (q *Queries) DeleteRolePermission(ctx context.Context, arg DeleteRolePermissionParams) error {
 	_, err := q.db.ExecContext(ctx, deleteRolePermission, arg.RoleID, arg.PermissionID)
 	return err
-}
-
-const userHasPermission = `-- name: UserHasPermission :one
-SELECT EXISTS (
-    SELECT 1
-    FROM members m
-             JOIN member_roles mr ON mr.member_id = m.id
-             JOIN role_permissions rp ON rp.role_id = mr.role_id
-             JOIN permissions p ON p.id = rp.permission_id
-    WHERE m.account_id = $1
-      AND m.agglomeration_id = $2
-      AND p.code = $3
-)
-`
-
-type UserHasPermissionParams struct {
-	AccountID       uuid.UUID
-	AgglomerationID uuid.UUID
-	Code            string
-}
-
-func (q *Queries) UserHasPermission(ctx context.Context, arg UserHasPermissionParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, userHasPermission, arg.AccountID, arg.AgglomerationID, arg.Code)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
 }

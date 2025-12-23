@@ -11,7 +11,48 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
+
+const countRoles = `-- name: CountRoles :one
+SELECT COUNT(*)::bigint
+FROM roles r
+WHERE r.agglomeration_id = $1::uuid
+
+    AND (
+        $2::uuid IS NULL
+        OR EXISTS (
+            SELECT 1
+            FROM member_roles mr
+            WHERE mr.role_id = r.id
+                AND mr.member_id = $2::uuid
+        )
+    )
+
+    AND (
+        $3::text[] IS NULL
+        OR EXISTS (
+            SELECT 1
+            FROM role_permissions rp2
+            JOIN permissions p2 ON p2.id = rp2.permission_id
+            WHERE rp2.role_id = r.id
+                AND p2.code = ANY($3::text[])
+    )
+)
+`
+
+type CountRolesParams struct {
+	AgglomerationID uuid.UUID
+	MemberID        uuid.NullUUID
+	PermissionCodes []string
+}
+
+func (q *Queries) CountRoles(ctx context.Context, arg CountRolesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRoles, arg.AgglomerationID, arg.MemberID, pq.Array(arg.PermissionCodes))
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
 
 const createRole = `-- name: CreateRole :one
 INSERT INTO roles (
@@ -35,9 +76,9 @@ RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_
 type CreateRoleParams struct {
 	ID              uuid.UUID
 	AgglomerationID uuid.UUID
-	Head            sql.NullBool
-	Editable        sql.NullBool
-	Rank            sql.NullInt32
+	Head            bool
+	Editable        bool
+	Rank            int32
 	Name            string
 }
 
@@ -74,7 +115,7 @@ func (q *Queries) DeleteRole(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const filterRole = `-- name: FilterRole :many
+const filterRoles = `-- name: FilterRoles :many
 SELECT
     r.id,
     r.agglomeration_id,
@@ -88,8 +129,9 @@ SELECT
     COALESCE(
         json_agg(
             json_build_object(
-                'permission_id', p.id,
-                'code', p.code
+            'permission_id', p.id,
+            'code', p.code,
+            'description', p.description
             )
         ) FILTER (WHERE p.id IS NOT NULL),
         '[]'
@@ -97,24 +139,48 @@ SELECT
 FROM roles r
 LEFT JOIN role_permissions rp ON rp.role_id = r.id
 LEFT JOIN permissions p ON p.id = rp.permission_id
-WHERE r.agglomeration_id = $1
+WHERE r.agglomeration_id = $1::uuid
+
     AND (
-        ($2 IS NULL AND $3 IS NULL)
-        OR (r.rank, r.id) > ($2, $3)
+        $2::uuid IS NULL
+        OR EXISTS (
+            SELECT 1
+            FROM member_roles mr
+            WHERE mr.role_id = r.id
+                AND mr.member_id = $2::uuid
+        )
     )
+    AND (
+        $3::text[] IS NULL
+        OR EXISTS (
+            SELECT 1
+            FROM role_permissions rp2
+            JOIN permissions p2 ON p2.id = rp2.permission_id
+            WHERE rp2.role_id = r.id
+                AND p2.code = ANY($3::text[])
+        )
+    )
+
+    AND (
+        ($4::int IS NULL AND $5::uuid IS NULL)
+        OR (r.rank, r.id) > ($4::int, $5::uuid)
+    )
+
 GROUP BY r.id
 ORDER BY r.rank ASC, r.id ASC
-LIMIT $4
+LIMIT $6::int
 `
 
-type FilterRoleParams struct {
+type FilterRolesParams struct {
 	AgglomerationID uuid.UUID
-	Column2         interface{}
-	Column3         interface{}
+	MemberID        uuid.NullUUID
+	PermissionCodes []string
+	CursorRank      sql.NullInt32
+	CursorID        uuid.NullUUID
 	Limit           int32
 }
 
-type FilterRoleRow struct {
+type FilterRolesRow struct {
 	ID              uuid.UUID
 	AgglomerationID uuid.UUID
 	Head            bool
@@ -126,20 +192,22 @@ type FilterRoleRow struct {
 	Permissions     interface{}
 }
 
-func (q *Queries) FilterRole(ctx context.Context, arg FilterRoleParams) ([]FilterRoleRow, error) {
-	rows, err := q.db.QueryContext(ctx, filterRole,
+func (q *Queries) FilterRoles(ctx context.Context, arg FilterRolesParams) ([]FilterRolesRow, error) {
+	rows, err := q.db.QueryContext(ctx, filterRoles,
 		arg.AgglomerationID,
-		arg.Column2,
-		arg.Column3,
+		arg.MemberID,
+		pq.Array(arg.PermissionCodes),
+		arg.CursorRank,
+		arg.CursorID,
 		arg.Limit,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FilterRoleRow
+	var items []FilterRolesRow
 	for rows.Next() {
-		var i FilterRoleRow
+		var i FilterRolesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.AgglomerationID,
@@ -180,6 +248,7 @@ SELECT
             json_build_object(
                 'permission_id', p.id,
                 'code', p.code
+                'description', p.description
             )
         ) FILTER (WHERE p.id IS NOT NULL),
         '[]'
@@ -220,7 +289,7 @@ func (q *Queries) GetRole(ctx context.Context, id uuid.UUID) (GetRoleRow, error)
 	return i, err
 }
 
-const updateRole = `-- name: UpdateRole :exec
+const updateRole = `-- name: UpdateRole :one
 UPDATE roles
 SET
     rank = COALESCE($1::int, rank),
@@ -229,6 +298,7 @@ SET
 
     updated_at = now()
 WHERE id = $3::uuid
+RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_at
 `
 
 type UpdateRoleParams struct {
@@ -239,7 +309,18 @@ type UpdateRoleParams struct {
 
 // head = COALESCE(sqlc.narg('head')::boolean, head),
 // editable = COALESCE(sqlc.narg('editable')::boolean, editable),
-func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) error {
-	_, err := q.db.ExecContext(ctx, updateRole, arg.Rank, arg.Name, arg.ID)
-	return err
+func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
+	row := q.db.QueryRowContext(ctx, updateRole, arg.Rank, arg.Name, arg.ID)
+	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.AgglomerationID,
+		&i.Head,
+		&i.Editable,
+		&i.Rank,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

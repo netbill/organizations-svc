@@ -31,3 +31,22 @@ func nullUUID(id *uuid.UUID) uuid.NullUUID {
 
 	return uuid.NullUUID{Valid: false}
 }
+
+func nullInt32(i *int) sql.NullInt32 {
+	if i != nil {
+		return sql.NullInt32{Int32: int32(*i), Valid: true}
+	}
+
+	return sql.NullInt32{Valid: false}
+}
+
+func calculateLimit(limit, def, max int) int {
+	if limit <= 0 {
+		return def
+	}
+	if limit > max {
+		return max
+	}
+
+	return limit
+}

@@ -1,0 +1,122 @@
+package repository
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/modules/role"
+	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/pagi"
+)
+
+func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (entity.Role, error) {
+	row, err := s.sql.CreateRole(ctx, pgdb.CreateRoleParams{})
+	if err != nil {
+		return entity.Role{}, err
+	}
+
+	return row.ToEntity(), nil
+}
+
+func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (entity.Role, error) {
+	row, err := s.sql.GetRole(ctx, roleID)
+	if err != nil {
+		return entity.Role{}, err
+	}
+
+	return row.ToEntity(), nil
+}
+
+func (s Service) FilterRoles(
+	ctx context.Context,
+	filter role.FilterParams,
+	pagination pagi.Params,
+) (pagi.Page[entity.Role], error) {
+	params := pgdb.FilterRolesParams{
+		AgglomerationID: filter.AgglomerationID,
+		MemberID:        nullUUID(filter.MemberID),
+		PermissionCodes: filter.PermissionCodes,
+	}
+
+	if pagination.Cursor != nil {
+		cursorRankStr, ok := pagination.Cursor["rank"]
+		if !ok || cursorRankStr == "" {
+			return pagi.Page[entity.Role]{}, fmt.Errorf("missing rank in pagination cursor")
+		}
+
+		var cursorRank int
+		_, err := fmt.Sscanf(cursorRankStr, "%d", &cursorRank)
+		if err != nil {
+			return pagi.Page[entity.Role]{}, fmt.Errorf("invalid rank in pagination cursor: %w", err)
+		}
+
+		cursorIDStr, ok := pagination.Cursor["id"]
+		if !ok || cursorIDStr == "" {
+			return pagi.Page[entity.Role]{}, fmt.Errorf("missing id in pagination cursor")
+		}
+
+		cursorID, err := uuid.Parse(cursorIDStr)
+		if err != nil {
+			return pagi.Page[entity.Role]{}, fmt.Errorf("invalid id in pagination cursor: %w", err)
+		}
+
+		params.CursorRank = nullInt32(&cursorRank)
+		params.CursorID = nullUUID(&cursorID)
+	}
+
+	limit := calculateLimit(pagination.Limit, 50, 100)
+	params.Limit = int32(limit)
+
+	rows, err := s.sql.FilterRoles(ctx, params)
+	if err != nil {
+		return pagi.Page[entity.Role]{}, err
+	}
+
+	count, err := s.sql.CountRoles(ctx, pgdb.CountRolesParams{
+		AgglomerationID: filter.AgglomerationID,
+		MemberID:        nullUUID(filter.MemberID),
+		PermissionCodes: filter.PermissionCodes,
+	})
+	if err != nil {
+		return pagi.Page[entity.Role]{}, err
+	}
+
+	entities := make([]entity.Role, len(rows))
+	for i, row := range rows {
+		entities[i] = row.ToEntity()
+	}
+
+	var nextCursor map[string]string
+	if len(rows) == limit {
+		lastRow := rows[len(rows)-1]
+		nextCursor = map[string]string{
+			"rank": fmt.Sprintf("%d", lastRow.Rank),
+			"id":   lastRow.ID.String(),
+		}
+	}
+
+	return pagi.Page[entity.Role]{
+		Data:       entities,
+		Total:      int(count),
+		NextCursor: nextCursor,
+	}, nil
+}
+
+func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (entity.Role, error) {
+	row, err := s.sql.UpdateRole(ctx, pgdb.UpdateRoleParams{
+		ID:   roleID,
+		Rank: nullInt32(params.Rank),
+		Name: nullString(params.Name),
+	})
+	if err != nil {
+		return entity.Role{}, err
+	}
+
+	return row.ToEntity(), nil
+}
+
+func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+	return s.sql.DeleteRole(ctx, roleID)
+}

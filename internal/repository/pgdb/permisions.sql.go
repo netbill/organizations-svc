@@ -15,11 +15,17 @@ import (
 const countPermissions = `-- name: CountPermissions :one
 SELECT COUNT(*)::bigint
 FROM permissions
-WHERE ($1::text IS NULL OR code ILIKE ($1::text || '%'))
+WHERE ($1::text IS NULL OR code ILIKE ($1::text || '%')) AND
+      ($2::text IS NULL OR code ILIKE ($2::text || '%'))
 `
 
-func (q *Queries) CountPermissions(ctx context.Context, description sql.NullString) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPermissions, description)
+type CountPermissionsParams struct {
+	Description sql.NullString
+	Code        sql.NullString
+}
+
+func (q *Queries) CountPermissions(ctx context.Context, arg CountPermissionsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPermissions, arg.Description, arg.Code)
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -29,18 +35,20 @@ const filterPermissions = `-- name: FilterPermissions :many
 SELECT id, code, description
 FROM permissions
 WHERE
-    ($1::text IS NULL OR code ILIKE ($1::text || '%'))
+    ($1::text IS NULL OR description ILIKE ($1::text || '%'))
+    AND ($2::text IS NULL OR code ILIKE ($2::text || '%'))
     AND
     (
-        $2::varchar IS NULL
-        OR (code, id) > ($2::varchar, $3::uuid)
+        $3::varchar IS NULL
+        OR (code, id) > ($3::varchar, $4::uuid)
     )
 ORDER BY code ASC, id ASC
-LIMIT $4::int
+LIMIT $5::int
 `
 
 type FilterPermissionsParams struct {
 	Description sql.NullString
+	Code        sql.NullString
 	AfterCode   sql.NullString
 	AfterID     uuid.NullUUID
 	Limit       int32
@@ -49,6 +57,7 @@ type FilterPermissionsParams struct {
 func (q *Queries) FilterPermissions(ctx context.Context, arg FilterPermissionsParams) ([]Permission, error) {
 	rows, err := q.db.QueryContext(ctx, filterPermissions,
 		arg.Description,
+		arg.Code,
 		arg.AfterCode,
 		arg.AfterID,
 		arg.Limit,

@@ -78,29 +78,29 @@ func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
 
 func (s Service) FilterAgglomerations(
 	ctx context.Context,
-	params agglomeration.FilterParams,
+	filter agglomeration.FilterParams,
 	pagination pagi.Params,
 ) (pagi.Page[entity.Agglomeration], error) {
-	sqlParam := pgdb.FilterAgglomerationsParams{
-		NameLike: nullString(params.NameLike),
+	params := pgdb.FilterAgglomerationsParams{
+		NameLike: nullString(filter.NameLike),
 	}
 
-	if params.Status != nil {
-		sqlParam.Status = pgdb.NullAdministrationStatus{
-			AdministrationStatus: pgdb.AdministrationStatus(*params.Status),
+	if filter.Status != nil {
+		params.Status = pgdb.NullAdministrationStatus{
+			AdministrationStatus: pgdb.AdministrationStatus(*filter.Status),
 			Valid:                true,
 		}
 	}
 
 	if pagination.Cursor != nil {
-		createdAtStr, ok := pagination.Cursor["after_created_at"]
+		createdAtStr, ok := pagination.Cursor["created_at"]
 		if !ok || createdAtStr == "" {
-			return pagi.Page[entity.Agglomeration]{}, fmt.Errorf("cursor missing after_created_at")
+			return pagi.Page[entity.Agglomeration]{}, fmt.Errorf("cursor missing created_at")
 		}
 
-		idStr, ok := pagination.Cursor["after_id"]
+		idStr, ok := pagination.Cursor["id"]
 		if !ok || idStr == "" {
-			return pagi.Page[entity.Agglomeration]{}, fmt.Errorf("cursor missing after_id")
+			return pagi.Page[entity.Agglomeration]{}, fmt.Errorf("cursor missing id")
 		}
 
 		afterT, err := time.Parse(time.RFC3339Nano, createdAtStr)
@@ -113,33 +113,27 @@ func (s Service) FilterAgglomerations(
 			return pagi.Page[entity.Agglomeration]{}, err
 		}
 
-		sqlParam.AfterCreatedAt = sql.NullTime{
+		params.AfterCreatedAt = sql.NullTime{
 			Time:  afterT,
 			Valid: true,
 		}
-		sqlParam.AfterID = uuid.NullUUID{
+		params.AfterID = uuid.NullUUID{
 			UUID:  afterID,
 			Valid: true,
 		}
 	}
 
-	limit := pagination.Limit
-	if limit <= 0 {
-		limit = 10
-	}
-	if limit > 100 {
-		limit = 100
-	}
-	sqlParam.Limit = int32(limit)
+	limit := calculateLimit(pagination.Limit, 20, 100)
+	params.Limit = int32(limit)
 
-	rows, err := s.sql.FilterAgglomerations(ctx, sqlParam)
+	rows, err := s.sql.FilterAgglomerations(ctx, params)
 	if err != nil {
 		return pagi.Page[entity.Agglomeration]{}, err
 	}
 
 	count, err := s.sql.CountAgglomerations(ctx, pgdb.CountAgglomerationsParams{
-		Status:   sqlParam.Status,
-		NameLike: sqlParam.NameLike,
+		Status:   params.Status,
+		NameLike: params.NameLike,
 	})
 	if err != nil {
 		return pagi.Page[entity.Agglomeration]{}, err
@@ -154,8 +148,8 @@ func (s Service) FilterAgglomerations(
 	if len(rows) == limit {
 		last := rows[len(rows)-1]
 		nextCursor = map[string]string{
-			"after_created_at": last.CreatedAt.UTC().Format(time.RFC3339Nano),
-			"after_id":         last.ID.String(),
+			"created_at": last.CreatedAt.UTC().Format(time.RFC3339Nano),
+			"id":         last.ID.String(),
 		}
 	}
 

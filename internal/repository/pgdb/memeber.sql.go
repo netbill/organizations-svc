@@ -13,7 +13,60 @@ import (
 	"github.com/google/uuid"
 )
 
-const createMember = `-- name: CreateMember :exec
+const countMembers = `-- name: CountMembers :one
+SELECT COUNT(*)::bigint
+FROM members m
+JOIN profiles p ON p.account_id = m.account_id
+WHERE
+    ($1::uuid IS NULL OR m.agglomeration_id = $1::uuid)
+AND ($2::uuid       IS NULL OR m.account_id       = $2::uuid)
+AND ($3::text         IS NULL OR p.username         = $3::text)
+
+AND (
+    $4::uuid IS NULL
+    OR EXISTS (
+        SELECT 1
+        FROM member_roles mr2
+        WHERE mr2.member_id = m.id
+            AND mr2.role_id   = $4::uuid
+    )
+)
+
+AND (
+    $5::text IS NULL
+    OR EXISTS (
+        SELECT 1
+        FROM member_roles mr3
+        JOIN role_permissions rp ON rp.role_id = mr3.role_id
+        JOIN permissions perm ON perm.id = rp.permission_id
+        WHERE mr3.member_id = m.id
+            AND perm.code = $5::text
+    )
+)
+`
+
+type CountMembersParams struct {
+	AgglomerationID uuid.NullUUID
+	AccountID       uuid.NullUUID
+	Username        sql.NullString
+	RoleID          uuid.NullUUID
+	PermissionCode  sql.NullString
+}
+
+func (q *Queries) CountMembers(ctx context.Context, arg CountMembersParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countMembers,
+		arg.AgglomerationID,
+		arg.AccountID,
+		arg.Username,
+		arg.RoleID,
+		arg.PermissionCode,
+	)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const createMember = `-- name: CreateMember :one
 INSERT INTO members (
     account_id,
     agglomeration_id,
@@ -22,6 +75,7 @@ INSERT INTO members (
 ) VALUES (
     $1, $2, $3, $4
 )
+RETURNING id, account_id, agglomeration_id, position, label, created_at, updated_at
 `
 
 type CreateMemberParams struct {
@@ -31,14 +85,172 @@ type CreateMemberParams struct {
 	Label           sql.NullString
 }
 
-func (q *Queries) CreateMember(ctx context.Context, arg CreateMemberParams) error {
-	_, err := q.db.ExecContext(ctx, createMember,
+func (q *Queries) CreateMember(ctx context.Context, arg CreateMemberParams) (Member, error) {
+	row := q.db.QueryRowContext(ctx, createMember,
 		arg.AccountID,
 		arg.AgglomerationID,
 		arg.Position,
 		arg.Label,
 	)
+	var i Member
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.AgglomerationID,
+		&i.Position,
+		&i.Label,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteMember = `-- name: DeleteMember :exec
+DELETE FROM members
+WHERE id = $1
+`
+
+func (q *Queries) DeleteMember(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteMember, id)
 	return err
+}
+
+const filterMembers = `-- name: FilterMembers :many
+SELECT
+    m.id               AS member_id,
+    m.account_id,
+    m.agglomeration_id,
+    m.position,
+    m.label,
+    m.created_at,
+    m.updated_at,
+
+    p.username,
+    p.official,
+    p.pseudonym,
+
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'role_id', r.id,
+                'head', r.head,
+                'rank', r.rank,
+                'name', r.name
+            )
+        ) FILTER (WHERE r.id IS NOT NULL),
+        '[]'
+    ) AS roles
+FROM members m
+JOIN profiles p ON p.account_id = m.account_id
+LEFT JOIN member_roles mr ON mr.member_id = m.id
+LEFT JOIN roles r ON r.id = mr.role_id
+WHERE
+    ($1::uuid IS NULL OR m.agglomeration_id = $1::uuid)
+AND ($2::uuid       IS NULL OR m.account_id       = $2::uuid)
+AND ($3::text         IS NULL OR p.username         = $3::text)
+
+AND (
+    $4::uuid IS NULL
+    OR EXISTS (
+        SELECT 1
+        FROM member_roles mr2
+        WHERE mr2.member_id = m.id
+            AND mr2.role_id   = $4::uuid
+    )
+)
+
+AND (
+    $5::text IS NULL
+    OR EXISTS (
+        SELECT 1
+        FROM member_roles mr3
+        JOIN role_permissions rp ON rp.role_id = mr3.role_id
+        JOIN permissions perm ON perm.id = rp.permission_id
+        WHERE mr3.member_id = m.id
+            AND perm.code = $5::text
+    )
+)
+
+AND (
+    ($6::text IS NULL AND $7::uuid IS NULL)
+    OR (p.username, m.id) > ($6::text, $7::uuid)
+)
+GROUP BY
+    m.id,
+    p.account_id
+ORDER BY
+    p.username ASC,
+    m.id ASC
+LIMIT $8::int
+`
+
+type FilterMembersParams struct {
+	AgglomerationID uuid.NullUUID
+	AccountID       uuid.NullUUID
+	Username        sql.NullString
+	RoleID          uuid.NullUUID
+	PermissionCode  sql.NullString
+	CursorUsername  sql.NullString
+	CursorMemberID  uuid.NullUUID
+	Limit           int32
+}
+
+type FilterMembersRow struct {
+	MemberID        uuid.UUID
+	AccountID       uuid.UUID
+	AgglomerationID uuid.UUID
+	Position        sql.NullString
+	Label           sql.NullString
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Username        string
+	Official        bool
+	Pseudonym       sql.NullString
+	Roles           interface{}
+}
+
+func (q *Queries) FilterMembers(ctx context.Context, arg FilterMembersParams) ([]FilterMembersRow, error) {
+	rows, err := q.db.QueryContext(ctx, filterMembers,
+		arg.AgglomerationID,
+		arg.AccountID,
+		arg.Username,
+		arg.RoleID,
+		arg.PermissionCode,
+		arg.CursorUsername,
+		arg.CursorMemberID,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FilterMembersRow
+	for rows.Next() {
+		var i FilterMembersRow
+		if err := rows.Scan(
+			&i.MemberID,
+			&i.AccountID,
+			&i.AgglomerationID,
+			&i.Position,
+			&i.Label,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Username,
+			&i.Official,
+			&i.Pseudonym,
+			&i.Roles,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getMember = `-- name: GetMember :one
@@ -110,111 +322,6 @@ func (q *Queries) GetMember(ctx context.Context, id uuid.UUID) (GetMemberRow, er
 	return i, err
 }
 
-const listMembers = `-- name: ListMembers :many
-SELECT
-    m.id               AS member_id,
-    m.account_id,
-    m.agglomeration_id,
-    m.position,
-    m.label,
-    m.created_at,
-    m.updated_at,
-
-    p.username,
-    p.official,
-    p.pseudonym,
-
-    COALESCE(
-        json_agg(
-            json_build_object(
-                'role_id', r.id,
-                'head', r.head,
-                'rank', r.rank,
-                'name', r.name
-            )
-        ) FILTER (WHERE r.id IS NOT NULL),
-    '[]'
-    ) AS roles
-
-FROM members m
-JOIN profiles p ON p.account_id = m.account_id
-LEFT JOIN member_roles mr ON mr.member_id = m.id
-LEFT JOIN roles r ON r.id = mr.role_id
-WHERE m.agglomeration_id = $1
-    AND (
-        ($2 IS NULL AND $3 IS NULL)
-        OR (p.username, m.id) > ($2, $3)
-    )
-GROUP BY
-    m.id,
-    p.account_id
-ORDER BY
-    p.username ASC,
-    m.id ASC
-LIMIT $4
-`
-
-type ListMembersParams struct {
-	AgglomerationID uuid.UUID
-	Column2         interface{}
-	Column3         interface{}
-	Limit           int32
-}
-
-type ListMembersRow struct {
-	MemberID        uuid.UUID
-	AccountID       uuid.UUID
-	AgglomerationID uuid.UUID
-	Position        sql.NullString
-	Label           sql.NullString
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	Username        string
-	Official        bool
-	Pseudonym       sql.NullString
-	Roles           interface{}
-}
-
-func (q *Queries) ListMembers(ctx context.Context, arg ListMembersParams) ([]ListMembersRow, error) {
-	rows, err := q.db.QueryContext(ctx, listMembers,
-		arg.AgglomerationID,
-		arg.Column2,
-		arg.Column3,
-		arg.Limit,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListMembersRow
-	for rows.Next() {
-		var i ListMembersRow
-		if err := rows.Scan(
-			&i.MemberID,
-			&i.AccountID,
-			&i.AgglomerationID,
-			&i.Position,
-			&i.Label,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Username,
-			&i.Official,
-			&i.Pseudonym,
-			&i.Roles,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const memberExists = `-- name: MemberExists :one
 SELECT EXISTS (
     SELECT 1
@@ -234,4 +341,35 @@ func (q *Queries) MemberExists(ctx context.Context, arg MemberExistsParams) (boo
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const updateMember = `-- name: UpdateMember :one
+UPDATE members
+SET
+    position = COALESCE($2, position),
+    label = COALESCE($3, label),
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, account_id, agglomeration_id, position, label, created_at, updated_at
+`
+
+type UpdateMemberParams struct {
+	ID       uuid.UUID
+	Position sql.NullString
+	Label    sql.NullString
+}
+
+func (q *Queries) UpdateMember(ctx context.Context, arg UpdateMemberParams) (Member, error) {
+	row := q.db.QueryRowContext(ctx, updateMember, arg.ID, arg.Position, arg.Label)
+	var i Member
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.AgglomerationID,
+		&i.Position,
+		&i.Label,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

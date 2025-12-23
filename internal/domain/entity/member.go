@@ -1,21 +1,31 @@
 package entity
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Member struct {
 	ID              uuid.UUID `json:"id"`
 	AccountID       uuid.UUID `json:"account_id"`
 	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Position        string    `json:"position"`
-	Label           string    `json:"label"`
+	Position        *string   `json:"position,omitempty"`
+	Label           *string   `json:"label,omitempty"`
 
-	Roles []MemberRole `json:"roles"`
+	Username  string  `json:"username"`
+	Pseudonym *string `json:"pseudonym,omitempty"`
+	Official  bool    `json:"official"`
 
-	CreatedAt int64 `json:"created_at"`
-	UpdatedAt int64 `json:"updated_at"`
+	Roles []MemberRole `json:"roles,omitempty"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type MemberRole struct {
 	RoleID uuid.UUID `json:"role_id"`
+	Head   bool      `json:"head"`
+	Rank   uint      `json:"rank"`
 	Name   string    `json:"name"`
 }
