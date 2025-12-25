@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/paulmach/orb"
-	"github.com/paulmach/orb/geojson"
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 )
@@ -32,13 +31,6 @@ func GetCityByID(c pgdb.GetCityByIDRow) entity.City {
 	if c.Banner.Valid {
 		s := c.Banner.String
 		ent.Banner = &s
-	}
-
-	if c.AreaGeojson != "" {
-		g, err := geojson.UnmarshalGeometry([]byte(c.AreaGeojson))
-		if err == nil && g != nil {
-			ent.Area = g.Geometry()
-		}
 	}
 
 	return ent
@@ -71,13 +63,6 @@ func GetCityBySlug(c pgdb.GetCityBySlugRow) entity.City {
 		ent.Banner = &s
 	}
 
-	if c.AreaGeojson != "" {
-		g, err := geojson.UnmarshalGeometry([]byte(c.AreaGeojson))
-		if err == nil && g != nil {
-			ent.Area = g.Geometry()
-		}
-	}
-
 	return ent
 }
 
@@ -108,11 +93,6 @@ func FilterCitiesNearestRow(rows []pgdb.FilterCitiesNearestRow) map[int64]entity
 		if c.Banner.Valid {
 			s := c.Banner.String
 			ent.Banner = &s
-		}
-
-		g, err := geojson.UnmarshalGeometry([]byte(c.AreaGeojson))
-		if err == nil && g != nil {
-			ent.Area = g.Geometry()
 		}
 
 		result[c.DistanceM] = ent
@@ -149,13 +129,6 @@ func FilterCitiesRow(rows []pgdb.FilterCitiesRow) []entity.City {
 		if c.Banner.Valid {
 			s := c.Banner.String
 			ent.Banner = &s
-		}
-
-		if c.AreaGeojson != "" {
-			g, err := geojson.UnmarshalGeometry([]byte(c.AreaGeojson))
-			if err == nil && g != nil {
-				ent.Area = g.Geometry()
-			}
 		}
 
 		result = append(result, ent)

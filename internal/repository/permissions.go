@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/domain/entity"
-	"github.com/umisto/cities-svc/internal/domain/modules/role"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/nilx"
 	"github.com/umisto/pagi"

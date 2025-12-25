@@ -72,17 +72,21 @@ CREATE TABLE roles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    UNIQUE(agglomeration_id, name)
+    UNIQUE(agglomeration_id, name),
 );
-
-ALTER TABLE roles
-    ADD CONSTRAINT roles_agglomeration_id_rank_key
-    UNIQUE (agglomeration_id, rank)
-    DEFERRABLE INITIALLY DEFERRED;
 
 CREATE UNIQUE INDEX roles_one_head_per_agglomeration
     ON roles (agglomeration_id)
     WHERE head = true;
+
+CREATE UNIQUE INDEX roles_one_rank0_per_agglomeration
+    ON roles (agglomeration_id)
+    WHERE rank = 0;
+
+-- ALTER TABLE roles
+--     ADD CONSTRAINT roles_agglomeration_id_rank_key
+--     UNIQUE (agglomeration_id, rank)
+--     DEFERRABLE INITIALLY DEFERRED;
 
 CREATE TABLE member_roles (
     member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,

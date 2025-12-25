@@ -25,7 +25,3 @@ type Agglomeration struct {
 func (e Agglomeration) IsNil() bool {
 	return e.ID == uuid.Nil
 }
-
-func (e Agglomeration) CanInteract() bool {
-	return e.Status == AgglomerationStatusActive
-}

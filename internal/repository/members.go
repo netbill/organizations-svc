@@ -26,7 +26,7 @@ func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uu
 	return res.ToEntity(), nil
 }
 
-func (s Service) UpdateMember(ctx context.Context, member entity.Member) (entity.Member, error) {
+func (s Service) UpdateMember(ctx context.Context, member) (entity.Member, error) {
 	res, err := s.sql(ctx).UpdateMember(ctx, pgdb.UpdateMemberParams{
 		ID:       member.ID,
 		Position: nilx.String(member.Position),

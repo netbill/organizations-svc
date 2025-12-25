@@ -29,7 +29,7 @@ func (r *RoleDTOs) Scan(src any) error {
 	case string:
 		b = []byte(v)
 	default:
-		return fmt.Errorf("RoleDTOs: unsupported Scan type %T", src)
+		return fmt.Errorf("RoleDTOs: unsupported scan type %T", src)
 	}
 
 	return json.Unmarshal(b, r)
@@ -56,7 +56,7 @@ func (p *PermissionDTOs) Scan(src any) error {
 	case string:
 		b = []byte(v)
 	default:
-		return fmt.Errorf("PermissionDTO: unsupported Scan type %T", src)
+		return fmt.Errorf("PermissionDTO: unsupported scan type %T", src)
 	}
 
 	return json.Unmarshal(b, p)
