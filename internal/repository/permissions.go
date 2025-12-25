@@ -2,17 +2,19 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/modules/role"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/nilx"
 	"github.com/umisto/pagi"
 )
 
 func (s Service) GetPermission(ctx context.Context, ID uuid.UUID) (entity.Permission, error) {
-	res, err := s.sql.GetPermissionByID(ctx, ID)
+	res, err := s.sql(ctx).GetPermissionByID(ctx, ID)
 	if err != nil {
 		return entity.Permission{}, err
 	}
@@ -21,7 +23,7 @@ func (s Service) GetPermission(ctx context.Context, ID uuid.UUID) (entity.Permis
 }
 
 func (s Service) GetPermissionByCode(ctx context.Context, code entity.CodeRolePermission) (entity.Permission, error) {
-	res, err := s.sql.GetPermissionByCode(ctx, string(code))
+	res, err := s.sql(ctx).GetPermissionByCode(ctx, string(code))
 	if err != nil {
 		return entity.Permission{}, err
 	}
@@ -35,8 +37,8 @@ func (s Service) ListPermissions(
 	pagination pagi.Params,
 ) (pagi.Page[entity.Permission], error) {
 	params := pgdb.FilterPermissionsParams{
-		Description: nullString(filter.Description),
-		Code:        nullString(filter.Code),
+		Description: nilx.String(filter.Description),
+		Code:        nilx.String(filter.Code),
 	}
 
 	if pagination.Cursor != nil {
@@ -55,18 +57,18 @@ func (s Service) ListPermissions(
 			return pagi.Page[entity.Permission]{}, fmt.Errorf("invalid id in cursor: %w", err)
 		}
 
-		params.AfterCode = nullString(&cursorCode)
-		params.AfterID = nullUUID(&cursorID)
+		params.AfterCode = sql.NullString{String: cursorCode, Valid: true}
+		params.AfterID = uuid.NullUUID{UUID: cursorID, Valid: true}
 	}
 
-	rows, err := s.sql.FilterPermissions(ctx, params)
+	rows, err := s.sql(ctx).FilterPermissions(ctx, params)
 	if err != nil {
 		return pagi.Page[entity.Permission]{}, err
 	}
 
-	count, err := s.sql.CountPermissions(ctx, pgdb.CountPermissionsParams{
-		Description: nullString(filter.Description),
-		Code:        nullString(filter.Code),
+	count, err := s.sql(ctx).CountPermissions(ctx, pgdb.CountPermissionsParams{
+		Description: nilx.String(filter.Description),
+		Code:        nilx.String(filter.Code),
 	})
 	if err != nil {
 		return pagi.Page[entity.Permission]{}, err

@@ -12,29 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const acceptInvite = `-- name: AcceptInvite :one
-UPDATE invites
-SET status = 'accepted'
-WHERE
-    id = $1::uuid
-    AND status = 'sent'
-    AND expires_at > now()
-RETURNING id, agglomeration_id, status, expires_at, created_at
-`
-
-func (q *Queries) AcceptInvite(ctx context.Context, id uuid.UUID) (Invite, error) {
-	row := q.db.QueryRowContext(ctx, acceptInvite, id)
-	var i Invite
-	err := row.Scan(
-		&i.ID,
-		&i.AgglomerationID,
-		&i.Status,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const createInvite = `-- name: CreateInvite :one
 INSERT INTO invites (
     id,
@@ -67,29 +44,6 @@ func (q *Queries) CreateInvite(ctx context.Context, arg CreateInviteParams) (Inv
 	return i, err
 }
 
-const declineInvite = `-- name: DeclineInvite :one
-UPDATE invites
-SET status = 'declined'
-WHERE
-    id = $1::uuid
-    AND status = 'sent'
-    AND expires_at > now()
-RETURNING id, agglomeration_id, status, expires_at, created_at
-`
-
-func (q *Queries) DeclineInvite(ctx context.Context, id uuid.UUID) (Invite, error) {
-	row := q.db.QueryRowContext(ctx, declineInvite, id)
-	var i Invite
-	err := row.Scan(
-		&i.ID,
-		&i.AgglomerationID,
-		&i.Status,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const deleteInvite = `-- name: DeleteInvite :exec
 DELETE FROM invites
 WHERE id = $1::uuid
@@ -108,6 +62,32 @@ WHERE id = $1::uuid
 
 func (q *Queries) GetInviteByID(ctx context.Context, id uuid.UUID) (Invite, error) {
 	row := q.db.QueryRowContext(ctx, getInviteByID, id)
+	var i Invite
+	err := row.Scan(
+		&i.ID,
+		&i.AgglomerationID,
+		&i.Status,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateInviteStatus = `-- name: UpdateInviteStatus :one
+UPDATE invites
+SET
+    status = $1::invite_status
+WHERE id = $2::uuid
+RETURNING id, agglomeration_id, status, expires_at, created_at
+`
+
+type UpdateInviteStatusParams struct {
+	Status InviteStatus
+	ID     uuid.UUID
+}
+
+func (q *Queries) UpdateInviteStatus(ctx context.Context, arg UpdateInviteStatusParams) (Invite, error) {
+	row := q.db.QueryRowContext(ctx, updateInviteStatus, arg.Status, arg.ID)
 	var i Invite
 	err := row.Scan(
 		&i.ID,

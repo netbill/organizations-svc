@@ -2,17 +2,19 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/modules/role"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/nilx"
 	"github.com/umisto/pagi"
 )
 
 func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (entity.Role, error) {
-	row, err := s.sql.CreateRole(ctx, pgdb.CreateRoleParams{})
+	row, err := s.sql(ctx).CreateRole(ctx, pgdb.CreateRoleParams{})
 	if err != nil {
 		return entity.Role{}, err
 	}
@@ -21,7 +23,7 @@ func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (enti
 }
 
 func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (entity.Role, error) {
-	row, err := s.sql.GetRole(ctx, roleID)
+	row, err := s.sql(ctx).GetRole(ctx, roleID)
 	if err != nil {
 		return entity.Role{}, err
 	}
@@ -36,7 +38,7 @@ func (s Service) FilterRoles(
 ) (pagi.Page[entity.Role], error) {
 	params := pgdb.FilterRolesParams{
 		AgglomerationID: filter.AgglomerationID,
-		MemberID:        nullUUID(filter.MemberID),
+		MemberID:        nilx.UUID(filter.MemberID),
 		PermissionCodes: filter.PermissionCodes,
 	}
 
@@ -62,21 +64,21 @@ func (s Service) FilterRoles(
 			return pagi.Page[entity.Role]{}, fmt.Errorf("invalid id in pagination cursor: %w", err)
 		}
 
-		params.CursorRank = nullInt32(&cursorRank)
-		params.CursorID = nullUUID(&cursorID)
+		params.CursorRank = sql.NullInt32{Int32: int32(cursorRank), Valid: true}
+		params.CursorID = uuid.NullUUID{UUID: cursorID, Valid: true}
 	}
 
-	limit := calculateLimit(pagination.Limit, 50, 100)
+	limit := pagi.CalculateLimit(pagination.Limit, 50, 100)
 	params.Limit = int32(limit)
 
-	rows, err := s.sql.FilterRoles(ctx, params)
+	rows, err := s.sql(ctx).FilterRoles(ctx, params)
 	if err != nil {
 		return pagi.Page[entity.Role]{}, err
 	}
 
-	count, err := s.sql.CountRoles(ctx, pgdb.CountRolesParams{
+	count, err := s.sql(ctx).CountRoles(ctx, pgdb.CountRolesParams{
 		AgglomerationID: filter.AgglomerationID,
-		MemberID:        nullUUID(filter.MemberID),
+		MemberID:        nilx.UUID(filter.MemberID),
 		PermissionCodes: filter.PermissionCodes,
 	})
 	if err != nil {
@@ -105,10 +107,21 @@ func (s Service) FilterRoles(
 }
 
 func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (entity.Role, error) {
-	row, err := s.sql.UpdateRole(ctx, pgdb.UpdateRoleParams{
+	row, err := s.sql(ctx).UpdateRole(ctx, pgdb.UpdateRoleParams{
 		ID:   roleID,
-		Rank: nullInt32(params.Rank),
-		Name: nullString(params.Name),
+		Name: nilx.String(params.Name),
+	})
+	if err != nil {
+		return entity.Role{}, err
+	}
+
+	return row.ToEntity(), nil
+}
+
+func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank int32) (entity.Role, error) {
+	row, err := s.sql(ctx).UpdateRoleRank(ctx, pgdb.UpdateRoleRankParams{
+		ID:      roleID,
+		NewRank: newRank,
 	})
 	if err != nil {
 		return entity.Role{}, err
@@ -118,5 +131,5 @@ func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.U
 }
 
 func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
-	return s.sql.DeleteRole(ctx, roleID)
+	return s.sql(ctx).DeleteRole(ctx, roleID)
 }

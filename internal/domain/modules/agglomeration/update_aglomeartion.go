@@ -14,25 +14,35 @@ type UpdateParams struct {
 	Icon *string `json:"icon,omitempty"`
 }
 
-func (s Service) UpdateAgglomeration(ctx context.Context, ID uuid.UUID, params UpdateParams) (entity.Agglomeration, error) {
-	res, err := s.repo.UpdateAgglomeration(ctx, ID, params)
-	if err != nil {
-		return entity.Agglomeration{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to update agglomeration: %w", err),
-		)
+func (s Service) UpdateAgglomeration(ctx context.Context, ID uuid.UUID, params UpdateParams) (agglo entity.Agglomeration, err error) {
+	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
+		agglo, err = s.repo.UpdateAgglomeration(ctx, ID, params)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to update agglomeration: %w", err),
+			)
+		}
+
+		err = s.messenger.WriteAgglomerationUpdated(ctx, agglo)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to publish agglomeration updated event: %w", err),
+			)
+		}
+
+		return nil
+	}); err != nil {
+		return entity.Agglomeration{}, err
 	}
 
-	err = s.messager.WriteAgglomerationUpdated(ctx, res)
-	if err != nil {
-		return entity.Agglomeration{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to publish agglomeration updated event: %w", err),
-		)
-	}
-
-	return res, nil
+	return agglo, nil
 }
 
-func (s Service) UpdateAgglomerationByUser(ctx context.Context, accountID, agglomerationID uuid.UUID, params UpdateParams) (entity.Agglomeration, error) {
+func (s Service) UpdateAgglomerationByUser(
+	ctx context.Context,
+	accountID, agglomerationID uuid.UUID,
+	params UpdateParams,
+) (entity.Agglomeration, error) {
 	agglo, err := s.GetAgglomeration(ctx, agglomerationID)
 	if err != nil {
 		return entity.Agglomeration{}, err
@@ -44,19 +54,14 @@ func (s Service) UpdateAgglomerationByUser(ctx context.Context, accountID, agglo
 		)
 	}
 
-	access, err := s.repo.CheckAccountHavePermissionByCode(
+	err = s.checkPermissionByCode(
 		ctx,
 		accountID,
-		entity.RolePermissionManageAgglomeration.String(),
+		agglomerationID,
+		entity.RolePermissionManageAgglomeration,
 	)
 	if err != nil {
-		return entity.Agglomeration{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to check initiator permissions: %w", err))
-	}
-	if !access {
-		return entity.Agglomeration{}, errx.ErrorNotEnoughRightsForAgglomeration.Raise(
-			fmt.Errorf("initiator has no access to activate agglomeration"),
-		)
+		return entity.Agglomeration{}, err
 	}
 
 	return s.UpdateAgglomeration(ctx, agglomerationID, params)

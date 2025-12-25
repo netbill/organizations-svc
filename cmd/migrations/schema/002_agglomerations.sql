@@ -1,4 +1,5 @@
 -- +migrate Up
+CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TYPE administration_status AS ENUM (
     'active',
@@ -18,7 +19,8 @@ CREATE TABLE agglomerations (
 
 CREATE TYPE cities_status AS ENUM (
     'active',
-    'inactive'
+    'inactive',
+    'archived'
 );
 
 CREATE TABLE cities (
@@ -29,6 +31,8 @@ CREATE TABLE cities (
     name             VARCHAR(255)  NOT NULL,
     icon             TEXT,
     banner           TEXT,
+
+    point geography(Point, 4326) NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -68,9 +72,13 @@ CREATE TABLE roles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    UNIQUE(agglomeration_id, rank),
     UNIQUE(agglomeration_id, name)
 );
+
+ALTER TABLE roles
+    ADD CONSTRAINT roles_agglomeration_id_rank_key
+    UNIQUE (agglomeration_id, rank)
+    DEFERRABLE INITIALLY DEFERRED;
 
 CREATE UNIQUE INDEX roles_one_head_per_agglomeration
     ON roles (agglomeration_id)

@@ -10,19 +10,21 @@ import (
 	"github.com/pkg/errors"
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/modules/agglomeration"
+	"github.com/umisto/cities-svc/internal/repository/models"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/nilx"
 	"github.com/umisto/pagi"
 )
 
 func (s Service) CreateAgglomeration(ctx context.Context, name string) (entity.Agglomeration, error) {
-	row, err := s.sql.CreateAgglomeration(ctx, pgdb.CreateAgglomerationParams{
+	row, err := s.sql(ctx).CreateAgglomeration(ctx, pgdb.CreateAgglomerationParams{
 		Name: name,
 	})
 	if err != nil {
 		return entity.Agglomeration{}, err
 	}
 
-	return row.ToEntity(), nil
+	return models.AgglomerationRow(row), nil
 }
 
 func (s Service) UpdateAgglomeration(
@@ -30,20 +32,20 @@ func (s Service) UpdateAgglomeration(
 	ID uuid.UUID,
 	params agglomeration.UpdateParams,
 ) (entity.Agglomeration, error) {
-	row, err := s.sql.UpdateAgglomeration(ctx, pgdb.UpdateAgglomerationParams{
+	row, err := s.sql(ctx).UpdateAgglomeration(ctx, pgdb.UpdateAgglomerationParams{
 		ID:   ID,
-		Name: nullString(params.Name),
-		Icon: nullString(params.Icon),
+		Name: nilx.String(params.Name),
+		Icon: nilx.String(params.Icon),
 	})
 	if err != nil {
 		return entity.Agglomeration{}, err
 	}
 
-	return row.ToEntity(), nil
+	return models.AgglomerationRow(row), nil
 }
 
 func (s Service) UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, status string) (entity.Agglomeration, error) {
-	res, err := s.sql.UpdateAgglomerationStatus(ctx, pgdb.UpdateAgglomerationStatusParams{
+	res, err := s.sql(ctx).UpdateAgglomerationStatus(ctx, pgdb.UpdateAgglomerationStatusParams{
 		ID:     ID,
 		Status: pgdb.AdministrationStatus(status),
 	})
@@ -51,11 +53,11 @@ func (s Service) UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, st
 		return entity.Agglomeration{}, err
 	}
 
-	return res.ToEntity(), nil
+	return models.AgglomerationRow(res), nil
 }
 
 func (s Service) GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error) {
-	row, err := s.sql.GetAgglomerationByID(ctx, ID)
+	row, err := s.sql(ctx).GetAgglomerationByID(ctx, ID)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return entity.Agglomeration{}, nil
@@ -63,20 +65,20 @@ func (s Service) GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity
 		return entity.Agglomeration{}, err
 	}
 
-	return row.ToEntity(), nil
+	return models.AgglomerationRow(row), nil
 }
 
 func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
-	return s.sql.DeleteAgglomeration(ctx, ID)
+	return s.sql(ctx).DeleteAgglomeration(ctx, ID)
 }
 
 func (s Service) FilterAgglomerations(
 	ctx context.Context,
 	filter agglomeration.FilterParams,
 	pagination pagi.Params,
-) (pagi.Page[entity.Agglomeration], error) {
+) (pagi.Page[[]entity.Agglomeration], error) {
 	params := pgdb.FilterAgglomerationsParams{
-		NameLike: nullString(filter.NameLike),
+		NameLike: nilx.String(filter.NameLike),
 	}
 
 	if filter.Status != nil {
@@ -89,22 +91,22 @@ func (s Service) FilterAgglomerations(
 	if pagination.Cursor != nil {
 		createdAtStr, ok := pagination.Cursor["created_at"]
 		if !ok || createdAtStr == "" {
-			return pagi.Page[entity.Agglomeration]{}, fmt.Errorf("cursor missing created_at")
+			return pagi.Page[[]entity.Agglomeration]{}, fmt.Errorf("cursor missing created_at")
 		}
 
 		idStr, ok := pagination.Cursor["id"]
 		if !ok || idStr == "" {
-			return pagi.Page[entity.Agglomeration]{}, fmt.Errorf("cursor missing id")
+			return pagi.Page[[]entity.Agglomeration]{}, fmt.Errorf("cursor missing id")
 		}
 
 		afterT, err := time.Parse(time.RFC3339Nano, createdAtStr)
 		if err != nil {
-			return pagi.Page[entity.Agglomeration]{}, err
+			return pagi.Page[[]entity.Agglomeration]{}, err
 		}
 
 		afterID, err := uuid.Parse(idStr)
 		if err != nil {
-			return pagi.Page[entity.Agglomeration]{}, err
+			return pagi.Page[[]entity.Agglomeration]{}, err
 		}
 
 		params.AfterCreatedAt = sql.NullTime{
@@ -117,25 +119,25 @@ func (s Service) FilterAgglomerations(
 		}
 	}
 
-	limit := calculateLimit(pagination.Limit, 20, 100)
+	limit := pagi.CalculateLimit(pagination.Limit, 20, 100)
 	params.Limit = int32(limit)
 
-	rows, err := s.sql.FilterAgglomerations(ctx, params)
+	rows, err := s.sql(ctx).FilterAgglomerations(ctx, params)
 	if err != nil {
-		return pagi.Page[entity.Agglomeration]{}, err
+		return pagi.Page[[]entity.Agglomeration]{}, err
 	}
 
-	count, err := s.sql.CountAgglomerations(ctx, pgdb.CountAgglomerationsParams{
+	count, err := s.sql(ctx).CountAgglomerations(ctx, pgdb.CountAgglomerationsParams{
 		Status:   params.Status,
 		NameLike: params.NameLike,
 	})
 	if err != nil {
-		return pagi.Page[entity.Agglomeration]{}, err
+		return pagi.Page[[]entity.Agglomeration]{}, err
 	}
 
 	collection := make([]entity.Agglomeration, 0, len(rows))
 	for _, row := range rows {
-		collection = append(collection, row.ToEntity())
+		collection = append(collection, models.AgglomerationRow(row))
 	}
 
 	var nextCursor map[string]string
@@ -147,7 +149,7 @@ func (s Service) FilterAgglomerations(
 		}
 	}
 
-	return pagi.Page[entity.Agglomeration]{
+	return pagi.Page[[]entity.Agglomeration]{
 		Data:       collection,
 		NextCursor: nextCursor,
 		Total:      int(count),

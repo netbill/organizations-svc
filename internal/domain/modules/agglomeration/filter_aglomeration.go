@@ -18,10 +18,10 @@ func (s Service) FilterAgglomerations(
 	ctx context.Context,
 	params FilterParams,
 	pagination pagi.Params,
-) (pagi.Page[entity.Agglomeration], error) {
+) (pagi.Page[[]entity.Agglomeration], error) {
 	res, err := s.repo.FilterAgglomerations(ctx, params, pagination)
 	if err != nil {
-		return pagi.Page[entity.Agglomeration]{}, errx.ErrorInternal.Raise(
+		return pagi.Page[[]entity.Agglomeration]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("filter agglomerations: %w", err),
 		)
 	}

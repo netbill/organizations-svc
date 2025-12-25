@@ -4,151 +4,144 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/paulmach/orb"
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/modules/city"
+	"github.com/umisto/cities-svc/internal/repository/models"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/nilx"
 	"github.com/umisto/pagi"
 )
 
-func (s Service) CreateCity(ctx context.Context, params city.CreateParams) (entity.City, error) {
-	row, err := s.sql.CreateCity(ctx, pgdb.CreateCityParams{
-		AgglomerationID: nullUUID(params.AgglomerationID),
-		Slug:            nullString(params.Slug),
+func (s Service) CreateCity(ctx context.Context, params city.CreateParams) error {
+	err := s.sql(ctx).CreateCity(ctx, pgdb.CreateCityParams{
+		AgglomerationID: nilx.UUID(params.AgglomerationID),
+		Slug:            nilx.String(params.Slug),
 		Name:            params.Name,
-		Icon:            nullString(params.Icon),
-		Banner:          nullString(params.Banner),
+		Icon:            nilx.String(params.Icon),
+		Banner:          nilx.String(params.Banner),
+		PointLat:        params.Point[1],
+		PointLng:        params.Point[0],
 	})
 	if err != nil {
-		return entity.City{}, err
+		return err
 	}
 
-	return row.ToEntity(), nil
+	return nil
 }
 
 func (s Service) GetCityByID(ctx context.Context, ID uuid.UUID) (entity.City, error) {
-	row, err := s.sql.GetCityByID(ctx, ID)
+	row, err := s.sql(ctx).GetCityByID(ctx, ID)
 	if err != nil {
 		return entity.City{}, err
 	}
 
-	return row.ToEntity(), nil
+	return models.GetCityByID(row), nil
 }
 
 func (s Service) GetCityBySlug(ctx context.Context, slug string) (entity.City, error) {
-	row, err := s.sql.GetCityBySlug(ctx, slug)
+	row, err := s.sql(ctx).GetCityBySlug(ctx, slug)
 	if err != nil {
 		return entity.City{}, err
 	}
 
-	return row.ToEntity(), nil
+	return models.GetCityBySlug(row), nil
 }
 
-func (s Service) UpdateCity(ctx context.Context, ID uuid.UUID, params city.UpdateParams) (entity.City, error) {
-	row, err := s.sql.UpdateCity(ctx, pgdb.UpdateCityParams{
+func (s Service) UpdateCity(ctx context.Context, ID uuid.UUID, params city.UpdateParams) error {
+	stmt := pgdb.UpdateCityParams{
 		ID:              ID,
-		AgglomerationID: nullUUID(params.AgglomerationID),
-		Name:            nullString(params.Name),
-		Slug:            nullString(params.Slug),
-		Icon:            nullString(params.Icon),
-		Banner:          nullString(params.Banner),
+		AgglomerationID: nilx.UUID(params.AgglomerationID),
+		Name:            nilx.String(params.Name),
+		Slug:            nilx.String(params.Slug),
+		Icon:            nilx.String(params.Icon),
+		Banner:          nilx.String(params.Banner),
+	}
+	if params.Point != nil {
+		stmt.PointLat = nilx.Float64(&params.Point[1])
+		stmt.PointLng = nilx.Float64(&params.Point[0])
+	}
+
+	return s.sql(ctx).UpdateCity(ctx, stmt)
+}
+
+func (s Service) UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) error {
+	return s.sql(ctx).UpdateCityStatus(ctx, pgdb.UpdateCityStatusParams{
+		ID:     ID,
+		Status: pgdb.CitiesStatus(status),
 	})
-	if err != nil {
-		return entity.City{}, err
-	}
-
-	return row.ToEntity(), nil
-}
-
-func (s Service) ActivateCity(ctx context.Context, ID uuid.UUID) (entity.City, error) {
-	res, err := s.sql.ActivateCity(ctx, ID)
-	if err != nil {
-		return entity.City{}, err
-	}
-
-	return res.ToEntity(), nil
-}
-
-func (s Service) DeactivateCity(ctx context.Context, ID uuid.UUID) (entity.City, error) {
-	res, err := s.sql.DeactivateCity(ctx, ID)
-	if err != nil {
-		return entity.City{}, err
-	}
-
-	return res.ToEntity(), nil
 }
 
 func (s Service) FilterCities(
 	ctx context.Context,
-	params city.FilterParams,
+	filter city.FilterParams,
 	pagination pagi.Params,
-) (pagi.Page[entity.City], error) {
-	sqlParams := pgdb.FilterCitiesParams{
-		AgglomerationID: nullUUID(params.AgglomerationID),
-		NameLike:        nullString(params.NameLike),
+) (pagi.Page[[]entity.City], error) {
+	params := pgdb.FilterCitiesParams{
+		AgglomerationID: nilx.UUID(filter.AgglomerationID),
+		NameLike:        nilx.String(filter.NameLike),
 	}
 
-	if params.Status != nil {
-		sqlParams.Status = pgdb.NullCitiesStatus{
+	if filter.Status != nil {
+		params.Status = pgdb.NullCitiesStatus{
 			Valid:        true,
-			CitiesStatus: pgdb.CitiesStatus(*params.Status),
+			CitiesStatus: pgdb.CitiesStatus(*filter.Status),
 		}
 	}
 
 	if pagination.Cursor != nil {
 		createdAtStr, ok := pagination.Cursor["created_at"]
 		if !ok || createdAtStr == "" {
-			return pagi.Page[entity.City]{}, fmt.Errorf("cursor missing after_created_at")
+			return pagi.Page[[]entity.City]{}, fmt.Errorf("cursor missing created_at")
 		}
 
 		idStr, ok := pagination.Cursor["id"]
 		if !ok || idStr == "" {
-			return pagi.Page[entity.City]{}, fmt.Errorf("cursor missing after_id")
+			return pagi.Page[[]entity.City]{}, fmt.Errorf("cursor missing id")
 		}
 
 		afterT, err := time.Parse(time.RFC3339Nano, createdAtStr)
 		if err != nil {
-			return pagi.Page[entity.City]{}, err
+			return pagi.Page[[]entity.City]{}, err
 		}
 
 		afterID, err := uuid.Parse(idStr)
 		if err != nil {
-			return pagi.Page[entity.City]{}, err
+			return pagi.Page[[]entity.City]{}, err
 		}
 
-		sqlParams.AfterCreatedAt = sql.NullTime{
+		params.AfterCreatedAt = sql.NullTime{
 			Time:  afterT,
 			Valid: true,
 		}
-		sqlParams.AfterID = uuid.NullUUID{
+		params.AfterID = uuid.NullUUID{
 			UUID:  afterID,
 			Valid: true,
 		}
 	}
 
-	limit := calculateLimit(pagination.Limit, 20, 100)
-	sqlParams.Limit = int32(limit)
+	limit := pagi.CalculateLimit(pagination.Limit, 20, 100)
+	params.Limit = int32(limit)
 
-	rows, err := s.sql.FilterCities(ctx, sqlParams)
+	rows, err := s.sql(ctx).FilterCities(ctx, params)
 	if err != nil {
-		return pagi.Page[entity.City]{}, err
+		return pagi.Page[[]entity.City]{}, err
 	}
 
-	count, err := s.sql.CountCities(ctx, pgdb.CountCitiesParams{
-		AgglomerationID: sqlParams.AgglomerationID,
-		Status:          sqlParams.Status,
-		NameLike:        sqlParams.NameLike,
+	count, err := s.sql(ctx).CountCities(ctx, pgdb.CountCitiesParams{
+		AgglomerationID: params.AgglomerationID,
+		Status:          params.Status,
+		NameLike:        params.NameLike,
 	})
 	if err != nil {
-		return pagi.Page[entity.City]{}, err
+		return pagi.Page[[]entity.City]{}, err
 	}
 
-	items := make([]entity.City, 0, len(rows))
-	for _, r := range rows {
-		items = append(items, r.ToEntity())
-	}
+	items := models.FilterCitiesRow(rows)
 
 	var nextCursor map[string]string
 	if len(items) == limit {
@@ -159,7 +152,93 @@ func (s Service) FilterCities(
 		}
 	}
 
-	return pagi.Page[entity.City]{
+	return pagi.Page[[]entity.City]{
+		Data:       items,
+		NextCursor: nextCursor,
+		Total:      int(count),
+	}, nil
+}
+
+func (s Service) FilterCitiesNearest(
+	ctx context.Context,
+	point orb.Point,
+	filter city.FilterParams,
+	pagination pagi.Params,
+) (pagi.Page[map[int64]entity.City], error) {
+	params := pgdb.FilterCitiesNearestParams{
+		AgglomerationID: nilx.UUID(filter.AgglomerationID),
+		NameLike:        nilx.String(filter.NameLike),
+		UserLat:         point[1],
+		UserLng:         point[0],
+	}
+
+	if filter.Status != nil {
+		params.Status = pgdb.NullCitiesStatus{
+			Valid:        true,
+			CitiesStatus: pgdb.CitiesStatus(*filter.Status),
+		}
+	}
+
+	if pagination.Cursor != nil {
+		distStr, ok := pagination.Cursor["distance"]
+		if !ok || distStr == "" {
+			return pagi.Page[map[int64]entity.City]{}, fmt.Errorf("cursor missing distance")
+		}
+
+		idStr, ok := pagination.Cursor["id"]
+		if !ok || idStr == "" {
+			return pagi.Page[map[int64]entity.City]{}, fmt.Errorf("cursor missing after_id")
+		}
+
+		dist, err := strconv.ParseInt(distStr, 10, 64)
+		if err != nil {
+			return pagi.Page[map[int64]entity.City]{}, err
+		}
+
+		afterID, err := uuid.Parse(idStr)
+		if err != nil {
+			return pagi.Page[map[int64]entity.City]{}, err
+		}
+
+		params.AfterDistanceM = sql.NullInt64{
+			Int64: dist,
+			Valid: true,
+		}
+		params.AfterID = uuid.NullUUID{
+			UUID:  afterID,
+			Valid: true,
+		}
+	}
+
+	limit := pagi.CalculateLimit(pagination.Limit, 20, 100)
+	params.Limit = int32(limit)
+
+	rows, err := s.sql(ctx).FilterCitiesNearest(ctx, params)
+	if err != nil {
+		return pagi.Page[map[int64]entity.City]{}, err
+	}
+
+	count, err := s.sql(ctx).CountCitiesNearest(ctx, pgdb.CountCitiesNearestParams{
+		AgglomerationID: params.AgglomerationID,
+		Status:          params.Status,
+		NameLike:        params.NameLike,
+	})
+	if err != nil {
+		return pagi.Page[map[int64]entity.City]{}, err
+	}
+
+	items := models.FilterCitiesNearestRow(rows)
+
+	var nextCursor map[string]string
+	if len(items) == limit {
+		lastItem := rows[len(rows)-1]
+		nextCursor = map[string]string{
+			"created_at": lastItem.CreatedAt.Format(time.RFC3339Nano),
+			"id":         lastItem.ID.String(),
+		}
+	}
+
+	return pagi.Page[map[int64]entity.City]{
 		Data:       items,
 		NextCursor: nextCursor,
 		Total:      int(count),

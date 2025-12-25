@@ -4,11 +4,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/paulmach/orb"
 )
 
 const (
 	CityStatusActive   = "active"
 	CityStatusInactive = "inactive"
+	CityStatusArchived = "archived"
 )
 
 type City struct {
@@ -19,6 +21,8 @@ type City struct {
 	Name            string     `json:"name"`
 	Icon            *string    `json:"icon,omitempty"`
 	Banner          *string    `json:"banner,omitempty"`
+
+	Point orb.Point `json:"point"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

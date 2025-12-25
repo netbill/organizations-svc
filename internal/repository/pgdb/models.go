@@ -62,6 +62,7 @@ type CitiesStatus string
 const (
 	CitiesStatusActive   CitiesStatus = "active"
 	CitiesStatusInactive CitiesStatus = "inactive"
+	CitiesStatusArchived CitiesStatus = "archived"
 )
 
 func (e *CitiesStatus) Scan(src interface{}) error {
@@ -247,6 +248,7 @@ type City struct {
 	Name            string
 	Icon            sql.NullString
 	Banner          sql.NullString
+	Point           []byte
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }

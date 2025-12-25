@@ -19,22 +19,11 @@ WHERE id = sqlc.arg('id')::uuid;
 DELETE FROM invites
 WHERE id = sqlc.arg('id')::uuid;
 
--- name: AcceptInvite :one
+-- name: UpdateInviteStatus :one
 UPDATE invites
-SET status = 'accepted'
-WHERE
-    id = sqlc.arg('id')::uuid
-    AND status = 'sent'
-    AND expires_at > now()
-RETURNING *;
-
--- name: DeclineInvite :one
-UPDATE invites
-SET status = 'declined'
-WHERE
-    id = sqlc.arg('id')::uuid
-    AND status = 'sent'
-    AND expires_at > now()
+SET
+    status = sqlc.arg('status')::invite_status
+WHERE id = sqlc.arg('id')::uuid
 RETURNING *;
 
 

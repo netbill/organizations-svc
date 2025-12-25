@@ -9,18 +9,24 @@ import (
 )
 
 func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
-	err := s.repo.DeleteAgglomeration(ctx, ID)
-	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to delete agglomeration: %w", err),
-		)
-	}
+	if err := s.repo.Transaction(ctx, func(ctx context.Context) error {
+		err := s.repo.DeleteAgglomeration(ctx, ID)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to delete agglomeration: %w", err),
+			)
+		}
 
-	err = s.messager.WriteAgglomerationDeleted(ctx, ID)
-	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to publish agglomeration delete event: %w", err),
-		)
+		err = s.messenger.WriteAgglomerationDeleted(ctx, ID)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to publish agglomeration delete event: %w", err),
+			)
+		}
+
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	return nil

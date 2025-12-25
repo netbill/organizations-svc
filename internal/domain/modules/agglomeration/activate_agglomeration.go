@@ -9,17 +9,23 @@ import (
 	"github.com/umisto/cities-svc/internal/domain/errx"
 )
 
-func (s Service) ActivateAgglomeration(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error) {
-	agglo, err := s.repo.UpdateAgglomerationStatus(ctx, ID, entity.AgglomerationStatusActive)
-	if err != nil {
-		return entity.Agglomeration{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to activate agglomeration: %w", err))
-	}
+func (s Service) ActivateAgglomeration(ctx context.Context, ID uuid.UUID) (agglo entity.Agglomeration, err error) {
+	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
+		agglo, err = s.repo.UpdateAgglomerationStatus(ctx, ID, entity.AgglomerationStatusActive)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to activate agglomeration: %w", err))
+		}
 
-	err = s.messager.WriteAgglomerationActivated(ctx, agglo)
-	if err != nil {
-		return entity.Agglomeration{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to publish agglomeration activated event: %w", err))
+		err = s.messenger.WriteAgglomerationActivated(ctx, agglo)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to publish agglomeration activated event: %w", err))
+		}
+
+		return nil
+	}); err != nil {
+		return entity.Agglomeration{}, err
 	}
 
 	return agglo, nil
@@ -40,19 +46,14 @@ func (s Service) ActivateAgglomerationByUser(
 		)
 	}
 
-	access, err := s.repo.CheckAccountHavePermissionByCode(
+	err = s.checkPermissionByCode(
 		ctx,
 		accountID,
-		entity.RolePermissionManageAgglomeration.String(),
+		agglomerationID,
+		entity.RolePermissionManageAgglomeration,
 	)
 	if err != nil {
-		return entity.Agglomeration{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to check initiator permissions: %w", err))
-	}
-	if !access {
-		return entity.Agglomeration{}, errx.ErrorNotEnoughRightsForAgglomeration.Raise(
-			fmt.Errorf("initiator has no access to activate agglomeration"),
-		)
+		return entity.Agglomeration{}, err
 	}
 
 	return s.ActivateAgglomeration(ctx, agglomerationID)

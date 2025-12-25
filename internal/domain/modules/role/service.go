@@ -20,7 +20,6 @@ type FilterParams struct {
 }
 
 type UpdateParams struct {
-	Rank *int
 	Name *string
 }
 

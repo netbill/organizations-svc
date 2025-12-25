@@ -1,52 +1,29 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
-	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/pgx"
 )
 
 type Service struct {
-	sql *pgdb.Queries
+	db *sql.DB
 }
 
-func New(db *sql.DB) *Service {
-	return &Service{
-		sql: pgdb.New(db),
-	}
+func New(db *sql.DB) Service {
+	return Service{db: db}
 }
 
-func nullString(s *string) sql.NullString {
-	if s != nil {
-		return sql.NullString{String: *s, Valid: true}
-	}
-	return sql.NullString{Valid: false}
+func (s Service) exec(ctx context.Context) pgdb.DBTX {
+	return pgx.Exec(s.db, ctx)
 }
 
-func nullUUID(id *uuid.UUID) uuid.NullUUID {
-	if id != nil {
-		return uuid.NullUUID{UUID: *id, Valid: true}
-	}
-
-	return uuid.NullUUID{Valid: false}
+func (s Service) sql(ctx context.Context) *pgdb.Queries {
+	return pgdb.New(s.exec(ctx))
 }
 
-func nullInt32(i *int) sql.NullInt32 {
-	if i != nil {
-		return sql.NullInt32{Int32: int32(*i), Valid: true}
-	}
-
-	return sql.NullInt32{Valid: false}
-}
-
-func calculateLimit(limit, def, max int) int {
-	if limit <= 0 {
-		return def
-	}
-	if limit > max {
-		return max
-	}
-
-	return limit
+func (s Service) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return pgx.Transaction(s.db, ctx, fn)
 }

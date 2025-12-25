@@ -8,35 +8,10 @@ package pgdb
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
-
-const activateCity = `-- name: ActivateCity :one
-UPDATE cities
-SET
-    status = 'active',
-    updated_at = now()
-WHERE id = $1::uuid
-RETURNING id, agglomeration_id, status, slug, name, icon, banner, created_at, updated_at
-`
-
-func (q *Queries) ActivateCity(ctx context.Context, id uuid.UUID) (City, error) {
-	row := q.db.QueryRowContext(ctx, activateCity, id)
-	var i City
-	err := row.Scan(
-		&i.ID,
-		&i.AgglomerationID,
-		&i.Status,
-		&i.Slug,
-		&i.Name,
-		&i.Icon,
-		&i.Banner,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
 
 const countCities = `-- name: CountCities :one
 SELECT COUNT(*)::bigint
@@ -60,21 +35,70 @@ func (q *Queries) CountCities(ctx context.Context, arg CountCitiesParams) (int64
 	return column_1, err
 }
 
-const createCity = `-- name: CreateCity :one
+const countCitiesNearest = `-- name: CountCitiesNearest :one
+WITH u AS (
+    SELECT ST_SetSRID(
+        ST_MakePoint(
+            $4::double precision,
+            $5::double precision
+        ),
+    4326
+    )::geography AS up
+)
+SELECT COUNT(*)::bigint
+FROM cities c
+CROSS JOIN u
+WHERE
+    c.point IS NOT NULL
+    AND ($1::uuid IS NULL OR c.agglomeration_id = $1::uuid)
+    AND ($2::cities_status IS NULL OR c.status = $2::cities_status)
+    AND ($3::text IS NULL OR c.name ILIKE ('%' || $3::text || '%'))
+`
+
+type CountCitiesNearestParams struct {
+	AgglomerationID uuid.NullUUID
+	Status          NullCitiesStatus
+	NameLike        sql.NullString
+	UserLng         float64
+	UserLat         float64
+}
+
+func (q *Queries) CountCitiesNearest(ctx context.Context, arg CountCitiesNearestParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countCitiesNearest,
+		arg.AgglomerationID,
+		arg.Status,
+		arg.NameLike,
+		arg.UserLng,
+		arg.UserLat,
+	)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const createCity = `-- name: CreateCity :exec
 INSERT INTO cities (
     agglomeration_id,
     slug,
     name,
     icon,
-    banner
+    banner,
+    point
 ) VALUES (
     $1::uuid,
     $2::varchar,
     $3::varchar,
     $4::text,
-    $5::text
+    $5::text,
+
+    ST_SetSRID(
+        ST_MakePoint(
+            $6::double precision,
+            $7::double precision
+        ),
+        4326
+    )::geography
 )
-RETURNING id, agglomeration_id, status, slug, name, icon, banner, created_at, updated_at
 `
 
 type CreateCityParams struct {
@@ -83,79 +107,65 @@ type CreateCityParams struct {
 	Name            string
 	Icon            sql.NullString
 	Banner          sql.NullString
+	PointLng        float64
+	PointLat        float64
 }
 
-func (q *Queries) CreateCity(ctx context.Context, arg CreateCityParams) (City, error) {
-	row := q.db.QueryRowContext(ctx, createCity,
+func (q *Queries) CreateCity(ctx context.Context, arg CreateCityParams) error {
+	_, err := q.db.ExecContext(ctx, createCity,
 		arg.AgglomerationID,
 		arg.Slug,
 		arg.Name,
 		arg.Icon,
 		arg.Banner,
+		arg.PointLng,
+		arg.PointLat,
 	)
-	var i City
-	err := row.Scan(
-		&i.ID,
-		&i.AgglomerationID,
-		&i.Status,
-		&i.Slug,
-		&i.Name,
-		&i.Icon,
-		&i.Banner,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const deactivateCity = `-- name: DeactivateCity :one
-UPDATE cities
-SET
-    status = 'inactive',
-    updated_at = now()
-WHERE id = $1::uuid
-RETURNING id, agglomeration_id, status, slug, name, icon, banner, created_at, updated_at
-`
-
-func (q *Queries) DeactivateCity(ctx context.Context, id uuid.UUID) (City, error) {
-	row := q.db.QueryRowContext(ctx, deactivateCity, id)
-	var i City
-	err := row.Scan(
-		&i.ID,
-		&i.AgglomerationID,
-		&i.Status,
-		&i.Slug,
-		&i.Name,
-		&i.Icon,
-		&i.Banner,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	return err
 }
 
 const deleteCity = `-- name: DeleteCity :exec
+
 DELETE FROM cities
 WHERE id = $1::uuid
 `
 
+// AND (
+//
+//	sqlc.narg('radius_m')::double precision IS NULL
+//	OR ST_DWithin(c.point, u.up, sqlc.narg('radius_m')::double precision)
+//
+// );
 func (q *Queries) DeleteCity(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteCity, id)
 	return err
 }
 
 const filterCities = `-- name: FilterCities :many
-SELECT id, agglomeration_id, status, slug, name, icon, banner, created_at, updated_at
-FROM cities
+SELECT
+    c.id,
+    c.agglomeration_id,
+    c.status,
+    c.slug,
+    c.name,
+    c.icon,
+    c.banner,
+
+    ST_X(c.point::geometry)::double precision AS point_lng,
+    ST_Y(c.point::geometry)::double precision AS point_lat,
+
+    c.created_at,
+    c.updated_at
+FROM cities c
 WHERE
-    ($1::uuid IS NULL OR agglomeration_id = $1::uuid)
-    AND ($2::cities_status IS NULL OR status = $2::cities_status)
-    AND ($3::text IS NULL OR name ILIKE ('%' || $3::text || '%'))
+    ($1::uuid IS NULL OR c.agglomeration_id = $1::uuid)
+    AND ($2::cities_status IS NULL OR c.status = $2::cities_status)
+    AND ($3::text IS NULL OR c.name ILIKE ('%' || $3::text || '%'))
     AND (
         $4::timestamptz IS NULL
-        OR (created_at, id) < ($4::timestamptz, $5::uuid)
+        OR (c.created_at, c.id) < ($4::timestamptz, $5::uuid)
     )
-ORDER BY created_at DESC, id DESC
+ORDER BY c.created_at DESC, c.id DESC
     LIMIT $6::int
 `
 
@@ -168,7 +178,21 @@ type FilterCitiesParams struct {
 	Limit           int32
 }
 
-func (q *Queries) FilterCities(ctx context.Context, arg FilterCitiesParams) ([]City, error) {
+type FilterCitiesRow struct {
+	ID              uuid.UUID
+	AgglomerationID uuid.NullUUID
+	Status          CitiesStatus
+	Slug            sql.NullString
+	Name            string
+	Icon            sql.NullString
+	Banner          sql.NullString
+	PointLng        float64
+	PointLat        float64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (q *Queries) FilterCities(ctx context.Context, arg FilterCitiesParams) ([]FilterCitiesRow, error) {
 	rows, err := q.db.QueryContext(ctx, filterCities,
 		arg.AgglomerationID,
 		arg.Status,
@@ -181,9 +205,9 @@ func (q *Queries) FilterCities(ctx context.Context, arg FilterCitiesParams) ([]C
 		return nil, err
 	}
 	defer rows.Close()
-	var items []City
+	var items []FilterCitiesRow
 	for rows.Next() {
-		var i City
+		var i FilterCitiesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.AgglomerationID,
@@ -192,6 +216,8 @@ func (q *Queries) FilterCities(ctx context.Context, arg FilterCitiesParams) ([]C
 			&i.Name,
 			&i.Icon,
 			&i.Banner,
+			&i.PointLng,
+			&i.PointLat,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -208,15 +234,165 @@ func (q *Queries) FilterCities(ctx context.Context, arg FilterCitiesParams) ([]C
 	return items, nil
 }
 
-const getCityByID = `-- name: GetCityByID :one
-SELECT id, agglomeration_id, status, slug, name, icon, banner, created_at, updated_at
-FROM cities
-WHERE id = $1::uuid
+const filterCitiesNearest = `-- name: FilterCitiesNearest :many
+WITH u AS (
+    SELECT ST_SetSRID(
+        ST_MakePoint(
+            $4::double precision,
+            $5::double precision
+        ),
+        4326
+    )::geography AS up
+),
+    base AS (
+        SELECT
+            c.id,
+            c.agglomeration_id,
+            c.status,
+            c.slug,
+            c.name,
+            c.icon,
+            c.banner,
+
+            ST_X(c.point::geometry)::double precision AS point_lng,
+            ST_Y(c.point::geometry)::double precision AS point_lat,
+
+            c.created_at,
+            c.updated_at,
+
+            floor(ST_Distance(c.point, u.up))::bigint AS distance_m
+        FROM cities c
+        CROSS JOIN u
+        WHERE
+            ($6::uuid IS NULL OR c.agglomeration_id = $6::uuid)
+            AND ($7::cities_status IS NULL OR c.status = $7::cities_status)
+            AND ($8::text IS NULL OR c.name ILIKE ('%' || $8::text || '%'))
+)
+SELECT id, agglomeration_id, status, slug, name, icon, banner, point_lng, point_lat, created_at, updated_at, distance_m
+FROM base
+WHERE
+    (
+        $1::bigint IS NULL
+        OR (
+            distance_m > $1::bigint
+            OR (
+                distance_m = $1::bigint
+                AND $2::uuid IS NOT NULL
+                AND id > $2::uuid
+            )
+        )
+    )
+ORDER BY distance_m ASC, id ASC
+LIMIT $3::int
 `
 
-func (q *Queries) GetCityByID(ctx context.Context, id uuid.UUID) (City, error) {
+type FilterCitiesNearestParams struct {
+	AfterDistanceM  sql.NullInt64
+	AfterID         uuid.NullUUID
+	Limit           int32
+	UserLng         float64
+	UserLat         float64
+	AgglomerationID uuid.NullUUID
+	Status          NullCitiesStatus
+	NameLike        sql.NullString
+}
+
+type FilterCitiesNearestRow struct {
+	ID              uuid.UUID
+	AgglomerationID uuid.NullUUID
+	Status          CitiesStatus
+	Slug            sql.NullString
+	Name            string
+	Icon            sql.NullString
+	Banner          sql.NullString
+	PointLng        float64
+	PointLat        float64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DistanceM       int64
+}
+
+func (q *Queries) FilterCitiesNearest(ctx context.Context, arg FilterCitiesNearestParams) ([]FilterCitiesNearestRow, error) {
+	rows, err := q.db.QueryContext(ctx, filterCitiesNearest,
+		arg.AfterDistanceM,
+		arg.AfterID,
+		arg.Limit,
+		arg.UserLng,
+		arg.UserLat,
+		arg.AgglomerationID,
+		arg.Status,
+		arg.NameLike,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FilterCitiesNearestRow
+	for rows.Next() {
+		var i FilterCitiesNearestRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AgglomerationID,
+			&i.Status,
+			&i.Slug,
+			&i.Name,
+			&i.Icon,
+			&i.Banner,
+			&i.PointLng,
+			&i.PointLat,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DistanceM,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCityByID = `-- name: GetCityByID :one
+SELECT
+    c.id,
+    c.agglomeration_id,
+    c.status,
+    c.slug,
+    c.name,
+    c.icon,
+    c.banner,
+
+    ST_X(c.point::geometry)::double precision AS point_lng,
+    ST_Y(c.point::geometry)::double precision AS point_lat,
+
+    c.created_at,
+    c.updated_at
+FROM cities c
+WHERE c.id = $1::uuid
+`
+
+type GetCityByIDRow struct {
+	ID              uuid.UUID
+	AgglomerationID uuid.NullUUID
+	Status          CitiesStatus
+	Slug            sql.NullString
+	Name            string
+	Icon            sql.NullString
+	Banner          sql.NullString
+	PointLng        float64
+	PointLat        float64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (q *Queries) GetCityByID(ctx context.Context, id uuid.UUID) (GetCityByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCityByID, id)
-	var i City
+	var i GetCityByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.AgglomerationID,
@@ -225,6 +401,8 @@ func (q *Queries) GetCityByID(ctx context.Context, id uuid.UUID) (City, error) {
 		&i.Name,
 		&i.Icon,
 		&i.Banner,
+		&i.PointLng,
+		&i.PointLat,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -232,14 +410,41 @@ func (q *Queries) GetCityByID(ctx context.Context, id uuid.UUID) (City, error) {
 }
 
 const getCityBySlug = `-- name: GetCityBySlug :one
-SELECT id, agglomeration_id, status, slug, name, icon, banner, created_at, updated_at
-FROM cities
-WHERE slug = $1::varchar
+SELECT
+    c.id,
+    c.agglomeration_id,
+    c.status,
+    c.slug,
+    c.name,
+    c.icon,
+    c.banner,
+
+    ST_X(c.point::geometry)::double precision AS point_lng,
+    ST_Y(c.point::geometry)::double precision AS point_lat,
+
+    c.created_at,
+    c.updated_at
+FROM cities c
+WHERE c.slug = $1::varchar
 `
 
-func (q *Queries) GetCityBySlug(ctx context.Context, slug string) (City, error) {
+type GetCityBySlugRow struct {
+	ID              uuid.UUID
+	AgglomerationID uuid.NullUUID
+	Status          CitiesStatus
+	Slug            sql.NullString
+	Name            string
+	Icon            sql.NullString
+	Banner          sql.NullString
+	PointLng        float64
+	PointLat        float64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (q *Queries) GetCityBySlug(ctx context.Context, slug string) (GetCityBySlugRow, error) {
 	row := q.db.QueryRowContext(ctx, getCityBySlug, slug)
-	var i City
+	var i GetCityBySlugRow
 	err := row.Scan(
 		&i.ID,
 		&i.AgglomerationID,
@@ -248,13 +453,15 @@ func (q *Queries) GetCityBySlug(ctx context.Context, slug string) (City, error) 
 		&i.Name,
 		&i.Icon,
 		&i.Banner,
+		&i.PointLng,
+		&i.PointLat,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const updateCity = `-- name: UpdateCity :one
+const updateCity = `-- name: UpdateCity :exec
 UPDATE cities
 SET
     agglomeration_id = COALESCE($1::uuid, agglomeration_id),
@@ -279,9 +486,14 @@ SET
         ELSE $5::text
     END,
 
+    point = CASE
+        WHEN $6::double precision IS NULL OR $7::double precision IS NULL
+            THEN point
+        ELSE ST_SetSRID(ST_MakePoint($6::double precision, $7::double precision), 4326)::geography
+    END,
+
     updated_at = now()
-WHERE id = $6::uuid
-RETURNING id, agglomeration_id, status, slug, name, icon, banner, created_at, updated_at
+WHERE id = $8::uuid
 `
 
 type UpdateCityParams struct {
@@ -290,29 +502,39 @@ type UpdateCityParams struct {
 	Slug            sql.NullString
 	Icon            sql.NullString
 	Banner          sql.NullString
+	PointLng        sql.NullFloat64
+	PointLat        sql.NullFloat64
 	ID              uuid.UUID
 }
 
-func (q *Queries) UpdateCity(ctx context.Context, arg UpdateCityParams) (City, error) {
-	row := q.db.QueryRowContext(ctx, updateCity,
+func (q *Queries) UpdateCity(ctx context.Context, arg UpdateCityParams) error {
+	_, err := q.db.ExecContext(ctx, updateCity,
 		arg.AgglomerationID,
 		arg.Name,
 		arg.Slug,
 		arg.Icon,
 		arg.Banner,
+		arg.PointLng,
+		arg.PointLat,
 		arg.ID,
 	)
-	var i City
-	err := row.Scan(
-		&i.ID,
-		&i.AgglomerationID,
-		&i.Status,
-		&i.Slug,
-		&i.Name,
-		&i.Icon,
-		&i.Banner,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	return err
+}
+
+const updateCityStatus = `-- name: UpdateCityStatus :exec
+UPDATE cities
+SET
+    status = $1::cities_status,
+    updated_at = now()
+WHERE id = $2::uuid
+`
+
+type UpdateCityStatusParams struct {
+	Status CitiesStatus
+	ID     uuid.UUID
+}
+
+func (q *Queries) UpdateCityStatus(ctx context.Context, arg UpdateCityStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateCityStatus, arg.Status, arg.ID)
+	return err
 }

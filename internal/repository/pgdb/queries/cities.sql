@@ -1,20 +1,28 @@
--- name: CreateCity :one
+-- name: CreateCity :exec
 INSERT INTO cities (
     agglomeration_id,
     slug,
     name,
     icon,
-    banner
+    banner,
+    point
 ) VALUES (
     sqlc.narg('agglomeration_id')::uuid,
     sqlc.narg('slug')::varchar,
     sqlc.arg('name')::varchar,
     sqlc.narg('icon')::text,
-    sqlc.narg('banner')::text
-)
-RETURNING *;
+    sqlc.narg('banner')::text,
 
--- name: UpdateCity :one
+    ST_SetSRID(
+        ST_MakePoint(
+            sqlc.arg('point_lng')::double precision,
+            sqlc.arg('point_lat')::double precision
+        ),
+        4326
+    )::geography
+);
+
+-- name: UpdateCity :exec
 UPDATE cities
 SET
     agglomeration_id = COALESCE(sqlc.narg('agglomeration_id')::uuid, agglomeration_id),
@@ -39,50 +47,135 @@ SET
         ELSE sqlc.narg('banner')::text
     END,
 
-    updated_at = now()
-WHERE id = sqlc.arg('id')::uuid
-RETURNING *;
+    point = CASE
+        WHEN sqlc.narg('point_lng')::double precision IS NULL OR sqlc.narg('point_lat')::double precision IS NULL
+            THEN point
+        ELSE ST_SetSRID(ST_MakePoint(sqlc.narg('point_lng')::double precision, sqlc.narg('point_lat')::double precision), 4326)::geography
+    END,
 
--- name: ActivateCity :one
-UPDATE cities
-SET
-    status = 'active',
     updated_at = now()
-WHERE id = sqlc.arg('id')::uuid
-RETURNING *;
-
--- name: DeactivateCity :one
-UPDATE cities
-SET
-    status = 'inactive',
-    updated_at = now()
-WHERE id = sqlc.arg('id')::uuid
-RETURNING *;
-
--- name: GetCityByID :one
-SELECT *
-FROM cities
 WHERE id = sqlc.arg('id')::uuid;
 
+-- name: UpdateCityStatus :exec
+UPDATE cities
+SET
+    status = sqlc.arg('status')::cities_status,
+    updated_at = now()
+WHERE id = sqlc.arg('id')::uuid;
+
+-- name: GetCityByID :one
+SELECT
+    c.id,
+    c.agglomeration_id,
+    c.status,
+    c.slug,
+    c.name,
+    c.icon,
+    c.banner,
+
+    ST_X(c.point::geometry)::double precision AS point_lng,
+    ST_Y(c.point::geometry)::double precision AS point_lat,
+
+    c.created_at,
+    c.updated_at
+FROM cities c
+WHERE c.id = sqlc.arg('id')::uuid;
+
 -- name: GetCityBySlug :one
-SELECT *
-FROM cities
-WHERE slug = sqlc.arg('slug')::varchar;
+SELECT
+    c.id,
+    c.agglomeration_id,
+    c.status,
+    c.slug,
+    c.name,
+    c.icon,
+    c.banner,
+
+    ST_X(c.point::geometry)::double precision AS point_lng,
+    ST_Y(c.point::geometry)::double precision AS point_lat,
+
+    c.created_at,
+    c.updated_at
+FROM cities c
+WHERE c.slug = sqlc.arg('slug')::varchar;
 
 -- name: FilterCities :many
-SELECT *
-FROM cities
+SELECT
+    c.id,
+    c.agglomeration_id,
+    c.status,
+    c.slug,
+    c.name,
+    c.icon,
+    c.banner,
+
+    ST_X(c.point::geometry)::double precision AS point_lng,
+    ST_Y(c.point::geometry)::double precision AS point_lat,
+
+    c.created_at,
+    c.updated_at
+FROM cities c
 WHERE
-    (sqlc.narg('agglomeration_id')::uuid IS NULL OR agglomeration_id = sqlc.narg('agglomeration_id')::uuid)
-    AND (sqlc.narg('status')::cities_status IS NULL OR status = sqlc.narg('status')::cities_status)
-    AND (sqlc.narg('name_like')::text IS NULL OR name ILIKE ('%' || sqlc.narg('name_like')::text || '%'))
+    (sqlc.narg('agglomeration_id')::uuid IS NULL OR c.agglomeration_id = sqlc.narg('agglomeration_id')::uuid)
+    AND (sqlc.narg('status')::cities_status IS NULL OR c.status = sqlc.narg('status')::cities_status)
+    AND (sqlc.narg('name_like')::text IS NULL OR c.name ILIKE ('%' || sqlc.narg('name_like')::text || '%'))
     AND (
         sqlc.narg('after_created_at')::timestamptz IS NULL
-        OR (created_at, id) < (sqlc.narg('after_created_at')::timestamptz, sqlc.narg('after_id')::uuid)
+        OR (c.created_at, c.id) < (sqlc.narg('after_created_at')::timestamptz, sqlc.narg('after_id')::uuid)
     )
-ORDER BY created_at DESC, id DESC
+ORDER BY c.created_at DESC, c.id DESC
     LIMIT sqlc.arg('limit')::int;
 
+-- name: FilterCitiesNearest :many
+WITH u AS (
+    SELECT ST_SetSRID(
+        ST_MakePoint(
+            sqlc.arg('user_lng')::double precision,
+            sqlc.arg('user_lat')::double precision
+        ),
+        4326
+    )::geography AS up
+),
+    base AS (
+        SELECT
+            c.id,
+            c.agglomeration_id,
+            c.status,
+            c.slug,
+            c.name,
+            c.icon,
+            c.banner,
+
+            ST_X(c.point::geometry)::double precision AS point_lng,
+            ST_Y(c.point::geometry)::double precision AS point_lat,
+
+            c.created_at,
+            c.updated_at,
+
+            floor(ST_Distance(c.point, u.up))::bigint AS distance_m
+        FROM cities c
+        CROSS JOIN u
+        WHERE
+            (sqlc.narg('agglomeration_id')::uuid IS NULL OR c.agglomeration_id = sqlc.narg('agglomeration_id')::uuid)
+            AND (sqlc.narg('status')::cities_status IS NULL OR c.status = sqlc.narg('status')::cities_status)
+            AND (sqlc.narg('name_like')::text IS NULL OR c.name ILIKE ('%' || sqlc.narg('name_like')::text || '%'))
+)
+SELECT *
+FROM base
+WHERE
+    (
+        sqlc.narg('after_distance_m')::bigint IS NULL
+        OR (
+            distance_m > sqlc.narg('after_distance_m')::bigint
+            OR (
+                distance_m = sqlc.narg('after_distance_m')::bigint
+                AND sqlc.narg('after_id')::uuid IS NOT NULL
+                AND id > sqlc.narg('after_id')::uuid
+            )
+        )
+    )
+ORDER BY distance_m ASC, id ASC
+LIMIT sqlc.arg('limit')::int;
 
 -- name: CountCities :one
 SELECT COUNT(*)::bigint
@@ -91,6 +184,29 @@ WHERE
     (sqlc.narg('agglomeration_id')::uuid IS NULL OR agglomeration_id = sqlc.narg('agglomeration_id')::uuid)
     AND (sqlc.narg('status')::cities_status IS NULL OR status = sqlc.narg('status')::cities_status)
     AND (sqlc.narg('name_like')::text IS NULL OR name ILIKE ('%' || sqlc.narg('name_like')::text || '%'));
+
+-- name: CountCitiesNearest :one
+WITH u AS (
+    SELECT ST_SetSRID(
+        ST_MakePoint(
+            sqlc.arg('user_lng')::double precision,
+            sqlc.arg('user_lat')::double precision
+        ),
+    4326
+    )::geography AS up
+)
+SELECT COUNT(*)::bigint
+FROM cities c
+CROSS JOIN u
+WHERE
+    c.point IS NOT NULL
+    AND (sqlc.narg('agglomeration_id')::uuid IS NULL OR c.agglomeration_id = sqlc.narg('agglomeration_id')::uuid)
+    AND (sqlc.narg('status')::cities_status IS NULL OR c.status = sqlc.narg('status')::cities_status)
+    AND (sqlc.narg('name_like')::text IS NULL OR c.name ILIKE ('%' || sqlc.narg('name_like')::text || '%'));
+--     AND (
+--         sqlc.narg('radius_m')::double precision IS NULL
+--         OR ST_DWithin(c.point, u.up, sqlc.narg('radius_m')::double precision)
+--     );
 
 -- name: DeleteCity :exec
 DELETE FROM cities

@@ -2,17 +2,19 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/modules/memeber"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/nilx"
 	"github.com/umisto/pagi"
 )
 
 func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Member, error) {
-	res, err := s.sql.CreateMember(ctx, pgdb.CreateMemberParams{
+	res, err := s.sql(ctx).CreateMember(ctx, pgdb.CreateMemberParams{
 		AccountID:       accountID,
 		AgglomerationID: agglomerationID,
 	})
@@ -25,10 +27,10 @@ func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uu
 }
 
 func (s Service) UpdateMember(ctx context.Context, member entity.Member) (entity.Member, error) {
-	res, err := s.sql.UpdateMember(ctx, pgdb.UpdateMemberParams{
+	res, err := s.sql(ctx).UpdateMember(ctx, pgdb.UpdateMemberParams{
 		ID:       member.ID,
-		Position: nullString(member.Position),
-		Label:    nullString(member.Label),
+		Position: nilx.String(member.Position),
+		Label:    nilx.String(member.Label),
 	})
 	if err != nil {
 		return entity.Member{}, err
@@ -38,7 +40,7 @@ func (s Service) UpdateMember(ctx context.Context, member entity.Member) (entity
 }
 
 func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (entity.Member, error) {
-	res, err := s.sql.GetMember(ctx, memberID)
+	res, err := s.sql(ctx).GetMember(ctx, memberID)
 	if err != nil {
 		return entity.Member{}, err
 	}
@@ -52,11 +54,11 @@ func (s Service) FilterMembers(
 	pagination pagi.Params,
 ) (pagi.Page[entity.Member], error) {
 	params := pgdb.FilterMembersParams{
-		AgglomerationID: nullUUID(filter.AgglomerationID),
-		Username:        nullString(filter.Username),
-		AccountID:       nullUUID(filter.AccountID),
-		RoleID:          nullUUID(filter.RoleID),
-		PermissionCode:  nullString(filter.PermissionCode),
+		AgglomerationID: nilx.UUID(filter.AgglomerationID),
+		Username:        nilx.String(filter.Username),
+		AccountID:       nilx.UUID(filter.AccountID),
+		RoleID:          nilx.UUID(filter.RoleID),
+		PermissionCode:  nilx.String(filter.PermissionCode),
 	}
 
 	if pagination.Cursor != nil {
@@ -64,7 +66,7 @@ func (s Service) FilterMembers(
 		if !ok || usernameCursor == "" {
 			return pagi.Page[entity.Member]{}, fmt.Errorf("missing username in pagination cursor")
 		}
-		params.CursorUsername = nullString(&usernameCursor)
+		params.CursorUsername = sql.NullString{String: usernameCursor, Valid: true}
 
 		idCursor, ok := pagination.Cursor["id"]
 		if !ok || idCursor == "" {
@@ -75,23 +77,23 @@ func (s Service) FilterMembers(
 		if err != nil {
 			return pagi.Page[entity.Member]{}, fmt.Errorf("invalid id in pagination cursor: %w", err)
 		}
-		params.CursorMemberID = nullUUID(&afterID)
+		params.CursorMemberID = uuid.NullUUID{UUID: afterID, Valid: true}
 	}
 
-	limit := calculateLimit(pagination.Limit, 50, 100)
+	limit := pagi.CalculateLimit(pagination.Limit, 50, 100)
 	params.Limit = int32(limit)
 
-	members, err := s.sql.FilterMembers(ctx, params)
+	members, err := s.sql(ctx).FilterMembers(ctx, params)
 	if err != nil {
 		return pagi.Page[entity.Member]{}, err
 	}
 
-	count, err := s.sql.CountMembers(ctx, pgdb.CountMembersParams{
-		AgglomerationID: nullUUID(filter.AgglomerationID),
-		Username:        nullString(filter.Username),
-		AccountID:       nullUUID(filter.AccountID),
-		RoleID:          nullUUID(filter.RoleID),
-		PermissionCode:  nullString(filter.PermissionCode),
+	count, err := s.sql(ctx).CountMembers(ctx, pgdb.CountMembersParams{
+		AgglomerationID: nilx.UUID(filter.AgglomerationID),
+		Username:        nilx.String(filter.Username),
+		AccountID:       nilx.UUID(filter.AccountID),
+		RoleID:          nilx.UUID(filter.RoleID),
+		PermissionCode:  nilx.String(filter.PermissionCode),
 	})
 	if err != nil {
 		return pagi.Page[entity.Member]{}, err
@@ -119,5 +121,5 @@ func (s Service) FilterMembers(
 }
 
 func (s Service) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
-	return s.sql.DeleteMember(ctx, memberID)
+	return s.sql(ctx).DeleteMember(ctx, memberID)
 }

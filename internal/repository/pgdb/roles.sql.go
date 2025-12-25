@@ -54,26 +54,35 @@ func (q *Queries) CountRoles(ctx context.Context, arg CountRolesParams) (int64, 
 	return column_1, err
 }
 
-const createRole = `-- name: CreateRole :one
-INSERT INTO roles (
-    id,
-    agglomeration_id,
-    head,
-    editable,
-    rank,
-    name
-) VALUES (
-    $1::uuid,
-    $2::uuid,
-    COALESCE($3::boolean, false),
-    COALESCE($4::boolean, true),
-    COALESCE($5::int, 0),
-    $6::text
+const createRoleAtRank = `-- name: CreateRoleAtRank :one
+WITH input AS (
+    SELECT
+        $1::uuid                AS id,
+        $2::uuid  AS agglomeration_id,
+        COALESCE($3::boolean, false)     AS head,
+        COALESCE($4::boolean, true)  AS editable,
+        COALESCE($5::int, 0)            AS new_rank,
+        $6::text              AS name
+),
+shift AS (
+    UPDATE roles r
+    SET rank = r.rank + 1,
+        updated_at = now()
+    WHERE r.agglomeration_id = (SELECT agglomeration_id FROM input)
+        AND (SELECT new_rank FROM input) > 0
+        AND r.rank >= (SELECT new_rank FROM input)
+    RETURNING 1
+),
+ins AS (
+    INSERT INTO roles (id, agglomeration_id, head, editable, rank, name)
+    SELECT id, agglomeration_id, head, editable, new_rank, name
+    FROM input
+    RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_at
 )
-RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_at
+SELECT id, agglomeration_id, head, editable, rank, name, created_at, updated_at FROM ins
 `
 
-type CreateRoleParams struct {
+type CreateRoleAtRankParams struct {
 	ID              uuid.UUID
 	AgglomerationID uuid.UUID
 	Head            bool
@@ -82,8 +91,19 @@ type CreateRoleParams struct {
 	Name            string
 }
 
-func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error) {
-	row := q.db.QueryRowContext(ctx, createRole,
+type CreateRoleAtRankRow struct {
+	ID              uuid.UUID
+	AgglomerationID uuid.UUID
+	Head            bool
+	Editable        bool
+	Rank            int32
+	Name            string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (q *Queries) CreateRoleAtRank(ctx context.Context, arg CreateRoleAtRankParams) (CreateRoleAtRankRow, error) {
+	row := q.db.QueryRowContext(ctx, createRoleAtRank,
 		arg.ID,
 		arg.AgglomerationID,
 		arg.Head,
@@ -91,7 +111,7 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) (Role, e
 		arg.Rank,
 		arg.Name,
 	)
-	var i Role
+	var i CreateRoleAtRankRow
 	err := row.Scan(
 		&i.ID,
 		&i.AgglomerationID,
@@ -292,17 +312,14 @@ func (q *Queries) GetRole(ctx context.Context, id uuid.UUID) (GetRoleRow, error)
 const updateRole = `-- name: UpdateRole :one
 UPDATE roles
 SET
-    rank = COALESCE($1::int, rank),
-
-    name = COALESCE($2::text, name),
+    name = COALESCE($1::text, name),
 
     updated_at = now()
-WHERE id = $3::uuid
+WHERE id = $2::uuid
 RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_at
 `
 
 type UpdateRoleParams struct {
-	Rank sql.NullInt32
 	Name sql.NullString
 	ID   uuid.UUID
 }
@@ -310,8 +327,76 @@ type UpdateRoleParams struct {
 // head = COALESCE(sqlc.narg('head')::boolean, head),
 // editable = COALESCE(sqlc.narg('editable')::boolean, editable),
 func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error) {
-	row := q.db.QueryRowContext(ctx, updateRole, arg.Rank, arg.Name, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateRole, arg.Name, arg.ID)
 	var i Role
+	err := row.Scan(
+		&i.ID,
+		&i.AgglomerationID,
+		&i.Head,
+		&i.Editable,
+		&i.Rank,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateRoleRank = `-- name: UpdateRoleRank :one
+WITH cur AS (
+    SELECT id, agglomeration_id, rank AS old_rank
+    FROM roles
+    WHERE id = $1::uuid
+    FOR UPDATE
+),
+upd AS (
+    UPDATE roles r
+    SET
+        rank = CASE
+            WHEN r.id = (SELECT id FROM cur) THEN $2::int
+
+            WHEN (SELECT old_rank FROM cur) < $2::int
+                AND r.rank > (SELECT old_rank FROM cur)
+                AND r.rank <= $2::int
+            THEN r.rank - 1
+
+            WHEN (SELECT old_rank FROM cur) > $2::int
+                AND r.rank >= $2::int
+                AND r.rank < (SELECT old_rank FROM cur)
+            THEN r.rank + 1
+
+            ELSE r.rank
+        END,
+        updated_at = now()
+    WHERE r.agglomeration_id = (SELECT agglomeration_id FROM cur)
+    AND (SELECT old_rank FROM cur) <> 0
+    AND $2::int > 0
+    RETURNING r.id, r.agglomeration_id, r.head, r.editable, r.rank, r.name, r.created_at, r.updated_at
+)
+SELECT id, agglomeration_id, head, editable, rank, name, created_at, updated_at
+FROM upd
+WHERE id = $1::uuid
+`
+
+type UpdateRoleRankParams struct {
+	ID      uuid.UUID
+	NewRank int32
+}
+
+type UpdateRoleRankRow struct {
+	ID              uuid.UUID
+	AgglomerationID uuid.UUID
+	Head            bool
+	Editable        bool
+	Rank            int32
+	Name            string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+func (q *Queries) UpdateRoleRank(ctx context.Context, arg UpdateRoleRankParams) (UpdateRoleRankRow, error) {
+	row := q.db.QueryRowContext(ctx, updateRoleRank, arg.ID, arg.NewRank)
+	var i UpdateRoleRankRow
 	err := row.Scan(
 		&i.ID,
 		&i.AgglomerationID,
