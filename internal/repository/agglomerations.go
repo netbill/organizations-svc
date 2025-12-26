@@ -1,0 +1,115 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/modules/agglomeration"
+	"github.com/umisto/cities-svc/internal/repository/models"
+	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/pagi"
+)
+
+func (s Service) CreateAgglomeration(ctx context.Context, name string) (entity.Agglomeration, error) {
+	row, err := s.agglomerationsQ().Insert(ctx, pgdb.AgglomerationsQInsertInput{
+		Name: name,
+	})
+	if err != nil {
+		return entity.Agglomeration{}, err
+	}
+
+	return models.Agglomeration(row), nil
+}
+
+func (s Service) UpdateAgglomeration(
+	ctx context.Context,
+	ID uuid.UUID,
+	params agglomeration.UpdateParams,
+) (entity.Agglomeration, error) {
+	q := s.agglomerationsQ().FilterByID(ID)
+	if params.Name != nil {
+		q = q.UpdateName(*params.Name)
+	}
+	if params.Icon != nil {
+		q = q.UpdateIcon(*params.Icon)
+	}
+
+	row, err := q.UpdateOne(ctx)
+	if err != nil {
+		return entity.Agglomeration{}, err
+	}
+
+	return models.Agglomeration(row), nil
+}
+
+func (s Service) UpdateAgglomerationStatus(
+	ctx context.Context,
+	ID uuid.UUID,
+	status string,
+) (entity.Agglomeration, error) {
+	row, err := s.agglomerationsQ().FilterByID(ID).UpdateStatus(status).UpdateOne(ctx)
+	if err != nil {
+		return entity.Agglomeration{}, err
+	}
+
+	return models.Agglomeration(row), nil
+}
+
+func (s Service) GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error) {
+	row, err := s.agglomerationsQ().FilterByID(ID).Get(ctx)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return entity.Agglomeration{}, nil
+	case err != nil:
+		return entity.Agglomeration{}, err
+	}
+
+	return models.Agglomeration(row), nil
+}
+
+func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
+	return s.agglomerationsQ().FilterByID(ID).Delete(ctx)
+}
+
+func (s Service) FilterAgglomerations(
+	ctx context.Context,
+	filter agglomeration.FilterParams,
+	offset uint,
+	limit uint,
+) (pagi.Page[[]entity.Agglomeration], error) {
+	q := s.agglomerationsQ()
+	if filter.Name != nil {
+		q = q.FilterNameLike(*filter.Name)
+	}
+	if filter.Status != nil {
+		q = q.FilterByStatus(*filter.Status)
+	}
+
+	limit = pagi.CalculateLimit(limit, 20, 100)
+
+	rows, err := q.Page(limit, offset).Select(ctx)
+	if err != nil {
+		return pagi.Page[[]entity.Agglomeration]{}, err
+	}
+
+	total, err := q.Count(ctx)
+	if err != nil {
+		return pagi.Page[[]entity.Agglomeration]{}, err
+	}
+
+	agglomerations := make([]entity.Agglomeration, len(rows))
+	for i, row := range rows {
+		agglomerations[i] = models.Agglomeration(row)
+	}
+
+	return pagi.Page[[]entity.Agglomeration]{
+		Data:  agglomerations,
+		Page:  uint(offset/limit) + 1,
+		Size:  uint(len(agglomerations)),
+		Total: total,
+	}, nil
+
+}

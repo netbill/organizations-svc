@@ -31,7 +31,12 @@ type repo interface {
 type FilterParams struct {
 	AgglomerationID *uuid.UUID
 	AccountID       *uuid.UUID
-	Username        *string
 	RoleID          *uuid.UUID
+	Username        *string
+	BestMatch       *string
 	PermissionCode  *string
+	Label           *string
+	Position        *string
+	RoleRankUp      *uint
+	RoleRankDown    *uint
 }

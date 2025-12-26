@@ -15,7 +15,7 @@ require (
 	github.com/umisto/ape v0.4.15
 	github.com/umisto/logium v0.1.4
 	github.com/umisto/nilx v0.1.1
-	github.com/umisto/pagi v0.2.4
+	github.com/umisto/pagi v0.2.6
 	github.com/umisto/pgx v0.1.0
 )
 

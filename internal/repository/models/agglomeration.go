@@ -5,12 +5,23 @@ import (
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 )
 
-func AgglomerationRow(db pgdb.Agglomeration) entity.Agglomeration {
+//func AgglomerationRow(db pgdbsql.Agglomeration) entity.Agglomeration {
+//	return entity.Agglomeration{
+//		ID:        db.ID,
+//		Status:    string(db.Status),
+//		Name:      db.Name,
+//		Icon:      db.Icon.String,
+//		CreatedAt: db.CreatedAt,
+//		UpdatedAt: db.UpdatedAt,
+//	}
+//}
+
+func Agglomeration(db pgdb.Agglomeration) entity.Agglomeration {
 	return entity.Agglomeration{
 		ID:        db.ID,
-		Status:    string(db.Status),
+		Status:    db.Status,
 		Name:      db.Name,
-		Icon:      db.Icon.String,
+		Icon:      db.Icon,
 		CreatedAt: db.CreatedAt,
 		UpdatedAt: db.UpdatedAt,
 	}

@@ -16,12 +16,40 @@ func New(db *sql.DB) Service {
 	return Service{db: db}
 }
 
-func (s Service) exec(ctx context.Context) pgdb.DBTX {
-	return pgx.Exec(s.db, ctx)
+func (s Service) agglomerationsQ() pgdb.AgglomerationsQ {
+	return pgdb.NewAgglomerationsQ(s.db)
 }
 
-func (s Service) sql(ctx context.Context) *pgdb.Queries {
-	return pgdb.New(s.exec(ctx))
+func (s Service) citiesQ() pgdb.CitiesQ {
+	return pgdb.NewCitiesQ(s.db)
+}
+
+func (s Service) membersQ() pgdb.MembersQ {
+	return pgdb.NewMembersQ(s.db)
+}
+
+func (s Service) memberRolesQ() pgdb.MemberRolesQ {
+	return pgdb.NewMemberRolesQ(s.db)
+}
+
+func (s Service) rolesQ() pgdb.RolesQ {
+	return pgdb.NewRolesQ(s.db)
+}
+
+func (s Service) rolePermissionsQ() pgdb.RolePermissionsQ {
+	return pgdb.NewRolePermissionsQ(s.db)
+}
+
+func (s Service) permissionsQ() pgdb.PermissionsQ {
+	return pgdb.NewPermissionsQ(s.db)
+}
+
+func (s Service) invitesQ() pgdb.InvitesQ {
+	return pgdb.NewInvitesQ(s.db)
+}
+
+func (s Service) profilesQ() pgdb.ProfilesQ {
+	return pgdb.NewProfilesQ(s.db)
 }
 
 func (s Service) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {

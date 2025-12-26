@@ -10,8 +10,8 @@ import (
 )
 
 type FilterParams struct {
-	NameLike *string `json:"name_likes,omitempty"`
-	Status   *string `json:"status,omitempty"`
+	Name   *string `json:"name,omitempty"`
+	Status *string `json:"status,omitempty"`
 }
 
 func (s Service) FilterAgglomerations(

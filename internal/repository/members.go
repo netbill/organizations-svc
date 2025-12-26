@@ -6,120 +6,149 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/modules/memeber"
+	"github.com/umisto/cities-svc/internal/repository/models"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
-	"github.com/umisto/nilx"
 	"github.com/umisto/pagi"
 )
 
 func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Member, error) {
-	res, err := s.sql(ctx).CreateMember(ctx, pgdb.CreateMemberParams{
+	row, err := s.membersQ().Insert(ctx, pgdb.InsertMemberParams{
 		AccountID:       accountID,
 		AgglomerationID: agglomerationID,
 	})
-
 	if err != nil {
 		return entity.Member{}, err
 	}
 
-	return res.ToEntity(), nil
+	return s.GetMember(ctx, row.ID)
 }
 
-func (s Service) UpdateMember(ctx context.Context, member) (entity.Member, error) {
-	res, err := s.sql(ctx).UpdateMember(ctx, pgdb.UpdateMemberParams{
-		ID:       member.ID,
-		Position: nilx.String(member.Position),
-		Label:    nilx.String(member.Label),
-	})
+type UpdateMemberParams struct {
+	Position *string
+	Label    *string
+}
+
+func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateMemberParams) (entity.Member, error) {
+	q := s.membersQ().FilterByID(ID)
+	if params.Position != nil {
+		if *params.Position == "" {
+			q.UpdatePosition(sql.NullString{Valid: false})
+		} else {
+			q = q.UpdatePosition(sql.NullString{String: *params.Position, Valid: true})
+		}
+	}
+	if params.Label != nil {
+		if *params.Label == "" {
+			q.UpdateLabel(sql.NullString{Valid: false})
+		} else {
+			q = q.UpdateLabel(sql.NullString{String: *params.Label, Valid: true})
+		}
+	}
+
+	row, err := q.UpdateOne(ctx)
 	if err != nil {
 		return entity.Member{}, err
 	}
 
-	return res.ToEntity(), nil
+	return s.GetMember(ctx, row.ID)
 }
 
 func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (entity.Member, error) {
-	res, err := s.sql(ctx).GetMember(ctx, memberID)
-	if err != nil {
-		return entity.Member{}, err
+	row, err := s.membersQ().FilterByID(memberID).GetWithUserData(ctx)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return entity.Member{}, nil
+	case err != nil:
+		return entity.Member{}, fmt.Errorf("getting member by id: %w", err)
 	}
 
-	return res.ToEntity(), nil
+	return models.MemberWithUserData(row), nil
+}
+
+func (s Service) GetMemberByAccountAndAgglomeration(
+	ctx context.Context,
+	accountID, agglomerationID uuid.UUID,
+) (entity.Member, error) {
+	row, err := s.membersQ().
+		FilterByAccountID(accountID).
+		FilterByAgglomerationID(agglomerationID).
+		GetWithUserData(ctx)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return entity.Member{}, nil
+	case err != nil:
+		return entity.Member{}, fmt.Errorf("getting member by account and agglomeration: %w", err)
+	}
+
+	return models.MemberWithUserData(row), nil
 }
 
 func (s Service) FilterMembers(
 	ctx context.Context,
 	filter memeber.FilterParams,
-	pagination pagi.Params,
-) (pagi.Page[entity.Member], error) {
-	params := pgdb.FilterMembersParams{
-		AgglomerationID: nilx.UUID(filter.AgglomerationID),
-		Username:        nilx.String(filter.Username),
-		AccountID:       nilx.UUID(filter.AccountID),
-		RoleID:          nilx.UUID(filter.RoleID),
-		PermissionCode:  nilx.String(filter.PermissionCode),
+	offset uint,
+	limit uint,
+) (pagi.Page[[]entity.Member], error) {
+	q := s.membersQ()
+	if filter.AgglomerationID != nil {
+		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
+	}
+	if filter.AccountID != nil {
+		q = q.FilterByAccountID(*filter.AccountID)
+	}
+	if filter.Username != nil {
+		q = q.FilterByUsername(*filter.Username)
+	}
+	if filter.BestMatch != nil {
+		q = q.FilterLikeUsername(*filter.BestMatch)
+	}
+	if filter.RoleID != nil {
+		q = q.FilterRoleID(*filter.RoleID)
+	}
+	if filter.PermissionCode != nil {
+		q = q.FilterByPermissionCode(*filter.PermissionCode)
+	}
+	if filter.RoleRankUp != nil {
+		q = q.FilterByRoleRankUp(*filter.RoleRankUp)
+	}
+	if filter.RoleRankDown != nil {
+		q = q.FilterByRoleRankDown(*filter.RoleRankDown)
+	}
+	if filter.Label != nil {
+		q = q.FilterLikeLabel(*filter.Label)
+	}
+	if filter.Position != nil {
+		q = q.FilterLikePosition(*filter.Position)
 	}
 
-	if pagination.Cursor != nil {
-		usernameCursor, ok := pagination.Cursor["username"]
-		if !ok || usernameCursor == "" {
-			return pagi.Page[entity.Member]{}, fmt.Errorf("missing username in pagination cursor")
-		}
-		params.CursorUsername = sql.NullString{String: usernameCursor, Valid: true}
+	limit = pagi.CalculateLimit(limit, 20, 100)
 
-		idCursor, ok := pagination.Cursor["id"]
-		if !ok || idCursor == "" {
-			return pagi.Page[entity.Member]{}, fmt.Errorf("missing id in pagination cursor")
-		}
-
-		afterID, err := uuid.Parse(idCursor)
-		if err != nil {
-			return pagi.Page[entity.Member]{}, fmt.Errorf("invalid id in pagination cursor: %w", err)
-		}
-		params.CursorMemberID = uuid.NullUUID{UUID: afterID, Valid: true}
-	}
-
-	limit := pagi.CalculateLimit(pagination.Limit, 50, 100)
-	params.Limit = int32(limit)
-
-	members, err := s.sql(ctx).FilterMembers(ctx, params)
+	rows, err := q.Page(limit, offset).SelectWithUserData(ctx)
 	if err != nil {
-		return pagi.Page[entity.Member]{}, err
+		return pagi.Page[[]entity.Member]{}, fmt.Errorf("filtering members: %w", err)
 	}
 
-	count, err := s.sql(ctx).CountMembers(ctx, pgdb.CountMembersParams{
-		AgglomerationID: nilx.UUID(filter.AgglomerationID),
-		Username:        nilx.String(filter.Username),
-		AccountID:       nilx.UUID(filter.AccountID),
-		RoleID:          nilx.UUID(filter.RoleID),
-		PermissionCode:  nilx.String(filter.PermissionCode),
-	})
+	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[entity.Member]{}, err
+		return pagi.Page[[]entity.Member]{}, fmt.Errorf("counting members: %w", err)
 	}
 
-	entities := make([]entity.Member, len(members))
-	for i, m := range members {
-		entities[i] = m.ToEntity()
+	collection := make([]entity.Member, 0, len(rows))
+	for _, row := range rows {
+		collection = append(collection, models.MemberWithUserData(row))
 	}
 
-	var nextCursor map[string]string
-	if len(members) == limit {
-		lastMember := members[len(members)-1]
-		nextCursor = map[string]string{
-			"username": lastMember.Username,
-			"id":       lastMember.MemberID.String(),
-		}
-	}
-
-	return pagi.Page[entity.Member]{
-		Data:       entities,
-		Total:      int(count),
-		NextCursor: nextCursor,
+	return pagi.Page[[]entity.Member]{
+		Data:  collection,
+		Page:  uint(offset/limit) + 1,
+		Size:  uint(len(collection)),
+		Total: uint(total),
 	}, nil
 }
 
 func (s Service) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
-	return s.sql(ctx).DeleteMember(ctx, memberID)
+	return s.membersQ().FilterByID(memberID).Delete(ctx)
 }

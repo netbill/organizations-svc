@@ -14,7 +14,7 @@ import (
 type FilterParams struct {
 	AgglomerationID *uuid.UUID
 	Status          *string
-	NameLike        *string
+	Name            *string
 }
 
 func (s Service) FilterCities(
