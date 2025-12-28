@@ -15,12 +15,6 @@ const InviteColumns = "id, agglomeration_id, status, expires_at, created_at"
 
 type InviteStatus string
 
-const (
-	InviteStatusSent     InviteStatus = "sent"
-	InviteStatusDeclined InviteStatus = "declined"
-	InviteStatusAccepted InviteStatus = "accepted"
-)
-
 type Invite struct {
 	ID              uuid.UUID    `json:"id"`
 	AgglomerationID uuid.UUID    `json:"agglomeration_id"`
@@ -56,8 +50,6 @@ func NewInvitesQ(db pgx.DBTX) InvitesQ {
 		counter:  b.Select("COUNT(*)").From(InviteTable),
 	}
 }
-
-func (q InvitesQ) New() InvitesQ { return NewInvitesQ(q.db) }
 
 func (q InvitesQ) Insert(ctx context.Context, data Invite) (Invite, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{

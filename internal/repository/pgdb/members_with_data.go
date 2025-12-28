@@ -35,16 +35,6 @@ func (mwd *MemberWithUserData) scan(row sq.RowScanner) error {
 	return nil
 }
 
-func (q MembersQ) WithUserData() MembersQ {
-	q.selector = q.selector.
-		Columns("p.username", "p.official", "p.pseudonym").
-		Join("profiles p ON p.account_id = m.account_id")
-
-	q.counter = q.counter.Join("profiles p ON p.account_id = m.account_id")
-
-	return q
-}
-
 func (q MembersQ) FilterByUsername(username string) MembersQ {
 	q.selector = q.selector.Where(sq.Eq{"p.username": username})
 	q.counter = q.counter.Where(sq.Eq{"p.username": username})
@@ -299,4 +289,34 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 	}
 
 	return out, nil
+}
+
+func (q MembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
+	const sqlq = `
+		SELECT
+			(m1.agglomeration_id = m2.agglomeration_id)
+			AND (COALESCE(r1.min_rank, 2147483647) < COALESCE(r2.min_rank, 2147483647)) AS can
+		FROM members m1
+		JOIN members m2 ON m2.id = $2
+		LEFT JOIN LATERAL (
+			SELECT MIN(r.rank) AS min_rank
+			FROM member_roles mr
+			JOIN roles r ON r.id = mr.role_id
+			WHERE mr.member_id = m1.id
+		) r1 ON true
+		LEFT JOIN LATERAL (
+			SELECT MIN(r.rank) AS min_rank
+			FROM member_roles mr
+			JOIN roles r ON r.id = mr.role_id
+			WHERE mr.member_id = m2.id
+		) r2 ON true
+		WHERE m1.id = $1
+		LIMIT 1
+	`
+
+	var ok bool
+	if err := q.db.QueryRowContext(ctx, sqlq, firstMemberID, secondMemberID).Scan(&ok); err != nil {
+		return false, fmt.Errorf("scanning can_interact: %w", err)
+	}
+	return ok, nil
 }

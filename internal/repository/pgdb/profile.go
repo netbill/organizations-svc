@@ -61,10 +61,6 @@ func NewProfilesQ(db pgx.DBTX) ProfilesQ {
 	}
 }
 
-func (q ProfilesQ) New() ProfilesQ {
-	return NewProfilesQ(q.db)
-}
-
 type ProfileInsertInput struct {
 	AccountID uuid.UUID
 	Username  string

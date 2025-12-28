@@ -14,9 +14,10 @@ func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (enti
 	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
 		AgglomerationID: params.AgglomerationID,
 		Head:            params.Head,
-		Editable:        params.Editable,
 		Rank:            params.Rank,
 		Name:            params.Name,
+		Description:     params.Description,
+		Color:           params.Color,
 	})
 	if err != nil {
 		return entity.Role{}, err
@@ -113,11 +114,11 @@ func (s Service) GetAccountMaxRoleInAgglomeration(
 	ctx context.Context,
 	accountID, agglomerationID uuid.UUID,
 ) (entity.Role, error) {
-	res, err := s.rolesQ().GetAccountMaxRoleInAgglomeration(
-		ctx,
-		accountID,
-		agglomerationID,
-	)
+	res, err := s.rolesQ().
+		FilterByAgglomerationID(agglomerationID).
+		FilterByAccountID(accountID).
+		OrderByRoleRank(true).
+		Get(ctx)
 	if err != nil {
 		return entity.Role{}, err
 	}
@@ -128,10 +129,10 @@ func (s Service) GetMemberMaxRole(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (entity.Role, error) {
-	res, err := s.rolesQ().GetMemberMaxRole(
-		ctx,
-		memberID,
-	)
+	res, err := s.rolesQ().
+		FilterByAccountID(memberID).
+		OrderByRoleRank(true).
+		Get(ctx)
 	if err != nil {
 		return entity.Role{}, err
 	}
@@ -157,9 +158,10 @@ func Role(r pgdb.Role) entity.Role {
 		ID:              r.ID,
 		AgglomerationID: r.AgglomerationID,
 		Head:            r.Head,
-		Editable:        r.Editable,
 		Rank:            r.Rank,
 		Name:            r.Name,
+		Description:     r.Description,
+		Color:           r.Color,
 		CreatedAt:       r.CreatedAt,
 		UpdatedAt:       r.UpdatedAt,
 	}

@@ -43,8 +43,6 @@ func NewMemberRolesQ(db pgx.DBTX) MemberRolesQ {
 	}
 }
 
-func (q MemberRolesQ) New() MemberRolesQ { return NewMemberRolesQ(q.db) }
-
 func (q MemberRolesQ) Insert(ctx context.Context, data MemberRole) (MemberRole, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"member_id": data.MemberID,

@@ -46,8 +46,6 @@ func NewPermissionsQ(db pgx.DBTX) PermissionsQ {
 	}
 }
 
-func (q PermissionsQ) New() PermissionsQ { return NewPermissionsQ(q.db) }
-
 func (q PermissionsQ) Insert(ctx context.Context, data Permission) (Permission, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"id":          data.ID,
@@ -147,19 +145,6 @@ func (q PermissionsQ) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (q PermissionsQ) Count(ctx context.Context) (int64, error) {
-	query, args, err := q.counter.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("building count query for %s: %w", PermissionTable, err)
-	}
-
-	var n int64
-	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
-		return 0, fmt.Errorf("scanning count for %s: %w", PermissionTable, err)
-	}
-	return n, nil
-}
-
 func (q PermissionsQ) FilterByID(id uuid.UUID) PermissionsQ {
 	q.selector = q.selector.Where(sq.Eq{"id": id})
 	q.counter = q.counter.Where(sq.Eq{"id": id})
@@ -208,4 +193,17 @@ func (q PermissionsQ) UpdateDescription(description string) PermissionsQ {
 func (q PermissionsQ) Page(limit, offset uint) PermissionsQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
+}
+
+func (q PermissionsQ) Count(ctx context.Context) (int64, error) {
+	query, args, err := q.counter.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("building count query for %s: %w", PermissionTable, err)
+	}
+
+	var n int64
+	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
+		return 0, fmt.Errorf("scanning count for %s: %w", PermissionTable, err)
+	}
+	return n, nil
 }

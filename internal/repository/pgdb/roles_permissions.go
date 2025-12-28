@@ -36,8 +36,6 @@ func NewRolePermissionsQ(db pgx.DBTX) RolePermissionsQ {
 	}
 }
 
-func (q RolePermissionsQ) New() RolePermissionsQ { return NewRolePermissionsQ(q.db) }
-
 func (q RolePermissionsQ) Insert(ctx context.Context, data RolePermission) (RolePermission, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"role_id":       data.RoleID,
@@ -125,149 +123,271 @@ func (q RolePermissionsQ) FilterByPermissionID(permissionID uuid.UUID) RolePermi
 	return q
 }
 
-func (q RolePermissionsQ) CheckMemberHavePermissionInAgglomerationByCode(
-	ctx context.Context,
-	memberID uuid.UUID,
-	agglomerationID uuid.UUID,
-	code string,
-) (bool, error) {
-	const sqlq = `
-		SELECT EXISTS (
-			SELECT 1
-			FROM members m
-			JOIN member_roles mr ON mr.member_id = m.id
-			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			JOIN permissions p ON p.id = rp.permission_id
-			WHERE m.id = $1
-				AND m.agglomeration_id = $2
-				AND p.code = $3
-		)
-	`
+func (q RolePermissionsQ) FilterByPermissionCode(code string) RolePermissionsQ {
+	sub := sq.
+		Select("id").
+		From(PermissionTable).
+		Where(sq.Eq{"code": code})
+
+	subSQL, subArgs, err := sub.ToSql()
+	if err != nil {
+		q.selector = q.selector.Where(sq.Expr("1=0"))
+		q.deleter = q.deleter.Where(sq.Expr("1=0"))
+		q.counter = q.counter.Where(sq.Expr("1=0"))
+		return q
+	}
+
+	expr := sq.Expr("permission_id IN ("+subSQL+")", subArgs...)
+	q.selector = q.selector.Where(expr)
+	q.deleter = q.deleter.Where(expr)
+	q.counter = q.counter.Where(expr)
+
+	return q
+}
+
+func (q RolePermissionsQ) FilterByAccountID(accountID uuid.UUID) RolePermissionsQ {
+	sub := sq.
+		Select("DISTINCT mr.role_id").
+		From("members m").
+		Join("member_roles mr ON mr.member_id = m.id").
+		Where(sq.Eq{"m.account_id": accountID})
+
+	subSQL, subArgs, err := sub.ToSql()
+	if err != nil {
+		q.selector = q.selector.Where(sq.Expr("1=0"))
+		q.deleter = q.deleter.Where(sq.Expr("1=0"))
+		q.counter = q.counter.Where(sq.Expr("1=0"))
+		return q
+	}
+
+	expr := sq.Expr("role_id IN ("+subSQL+")", subArgs...)
+	q.selector = q.selector.Where(expr)
+	q.deleter = q.deleter.Where(expr)
+	q.counter = q.counter.Where(expr)
+
+	return q
+}
+
+func (q RolePermissionsQ) FilterByAgglomerationID(agglomerationID uuid.UUID) RolePermissionsQ {
+	sub := sq.
+		Select("id").
+		From("roles").
+		Where(sq.Eq{"agglomeration_id": agglomerationID})
+
+	subSQL, subArgs, err := sub.ToSql()
+	if err != nil {
+		q.selector = q.selector.Where(sq.Expr("1=0"))
+		q.deleter = q.deleter.Where(sq.Expr("1=0"))
+		q.counter = q.counter.Where(sq.Expr("1=0"))
+		return q
+	}
+
+	expr := sq.Expr("role_id IN ("+subSQL+")", subArgs...)
+	q.selector = q.selector.Where(expr)
+	q.deleter = q.deleter.Where(expr)
+	q.counter = q.counter.Where(expr)
+
+	return q
+}
+
+func (q RolePermissionsQ) FilterByMemberID(memberID uuid.UUID) RolePermissionsQ {
+	sub := sq.
+		Select("mr.role_id").
+		From("member_roles mr").
+		Where(sq.Eq{"mr.member_id": memberID})
+
+	subSQL, subArgs, err := sub.ToSql()
+	if err != nil {
+		q.selector = q.selector.Where(sq.Expr("1=0"))
+		q.deleter = q.deleter.Where(sq.Expr("1=0"))
+		q.counter = q.counter.Where(sq.Expr("1=0"))
+		return q
+	}
+
+	expr := sq.Expr("role_id IN ("+subSQL+")", subArgs...)
+	q.selector = q.selector.Where(expr)
+	q.deleter = q.deleter.Where(expr)
+	q.counter = q.counter.Where(expr)
+
+	return q
+}
+
+func (q RolePermissionsQ) Count(ctx context.Context) (int64, error) {
+	query, args, err := q.counter.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("building count query for %s: %w", RolePermissionsTable, err)
+	}
+
+	var n int64
+	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
+		return 0, fmt.Errorf("scanning count for %s: %w", RolePermissionsTable, err)
+	}
+	return n, nil
+}
+
+func (q RolePermissionsQ) Page(limit, offset uint) RolePermissionsQ {
+	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
+	return q
+}
+
+func (q RolePermissionsQ) Exists(ctx context.Context) (bool, error) {
+	subSQL, subArgs, err := q.selector.Limit(1).ToSql()
+	if err != nil {
+		return false, fmt.Errorf("building exists query for %s: %w", RolePermissionsTable, err)
+	}
+
+	sqlq := "SELECT EXISTS (" + subSQL + ")"
 
 	var ok bool
-	if err := q.db.QueryRowContext(ctx, sqlq, memberID, agglomerationID, code).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning permission exists (member+code): %w", err)
+	if err := q.db.QueryRowContext(ctx, sqlq, subArgs...).Scan(&ok); err != nil {
+		return false, fmt.Errorf("scanning exists for %s: %w", RolePermissionsTable, err)
 	}
 	return ok, nil
 }
 
-func (q RolePermissionsQ) CheckMemberHavePermissionInAgglomerationByID(
-	ctx context.Context,
-	memberID uuid.UUID,
-	agglomerationID uuid.UUID,
-	permissionID uuid.UUID,
-) (bool, error) {
-	const sqlq = `
-		SELECT EXISTS (
-			SELECT 1
-			FROM members m
-			JOIN member_roles mr ON mr.member_id = m.id
-			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			WHERE m.id = $1
-				AND m.agglomeration_id = $2
-				AND rp.permission_id = $3
-		)
-	`
-
-	var ok bool
-	if err := q.db.QueryRowContext(ctx, sqlq, memberID, agglomerationID, permissionID).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning permission exists (member+id): %w", err)
-	}
-	return ok, nil
-}
-
-func (q RolePermissionsQ) CheckMemberHavePermissionByCode(
-	ctx context.Context,
-	memberID uuid.UUID,
-	code string,
-) (bool, error) {
-	const sqlq = `
-		SELECT EXISTS (
-			SELECT 1
-			FROM member_roles mr
-			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			JOIN permissions p ON p.id = rp.permission_id
-			WHERE mr.member_id = $1
-				AND p.code = $2
-		)
-	`
-
-	var ok bool
-	if err := q.db.QueryRowContext(ctx, sqlq, memberID, code).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning permission exists (member+code): %w", err)
-	}
-	return ok, nil
-}
-
-func (q RolePermissionsQ) CheckMemberHavePermissionByID(
-	ctx context.Context,
-	memberID uuid.UUID,
-	permissionID uuid.UUID,
-) (bool, error) {
-	const sqlq = `
-		SELECT EXISTS (
-			SELECT 1
-			FROM member_roles mr
-			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			WHERE mr.member_id = $1
-				AND rp.permission_id = $2
-		)
-	`
-
-	var ok bool
-	if err := q.db.QueryRowContext(ctx, sqlq, memberID, permissionID).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning permission exists (member+id): %w", err)
-	}
-	return ok, nil
-}
-
-func (q RolePermissionsQ) CheckAccountHavePermissionByCode(
-	ctx context.Context,
-	accountID uuid.UUID,
-	agglomerationID uuid.UUID,
-	code string,
-) (bool, error) {
-	const sqlq = `
-		SELECT EXISTS (
-			SELECT 1
-			FROM members m
-			JOIN member_roles mr ON mr.member_id = m.id
-			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			JOIN permissions p ON p.id = rp.permission_id
-			WHERE m.account_id = $1
-				AND m.agglomeration_id = $2
-				AND p.code = $3
-		)
-	`
-
-	var ok bool
-	if err := q.db.QueryRowContext(ctx, sqlq, accountID, agglomerationID, code).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning permission exists (account+code): %w", err)
-	}
-	return ok, nil
-}
-
-func (q RolePermissionsQ) CheckAccountHavePermissionByID(
-	ctx context.Context,
-	accountID uuid.UUID,
-	agglomerationID uuid.UUID,
-	permissionID uuid.UUID,
-) (bool, error) {
-	const sqlq = `
-		SELECT EXISTS (
-			SELECT 1
-			FROM members m
-			JOIN member_roles mr ON mr.member_id = m.id
-			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			WHERE m.account_id = $1
-				AND m.agglomeration_id = $2
-				AND rp.permission_id = $3
-		)
-	`
-
-	var ok bool
-	if err := q.db.QueryRowContext(ctx, sqlq, accountID, agglomerationID, permissionID).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning permission exists (account+id): %w", err)
-	}
-	return ok, nil
-}
+//func (q RolePermissionsQ) CheckMemberHavePermissionInAgglomerationByCode(
+//	ctx context.Context,
+//	memberID uuid.UUID,
+//	agglomerationID uuid.UUID,
+//	code string,
+//) (bool, error) {
+//	const sqlq = `
+//		SELECT EXISTS (
+//			SELECT 1
+//			FROM members m
+//			JOIN member_roles mr ON mr.member_id = m.id
+//			JOIN role_permissions rp ON rp.role_id = mr.role_id
+//			JOIN permissions p ON p.id = rp.permission_id
+//			WHERE m.id = $1
+//				AND m.agglomeration_id = $2
+//				AND p.code = $3
+//		)
+//	`
+//
+//	var ok bool
+//	if err := q.db.QueryRowContext(ctx, sqlq, memberID, agglomerationID, code).Scan(&ok); err != nil {
+//		return false, fmt.Errorf("scanning permission exists (member+code): %w", err)
+//	}
+//	return ok, nil
+//}
+//
+//func (q RolePermissionsQ) CheckMemberHavePermissionInAgglomerationByID(
+//	ctx context.Context,
+//	memberID uuid.UUID,
+//	agglomerationID uuid.UUID,
+//	permissionID uuid.UUID,
+//) (bool, error) {
+//	const sqlq = `
+//		SELECT EXISTS (
+//			SELECT 1
+//			FROM members m
+//			JOIN member_roles mr ON mr.member_id = m.id
+//			JOIN role_permissions rp ON rp.role_id = mr.role_id
+//			WHERE m.id = $1
+//				AND m.agglomeration_id = $2
+//				AND rp.permission_id = $3
+//		)
+//	`
+//
+//	var ok bool
+//	if err := q.db.QueryRowContext(ctx, sqlq, memberID, agglomerationID, permissionID).Scan(&ok); err != nil {
+//		return false, fmt.Errorf("scanning permission exists (member+id): %w", err)
+//	}
+//	return ok, nil
+//}
+//
+//func (q RolePermissionsQ) CheckMemberHavePermissionByCode(
+//	ctx context.Context,
+//	memberID uuid.UUID,
+//	code string,
+//) (bool, error) {
+//	const sqlq = `
+//		SELECT EXISTS (
+//			SELECT 1
+//			FROM member_roles mr
+//			JOIN role_permissions rp ON rp.role_id = mr.role_id
+//			JOIN permissions p ON p.id = rp.permission_id
+//			WHERE mr.member_id = $1
+//				AND p.code = $2
+//		)
+//	`
+//
+//	var ok bool
+//	if err := q.db.QueryRowContext(ctx, sqlq, memberID, code).Scan(&ok); err != nil {
+//		return false, fmt.Errorf("scanning permission exists (member+code): %w", err)
+//	}
+//	return ok, nil
+//}
+//
+//func (q RolePermissionsQ) CheckMemberHavePermissionByID(
+//	ctx context.Context,
+//	memberID uuid.UUID,
+//	permissionID uuid.UUID,
+//) (bool, error) {
+//	const sqlq = `
+//		SELECT EXISTS (
+//			SELECT 1
+//			FROM member_roles mr
+//			JOIN role_permissions rp ON rp.role_id = mr.role_id
+//			WHERE mr.member_id = $1
+//				AND rp.permission_id = $2
+//		)
+//	`
+//
+//	var ok bool
+//	if err := q.db.QueryRowContext(ctx, sqlq, memberID, permissionID).Scan(&ok); err != nil {
+//		return false, fmt.Errorf("scanning permission exists (member+id): %w", err)
+//	}
+//	return ok, nil
+//}
+//
+//func (q RolePermissionsQ) CheckAccountHavePermissionByCode(
+//	ctx context.Context,
+//	accountID uuid.UUID,
+//	agglomerationID uuid.UUID,
+//	code string,
+//) (bool, error) {
+//	const sqlq = `
+//		SELECT EXISTS (
+//			SELECT 1
+//			FROM members m
+//			JOIN member_roles mr ON mr.member_id = m.id
+//			JOIN role_permissions rp ON rp.role_id = mr.role_id
+//			JOIN permissions p ON p.id = rp.permission_id
+//			WHERE m.account_id = $1
+//				AND m.agglomeration_id = $2
+//				AND p.code = $3
+//		)
+//	`
+//
+//	var ok bool
+//	if err := q.db.QueryRowContext(ctx, sqlq, accountID, agglomerationID, code).Scan(&ok); err != nil {
+//		return false, fmt.Errorf("scanning permission exists (account+code): %w", err)
+//	}
+//	return ok, nil
+//}
+//
+//func (q RolePermissionsQ) CheckAccountHavePermissionByID(
+//	ctx context.Context,
+//	accountID uuid.UUID,
+//	agglomerationID uuid.UUID,
+//	permissionID uuid.UUID,
+//) (bool, error) {
+//	const sqlq = `
+//		SELECT EXISTS (
+//			SELECT 1
+//			FROM members m
+//			JOIN member_roles mr ON mr.member_id = m.id
+//			JOIN role_permissions rp ON rp.role_id = mr.role_id
+//			WHERE m.account_id = $1
+//				AND m.agglomeration_id = $2
+//				AND rp.permission_id = $3
+//		)
+//	`
+//
+//	var ok bool
+//	if err := q.db.QueryRowContext(ctx, sqlq, accountID, agglomerationID, permissionID).Scan(&ok); err != nil {
+//		return false, fmt.Errorf("scanning permission exists (account+id): %w", err)
+//	}
+//	return ok, nil
+//}

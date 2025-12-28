@@ -65,9 +65,10 @@ CREATE TABLE roles (
     id               UUID    PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     agglomeration_id UUID    NOT NULL REFERENCES agglomerations(id) ON DELETE CASCADE,
     head             BOOLEAN NOT NULL DEFAULT false,
-    editable         BOOLEAN NOT NULL DEFAULT true,
     rank             INT     NOT NULL DEFAULT 0 CHECK ( rank >= 0 ),
     name             TEXT    NOT NULL,
+    description      TEXT    NOT NULL,
+    color            TEXT    NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),

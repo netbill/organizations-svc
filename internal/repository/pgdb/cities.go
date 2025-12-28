@@ -72,10 +72,6 @@ func NewCitiesQ(db pgx.DBTX) CitiesQ {
 	}
 }
 
-func (q CitiesQ) New() CitiesQ {
-	return NewCitiesQ(q.db)
-}
-
 type CityInsertParams struct {
 	AgglomerationID *uuid.UUID
 	Status          string

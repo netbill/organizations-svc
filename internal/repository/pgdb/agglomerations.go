@@ -60,10 +60,6 @@ func NewAgglomerationsQ(db pgx.DBTX) AgglomerationsQ {
 	}
 }
 
-func (q AgglomerationsQ) New() AgglomerationsQ {
-	return NewAgglomerationsQ(q.db)
-}
-
 type AgglomerationsQInsertInput struct {
 	Name string
 	Icon string
