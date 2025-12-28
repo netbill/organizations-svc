@@ -53,12 +53,10 @@ func (s Service) UpdateAgglomerationByUser(
 			fmt.Errorf("agglomeration is suspended"),
 		)
 	}
-
-	err = s.checkPermissionByCode(
+	err = s.checkPermissionForManageAgglomeration(
 		ctx,
 		accountID,
 		agglomerationID,
-		entity.RolePermissionManageAgglomeration,
 	)
 	if err != nil {
 		return entity.Agglomeration{}, err

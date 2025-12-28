@@ -5,20 +5,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/domain/entity"
-	"github.com/umisto/cities-svc/internal/repository/models"
+	"github.com/umisto/cities-svc/internal/domain/modules/role"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 
-type InsertRoleParams struct {
-	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Head            bool      `json:"head"`
-	Editable        bool      `json:"editable"`
-	Rank            int       `json:"rank"`
-	Name            string    `json:"name"`
-}
-
-func (s Service) CreateRole(ctx context.Context, params InsertRoleParams) (entity.Role, error) {
+func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (entity.Role, error) {
 	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
 		AgglomerationID: params.AgglomerationID,
 		Head:            params.Head,
@@ -30,7 +22,7 @@ func (s Service) CreateRole(ctx context.Context, params InsertRoleParams) (entit
 		return entity.Role{}, err
 	}
 
-	return models.Role(row), nil
+	return Role(row), nil
 }
 
 func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (entity.Role, error) {
@@ -39,20 +31,12 @@ func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (entity.Role, er
 		return entity.Role{}, err
 	}
 
-	return models.Role(row), nil
-}
-
-type FilterParams struct {
-	AgglomerationID *uuid.UUID
-	Head            *bool
-	Editable        *bool
-	Rank            *int
-	Name            *string
+	return Role(row), nil
 }
 
 func (s Service) FilterRoles(
 	ctx context.Context,
-	filter FilterParams,
+	filter role.FilterParams,
 	offset uint,
 	limit uint,
 ) (pagi.Page[[]entity.Role], error) {
@@ -87,7 +71,7 @@ func (s Service) FilterRoles(
 
 	collection := make([]entity.Role, 0, len(rows))
 	for _, row := range rows {
-		collection = append(collection, models.Role(row))
+		collection = append(collection, Role(row))
 	}
 
 	return pagi.Page[[]entity.Role]{
@@ -98,11 +82,7 @@ func (s Service) FilterRoles(
 	}, nil
 }
 
-type UpdateRoleParams struct {
-	Name *string `json:"name"`
-}
-
-func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params UpdateRoleParams) (entity.Role, error) {
+func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (entity.Role, error) {
 	q := s.rolesQ().FilterByID(roleID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
@@ -113,7 +93,7 @@ func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params Update
 		return entity.Role{}, err
 	}
 
-	return models.Role(row), nil
+	return Role(row), nil
 }
 
 func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (entity.Role, error) {
@@ -122,9 +102,65 @@ func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank u
 		return entity.Role{}, err
 	}
 
-	return models.Role(row), nil
+	return Role(row), nil
 }
 
 func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 	return s.rolesQ().DeleteAndShiftRanks(ctx, roleID)
+}
+
+func (s Service) GetAccountMaxRoleInAgglomeration(
+	ctx context.Context,
+	accountID, agglomerationID uuid.UUID,
+) (entity.Role, error) {
+	res, err := s.rolesQ().GetAccountMaxRoleInAgglomeration(
+		ctx,
+		accountID,
+		agglomerationID,
+	)
+	if err != nil {
+		return entity.Role{}, err
+	}
+	return Role(res), nil
+}
+
+func (s Service) GetMemberMaxRole(
+	ctx context.Context,
+	memberID uuid.UUID,
+) (entity.Role, error) {
+	res, err := s.rolesQ().GetMemberMaxRole(
+		ctx,
+		memberID,
+	)
+	if err != nil {
+		return entity.Role{}, err
+	}
+	return Role(res), nil
+}
+
+func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]entity.Permission, error) {
+	rows, err := s.permissionsQ().FilterByRoleID(roleID).Select(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions := make([]entity.Permission, 0, len(rows))
+	for _, row := range rows {
+		permissions = append(permissions, Permission(row))
+	}
+
+	return permissions, nil
+}
+
+func Role(r pgdb.Role) entity.Role {
+	return entity.Role{
+		ID:              r.ID,
+		AgglomerationID: r.AgglomerationID,
+		Head:            r.Head,
+		Editable:        r.Editable,
+		Rank:            r.Rank,
+		Name:            r.Name,
+		CreatedAt:       r.CreatedAt,
+		UpdatedAt:       r.UpdatedAt,
+	}
 }

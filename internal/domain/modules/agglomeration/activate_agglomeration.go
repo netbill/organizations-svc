@@ -46,11 +46,10 @@ func (s Service) ActivateAgglomerationByUser(
 		)
 	}
 
-	err = s.checkPermissionByCode(
+	err = s.checkPermissionForManageAgglomeration(
 		ctx,
 		accountID,
 		agglomerationID,
-		entity.RolePermissionManageAgglomeration,
 	)
 	if err != nil {
 		return entity.Agglomeration{}, err

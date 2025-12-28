@@ -176,6 +176,19 @@ func (q PermissionsQ) FilterByCode(code string) PermissionsQ {
 	return q
 }
 
+func (q PermissionsQ) FilterByRoleID(roleID uuid.UUID) PermissionsQ {
+	q.selector = q.selector.
+		Join("role_permissions rp ON rp.permission_id = permissions.id").
+		Where(sq.Eq{"rp.role_id": roleID}).
+		Distinct()
+
+	q.counter = q.counter.
+		Join("role_permissions rp ON rp.permission_id = permissions.id").
+		Where(sq.Eq{"rp.role_id": roleID})
+
+	return q
+}
+
 func (q PermissionsQ) FilterLikeDescription(description string) PermissionsQ {
 	q.selector = q.selector.Where(sq.ILike{"description": "%" + description + "%"})
 	q.counter = q.counter.Where(sq.ILike{"description": "%" + description + "%"})

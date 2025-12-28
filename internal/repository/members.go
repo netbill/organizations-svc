@@ -8,8 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/umisto/cities-svc/internal/domain/entity"
-	"github.com/umisto/cities-svc/internal/domain/modules/memeber"
-	"github.com/umisto/cities-svc/internal/repository/models"
+	"github.com/umisto/cities-svc/internal/domain/modules/member"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
@@ -26,12 +25,7 @@ func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uu
 	return s.GetMember(ctx, row.ID)
 }
 
-type UpdateMemberParams struct {
-	Position *string
-	Label    *string
-}
-
-func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateMemberParams) (entity.Member, error) {
+func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params member.UpdateParams) (entity.Member, error) {
 	q := s.membersQ().FilterByID(ID)
 	if params.Position != nil {
 		if *params.Position == "" {
@@ -65,7 +59,7 @@ func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (entity.Memb
 		return entity.Member{}, fmt.Errorf("getting member by id: %w", err)
 	}
 
-	return models.MemberWithUserData(row), nil
+	return MemberWithUserData(row), nil
 }
 
 func (s Service) GetMemberByAccountAndAgglomeration(
@@ -83,12 +77,12 @@ func (s Service) GetMemberByAccountAndAgglomeration(
 		return entity.Member{}, fmt.Errorf("getting member by account and agglomeration: %w", err)
 	}
 
-	return models.MemberWithUserData(row), nil
+	return MemberWithUserData(row), nil
 }
 
 func (s Service) FilterMembers(
 	ctx context.Context,
-	filter memeber.FilterParams,
+	filter member.FilterParams,
 	offset uint,
 	limit uint,
 ) (pagi.Page[[]entity.Member], error) {
@@ -138,7 +132,7 @@ func (s Service) FilterMembers(
 
 	collection := make([]entity.Member, 0, len(rows))
 	for _, row := range rows {
-		collection = append(collection, models.MemberWithUserData(row))
+		collection = append(collection, MemberWithUserData(row))
 	}
 
 	return pagi.Page[[]entity.Member]{
@@ -151,4 +145,43 @@ func (s Service) FilterMembers(
 
 func (s Service) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
 	return s.membersQ().FilterByID(memberID).Delete(ctx)
+}
+
+func (s Service) CheckMemberHavePermission(
+	ctx context.Context,
+	memberID uuid.UUID,
+	permissionCode string,
+) (bool, error) {
+	have, err := s.membersQ().
+		FilterByID(memberID).
+		FilterByPermissionCode(permissionCode).Exists(ctx)
+	if err != nil {
+		return false, fmt.Errorf("checking member have permission: %w", err)
+	}
+
+	return have, nil
+}
+
+func (s Service) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
+	res, err := s.CanInteract(ctx, firstMemberID, secondMemberID)
+	if err != nil {
+		return false, fmt.Errorf("checking first member can interact: %w", err)
+	}
+
+	return res, nil
+}
+
+func MemberWithUserData(db pgdb.MemberWithUserData) entity.Member {
+	return entity.Member{
+		ID:              db.ID,
+		AccountID:       db.AccountID,
+		AgglomerationID: db.AgglomerationID,
+		Position:        db.Position,
+		Label:           db.Label,
+		Username:        db.Username,
+		Pseudonym:       db.Pseudonym,
+		Official:        db.Official,
+		CreatedAt:       db.CreatedAt,
+		UpdatedAt:       db.UpdatedAt,
+	}
 }

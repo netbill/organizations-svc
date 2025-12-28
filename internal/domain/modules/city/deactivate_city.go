@@ -11,7 +11,7 @@ import (
 
 func (s Service) DeactivateCity(ctx context.Context, ID uuid.UUID) (city entity.City, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = s.repo.UpdateCityStatus(ctx, ID, entity.CityStatusInactive)
+		city, err = s.repo.UpdateCityStatus(ctx, ID, entity.CityStatusInactive)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to deactivate city: %w", err),
@@ -29,7 +29,7 @@ func (s Service) DeactivateCity(ctx context.Context, ID uuid.UUID) (city entity.
 		return entity.City{}, err
 	}
 
-	return s.GetCity(ctx, ID)
+	return city, nil
 }
 
 func (s Service) DeactivateCityByUser(
@@ -52,7 +52,7 @@ func (s Service) DeactivateCityByUser(
 		return entity.City{}, err
 	}
 
-	err = s.checkPermissionByCode(ctx, accountID, *city.AgglomerationID, entity.RolePermissionManageCities)
+	err = s.checkPermissionForManageCity(ctx, accountID, *city.AgglomerationID)
 	if err != nil {
 		return entity.City{}, err
 	}

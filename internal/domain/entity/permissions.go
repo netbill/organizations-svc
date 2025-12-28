@@ -28,8 +28,20 @@ const (
 	RolePermissionManageMembers       CodeRolePermission = "members.manage"
 )
 
+var AllRolePermissions = []CodeRolePermission{
+	RolePermissionManageAgglomeration,
+	RolePermissionManageCities,
+	RolePermissionManageRoles,
+	RolePermissionManageInvites,
+	RolePermissionManageMembers,
+}
+
 type Permission struct {
 	ID          uuid.UUID          `json:"id"`
 	Code        CodeRolePermission `json:"code"`
 	Description string             `json:"description"`
+}
+
+func (p Permission) IsNil() bool {
+	return p.ID == uuid.Nil
 }

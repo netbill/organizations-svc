@@ -10,3 +10,7 @@ type Profile struct {
 	Official  bool      `json:"official"`
 	Pseudonym *string   `json:"pseudonym"`
 }
+
+func (p Profile) IsNil() bool {
+	return p.AccountID == uuid.Nil
+}

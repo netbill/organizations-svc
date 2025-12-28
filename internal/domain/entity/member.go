@@ -17,15 +17,10 @@ type Member struct {
 	Pseudonym *string `json:"pseudonym,omitempty"`
 	Official  bool    `json:"official"`
 
-	Roles []MemberRole `json:"roles,omitempty"`
-
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type MemberRole struct {
-	RoleID uuid.UUID `json:"role_id"`
-	Head   bool      `json:"head"`
-	Rank   uint      `json:"rank"`
-	Name   string    `json:"name"`
+func (m Member) IsNil() bool {
+	return m.ID == uuid.Nil
 }

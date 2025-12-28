@@ -74,7 +74,7 @@ type InsertRoleParams struct {
 	AgglomerationID uuid.UUID `json:"agglomeration_id"`
 	Head            bool      `json:"head"`
 	Editable        bool      `json:"editable"`
-	Rank            int       `json:"rank"`
+	Rank            uint      `json:"rank"`
 	Name            string    `json:"name"`
 }
 
@@ -220,50 +220,6 @@ func (q RolesQ) UpdateMany(ctx context.Context) (int64, error) {
 	return aff, nil
 }
 
-func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (Role, error) {
-	var aggID uuid.UUID
-	var oldRank int
-
-	{
-		const sqlGet = `SELECT agglomeration_id, rank FROM roles WHERE id = $1 LIMIT 1`
-		if err := q.db.QueryRowContext(ctx, sqlGet, roleID).Scan(&aggID, &oldRank); err != nil {
-			return Role{}, fmt.Errorf("scanning role rank: %w", err)
-		}
-	}
-
-	if oldRank == int(newRank) {
-		return q.New().FilterByID(roleID).Get(ctx)
-	}
-
-	const sqlMove = `
-		WITH upd AS (
-			UPDATE roles
-			SET
-				rank = CASE
-					WHEN id = $1 THEN $2
-					WHEN $2 < $3 AND rank >= $2 AND rank < $3 THEN rank + 1
-					WHEN $2 > $3 AND rank <= $2 AND rank > $3 THEN rank - 1
-					ELSE rank
-				END,
-				updated_at = now()
-			WHERE agglomeration_id = $4
-			RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_at
-		)
-		SELECT id, agglomeration_id, head, editable, rank, name, created_at, updated_at
-		FROM upd
-		WHERE id = $1
-	`
-
-	args := []any{roleID, int(newRank), oldRank, aggID}
-
-	var out Role
-	if err := out.scan(q.db.QueryRowContext(ctx, sqlMove, args...)); err != nil {
-		return Role{}, err
-	}
-
-	return out, nil
-}
-
 func (q RolesQ) FilterByID(id uuid.UUID) RolesQ {
 	q.selector = q.selector.Where(sq.Eq{"r.id": id})
 	q.counter = q.counter.Where(sq.Eq{"r.id": id})
@@ -312,11 +268,6 @@ func (q RolesQ) FilterLikeName(name string) RolesQ {
 	return q
 }
 
-func (q RolesQ) UpdateRank(rank int) RolesQ {
-	q.updater = q.updater.Set("rank", rank)
-	return q
-}
-
 func (q RolesQ) UpdateName(name string) RolesQ {
 	q.updater = q.updater.Set("name", name)
 	return q
@@ -347,4 +298,135 @@ func (q RolesQ) DeleteAndShiftRanks(ctx context.Context, roleID uuid.UUID) error
 	}
 
 	return nil
+}
+
+func (q RolesQ) GetMemberMaxRole(
+	ctx context.Context,
+	memberID uuid.UUID,
+) (Role, error) {
+	const sqlq = `
+		SELECT
+			r.id,
+			r.agglomeration_id,
+			r.head,
+			r.editable,
+			r.rank,
+			r.name,
+			r.created_at,
+			r.updated_at
+		FROM member_roles mr
+		JOIN roles r ON r.id = mr.role_id
+		WHERE mr.member_id = $1
+		ORDER BY r.rank ASC, r.id ASC
+		LIMIT 1
+	`
+
+	var role Role
+	var rank int
+
+	if err := q.db.QueryRowContext(ctx, sqlq, memberID).
+		Scan(
+			&role.ID,
+			&role.AgglomerationID,
+			&role.Head,
+			&role.Editable,
+			&rank,
+			&role.Name,
+			&role.CreatedAt,
+			&role.UpdatedAt,
+		); err != nil {
+		return Role{}, fmt.Errorf("scanning member max role: %w", err)
+	}
+
+	role.Rank = uint(rank)
+	return role, nil
+}
+
+func (q RolesQ) GetAccountMaxRoleInAgglomeration(
+	ctx context.Context,
+	accountID uuid.UUID,
+	agglomerationID uuid.UUID,
+) (Role, error) {
+	const sqlq = `
+		SELECT
+			r.id,
+			r.agglomeration_id,
+			r.head,
+			r.editable,
+			r.rank,
+			r.name,
+			r.created_at,
+			r.updated_at
+		FROM members m
+		JOIN member_roles mr ON mr.member_id = m.id
+		JOIN roles r ON r.id = mr.role_id
+		WHERE m.account_id = $1
+		  AND m.agglomeration_id = $2
+		ORDER BY r.rank ASC, r.id ASC
+		LIMIT 1
+	`
+
+	var role Role
+	var rank int
+
+	if err := q.db.QueryRowContext(ctx, sqlq, accountID, agglomerationID).
+		Scan(
+			&role.ID,
+			&role.AgglomerationID,
+			&role.Head,
+			&role.Editable,
+			&rank,
+			&role.Name,
+			&role.CreatedAt,
+			&role.UpdatedAt,
+		); err != nil {
+		return Role{}, fmt.Errorf("scanning account max role in agglomeration: %w", err)
+	}
+
+	role.Rank = uint(rank)
+	return role, nil
+}
+
+func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (Role, error) {
+	var aggID uuid.UUID
+	var oldRank int
+
+	{
+		const sqlGet = `SELECT agglomeration_id, rank FROM roles WHERE id = $1 LIMIT 1`
+		if err := q.db.QueryRowContext(ctx, sqlGet, roleID).Scan(&aggID, &oldRank); err != nil {
+			return Role{}, fmt.Errorf("scanning role rank: %w", err)
+		}
+	}
+
+	if oldRank == int(newRank) {
+		return q.New().FilterByID(roleID).Get(ctx)
+	}
+
+	const sqlMove = `
+		WITH upd AS (
+			UPDATE roles
+			SET
+				rank = CASE
+					WHEN id = $1 THEN $2
+					WHEN $2 < $3 AND rank >= $2 AND rank < $3 THEN rank + 1
+					WHEN $2 > $3 AND rank <= $2 AND rank > $3 THEN rank - 1
+					ELSE rank
+				END,
+				updated_at = now()
+			WHERE agglomeration_id = $4
+			RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_at
+		)
+		SELECT id, agglomeration_id, head, editable, rank, name, created_at, updated_at
+		FROM upd
+		WHERE id = $1
+	`
+
+	args := []any{roleID, int(newRank), oldRank, aggID}
+
+	var out Role
+	if err := out.scan(q.db.QueryRowContext(ctx, sqlMove, args...)); err != nil {
+		return Role{}, err
+	}
+
+	return out, nil
 }

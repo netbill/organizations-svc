@@ -34,7 +34,7 @@ func (s Service) DeactivateAgglomeration(ctx context.Context, ID uuid.UUID) (agg
 
 func (s Service) DeactivateAgglomerationByUser(
 	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
+	memberID, agglomerationID uuid.UUID,
 ) (entity.Agglomeration, error) {
 	agglo, err := s.GetAgglomeration(ctx, agglomerationID)
 	if err != nil {
@@ -47,11 +47,10 @@ func (s Service) DeactivateAgglomerationByUser(
 		)
 	}
 
-	err = s.checkPermissionByCode(
+	err = s.checkPermissionForManageAgglomeration(
 		ctx,
-		accountID,
+		memberID,
 		agglomerationID,
-		entity.RolePermissionManageAgglomeration,
 	)
 	if err != nil {
 		return entity.Agglomeration{}, err

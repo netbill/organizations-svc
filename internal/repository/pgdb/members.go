@@ -95,6 +95,28 @@ func (q MembersQ) Insert(ctx context.Context, data InsertMemberParams) (Member, 
 	return inserted, nil
 }
 
+func (q MembersQ) Exists(ctx context.Context) (bool, error) {
+	existsQ := q.selector.
+		Columns("1").
+		RemoveLimit().
+		RemoveOffset().
+		Prefix("SELECT EXISTS (").
+		Suffix(") AS exists").
+		Limit(1)
+
+	query, args, err := existsQ.ToSql()
+	if err != nil {
+		return false, fmt.Errorf("building exists query for %s: %w", MemberTable, err)
+	}
+
+	var ok bool
+	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil {
+		return false, fmt.Errorf("scanning exists for %s: %w", MemberTable, err)
+	}
+
+	return ok, nil
+}
+
 func (q MembersQ) Get(ctx context.Context) (Member, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
@@ -257,4 +279,34 @@ func (q MembersQ) Count(ctx context.Context) (int64, error) {
 func (q MembersQ) Page(limit uint, offset uint) MembersQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
+}
+
+func (q MembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
+	const sqlq = `
+		SELECT
+			(m1.agglomeration_id = m2.agglomeration_id)
+			AND (COALESCE(r1.min_rank, 2147483647) < COALESCE(r2.min_rank, 2147483647)) AS can
+		FROM members m1
+		JOIN members m2 ON m2.id = $2
+		LEFT JOIN LATERAL (
+			SELECT MIN(r.rank) AS min_rank
+			FROM member_roles mr
+			JOIN roles r ON r.id = mr.role_id
+			WHERE mr.member_id = m1.id
+		) r1 ON true
+		LEFT JOIN LATERAL (
+			SELECT MIN(r.rank) AS min_rank
+			FROM member_roles mr
+			JOIN roles r ON r.id = mr.role_id
+			WHERE mr.member_id = m2.id
+		) r2 ON true
+		WHERE m1.id = $1
+		LIMIT 1
+	`
+
+	var ok bool
+	if err := q.db.QueryRowContext(ctx, sqlq, firstMemberID, secondMemberID).Scan(&ok); err != nil {
+		return false, fmt.Errorf("scanning can_interact: %w", err)
+	}
+	return ok, nil
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/modules/agglomeration"
-	"github.com/umisto/cities-svc/internal/repository/models"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
@@ -21,7 +20,7 @@ func (s Service) CreateAgglomeration(ctx context.Context, name string) (entity.A
 		return entity.Agglomeration{}, err
 	}
 
-	return models.Agglomeration(row), nil
+	return Agglomeration(row), nil
 }
 
 func (s Service) UpdateAgglomeration(
@@ -42,7 +41,7 @@ func (s Service) UpdateAgglomeration(
 		return entity.Agglomeration{}, err
 	}
 
-	return models.Agglomeration(row), nil
+	return Agglomeration(row), nil
 }
 
 func (s Service) UpdateAgglomerationStatus(
@@ -55,7 +54,7 @@ func (s Service) UpdateAgglomerationStatus(
 		return entity.Agglomeration{}, err
 	}
 
-	return models.Agglomeration(row), nil
+	return Agglomeration(row), nil
 }
 
 func (s Service) GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error) {
@@ -67,7 +66,7 @@ func (s Service) GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity
 		return entity.Agglomeration{}, err
 	}
 
-	return models.Agglomeration(row), nil
+	return Agglomeration(row), nil
 }
 
 func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
@@ -77,8 +76,7 @@ func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
 func (s Service) FilterAgglomerations(
 	ctx context.Context,
 	filter agglomeration.FilterParams,
-	offset uint,
-	limit uint,
+	offset, limit uint,
 ) (pagi.Page[[]entity.Agglomeration], error) {
 	q := s.agglomerationsQ()
 	if filter.Name != nil {
@@ -102,7 +100,7 @@ func (s Service) FilterAgglomerations(
 
 	agglomerations := make([]entity.Agglomeration, len(rows))
 	for i, row := range rows {
-		agglomerations[i] = models.Agglomeration(row)
+		agglomerations[i] = Agglomeration(row)
 	}
 
 	return pagi.Page[[]entity.Agglomeration]{
@@ -112,4 +110,15 @@ func (s Service) FilterAgglomerations(
 		Total: total,
 	}, nil
 
+}
+
+func Agglomeration(db pgdb.Agglomeration) entity.Agglomeration {
+	return entity.Agglomeration{
+		ID:        db.ID,
+		Status:    db.Status,
+		Name:      db.Name,
+		Icon:      db.Icon,
+		CreatedAt: db.CreatedAt,
+		UpdatedAt: db.UpdatedAt,
+	}
 }

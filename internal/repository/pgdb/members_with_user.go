@@ -2,31 +2,21 @@ package pgdb
 
 import (
 	"context"
-	"encoding/json"
+	"database/sql"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 )
 
-type MemberRoleData struct {
-	RoleID uuid.UUID `json:"role_id"`
-	Head   bool      `json:"head"`
-	Rank   uint      `json:"rank"`
-	Name   string    `json:"name"`
-}
-
 type MemberWithUserData struct {
 	Member
-	Username  string           `json:"username"`
-	Official  bool             `json:"official"`
-	Pseudonym *string          `json:"pseudonym"`
-	Roles     []MemberRoleData `json:"roles"`
+	Username  string  `json:"username"`
+	Official  bool    `json:"official"`
+	Pseudonym *string `json:"pseudonym"`
 }
 
 func (mwd *MemberWithUserData) scan(row sq.RowScanner) error {
-	var rolesRaw []byte
-
 	err := row.Scan(
 		&mwd.ID,
 		&mwd.AccountID,
@@ -38,50 +28,17 @@ func (mwd *MemberWithUserData) scan(row sq.RowScanner) error {
 		&mwd.Username,
 		&mwd.Official,
 		&mwd.Pseudonym,
-		&rolesRaw,
 	)
 	if err != nil {
 		return fmt.Errorf("scanning member with user data: %w", err)
 	}
-
-	if len(rolesRaw) == 0 || string(rolesRaw) == "null" {
-		mwd.Roles = nil
-		return nil
-	}
-
-	if err = json.Unmarshal(rolesRaw, &mwd.Roles); err != nil {
-		return fmt.Errorf("unmarshal roles: %w", err)
-	}
-
 	return nil
 }
 
-func (q MembersQ) WithUserData(roleLimit uint) MembersQ {
+func (q MembersQ) WithUserData() MembersQ {
 	q.selector = q.selector.
 		Columns("p.username", "p.official", "p.pseudonym").
-		Join("profiles p ON p.account_id = m.account_id").
-		JoinClause(sq.Expr(
-			`LEFT JOIN LATERAL (
-				SELECT COALESCE(
-					jsonb_agg(
-						jsonb_build_object(
-							'role_id', r.id,
-							'head', r.head,
-							'rank', r.rank,
-							'name', r.name
-						)
-						ORDER BY r.rank ASC, r.id ASC
-					),
-					'[]'::jsonb
-				) AS roles
-				FROM member_roles mr
-				JOIN roles r ON r.id = mr.role_id
-				WHERE mr.member_id = m.id
-				LIMIT ?
-			) rr ON true`,
-			uint64(roleLimit),
-		)).
-		Column("rr.roles")
+		Join("profiles p ON p.account_id = m.account_id")
 
 	q.counter = q.counter.Join("profiles p ON p.account_id = m.account_id")
 
@@ -139,33 +96,24 @@ func (q MembersQ) FilterBestMatch(term string) MembersQ {
 }
 
 func (q MembersQ) FilterRoleID(roleID uuid.UUID) MembersQ {
-	q.selector = q.selector.Where(sq.Expr(`
+	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
 			FROM member_roles mr
 			WHERE mr.member_id = m.id
 				AND mr.role_id = ?
 		)
-	`, roleID))
-	return q
-}
+	`, roleID)
 
-func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
-	q.selector = q.selector.Where(sq.Expr(`
-		EXISTS (
-			SELECT 1
-			FROM member_roles mr
-			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			JOIN permissions p ON p.id = rp.permission_id
-			WHERE mr.member_id = m.id
-				AND p.code = ?
-		)
-	`, code))
+	q.selector = q.selector.Where(query)
+	q.counter = q.counter.Where(query)
+	q.updater = q.updater.Where(query)
+	q.deleter = q.deleter.Where(query)
 	return q
 }
 
 func (q MembersQ) FilterByRoleRankUp(rankUp uint) MembersQ {
-	q.selector = q.selector.Where(sq.Expr(`
+	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
 			FROM member_roles mr
@@ -173,12 +121,17 @@ func (q MembersQ) FilterByRoleRankUp(rankUp uint) MembersQ {
 			WHERE mr.member_id = m.id
 				AND r.rank >= ?
 		)
-	`, int(rankUp)))
+	`, int(rankUp))
+
+	q.selector = q.selector.Where(query)
+	q.counter = q.counter.Where(query)
+	q.updater = q.updater.Where(query)
+	q.deleter = q.deleter.Where(query)
 	return q
 }
 
 func (q MembersQ) FilterByRoleRankDown(rankDown uint) MembersQ {
-	q.selector = q.selector.Where(sq.Expr(`
+	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
 			FROM member_roles mr
@@ -186,7 +139,32 @@ func (q MembersQ) FilterByRoleRankDown(rankDown uint) MembersQ {
 			WHERE mr.member_id = m.id
 				AND r.rank <= ?
 		)
-	`, int(rankDown)))
+	`, int(rankDown))
+
+	q.selector = q.selector.Where(query)
+	q.counter = q.counter.Where(query)
+	q.updater = q.updater.Where(query)
+	q.deleter = q.deleter.Where(query)
+	return q
+}
+
+func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
+	expr := sq.Expr(`
+		EXISTS (
+			SELECT 1
+			FROM member_roles mr
+			JOIN role_permissions rp ON rp.role_id = mr.role_id
+			JOIN permissions p ON p.id = rp.permission_id
+			WHERE mr.member_id = m.id
+			  AND p.code = ?
+		)
+	`, code)
+
+	q.selector = q.selector.Where(expr)
+	q.counter = q.counter.Where(expr)
+	q.updater = q.updater.Where(expr)
+	q.deleter = q.deleter.Where(expr)
+
 	return q
 }
 
@@ -224,6 +202,98 @@ func (q MembersQ) SelectWithUserData(ctx context.Context) ([]MemberWithUserData,
 		}
 		out = append(out, mwd)
 	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+type MemberRoleData struct {
+	RoleID uuid.UUID `json:"role_id"`
+	Head   bool      `json:"head"`
+	Rank   uint      `json:"rank"`
+	Name   string    `json:"name"`
+}
+
+type MemberWithRoleDataRow struct {
+	MemberWithUserData
+	roles []MemberRoleData
+}
+
+func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]MemberWithRoleDataRow, error) {
+	q.selector = q.selector.
+		Columns("p.username", "p.official", "p.pseudonym").
+		Join("profiles p ON p.account_id = m.account_id").
+		LeftJoin("member_roles mr ON mr.member_id = m.id").
+		LeftJoin("roles r ON r.id = mr.role_id").
+		Columns("r.id", "r.head", "r.rank", "r.name").
+		OrderBy("m.id ASC", "r.rank ASC", "r.id ASC")
+
+	query, args, err := q.selector.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("building select query for %s: %w", MemberTable, err)
+	}
+
+	rows, err := q.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("executing select query for %s: %w", MemberTable, err)
+	}
+	defer rows.Close()
+
+	out := make([]MemberWithRoleDataRow, 0)
+	idx := make(map[uuid.UUID]int)
+
+	for rows.Next() {
+		var mwd MemberWithUserData
+
+		var roleID uuid.NullUUID
+		var head sql.NullBool
+		var rank sql.NullInt64
+		var name sql.NullString
+
+		if err = rows.Scan(
+			&mwd.ID,
+			&mwd.AccountID,
+			&mwd.AgglomerationID,
+			&mwd.Position,
+			&mwd.Label,
+			&mwd.CreatedAt,
+			&mwd.UpdatedAt,
+			&mwd.Username,
+			&mwd.Official,
+			&mwd.Pseudonym,
+			&roleID,
+			&head,
+			&rank,
+			&name,
+		); err != nil {
+			return nil, fmt.Errorf("scanning member with role data: %w", err)
+		}
+
+		i, ok := idx[mwd.ID]
+		if !ok {
+			out = append(out, MemberWithRoleDataRow{MemberWithUserData: mwd})
+			i = len(out) - 1
+			idx[mwd.ID] = i
+		}
+
+		if !roleID.Valid {
+			continue
+		}
+
+		if roleLimit > 0 && uint(len(out[i].roles)) >= roleLimit {
+			continue
+		}
+
+		out[i].roles = append(out[i].roles, MemberRoleData{
+			RoleID: roleID.UUID,
+			Head:   head.Valid && head.Bool,
+			Rank:   uint(rank.Int64),
+			Name:   name.String,
+		})
+	}
+
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}

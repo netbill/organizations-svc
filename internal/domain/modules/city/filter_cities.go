@@ -20,9 +20,9 @@ type FilterParams struct {
 func (s Service) FilterCities(
 	ctx context.Context,
 	params FilterParams,
-	pagination pagi.Params,
+	offset, limit uint,
 ) (pagi.Page[[]entity.City], error) {
-	res, err := s.repo.FilterCities(ctx, params, pagination)
+	res, err := s.repo.FilterCities(ctx, params, offset, limit)
 	if err != nil {
 		return pagi.Page[[]entity.City]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("filter cities: %w", err),
@@ -34,13 +34,13 @@ func (s Service) FilterCities(
 
 func (s Service) FilterCitiesNearest(
 	ctx context.Context,
-	point orb.Point,
 	filter FilterParams,
-	pagination pagi.Params,
-) (pagi.Page[map[int64]entity.City], error) {
-	res, err := s.repo.FilterCitiesNearest(ctx, point, filter, pagination)
+	point orb.Point,
+	offset, limit uint,
+) (pagi.Page[map[float64]entity.City], error) {
+	res, err := s.repo.FilterCitiesNearest(ctx, filter, point, offset, limit)
 	if err != nil {
-		return pagi.Page[map[int64]entity.City]{}, errx.ErrorInternal.Raise(
+		return pagi.Page[map[float64]entity.City]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("filter cities by distance: %w", err),
 		)
 	}

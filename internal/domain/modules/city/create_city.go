@@ -34,7 +34,7 @@ func (s Service) CreateCity(ctx context.Context, params CreateParams) (city enti
 	}
 
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = s.repo.CreateCity(ctx, params)
+		city, err = s.repo.CreateCity(ctx, params)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to create city: %w", err),
@@ -51,5 +51,5 @@ func (s Service) CreateCity(ctx context.Context, params CreateParams) (city enti
 		return nil
 	})
 
-	return s.GetCity(ctx, city.ID)
+	return city, err
 }

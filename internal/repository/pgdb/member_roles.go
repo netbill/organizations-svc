@@ -6,6 +6,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/umisto/pgx"
 )
 
 const MemberRoleTable = "member_roles"

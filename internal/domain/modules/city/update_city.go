@@ -21,7 +21,7 @@ type UpdateParams struct {
 
 func (s Service) UpdateCity(ctx context.Context, id uuid.UUID, params UpdateParams) (city entity.City, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = s.repo.UpdateCity(ctx, id, params)
+		city, err = s.repo.UpdateCity(ctx, id, params)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to update city: %w", err),
@@ -40,7 +40,7 @@ func (s Service) UpdateCity(ctx context.Context, id uuid.UUID, params UpdatePara
 		return entity.City{}, err
 	}
 
-	return s.GetCity(ctx, id)
+	return city, nil
 }
 
 func (s Service) UpdateCityByUser(
@@ -64,7 +64,7 @@ func (s Service) UpdateCityByUser(
 		return entity.City{}, err
 	}
 
-	err = s.checkPermissionByCode(ctx, accountID, *city.AgglomerationID, entity.RolePermissionManageCities)
+	err = s.checkPermissionForManageCity(ctx, accountID, *city.AgglomerationID)
 	if err != nil {
 		return entity.City{}, err
 	}

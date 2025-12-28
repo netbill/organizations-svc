@@ -17,9 +17,9 @@ type FilterParams struct {
 func (s Service) FilterAgglomerations(
 	ctx context.Context,
 	params FilterParams,
-	pagination pagi.Params,
+	offset, limit uint,
 ) (pagi.Page[[]entity.Agglomeration], error) {
-	res, err := s.repo.FilterAgglomerations(ctx, params, pagination)
+	res, err := s.repo.FilterAgglomerations(ctx, params, offset, limit)
 	if err != nil {
 		return pagi.Page[[]entity.Agglomeration]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("filter agglomerations: %w", err),

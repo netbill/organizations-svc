@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/domain/entity"
-	"github.com/umisto/cities-svc/internal/repository/models"
+	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 
@@ -15,7 +15,7 @@ func (s Service) GetPermission(ctx context.Context, ID uuid.UUID) (entity.Permis
 		return entity.Permission{}, err
 	}
 
-	return models.Permission(res), nil
+	return Permission(res), nil
 }
 
 func (s Service) GetPermissionByCode(ctx context.Context, code entity.CodeRolePermission) (entity.Permission, error) {
@@ -24,7 +24,7 @@ func (s Service) GetPermissionByCode(ctx context.Context, code entity.CodeRolePe
 		return entity.Permission{}, err
 	}
 
-	return models.Permission(res), nil
+	return Permission(res), nil
 }
 
 type FilterPermissionsParams struct {
@@ -60,7 +60,7 @@ func (s Service) FilterPermissions(
 
 	collection := make([]entity.Permission, 0, len(rows))
 	for i, row := range rows {
-		collection[i] = models.Permission(row)
+		collection[i] = Permission(row)
 	}
 
 	return pagi.Page[[]entity.Permission]{
@@ -69,4 +69,12 @@ func (s Service) FilterPermissions(
 		Size:  uint(len(collection)),
 		Total: uint(total),
 	}, nil
+}
+
+func Permission(p pgdb.Permission) entity.Permission {
+	return entity.Permission{
+		ID:          p.ID,
+		Code:        entity.CodeRolePermission(p.Code),
+		Description: p.Description,
+	}
 }

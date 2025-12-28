@@ -17,28 +17,29 @@ type Service struct {
 
 type repo interface {
 	CreateAgglomeration(ctx context.Context, name string) (entity.Agglomeration, error)
-	FilterAgglomerations(
-		ctx context.Context,
-		filter FilterParams,
-		pagination pagi.Params,
-	) (pagi.Page[[]entity.Agglomeration], error)
 
 	UpdateAgglomeration(
 		ctx context.Context,
 		ID uuid.UUID,
 		params UpdateParams,
 	) (entity.Agglomeration, error)
-
 	UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, status string) (entity.Agglomeration, error)
 
 	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error)
 
 	DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error
 
-	//CheckMemberHavePermissionByCode(ctx context.Context, memberID uuid.UUID, permissionKey string) (bool, error)
-	//CheckMemberHavePermissionByID(ctx context.Context, memberID, permissionID uuid.UUID) (bool, error)
-	//CheckAccountHavePermissionByCode(ctx context.Context, accountID, agglomerationID uuid.UUID, permissionKey string) (bool, error)
-	//CheckAccountHavePermissionByID(ctx context.Context, accountID, agglomerationID, permissionID uuid.UUID) (bool, error)
+	FilterAgglomerations(
+		ctx context.Context,
+		filter FilterParams,
+		offset, limit uint,
+	) (pagi.Page[[]entity.Agglomeration], error)
+
+	CheckAccountHavePermissionByCode(
+		ctx context.Context,
+		accountID, agglomerationID uuid.UUID,
+		permissionKey string,
+	) (bool, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
@@ -55,17 +56,16 @@ type messanger interface {
 	WriteAgglomerationDeleted(ctx context.Context, agglomerationID uuid.UUID) error
 }
 
-func (s Service) checkPermissionByCode(
+func (s Service) checkPermissionForManageAgglomeration(
 	ctx context.Context,
 	accountID uuid.UUID,
 	agglomerationID uuid.UUID,
-	permissionKey entity.CodeRolePermission,
 ) error {
 	access, err := s.repo.CheckAccountHavePermissionByCode(
 		ctx,
 		accountID,
 		agglomerationID,
-		permissionKey.String(),
+		entity.RolePermissionManageAgglomeration.String(),
 	)
 	if err != nil {
 		return errx.ErrorInternal.Raise(

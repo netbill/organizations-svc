@@ -19,28 +19,32 @@ type Service struct {
 type repo interface {
 	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error)
 
-	CreateCity(ctx context.Context, params CreateParams) error
+	CreateCity(ctx context.Context, params CreateParams) (entity.City, error)
 
 	GetCityByID(ctx context.Context, ID uuid.UUID) (entity.City, error)
 	GetCityBySlug(ctx context.Context, slug string) (entity.City, error)
 
-	UpdateCity(ctx context.Context, ID uuid.UUID, params UpdateParams) error
+	UpdateCity(ctx context.Context, ID uuid.UUID, params UpdateParams) (entity.City, error)
 
-	UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) error
+	UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) (entity.City, error)
 
 	FilterCities(
 		ctx context.Context,
 		params FilterParams,
-		pagination pagi.Params,
+		offset, limit uint,
 	) (pagi.Page[[]entity.City], error)
 	FilterCitiesNearest(
 		ctx context.Context,
-		point orb.Point,
 		filter FilterParams,
-		pagination pagi.Params,
-	) (pagi.Page[map[int64]entity.City], error)
+		point orb.Point,
+		offset, limit uint,
+	) (pagi.Page[map[uint]entity.City], error)
 
-	CheckAccountHavePermissionByCode(ctx context.Context, accountID, agglomerationID uuid.UUID, permissionKey string) (bool, error)
+	CheckAccountHavePermissionByCode(
+		ctx context.Context,
+		accountID, agglomerationID uuid.UUID,
+		permissionKey string,
+	) (bool, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
@@ -79,6 +83,30 @@ func (s Service) checkAgglomerationIsActiveAndExists(ctx context.Context, agglom
 	return agglo, nil
 }
 
+func (s Service) checkPermissionForManageCity(
+	ctx context.Context,
+	accountID uuid.UUID,
+	agglomerationID uuid.UUID,
+) error {
+	access, err := s.repo.CheckAccountHavePermissionByCode(
+		ctx,
+		accountID,
+		agglomerationID,
+		entity.RolePermissionManageCities.String(),
+	)
+	if err != nil {
+		return errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to check initiator permissions: %w", err))
+	}
+	if !access {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("initiator has no access to activate agglomeration"),
+		)
+	}
+
+	return nil
+}
+
 func (s Service) checkSlugIsAvailable(ctx context.Context, slug string) error {
 	existingCity, err := s.repo.GetCityBySlug(ctx, slug)
 	if err != nil {
@@ -91,30 +119,5 @@ func (s Service) checkSlugIsAvailable(ctx context.Context, slug string) error {
 			fmt.Errorf("city with slug %s already exists", slug),
 		)
 	}
-	return nil
-}
-
-func (s Service) checkPermissionByCode(
-	ctx context.Context,
-	accountID uuid.UUID,
-	agglomerationID uuid.UUID,
-	permissionKey entity.CodeRolePermission,
-) error {
-	access, err := s.repo.CheckAccountHavePermissionByCode(
-		ctx,
-		accountID,
-		agglomerationID,
-		permissionKey.String(),
-	)
-	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to check initiator permissions: %w", err))
-	}
-	if !access {
-		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator has no access to activate agglomeration"),
-		)
-	}
-
 	return nil
 }

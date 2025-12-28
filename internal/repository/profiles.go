@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/domain/entity"
-	"github.com/umisto/cities-svc/internal/repository/models"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 )
 
@@ -20,7 +19,7 @@ func (s Service) CreateProfile(ctx context.Context, profile entity.Profile) (ent
 		return entity.Profile{}, err
 	}
 
-	return models.Profile(row), nil
+	return Profile(row), nil
 }
 
 func (s Service) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (entity.Profile, error) {
@@ -29,7 +28,7 @@ func (s Service) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID)
 		return entity.Profile{}, err
 	}
 
-	return models.Profile(row), nil
+	return Profile(row), nil
 }
 
 func (s Service) GetProfileByUsername(ctx context.Context, username string) (entity.Profile, error) {
@@ -38,9 +37,18 @@ func (s Service) GetProfileByUsername(ctx context.Context, username string) (ent
 		return entity.Profile{}, err
 	}
 
-	return models.Profile(row), nil
+	return Profile(row), nil
 }
 
 func (s Service) DeleteProfileByAccountID(ctx context.Context, accountID uuid.UUID) error {
 	return s.profilesQ().FilterByAccountID(accountID).Delete(ctx)
+}
+
+func Profile(row pgdb.Profile) entity.Profile {
+	return entity.Profile{
+		AccountID: row.AccountID,
+		Username:  row.Username,
+		Official:  row.Official,
+		Pseudonym: row.Pseudonym,
+	}
 }
