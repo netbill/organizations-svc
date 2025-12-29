@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
 func (s Service) DeleteInvite(
@@ -25,7 +25,7 @@ func (s Service) DeleteInvite(
 		)
 	}
 
-	if invite.Status != entity.InviteStatusSent {
+	if invite.Status != models.InviteStatusSent {
 		return err
 	}
 	if invite.ExpiresAt.Before(time.Now().UTC()) {
@@ -40,5 +40,17 @@ func (s Service) DeleteInvite(
 		return err
 	}
 
-	return s.repo.DeleteInvite(ctx, inviteID)
+	return s.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = s.repo.DeleteInvite(ctx, inviteID)
+		if err != nil {
+			return err
+		}
+
+		err = s.messenger.WriteDeletedInvite(ctx, invite.ID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

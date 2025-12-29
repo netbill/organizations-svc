@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
 
@@ -23,16 +23,16 @@ func New(repo repo, messenger messanger) Service {
 }
 
 type repo interface {
-	CreateAgglomeration(ctx context.Context, name string) (entity.Agglomeration, error)
+	CreateAgglomeration(ctx context.Context, name string) (models.Agglomeration, error)
 
 	UpdateAgglomeration(
 		ctx context.Context,
 		ID uuid.UUID,
 		params UpdateParams,
-	) (entity.Agglomeration, error)
-	UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, status string) (entity.Agglomeration, error)
+	) (models.Agglomeration, error)
+	UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, status string) (models.Agglomeration, error)
 
-	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error)
+	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
 
 	DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error
 
@@ -40,7 +40,7 @@ type repo interface {
 		ctx context.Context,
 		filter FilterParams,
 		offset, limit uint,
-	) (pagi.Page[[]entity.Agglomeration], error)
+	) (pagi.Page[[]models.Agglomeration], error)
 
 	CheckAccountHavePermissionByCode(
 		ctx context.Context,
@@ -52,13 +52,13 @@ type repo interface {
 }
 
 type messanger interface {
-	WriteAgglomerationCreated(ctx context.Context, agglomeration entity.Agglomeration) error
+	WriteAgglomerationCreated(ctx context.Context, agglomeration models.Agglomeration) error
 
-	WriteAgglomerationActivated(ctx context.Context, agglomeration entity.Agglomeration) error
-	WriteAgglomerationDeactivated(ctx context.Context, agglomeration entity.Agglomeration) error
-	WriteAgglomerationSuspended(ctx context.Context, agglomeration entity.Agglomeration) error
+	WriteAgglomerationActivated(ctx context.Context, agglomeration models.Agglomeration) error
+	WriteAgglomerationDeactivated(ctx context.Context, agglomeration models.Agglomeration) error
+	WriteAgglomerationSuspended(ctx context.Context, agglomeration models.Agglomeration) error
 
-	WriteAgglomerationUpdated(ctx context.Context, agglomeration entity.Agglomeration) error
+	WriteAgglomerationUpdated(ctx context.Context, agglomeration models.Agglomeration) error
 
 	WriteAgglomerationDeleted(ctx context.Context, agglomerationID uuid.UUID) error
 }
@@ -72,7 +72,7 @@ func (s Service) checkPermissionForManageAgglomeration(
 		ctx,
 		accountID,
 		agglomerationID,
-		entity.RolePermissionManageAgglomeration.String(),
+		models.RolePermissionManageAgglomeration.String(),
 	)
 	if err != nil {
 		return errx.ErrorInternal.Raise(

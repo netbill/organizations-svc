@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 )
 
-func (s Service) CreateProfile(ctx context.Context, profile entity.Profile) (entity.Profile, error) {
+func (s Service) CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
 	row, err := s.profilesQ().Upsert(ctx, pgdb.ProfileUpsertInput{
 		AccountID: profile.AccountID,
 		Username:  profile.Username,
@@ -16,25 +16,25 @@ func (s Service) CreateProfile(ctx context.Context, profile entity.Profile) (ent
 		Pseudonym: profile.Pseudonym,
 	})
 	if err != nil {
-		return entity.Profile{}, err
+		return models.Profile{}, err
 	}
 
 	return Profile(row), nil
 }
 
-func (s Service) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (entity.Profile, error) {
+func (s Service) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (models.Profile, error) {
 	row, err := s.profilesQ().FilterByAccountID(accountID).Get(ctx)
 	if err != nil {
-		return entity.Profile{}, err
+		return models.Profile{}, err
 	}
 
 	return Profile(row), nil
 }
 
-func (s Service) GetProfileByUsername(ctx context.Context, username string) (entity.Profile, error) {
+func (s Service) GetProfileByUsername(ctx context.Context, username string) (models.Profile, error) {
 	row, err := s.profilesQ().FilterByUsername(username).Get(ctx)
 	if err != nil {
-		return entity.Profile{}, err
+		return models.Profile{}, err
 	}
 
 	return Profile(row), nil
@@ -44,8 +44,8 @@ func (s Service) DeleteProfileByAccountID(ctx context.Context, accountID uuid.UU
 	return s.profilesQ().FilterByAccountID(accountID).Delete(ctx)
 }
 
-func Profile(row pgdb.Profile) entity.Profile {
-	return entity.Profile{
+func Profile(row pgdb.Profile) models.Profile {
+	return models.Profile{
 		AccountID: row.AccountID,
 		Username:  row.Username,
 		Official:  row.Official,

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
 type UpdateParams struct {
@@ -14,7 +14,7 @@ type UpdateParams struct {
 	Label    *string
 }
 
-func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (member entity.Member, err error) {
+func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (member models.Member, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		member, err = s.repo.UpdateMember(ctx, ID, params)
 		if err != nil {
@@ -31,7 +31,7 @@ func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params UpdatePa
 
 		return nil
 	}); err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 
 	return member, nil
@@ -41,20 +41,20 @@ func (s Service) UpdateMemberByUser(
 	ctx context.Context,
 	accountID, memberID uuid.UUID,
 	params UpdateParams,
-) (entity.Member, error) {
-	member, err := s.GetMember(ctx, memberID)
+) (models.Member, error) {
+	member, err := s.GetMemberByID(ctx, memberID)
 	if err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 
 	initiator, err := s.GetInitiatorMember(ctx, accountID, memberID)
 	if err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 
 	err = s.CheckAccessToManageOtherMember(ctx, initiator.ID, member.ID)
 	if err != nil {
-		return entity.Member{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("initiator member %s has no permission to manage members: %w", initiator.ID, err),
 		)
 	}

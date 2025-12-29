@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
-func (s Service) CreateAgglomeration(ctx context.Context, name string) (agglo entity.Agglomeration, err error) {
+func (s Service) CreateAgglomeration(ctx context.Context, name string) (agglo models.Agglomeration, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		agglo, err = s.repo.CreateAgglomeration(ctx, name)
 		if err != nil {
@@ -26,7 +26,7 @@ func (s Service) CreateAgglomeration(ctx context.Context, name string) (agglo en
 
 		return nil
 	}); err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
 	return agglo, nil

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/cities-svc/internal/domain/modules/invite"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 )
@@ -12,14 +12,14 @@ import (
 func (s Service) CreateInvite(
 	ctx context.Context,
 	params invite.CreateParams,
-) (entity.Invite, error) {
+) (models.Invite, error) {
 	row, err := s.invitesQ().Insert(ctx, pgdb.InsertInviteParams{
 		AgglomerationID: params.AgglomerationID,
 		AccountID:       params.AccountID,
 		ExpiresAt:       params.ExpiresAt,
 	})
 	if err != nil {
-		return entity.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	return Invite(row), nil
@@ -28,10 +28,10 @@ func (s Service) CreateInvite(
 func (s Service) GetInviteByID(
 	ctx context.Context,
 	id uuid.UUID,
-) (entity.Invite, error) {
+) (models.Invite, error) {
 	row, err := s.invitesQ().FilterByID(id).Get(ctx)
 	if err != nil {
-		return entity.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	return Invite(row), nil
@@ -41,10 +41,10 @@ func (s Service) UpdateInviteStatus(
 	ctx context.Context,
 	id uuid.UUID,
 	status string,
-) (entity.Invite, error) {
+) (models.Invite, error) {
 	row, err := s.invitesQ().FilterByID(id).UpdateStatus(status).UpdateOne(ctx)
 	if err != nil {
-		return entity.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	return Invite(row), nil
@@ -60,7 +60,7 @@ func (s Service) DeleteInvite(
 func (s Service) FilterInvites(
 	ctx context.Context,
 	filter invite.FilterInviteParams,
-) ([]entity.Invite, error) {
+) ([]models.Invite, error) {
 	q := s.invitesQ()
 
 	if filter.AgglomerationID != nil {
@@ -75,10 +75,10 @@ func (s Service) FilterInvites(
 
 	rows, err := q.Select(ctx)
 	if err != nil {
-		return []entity.Invite{}, err
+		return []models.Invite{}, err
 	}
 
-	res := make([]entity.Invite, 0, len(rows))
+	res := make([]models.Invite, 0, len(rows))
 	for _, row := range rows {
 		res = append(res, Invite(row))
 	}
@@ -86,8 +86,8 @@ func (s Service) FilterInvites(
 	return res, nil
 }
 
-func Invite(row pgdb.Invite) entity.Invite {
-	return entity.Invite{
+func Invite(row pgdb.Invite) models.Invite {
+	return models.Invite{
 		ID:              row.ID,
 		AgglomerationID: row.AgglomerationID,
 		AccountID:       row.AccountID,

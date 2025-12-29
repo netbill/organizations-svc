@@ -6,17 +6,17 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
-func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (entity.Member, error) {
+func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
 	row, err := s.repo.GetMember(ctx, memberID)
 	if err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 	if row.IsNil() {
-		return entity.Member{}, errx.ErrorMemberNotFound.Raise(
+		return models.Member{}, errx.ErrorMemberNotFound.Raise(
 			fmt.Errorf("member with id %s not found", memberID),
 		)
 	}
@@ -27,13 +27,13 @@ func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (entity.
 func (s Service) GetMemberByAccountAndAgglomeration(
 	ctx context.Context,
 	accountID, agglomerationID uuid.UUID,
-) (entity.Member, error) {
+) (models.Member, error) {
 	row, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
 	if err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 	if row.IsNil() {
-		return entity.Member{}, errx.ErrorMemberNotFound.Raise(
+		return models.Member{}, errx.ErrorMemberNotFound.Raise(
 			fmt.Errorf("member with account id %s and agglomeration id %s not found", accountID, agglomerationID),
 		)
 	}
@@ -44,10 +44,10 @@ func (s Service) GetMemberByAccountAndAgglomeration(
 func (s Service) GetInitiatorMember(
 	ctx context.Context,
 	accountID, agglomerationID uuid.UUID,
-) (entity.Member, error) {
+) (models.Member, error) {
 	initiator, err := s.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
 	if errors.Is(err, errx.ErrorMemberNotFound) {
-		return entity.Member{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("initiator member with account id %s and agglomeration id %s not found: %w",
 				accountID, agglomerationID, err.Error()),
 		)

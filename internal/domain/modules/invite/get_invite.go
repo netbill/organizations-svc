@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
-func (s Service) GetInvite(ctx context.Context, id uuid.UUID) (entity.Invite, error) {
+func (s Service) GetInvite(ctx context.Context, id uuid.UUID) (models.Invite, error) {
 	res, err := s.repo.GetInviteByID(ctx, id)
 	if err != nil {
-		return entity.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	return res, nil
@@ -25,10 +25,10 @@ type FilterInviteParams struct {
 func (s Service) FilterInvites(
 	ctx context.Context,
 	filter FilterInviteParams,
-) ([]entity.Invite, error) {
+) ([]models.Invite, error) {
 	res, err := s.repo.FilterInvites(ctx, filter)
 	if err != nil {
-		return []entity.Invite{}, err
+		return []models.Invite{}, err
 	}
 
 	return res, nil

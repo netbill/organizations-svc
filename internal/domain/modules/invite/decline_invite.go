@@ -5,31 +5,42 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
 func (s Service) DeclineInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
-) (entity.Invite, error) {
-	invite, err := s.repo.GetInviteByID(ctx, inviteID)
+) (invite models.Invite, err error) {
+	invite, err = s.repo.GetInviteByID(ctx, inviteID)
 	if err != nil {
-		return entity.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	if invite.AccountID != accountID {
-		return entity.Invite{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Invite{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("account has no rights to decline this invite"),
 		)
 	}
-	if invite.Status != entity.InviteStatusSent {
-		return entity.Invite{}, err
+	if invite.Status != models.InviteStatusSent {
+		return models.Invite{}, err
 	}
 
-	invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, entity.InviteStatusDeclined)
-	if err != nil {
-		return entity.Invite{}, err
+	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
+		invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusDeclined)
+		if err != nil {
+			return err
+		}
+
+		err = s.messenger.WriteDeclinedInvite(ctx, invite)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return models.Invite{}, err
 	}
 
 	return invite, nil

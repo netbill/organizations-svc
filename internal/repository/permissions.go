@@ -4,24 +4,24 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 
-func (s Service) GetPermission(ctx context.Context, ID uuid.UUID) (entity.Permission, error) {
+func (s Service) GetPermission(ctx context.Context, ID uuid.UUID) (models.Permission, error) {
 	res, err := s.permissionsQ().FilterByID(ID).Get(ctx)
 	if err != nil {
-		return entity.Permission{}, err
+		return models.Permission{}, err
 	}
 
 	return Permission(res), nil
 }
 
-func (s Service) GetPermissionByCode(ctx context.Context, code entity.CodeRolePermission) (entity.Permission, error) {
+func (s Service) GetPermissionByCode(ctx context.Context, code models.CodeRolePermission) (models.Permission, error) {
 	res, err := s.permissionsQ().FilterByCode(string(code)).Get(ctx)
 	if err != nil {
-		return entity.Permission{}, err
+		return models.Permission{}, err
 	}
 
 	return Permission(res), nil
@@ -29,7 +29,7 @@ func (s Service) GetPermissionByCode(ctx context.Context, code entity.CodeRolePe
 
 type FilterPermissionsParams struct {
 	Description *string
-	Code        *entity.CodeRolePermission
+	Code        *models.CodeRolePermission
 }
 
 func (s Service) FilterPermissions(
@@ -37,7 +37,7 @@ func (s Service) FilterPermissions(
 	filter FilterPermissionsParams,
 	offset uint,
 	limit uint,
-) (pagi.Page[[]entity.Permission], error) {
+) (pagi.Page[[]models.Permission], error) {
 	q := s.permissionsQ()
 	if filter.Description != nil {
 		q = q.FilterLikeDescription(*filter.Description)
@@ -48,20 +48,20 @@ func (s Service) FilterPermissions(
 
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
-		return pagi.Page[[]entity.Permission]{}, err
+		return pagi.Page[[]models.Permission]{}, err
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]entity.Permission]{}, err
+		return pagi.Page[[]models.Permission]{}, err
 	}
 
-	collection := make([]entity.Permission, 0, len(rows))
+	collection := make([]models.Permission, 0, len(rows))
 	for i, row := range rows {
 		collection[i] = Permission(row)
 	}
 
-	return pagi.Page[[]entity.Permission]{
+	return pagi.Page[[]models.Permission]{
 		Data:  collection,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(collection)),
@@ -69,10 +69,10 @@ func (s Service) FilterPermissions(
 	}, nil
 }
 
-func Permission(p pgdb.Permission) entity.Permission {
-	return entity.Permission{
+func Permission(p pgdb.Permission) models.Permission {
+	return models.Permission{
 		ID:          p.ID,
-		Code:        entity.CodeRolePermission(p.Code),
+		Code:        models.CodeRolePermission(p.Code),
 		Description: p.Description,
 	}
 }

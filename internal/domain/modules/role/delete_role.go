@@ -7,7 +7,13 @@ import (
 )
 
 func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
-	return s.repo.DeleteRole(ctx, roleID)
+	return s.repo.Transaction(ctx, func(ctx context.Context) error {
+		if err := s.repo.DeleteRole(ctx, roleID); err != nil {
+			return err
+		}
+
+		return s.messenger.WriteRoleDeleted(ctx, roleID)
+	})
 }
 
 func (s Service) DeleteRoleByUser(ctx context.Context, accountID, roleID uuid.UUID) error {

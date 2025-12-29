@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
 type Service struct {
@@ -22,22 +22,22 @@ func New(repo repo, messenger messenger) Service {
 }
 
 type repo interface {
-	CreateInvite(ctx context.Context, params CreateParams) (entity.Invite, error)
+	CreateInvite(ctx context.Context, params CreateParams) (models.Invite, error)
 
 	GetInviteByID(
 		ctx context.Context,
 		id uuid.UUID,
-	) (entity.Invite, error)
+	) (models.Invite, error)
 	FilterInvites(
 		ctx context.Context,
 		filter FilterInviteParams,
-	) ([]entity.Invite, error)
+	) ([]models.Invite, error)
 
 	UpdateInviteStatus(
 		ctx context.Context,
 		id uuid.UUID,
 		status string,
-	) (entity.Invite, error)
+	) (models.Invite, error)
 
 	DeleteInvite(
 		ctx context.Context,
@@ -50,12 +50,20 @@ type repo interface {
 		permissionKey string,
 	) (bool, error)
 
-	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Member, error)
+	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type messenger interface {
+	WriteCreatedNewMember(ctx context.Context, member models.Member) error
+
+	WriteCreatedInvite(ctx context.Context, invite models.Invite) error
+
+	WriteAcceptedInvite(ctx context.Context, invite models.Invite) error
+	WriteDeclinedInvite(ctx context.Context, invite models.Invite) error
+
+	WriteDeletedInvite(ctx context.Context, inviteID uuid.UUID) error
 }
 
 func (s Service) checkPermissionForManageInvite(
@@ -67,7 +75,7 @@ func (s Service) checkPermissionForManageInvite(
 		ctx,
 		accountID,
 		agglomerationID,
-		entity.RolePermissionManageInvites.String(),
+		models.RolePermissionManageInvites.String(),
 	)
 	if err != nil {
 		return errx.ErrorInternal.Raise(

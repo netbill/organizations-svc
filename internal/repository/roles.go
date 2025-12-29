@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/cities-svc/internal/domain/modules/role"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 
-func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (entity.Role, error) {
+func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error) {
 	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
 		AgglomerationID: params.AgglomerationID,
 		Head:            params.Head,
@@ -20,16 +20,16 @@ func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (enti
 		Color:           params.Color,
 	})
 	if err != nil {
-		return entity.Role{}, err
+		return models.Role{}, err
 	}
 
 	return Role(row), nil
 }
 
-func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (entity.Role, error) {
+func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
 	row, err := s.rolesQ().FilterByID(roleID).Get(ctx)
 	if err != nil {
-		return entity.Role{}, err
+		return models.Role{}, err
 	}
 
 	return Role(row), nil
@@ -40,7 +40,7 @@ func (s Service) FilterRoles(
 	filter role.FilterParams,
 	offset uint,
 	limit uint,
-) (pagi.Page[[]entity.Role], error) {
+) (pagi.Page[[]models.Role], error) {
 	q := s.rolesQ()
 	if filter.AgglomerationID != nil {
 		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
@@ -60,20 +60,20 @@ func (s Service) FilterRoles(
 
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
-		return pagi.Page[[]entity.Role]{}, err
+		return pagi.Page[[]models.Role]{}, err
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]entity.Role]{}, err
+		return pagi.Page[[]models.Role]{}, err
 	}
 
-	collection := make([]entity.Role, 0, len(rows))
+	collection := make([]models.Role, 0, len(rows))
 	for _, row := range rows {
 		collection = append(collection, Role(row))
 	}
 
-	return pagi.Page[[]entity.Role]{
+	return pagi.Page[[]models.Role]{
 		Data:  collection,
 		Total: uint(total),
 		Page:  uint(offset/limit) + 1,
@@ -81,24 +81,30 @@ func (s Service) FilterRoles(
 	}, nil
 }
 
-func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (entity.Role, error) {
+func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (models.Role, error) {
 	q := s.rolesQ().FilterByID(roleID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
 	}
+	if params.Description != nil {
+		q = q.UpdateDescription(*params.Description)
+	}
+	if params.Color != nil {
+		q = q.UpdateColor(*params.Color)
+	}
 
 	row, err := q.UpdateOne(ctx)
 	if err != nil {
-		return entity.Role{}, err
+		return models.Role{}, err
 	}
 
 	return Role(row), nil
 }
 
-func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (entity.Role, error) {
+func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (models.Role, error) {
 	row, err := s.rolesQ().UpdateRoleRank(ctx, roleID, newRank)
 	if err != nil {
-		return entity.Role{}, err
+		return models.Role{}, err
 	}
 
 	return Role(row), nil
@@ -124,14 +130,14 @@ func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 func (s Service) GetAccountMaxRoleInAgglomeration(
 	ctx context.Context,
 	accountID, agglomerationID uuid.UUID,
-) (entity.Role, error) {
+) (models.Role, error) {
 	res, err := s.rolesQ().
 		FilterByAgglomerationID(agglomerationID).
 		FilterByAccountID(accountID).
 		OrderByRoleRank(true).
 		Get(ctx)
 	if err != nil {
-		return entity.Role{}, err
+		return models.Role{}, err
 	}
 	return Role(res), nil
 }
@@ -139,24 +145,24 @@ func (s Service) GetAccountMaxRoleInAgglomeration(
 func (s Service) GetMemberMaxRole(
 	ctx context.Context,
 	memberID uuid.UUID,
-) (entity.Role, error) {
+) (models.Role, error) {
 	res, err := s.rolesQ().
 		FilterByAccountID(memberID).
 		OrderByRoleRank(true).
 		Get(ctx)
 	if err != nil {
-		return entity.Role{}, err
+		return models.Role{}, err
 	}
 	return Role(res), nil
 }
 
-func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]entity.Permission, error) {
+func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]models.Permission, error) {
 	rows, err := s.permissionsQ().FilterByRoleID(roleID).Select(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	permissions := make([]entity.Permission, 0, len(rows))
+	permissions := make([]models.Permission, 0, len(rows))
 	for _, row := range rows {
 		permissions = append(permissions, Permission(row))
 	}
@@ -164,8 +170,8 @@ func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]en
 	return permissions, nil
 }
 
-func Role(r pgdb.Role) entity.Role {
-	return entity.Role{
+func Role(r pgdb.Role) models.Role {
+	return models.Role{
 		ID:              r.ID,
 		AgglomerationID: r.AgglomerationID,
 		Head:            r.Head,

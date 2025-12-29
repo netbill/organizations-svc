@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
-func (s Service) ActivateAgglomeration(ctx context.Context, ID uuid.UUID) (agglo entity.Agglomeration, err error) {
+func (s Service) ActivateAgglomeration(ctx context.Context, ID uuid.UUID) (agglo models.Agglomeration, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.UpdateAgglomerationStatus(ctx, ID, entity.AgglomerationStatusActive)
+		agglo, err = s.repo.UpdateAgglomerationStatus(ctx, ID, models.AgglomerationStatusActive)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to activate agglomeration: %w", err))
@@ -25,7 +25,7 @@ func (s Service) ActivateAgglomeration(ctx context.Context, ID uuid.UUID) (agglo
 
 		return nil
 	}); err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
 	return agglo, nil
@@ -34,14 +34,14 @@ func (s Service) ActivateAgglomeration(ctx context.Context, ID uuid.UUID) (agglo
 func (s Service) ActivateAgglomerationByUser(
 	ctx context.Context,
 	accountID, agglomerationID uuid.UUID,
-) (entity.Agglomeration, error) {
+) (models.Agglomeration, error) {
 	agglo, err := s.GetAgglomeration(ctx, agglomerationID)
 	if err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
-	if agglo.Status == entity.AgglomerationStatusSuspended {
-		return entity.Agglomeration{}, errx.ErrorAgglomerationIsSuspended.Raise(
+	if agglo.Status == models.AgglomerationStatusSuspended {
+		return models.Agglomeration{}, errx.ErrorAgglomerationIsSuspended.Raise(
 			fmt.Errorf("agglomeration is suspended"),
 		)
 	}
@@ -52,7 +52,7 @@ func (s Service) ActivateAgglomerationByUser(
 		agglomerationID,
 	)
 	if err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
 	return s.ActivateAgglomeration(ctx, agglomerationID)

@@ -28,7 +28,7 @@ func (s Service) DeleteMember(ctx context.Context, ID uuid.UUID) error {
 }
 
 func (s Service) DeleteMemberByUser(ctx context.Context, accountID, memberID uuid.UUID) error {
-	member, err := s.GetMember(ctx, memberID)
+	member, err := s.GetMemberByID(ctx, memberID)
 	if err != nil {
 		return err
 	}

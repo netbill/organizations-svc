@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/paulmach/orb"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
 
@@ -24,28 +24,33 @@ func New(repo repo, messanger messanger) Service {
 }
 
 type repo interface {
-	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error)
+	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
 
-	CreateCity(ctx context.Context, params CreateParams) (entity.City, error)
+	CreateCity(ctx context.Context, params CreateParams) (models.City, error)
 
-	GetCityByID(ctx context.Context, ID uuid.UUID) (entity.City, error)
-	GetCityBySlug(ctx context.Context, slug string) (entity.City, error)
+	GetCityByID(ctx context.Context, ID uuid.UUID) (models.City, error)
+	GetCityBySlug(ctx context.Context, slug string) (models.City, error)
 
-	UpdateCity(ctx context.Context, ID uuid.UUID, params UpdateParams) (entity.City, error)
-
-	UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) (entity.City, error)
+	UpdateCity(ctx context.Context, ID uuid.UUID, params UpdateParams) (models.City, error)
+	UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) (models.City, error)
+	UpdateCitySlug(ctx context.Context, ID uuid.UUID, slug *string) (models.City, error)
+	UpdateCityAgglomeration(
+		ctx context.Context,
+		cityID uuid.UUID,
+		agglomerationID *uuid.UUID,
+	) (models.City, error)
 
 	FilterCities(
 		ctx context.Context,
 		params FilterParams,
 		offset, limit uint,
-	) (pagi.Page[[]entity.City], error)
+	) (pagi.Page[[]models.City], error)
 	FilterCitiesNearest(
 		ctx context.Context,
 		filter FilterParams,
 		point orb.Point,
 		offset, limit uint,
-	) (pagi.Page[map[uint]entity.City], error)
+	) (pagi.Page[map[float64]models.City], error)
 
 	CheckAccountHavePermissionByCode(
 		ctx context.Context,
@@ -57,32 +62,35 @@ type repo interface {
 }
 
 type messanger interface {
-	CreateCity(ctx context.Context, city entity.City) error
+	WriteCreateCity(ctx context.Context, city models.City) error
 
-	UpdateCity(ctx context.Context, city entity.City) error
+	WriteUpdateCity(ctx context.Context, city models.City) error
 
-	ActivateCity(ctx context.Context, city entity.City) error
-	DeactivateCity(ctx context.Context, city entity.City) error
-	ArchivedCity(ctx context.Context, city entity.City) error
+	WriteUpdateCitySlug(ctx context.Context, cityID uuid.UUID, oldSlug, newSlug *string) error
+	WriteUpdateCityAgglomeration(ctx context.Context, cityID uuid.UUID, oldAggloID, newAggloId *uuid.UUID) error
 
-	DeleteCity(ctx context.Context, city entity.City) error
+	WriteActivateCity(ctx context.Context, city models.City) error
+	WriteDeactivateCity(ctx context.Context, city models.City) error
+	WriteArchivedCity(ctx context.Context, city models.City) error
+
+	WriteDeleteCity(ctx context.Context, city models.City) error
 }
 
-func (s Service) checkAgglomerationIsActiveAndExists(ctx context.Context, agglomerationID uuid.UUID) (entity.Agglomeration, error) {
+func (s Service) checkAgglomerationIsActiveAndExists(ctx context.Context, agglomerationID uuid.UUID) (models.Agglomeration, error) {
 	agglo, err := s.repo.GetAgglomerationByID(ctx, agglomerationID)
 	if err != nil {
-		return entity.Agglomeration{}, errx.ErrorInternal.Raise(
+		return models.Agglomeration{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to get agglomeration by id: %w", err),
 		)
 	}
 	if agglo.IsNil() {
-		return entity.Agglomeration{}, errx.ErrorAgglomerationNotFound.Raise(
+		return models.Agglomeration{}, errx.ErrorAgglomerationNotFound.Raise(
 			fmt.Errorf("agglomeration with id %s not found", agglomerationID),
 		)
 	}
 
-	if agglo.Status != entity.AgglomerationStatusActive {
-		return entity.Agglomeration{}, errx.ErrorAgglomerationIsNotActive.Raise(
+	if agglo.Status != models.AgglomerationStatusActive {
+		return models.Agglomeration{}, errx.ErrorAgglomerationIsNotActive.Raise(
 			fmt.Errorf("agglomeration with id %s is not active", agglomerationID),
 		)
 	}
@@ -99,7 +107,7 @@ func (s Service) checkPermissionForManageCity(
 		ctx,
 		accountID,
 		agglomerationID,
-		entity.RolePermissionManageCities.String(),
+		models.RolePermissionManageCities.String(),
 	)
 	if err != nil {
 		return errx.ErrorInternal.Raise(

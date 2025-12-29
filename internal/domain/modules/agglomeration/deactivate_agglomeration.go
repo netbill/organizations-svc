@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
-func (s Service) DeactivateAgglomeration(ctx context.Context, ID uuid.UUID) (agglo entity.Agglomeration, err error) {
+func (s Service) DeactivateAgglomeration(ctx context.Context, ID uuid.UUID) (agglo models.Agglomeration, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.UpdateAgglomerationStatus(ctx, ID, entity.AgglomerationStatusInactive)
+		agglo, err = s.repo.UpdateAgglomerationStatus(ctx, ID, models.AgglomerationStatusInactive)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to deactivate agglomeration: %w", err),
@@ -26,7 +26,7 @@ func (s Service) DeactivateAgglomeration(ctx context.Context, ID uuid.UUID) (agg
 
 		return nil
 	}); err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
 	return agglo, nil
@@ -35,14 +35,14 @@ func (s Service) DeactivateAgglomeration(ctx context.Context, ID uuid.UUID) (agg
 func (s Service) DeactivateAgglomerationByUser(
 	ctx context.Context,
 	memberID, agglomerationID uuid.UUID,
-) (entity.Agglomeration, error) {
+) (models.Agglomeration, error) {
 	agglo, err := s.GetAgglomeration(ctx, agglomerationID)
 	if err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
-	if agglo.Status == entity.AgglomerationStatusSuspended {
-		return entity.Agglomeration{}, errx.ErrorAgglomerationIsSuspended.Raise(
+	if agglo.Status == models.AgglomerationStatusSuspended {
+		return models.Agglomeration{}, errx.ErrorAgglomerationIsSuspended.Raise(
 			fmt.Errorf("agglomeration is not suspended"),
 		)
 	}
@@ -53,7 +53,7 @@ func (s Service) DeactivateAgglomerationByUser(
 		agglomerationID,
 	)
 	if err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
 	return s.DeactivateAgglomeration(ctx, agglomerationID)

@@ -7,25 +7,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/cities-svc/internal/domain/modules/member"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 
-func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Member, error) {
+func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error) {
 	row, err := s.membersQ().Insert(ctx, pgdb.InsertMemberParams{
 		AccountID:       accountID,
 		AgglomerationID: agglomerationID,
 	})
 	if err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 
 	return s.GetMember(ctx, row.ID)
 }
 
-func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params member.UpdateParams) (entity.Member, error) {
+func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params member.UpdateParams) (models.Member, error) {
 	q := s.membersQ().FilterByID(ID)
 	if params.Position != nil {
 		if *params.Position == "" {
@@ -44,19 +44,19 @@ func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params member.U
 
 	row, err := q.UpdateOne(ctx)
 	if err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 
 	return s.GetMember(ctx, row.ID)
 }
 
-func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (entity.Member, error) {
+func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
 	row, err := s.membersQ().FilterByID(memberID).GetWithUserData(ctx)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return entity.Member{}, nil
+		return models.Member{}, nil
 	case err != nil:
-		return entity.Member{}, fmt.Errorf("getting member by id: %w", err)
+		return models.Member{}, fmt.Errorf("getting member by id: %w", err)
 	}
 
 	return MemberWithUserData(row), nil
@@ -65,16 +65,16 @@ func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (entity.Memb
 func (s Service) GetMemberByAccountAndAgglomeration(
 	ctx context.Context,
 	accountID, agglomerationID uuid.UUID,
-) (entity.Member, error) {
+) (models.Member, error) {
 	row, err := s.membersQ().
 		FilterByAccountID(accountID).
 		FilterByAgglomerationID(agglomerationID).
 		GetWithUserData(ctx)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
-		return entity.Member{}, nil
+		return models.Member{}, nil
 	case err != nil:
-		return entity.Member{}, fmt.Errorf("getting member by account and agglomeration: %w", err)
+		return models.Member{}, fmt.Errorf("getting member by account and agglomeration: %w", err)
 	}
 
 	return MemberWithUserData(row), nil
@@ -85,7 +85,7 @@ func (s Service) FilterMembers(
 	filter member.FilterParams,
 	offset uint,
 	limit uint,
-) (pagi.Page[[]entity.Member], error) {
+) (pagi.Page[[]models.Member], error) {
 	q := s.membersQ()
 	if filter.AgglomerationID != nil {
 		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
@@ -120,20 +120,20 @@ func (s Service) FilterMembers(
 
 	rows, err := q.Page(limit, offset).SelectWithUserData(ctx)
 	if err != nil {
-		return pagi.Page[[]entity.Member]{}, fmt.Errorf("filtering members: %w", err)
+		return pagi.Page[[]models.Member]{}, fmt.Errorf("filtering members: %w", err)
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]entity.Member]{}, fmt.Errorf("counting members: %w", err)
+		return pagi.Page[[]models.Member]{}, fmt.Errorf("counting members: %w", err)
 	}
 
-	collection := make([]entity.Member, 0, len(rows))
+	collection := make([]models.Member, 0, len(rows))
 	for _, row := range rows {
 		collection = append(collection, MemberWithUserData(row))
 	}
 
-	return pagi.Page[[]entity.Member]{
+	return pagi.Page[[]models.Member]{
 		Data:  collection,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(collection)),
@@ -169,8 +169,8 @@ func (s Service) CanInteract(ctx context.Context, firstMemberID, secondMemberID 
 	return res, nil
 }
 
-func MemberWithUserData(db pgdb.MemberWithUserData) entity.Member {
-	return entity.Member{
+func MemberWithUserData(db pgdb.MemberWithUserData) models.Member {
+	return models.Member{
 		ID:              db.ID,
 		AccountID:       db.AccountID,
 		AgglomerationID: db.AgglomerationID,

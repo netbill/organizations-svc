@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
 
@@ -23,10 +23,10 @@ func New(repo repo, messenger messenger) Service {
 }
 
 type repo interface {
-	CreateRole(ctx context.Context, params CreateParams) (entity.Role, error)
+	CreateRole(ctx context.Context, params CreateParams) (models.Role, error)
 
-	UpdateRole(ctx context.Context, roleID uuid.UUID, params UpdateParams) (entity.Role, error)
-	UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (entity.Role, error)
+	UpdateRole(ctx context.Context, roleID uuid.UUID, params UpdateParams) (models.Role, error)
+	UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (models.Role, error)
 	UpdateRolesRanks(
 		ctx context.Context,
 		agglomerationID uuid.UUID,
@@ -40,44 +40,60 @@ type repo interface {
 		filter FilterParams,
 		offset uint,
 		limit uint,
-	) (pagi.Page[[]entity.Role], error)
-	GetRole(ctx context.Context, roleID uuid.UUID) (entity.Role, error)
+	) (pagi.Page[[]models.Role], error)
+	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
 
-	GetMember(ctx context.Context, memberID uuid.UUID) (entity.Member, error)
+	GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error)
 	GetMemberByAccountAndAgglomeration(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
-	) (entity.Member, error)
+	) (models.Member, error)
 
-	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]entity.Permission, error)
+	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]models.Permission, error)
 	SetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-		permissions map[entity.CodeRolePermission]bool,
+		permissions map[models.CodeRolePermission]bool,
 	) error
 
-	GetAllPermissions(ctx context.Context) ([]entity.Permission, error)
+	GetAllPermissions(ctx context.Context) ([]models.Permission, error)
 
-	GetAccountMaxRoleInAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Role, error)
-	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (entity.Role, error)
+	GetAccountMaxRoleInAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Role, error)
+	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
 	CheckAccountHavePermissionByCode(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
 		permissionKey string,
 	) (bool, error)
+
+	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type messenger interface {
+	WriteRoleCreated(ctx context.Context, role models.Role) error
+	WriteRoleUpdated(ctx context.Context, role models.Role) error
+	WriteRoleDeleted(ctx context.Context, roleID uuid.UUID) error
+
+	WriteRoleRanksUpdated(
+		ctx context.Context,
+		agglomerationID uuid.UUID,
+		order map[uint]uuid.UUID,
+	) error
+	WriteUpdatedRolePermissions(
+		ctx context.Context,
+		roleID uuid.UUID,
+		permissions map[models.CodeRolePermission]bool,
+	) error
 }
 
-func (s Service) GetInitiator(ctx context.Context, memberID uuid.UUID) (entity.Member, error) {
+func (s Service) GetInitiator(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
 	row, err := s.repo.GetMember(ctx, memberID)
 	if err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 	if row.IsNil() {
-		return entity.Member{}, errx.ErrorMemberNotFound.Raise(
+		return models.Member{}, errx.ErrorMemberNotFound.Raise(
 			fmt.Errorf("member with id %s not found", memberID),
 		)
 	}
@@ -88,13 +104,13 @@ func (s Service) GetInitiator(ctx context.Context, memberID uuid.UUID) (entity.M
 func (s Service) GetInitiatorByAccountAndAgglomeration(
 	ctx context.Context,
 	initiatorAccountID, agglomerationID uuid.UUID,
-) (entity.Member, error) {
+) (models.Member, error) {
 	initiator, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, initiatorAccountID, agglomerationID)
 	if err != nil {
-		return entity.Member{}, err
+		return models.Member{}, err
 	}
 	if initiator.IsNil() {
-		return entity.Member{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("initiator member with account id %s and agglomeration id %s not found: %w",
 				initiatorAccountID, agglomerationID, err),
 		)
@@ -110,14 +126,14 @@ func (s Service) CheckPermissionsToManageRole(
 ) error {
 	hasPermission, err := s.repo.CheckAccountHavePermissionByCode(
 		ctx, accountID, agglomerationID,
-		entity.RolePermissionManageRoles.String(),
+		models.RolePermissionManageRoles.String(),
 	)
 	if err != nil {
 		return err
 	}
 	if !hasPermission {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member %s does not have permission %s", accountID, entity.RolePermissionManageRoles.String()),
+			fmt.Errorf("member %s does not have permission %s", accountID, models.RolePermissionManageRoles.String()),
 		)
 	}
 

@@ -6,13 +6,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/paulmach/orb"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/cities-svc/internal/domain/modules/city"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 
-func (s Service) CreateCity(ctx context.Context, params city.CreateParams) (entity.City, error) {
+func (s Service) CreateCity(ctx context.Context, params city.CreateParams) (models.City, error) {
 	row, err := s.citiesQ().Insert(ctx, pgdb.CityInsertParams{
 		AgglomerationID: params.AgglomerationID,
 		Name:            params.Name,
@@ -22,48 +22,34 @@ func (s Service) CreateCity(ctx context.Context, params city.CreateParams) (enti
 		Point:           params.Point,
 	})
 	if err != nil {
-		return entity.City{}, err
+		return models.City{}, err
 	}
 
 	return City(row), nil
 }
 
-func (s Service) GetCityByID(ctx context.Context, ID uuid.UUID) (entity.City, error) {
+func (s Service) GetCityByID(ctx context.Context, ID uuid.UUID) (models.City, error) {
 	row, err := s.citiesQ().FilterByID(ID).Get(ctx)
 	if err != nil {
-		return entity.City{}, err
+		return models.City{}, err
 	}
 
 	return City(row), nil
 }
 
-func (s Service) GetCityBySlug(ctx context.Context, slug string) (entity.City, error) {
+func (s Service) GetCityBySlug(ctx context.Context, slug string) (models.City, error) {
 	row, err := s.citiesQ().FilterBySlug(slug).Get(ctx)
 	if err != nil {
-		return entity.City{}, err
+		return models.City{}, err
 	}
 
 	return City(row), nil
 }
 
-func (s Service) UpdateCity(ctx context.Context, ID uuid.UUID, params city.UpdateParams) (entity.City, error) {
+func (s Service) UpdateCity(ctx context.Context, ID uuid.UUID, params city.UpdateParams) (models.City, error) {
 	q := s.citiesQ().FilterByID(ID)
-	if params.AgglomerationID != nil {
-		if params.AgglomerationID == nil {
-			q = q.UpdateAgglomerationID(uuid.NullUUID{Valid: false})
-		} else {
-			q = q.UpdateAgglomerationID(uuid.NullUUID{UUID: *params.AgglomerationID, Valid: true})
-		}
-	}
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
-	}
-	if params.Slug != nil {
-		if *params.Slug == "" {
-			q = q.UpdateSlug(sql.NullString{Valid: false})
-		} else {
-			q = q.UpdateSlug(sql.NullString{String: *params.Slug, Valid: true})
-		}
 	}
 	if params.Icon != nil {
 		if *params.Icon == "" {
@@ -88,10 +74,46 @@ func (s Service) UpdateCity(ctx context.Context, ID uuid.UUID, params city.Updat
 	return City(row), err
 }
 
-func (s Service) UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) (entity.City, error) {
+func (s Service) UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) (models.City, error) {
 	row, err := s.citiesQ().FilterByID(ID).UpdateStatus(status).UpdateOne(ctx)
 	if err != nil {
-		return entity.City{}, err
+		return models.City{}, err
+	}
+
+	return City(row), nil
+}
+
+func (s Service) UpdateCityAgglomeration(
+	ctx context.Context,
+	cityID uuid.UUID,
+	agglomerationID *uuid.UUID,
+) (models.City, error) {
+	q := s.citiesQ().FilterByID(cityID)
+	if agglomerationID == nil {
+		q = q.UpdateAgglomerationID(uuid.NullUUID{Valid: false})
+	} else {
+		q = q.UpdateAgglomerationID(uuid.NullUUID{UUID: *agglomerationID, Valid: true})
+	}
+
+	row, err := q.UpdateOne(ctx)
+	if err != nil {
+		return models.City{}, err
+	}
+
+	return City(row), nil
+}
+
+func (s Service) UpdateCitySlug(ctx context.Context, ID uuid.UUID, slug *string) (models.City, error) {
+	q := s.citiesQ().FilterByID(ID)
+	if slug == nil {
+		q = q.UpdateSlug(sql.NullString{Valid: false})
+	} else {
+		q = q.UpdateSlug(sql.NullString{String: *slug, Valid: true})
+	}
+
+	row, err := q.UpdateOne(ctx)
+	if err != nil {
+		return models.City{}, err
 	}
 
 	return City(row), nil
@@ -105,7 +127,7 @@ func (s Service) FilterCities(
 	ctx context.Context,
 	filter city.FilterParams,
 	offset, limit uint,
-) (pagi.Page[[]entity.City], error) {
+) (pagi.Page[[]models.City], error) {
 	q := s.citiesQ()
 	if filter.AgglomerationID != nil {
 		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
@@ -119,20 +141,20 @@ func (s Service) FilterCities(
 
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
-		return pagi.Page[[]entity.City]{}, err
+		return pagi.Page[[]models.City]{}, err
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]entity.City]{}, err
+		return pagi.Page[[]models.City]{}, err
 	}
 
-	collection := make([]entity.City, 0, len(rows))
+	collection := make([]models.City, 0, len(rows))
 	for _, row := range rows {
 		collection = append(collection, City(row))
 	}
 
-	return pagi.Page[[]entity.City]{
+	return pagi.Page[[]models.City]{
 		Data:  collection,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(collection)),
@@ -145,7 +167,7 @@ func (s Service) FilterCitiesNearest(
 	filter city.FilterParams,
 	point orb.Point,
 	offset, limit uint,
-) (pagi.Page[map[uint]entity.City], error) {
+) (pagi.Page[map[float64]models.City], error) {
 	q := s.citiesQ()
 	if filter.AgglomerationID != nil {
 		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
@@ -159,20 +181,20 @@ func (s Service) FilterCitiesNearest(
 
 	rows, err := q.OrderNearest(limit, point[1], point[0]).Page(limit, offset).SelectNearest(ctx)
 	if err != nil {
-		return pagi.Page[map[uint]entity.City]{}, err
+		return pagi.Page[map[float64]models.City]{}, err
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[map[uint]entity.City]{}, err
+		return pagi.Page[map[float64]models.City]{}, err
 	}
 
-	collection := make(map[uint]entity.City, len(rows))
+	collection := make(map[float64]models.City, len(rows))
 	for _, row := range rows {
-		collection[uint(row.DistanceMeters)] = CityDistance(row)
+		collection[row.DistanceMeters] = CityDistance(row)
 	}
 
-	return pagi.Page[map[uint]entity.City]{
+	return pagi.Page[map[float64]models.City]{
 		Data:  collection,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(collection)),
@@ -180,8 +202,8 @@ func (s Service) FilterCitiesNearest(
 	}, nil
 }
 
-func City(c pgdb.City) entity.City {
-	ent := entity.City{
+func City(c pgdb.City) models.City {
+	ent := models.City{
 		ID:        c.ID,
 		Status:    c.Status,
 		Name:      c.Name,
@@ -206,8 +228,8 @@ func City(c pgdb.City) entity.City {
 	return ent
 }
 
-func CityDistance(cd pgdb.CityDistance) entity.City {
-	ent := entity.City{
+func CityDistance(cd pgdb.CityDistance) models.City {
+	ent := models.City{
 		ID:        cd.ID,
 		Status:    cd.Status,
 		Name:      cd.Name,

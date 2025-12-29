@@ -5,20 +5,20 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
-func (s Service) DeactivateCity(ctx context.Context, ID uuid.UUID) (city entity.City, err error) {
+func (s Service) DeactivateCity(ctx context.Context, ID uuid.UUID) (city models.City, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		city, err = s.repo.UpdateCityStatus(ctx, ID, entity.CityStatusInactive)
+		city, err = s.repo.UpdateCityStatus(ctx, ID, models.CityStatusInactive)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to deactivate city: %w", err),
 			)
 		}
 
-		if err = s.messanger.ActivateCity(ctx, city); err != nil {
+		if err = s.messanger.WriteDeactivateCity(ctx, city); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send deactivate city message: %w", err),
 			)
@@ -26,7 +26,7 @@ func (s Service) DeactivateCity(ctx context.Context, ID uuid.UUID) (city entity.
 
 		return nil
 	}); err != nil {
-		return entity.City{}, err
+		return models.City{}, err
 	}
 
 	return city, nil
@@ -35,26 +35,26 @@ func (s Service) DeactivateCity(ctx context.Context, ID uuid.UUID) (city entity.
 func (s Service) DeactivateCityByUser(
 	ctx context.Context,
 	accountID, cityID uuid.UUID,
-) (entity.City, error) {
-	city, err := s.GetCity(ctx, cityID)
+) (models.City, error) {
+	city, err := s.GetCityByID(ctx, cityID)
 	if err != nil {
-		return entity.City{}, err
+		return models.City{}, err
 	}
 
 	if city.AgglomerationID == nil {
-		return entity.City{}, errx.ErrorNotEnoughRights.Raise(
+		return models.City{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("city %s has no agglomeration", city.ID),
 		)
 	}
 
 	_, err = s.checkAgglomerationIsActiveAndExists(ctx, *city.AgglomerationID)
 	if err != nil {
-		return entity.City{}, err
+		return models.City{}, err
 	}
 
 	err = s.checkPermissionForManageCity(ctx, accountID, *city.AgglomerationID)
 	if err != nil {
-		return entity.City{}, err
+		return models.City{}, err
 	}
 
 	return s.DeactivateCity(ctx, cityID)

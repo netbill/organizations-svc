@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
 type CreateParams struct {
@@ -14,31 +14,42 @@ type CreateParams struct {
 	ExpiresAt       time.Time
 }
 
-func (s Service) CreateInvite(ctx context.Context, params CreateParams) (entity.Invite, error) {
-	res, err := s.repo.CreateInvite(ctx, params)
-	if err != nil {
-		return entity.Invite{}, err
+func (s Service) CreateInvite(ctx context.Context, params CreateParams) (invite models.Invite, err error) {
+	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
+		invite, err = s.repo.CreateInvite(ctx, params)
+		if err != nil {
+			return err
+		}
+
+		err = s.messenger.WriteCreatedInvite(ctx, invite)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return models.Invite{}, err
 	}
 
-	return res, nil
+	return invite, nil
 }
 
 func (s Service) CreateInviteByUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params CreateParams,
-) (entity.Invite, error) {
+) (models.Invite, error) {
 	if err := s.checkPermissionForManageInvite(
 		ctx,
 		accountID,
 		params.AgglomerationID,
 	); err != nil {
-		return entity.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	res, err := s.CreateInvite(ctx, params)
 	if err != nil {
-		return entity.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	return res, nil

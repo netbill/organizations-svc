@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
 
@@ -23,22 +23,22 @@ func New(repo repo, messenger messenger) Service {
 }
 
 type repo interface {
-	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Member, error)
+	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
 
-	UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (entity.Member, error)
+	UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (models.Member, error)
 
-	GetMember(ctx context.Context, memberID uuid.UUID) (entity.Member, error)
+	GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error)
 	GetMemberByAccountAndAgglomeration(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
-	) (entity.Member, error)
+	) (models.Member, error)
 
 	FilterMembers(
 		ctx context.Context,
 		filter FilterParams,
 		offset uint,
 		limit uint,
-	) (pagi.Page[[]entity.Member], error)
+	) (pagi.Page[[]models.Member], error)
 
 	DeleteMember(ctx context.Context, memberID uuid.UUID) error
 
@@ -54,8 +54,8 @@ type repo interface {
 }
 
 type messenger interface {
-	WriteMemberCreated(ctx context.Context, member entity.Member) error
-	WriteMemberUpdated(ctx context.Context, member entity.Member) error
+	WriteMemberCreated(ctx context.Context, member models.Member) error
+	WriteMemberUpdated(ctx context.Context, member models.Member) error
 	WriteMemberDeleted(ctx context.Context, memberID uuid.UUID) error
 }
 
@@ -66,7 +66,7 @@ func (s Service) CheckAccessToManageOtherMember(
 	hasPermission, err := s.repo.CheckMemberHavePermission(
 		ctx,
 		initiatorID,
-		entity.RolePermissionManageMembers.String(),
+		models.RolePermissionManageMembers.String(),
 	)
 	if err != nil {
 		return err

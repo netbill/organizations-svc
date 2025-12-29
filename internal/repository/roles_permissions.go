@@ -4,21 +4,21 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 )
 
-func (s Service) GetAllPermissions(ctx context.Context) ([]entity.Permission, error) {
+func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
 	permissions, err := s.permissionsQ().Select(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]entity.Permission, len(permissions))
+	result := make([]models.Permission, len(permissions))
 	for i, perm := range permissions {
-		result[i] = entity.Permission{
+		result[i] = models.Permission{
 			ID:          perm.ID,
-			Code:        entity.CodeRolePermission(perm.Code),
+			Code:        models.CodeRolePermission(perm.Code),
 			Description: perm.Description,
 		}
 	}
@@ -29,7 +29,7 @@ func (s Service) GetAllPermissions(ctx context.Context) ([]entity.Permission, er
 func (s Service) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
-	permissions map[entity.CodeRolePermission]bool,
+	permissions map[models.CodeRolePermission]bool,
 ) error {
 	deletePermissions := make([]string, 0)
 	addPermissions := make([]string, 0)

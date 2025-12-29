@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/paulmach/orb"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
 type CreateParams struct {
@@ -19,17 +19,17 @@ type CreateParams struct {
 	Point           orb.Point
 }
 
-func (s Service) CreateCity(ctx context.Context, params CreateParams) (city entity.City, err error) {
+func (s Service) CreateCity(ctx context.Context, params CreateParams) (city models.City, err error) {
 	if params.AgglomerationID != nil {
 		if _, err = s.checkAgglomerationIsActiveAndExists(ctx, *params.AgglomerationID); err != nil {
-			return entity.City{}, err
+			return models.City{}, err
 		}
 	}
 
 	if params.Slug != nil {
 		err = s.checkSlugIsAvailable(ctx, *params.Slug)
 		if err != nil {
-			return entity.City{}, err
+			return models.City{}, err
 		}
 	}
 
@@ -41,7 +41,7 @@ func (s Service) CreateCity(ctx context.Context, params CreateParams) (city enti
 			)
 		}
 
-		err = s.messanger.CreateCity(ctx, city)
+		err = s.messanger.WriteCreateCity(ctx, city)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send create city message: %w", err),

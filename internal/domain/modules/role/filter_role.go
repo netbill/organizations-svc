@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
+	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
 
@@ -21,6 +21,6 @@ func (s Service) FilterRoles(
 	params FilterParams,
 	offset uint,
 	limit uint,
-) (pagi.Page[[]entity.Role], error) {
+) (pagi.Page[[]models.Role], error) {
 	return s.repo.FilterRoles(ctx, params, offset, limit)
 }

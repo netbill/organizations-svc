@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
 type UpdateParams struct {
@@ -14,7 +14,7 @@ type UpdateParams struct {
 	Icon *string `json:"icon,omitempty"`
 }
 
-func (s Service) UpdateAgglomeration(ctx context.Context, ID uuid.UUID, params UpdateParams) (agglo entity.Agglomeration, err error) {
+func (s Service) UpdateAgglomeration(ctx context.Context, ID uuid.UUID, params UpdateParams) (agglo models.Agglomeration, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		agglo, err = s.repo.UpdateAgglomeration(ctx, ID, params)
 		if err != nil {
@@ -32,7 +32,7 @@ func (s Service) UpdateAgglomeration(ctx context.Context, ID uuid.UUID, params U
 
 		return nil
 	}); err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
 	return agglo, nil
@@ -42,14 +42,14 @@ func (s Service) UpdateAgglomerationByUser(
 	ctx context.Context,
 	accountID, agglomerationID uuid.UUID,
 	params UpdateParams,
-) (entity.Agglomeration, error) {
+) (models.Agglomeration, error) {
 	agglo, err := s.GetAgglomeration(ctx, agglomerationID)
 	if err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
-	if agglo.Status == entity.AgglomerationStatusSuspended {
-		return entity.Agglomeration{}, errx.ErrorAgglomerationIsSuspended.Raise(
+	if agglo.Status == models.AgglomerationStatusSuspended {
+		return models.Agglomeration{}, errx.ErrorAgglomerationIsSuspended.Raise(
 			fmt.Errorf("agglomeration is suspended"),
 		)
 	}
@@ -59,7 +59,7 @@ func (s Service) UpdateAgglomerationByUser(
 		agglomerationID,
 	)
 	if err != nil {
-		return entity.Agglomeration{}, err
+		return models.Agglomeration{}, err
 	}
 
 	return s.UpdateAgglomeration(ctx, agglomerationID, params)
