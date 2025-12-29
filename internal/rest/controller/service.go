@@ -91,7 +91,9 @@ type City interface {
 
 type Member interface {
 	GetMemberByID(ctx context.Context, ID uuid.UUID) (entity.Member, error)
-	GetMemberByAccountIDAndAgglomerationID(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Member, error)
+	GetMemberByAccountAndAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Member, error)
+	GetInitiatorMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Member, error)
+
 	FilterMembers(
 		ctx context.Context,
 		filter member.FilterParams,
@@ -144,6 +146,18 @@ type Role interface {
 		accountID uuid.UUID,
 		roleID uuid.UUID,
 		params role.UpdateParams,
+	) (entity.Role, error)
+
+	UpdateRolesRanksByUser(
+		ctx context.Context,
+		accountID uuid.UUID,
+		agglomerationID uuid.UUID,
+		order map[uint]uuid.UUID,
+	) error
+	UpdateRoleRank(
+		ctx context.Context,
+		roleID uuid.UUID,
+		newRank uint,
 	) (entity.Role, error)
 	UpdateRoleRankByUser(
 		ctx context.Context,

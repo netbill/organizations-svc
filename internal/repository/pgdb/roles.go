@@ -94,7 +94,7 @@ func (q RolesQ) Insert(ctx context.Context, data InsertRoleParams) (Role, error)
 			VALUES ($1, $3, $2, $4, $5, $6)
 			RETURNING id, agglomeration_id, head, rank, name, description, color, created_at, updated_at
 		)
-		SELECT id, agglomeration_id, head, editable, rank, name, description, color, created_at, updated_at
+		SELECT id, agglomeration_id, head, rank, name, description, color, created_at, updated_at
 		FROM ins;
 	`
 
@@ -236,7 +236,7 @@ func (q RolesQ) UpdateColor(color string) RolesQ {
 	return q
 }
 
-func (q RolesQ) FilterByID(id uuid.UUID) RolesQ {
+func (q RolesQ) FilterByID(id ...uuid.UUID) RolesQ {
 	q.selector = q.selector.Where(sq.Eq{"r.id": id})
 	q.counter = q.counter.Where(sq.Eq{"r.id": id})
 	q.updater = q.updater.Where(sq.Eq{"r.id": id})
@@ -308,14 +308,6 @@ func (q RolesQ) FilterHead(head bool) RolesQ {
 	q.counter = q.counter.Where(sq.Eq{"r.head": head})
 	q.updater = q.updater.Where(sq.Eq{"r.head": head})
 	q.deleter = q.deleter.Where(sq.Eq{"r.head": head})
-	return q
-}
-
-func (q RolesQ) FilterEditable(editable bool) RolesQ {
-	q.selector = q.selector.Where(sq.Eq{"r.editable": editable})
-	q.counter = q.counter.Where(sq.Eq{"r.editable": editable})
-	q.updater = q.updater.Where(sq.Eq{"r.editable": editable})
-	q.deleter = q.deleter.Where(sq.Eq{"r.editable": editable})
 	return q
 }
 
@@ -400,9 +392,9 @@ func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank ui
 				END,
 				updated_at = now()
 			WHERE agglomeration_id = $4
-			RETURNING id, agglomeration_id, head, editable, rank, name, created_at, updated_at
+			RETURNING id, agglomeration_id, head, rank, name, description, color, created_at, updated_at
 		)
-		SELECT id, agglomeration_id, head, editable, rank, name, created_at, updated_at
+		SELECT id, agglomeration_id, head, rank, name, description, color, created_at, updated_at
 		FROM upd
 		WHERE id = $1
 	`
@@ -412,6 +404,150 @@ func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank ui
 	var out Role
 	if err := out.scan(q.db.QueryRowContext(ctx, sqlMove, args...)); err != nil {
 		return Role{}, err
+	}
+
+	return out, nil
+}
+
+func (q RolesQ) UpdateRolesRanks(
+	ctx context.Context,
+	agglomerationID uuid.UUID,
+	order map[uint]uuid.UUID,
+) ([]Role, error) {
+	roles, err := NewRolesQ(q.db).
+		FilterByAgglomerationID(agglomerationID).
+		OrderByRoleRank(true).
+		Select(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("select roles by agglomeration: %w", err)
+	}
+	if len(roles) == 0 {
+		return nil, fmt.Errorf("no roles in agglomeration %s", agglomerationID)
+	}
+
+	n := len(roles)
+
+	idToIndex := make(map[uuid.UUID]int, n)
+	for i := range roles {
+		idToIndex[roles[i].ID] = i
+	}
+
+	seenIDs := make(map[uuid.UUID]struct{}, len(order))
+	for newRank, roleID := range order {
+		if int(newRank) < 0 || int(newRank) >= n {
+			return nil, fmt.Errorf("rank %d out of range [0..%d]", newRank, n-1)
+		}
+		if _, ok := idToIndex[roleID]; !ok {
+			return nil, fmt.Errorf("role %s not in agglomeration %s", roleID, agglomerationID)
+		}
+		if _, ok := seenIDs[roleID]; ok {
+			return nil, fmt.Errorf("duplicate role id %s in order map", roleID)
+		}
+		seenIDs[roleID] = struct{}{}
+	}
+
+	type mv struct {
+		rank uint
+		id   uuid.UUID
+	}
+	moves := make([]mv, 0, len(order))
+	for r, id := range order {
+		moves = append(moves, mv{rank: r, id: id})
+	}
+	for i := 0; i < len(moves); i++ {
+		for j := i + 1; j < len(moves); j++ {
+			if moves[j].rank < moves[i].rank {
+				moves[i], moves[j] = moves[j], moves[i]
+			}
+		}
+	}
+
+	current := make([]uuid.UUID, 0, n)
+	for i := range roles {
+		current = append(current, roles[i].ID)
+	}
+
+	removeAt := func(s []uuid.UUID, idx int) []uuid.UUID {
+		copy(s[idx:], s[idx+1:])
+		return s[:len(s)-1]
+	}
+	insertAt := func(s []uuid.UUID, idx int, v uuid.UUID) []uuid.UUID {
+		s = append(s, uuid.Nil)
+		copy(s[idx+1:], s[idx:])
+		s[idx] = v
+		return s
+	}
+
+	for _, m := range moves {
+		id := m.id
+		newIdx := int(m.rank)
+
+		var oldIdx int = -1
+		for i := range current {
+			if current[i] == id {
+				oldIdx = i
+				break
+			}
+		}
+		if oldIdx == -1 {
+			return nil, fmt.Errorf("role %s not found in current order", id)
+		}
+
+		if oldIdx == newIdx {
+			continue
+		}
+
+		current = removeAt(current, oldIdx)
+		if oldIdx < newIdx {
+			newIdx--
+		}
+		current = insertAt(current, newIdx, id)
+	}
+
+	changed := make([]uuid.UUID, 0, n)
+	newRanks := make([]int, 0, n)
+
+	for idx, id := range current {
+		oldIdx := idToIndex[id]
+		if oldIdx != idx {
+			changed = append(changed, id)
+			newRanks = append(newRanks, idx)
+		}
+	}
+
+	if len(changed) == 0 {
+		return roles, nil
+	}
+
+	const sqlUpdate = `
+		UPDATE roles r
+		SET
+			rank = v.rank,
+			updated_at = now()
+		FROM (
+			SELECT UNNEST($1::uuid[]) AS id, UNNEST($2::int[]) AS rank
+		) v
+		WHERE r.id = v.id
+		  AND r.agglomeration_id = $3
+		RETURNING r.id, r.agglomeration_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at
+	`
+
+	rows, err := q.db.QueryContext(ctx, sqlUpdate, changed, newRanks, agglomerationID)
+	if err != nil {
+		return nil, fmt.Errorf("updating roles ranks: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]Role, 0, len(changed))
+	for rows.Next() {
+		var r Role
+		if err := r.scan(rows); err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return out, nil

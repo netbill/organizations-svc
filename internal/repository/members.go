@@ -118,8 +118,6 @@ func (s Service) FilterMembers(
 		q = q.FilterLikePosition(*filter.Position)
 	}
 
-	limit = pagi.CalculateLimit(limit, 20, 100)
-
 	rows, err := q.Page(limit, offset).SelectWithUserData(ctx)
 	if err != nil {
 		return pagi.Page[[]entity.Member]{}, fmt.Errorf("filtering members: %w", err)

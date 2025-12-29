@@ -10,5 +10,4 @@ config_docker.yaml
 
 .gitignore
 
-internal/domain/modules/permissions
-internal/domain/modules/role
+internal/domain/modules/permissions\

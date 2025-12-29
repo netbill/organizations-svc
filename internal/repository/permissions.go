@@ -46,8 +46,6 @@ func (s Service) FilterPermissions(
 		q = q.FilterByCode(string(*filter.Code))
 	}
 
-	limit = pagi.CalculateLimit(limit, 20, 100)
-
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]entity.Permission]{}, err

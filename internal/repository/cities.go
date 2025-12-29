@@ -117,8 +117,6 @@ func (s Service) FilterCities(
 		q = q.FilterLikeName(*filter.Name)
 	}
 
-	limit = pagi.CalculateLimit(limit, 20, 100)
-
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]entity.City]{}, err
@@ -158,8 +156,6 @@ func (s Service) FilterCitiesNearest(
 	if filter.Name != nil {
 		q = q.FilterLikeName(*filter.Name)
 	}
-
-	limit = pagi.CalculateLimit(limit, 20, 100)
 
 	rows, err := q.OrderNearest(limit, point[1], point[0]).Page(limit, offset).SelectNearest(ctx)
 	if err != nil {

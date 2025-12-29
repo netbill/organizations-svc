@@ -47,7 +47,7 @@ func (s Service) UpdateMemberByUser(
 		return entity.Member{}, err
 	}
 
-	initiator, err := s.GetInitiatorMemberByAccountAndAgglomeration(ctx, accountID, memberID)
+	initiator, err := s.GetInitiatorMember(ctx, accountID, memberID)
 	if err != nil {
 		return entity.Member{}, err
 	}

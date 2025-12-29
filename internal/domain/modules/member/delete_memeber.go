@@ -33,7 +33,7 @@ func (s Service) DeleteMemberByUser(ctx context.Context, accountID, memberID uui
 		return err
 	}
 
-	initiator, err := s.GetInitiatorMemberByAccountAndAgglomeration(ctx, accountID, member.AgglomerationID)
+	initiator, err := s.GetInitiatorMember(ctx, accountID, member.AgglomerationID)
 	if err != nil {
 		return err
 	}

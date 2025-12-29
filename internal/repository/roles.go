@@ -45,11 +45,11 @@ func (s Service) FilterRoles(
 	if filter.AgglomerationID != nil {
 		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
 	}
+	if filter.RolesID != nil && len(*filter.RolesID) > 0 {
+		q = q.FilterByID(*filter.RolesID...)
+	}
 	if filter.Head != nil {
 		q = q.FilterHead(*filter.Head)
-	}
-	if filter.Editable != nil {
-		q = q.FilterEditable(*filter.Editable)
 	}
 	if filter.Rank != nil {
 		q = q.FilterByRank(*filter.Rank)
@@ -57,8 +57,6 @@ func (s Service) FilterRoles(
 	if filter.Name != nil {
 		q = q.FilterLikeName(*filter.Name)
 	}
-
-	limit = pagi.CalculateLimit(limit, 20, 100)
 
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
@@ -104,6 +102,19 @@ func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank u
 	}
 
 	return Role(row), nil
+}
+
+func (s Service) UpdateRolesRanks(
+	ctx context.Context,
+	agglomerationID uuid.UUID,
+	order map[uint]uuid.UUID,
+) error {
+	_, err := s.rolesQ().UpdateRolesRanks(ctx, agglomerationID, order)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {

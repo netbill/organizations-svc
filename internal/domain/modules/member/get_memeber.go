@@ -10,7 +10,7 @@ import (
 	"github.com/umisto/cities-svc/internal/domain/errx"
 )
 
-func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (entity.Member, error) {
+func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (entity.Member, error) {
 	row, err := s.repo.GetMember(ctx, memberID)
 	if err != nil {
 		return entity.Member{}, err
@@ -41,7 +41,7 @@ func (s Service) GetMemberByAccountAndAgglomeration(
 	return row, nil
 }
 
-func (s Service) GetInitiatorMemberByAccountAndAgglomeration(
+func (s Service) GetInitiatorMember(
 	ctx context.Context,
 	accountID, agglomerationID uuid.UUID,
 ) (entity.Member, error) {

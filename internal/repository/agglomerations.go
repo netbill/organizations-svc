@@ -86,8 +86,6 @@ func (s Service) FilterAgglomerations(
 		q = q.FilterByStatus(*filter.Status)
 	}
 
-	limit = pagi.CalculateLimit(limit, 20, 100)
-
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]entity.Agglomeration]{}, err
