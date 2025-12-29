@@ -163,7 +163,7 @@ func (s Service) CheckMemberHavePermission(
 }
 
 func (s Service) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
-	res, err := s.CanInteract(ctx, firstMemberID, secondMemberID)
+	res, err := s.membersQ().CanInteract(ctx, firstMemberID, secondMemberID)
 	if err != nil {
 		return false, fmt.Errorf("checking first member can interact: %w", err)
 	}
