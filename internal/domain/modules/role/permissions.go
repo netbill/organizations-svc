@@ -2,6 +2,7 @@ package role
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/umisto/cities-svc/internal/domain/errx"
@@ -9,7 +10,14 @@ import (
 )
 
 func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]models.Permission, error) {
-	return s.repo.GetRolePermissions(ctx, roleID)
+	permission, err := s.repo.GetRolePermissions(ctx, roleID)
+	if err != nil {
+		return nil, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get role permissions: %w", err),
+		)
+	}
+
+	return permission, nil
 }
 
 func (s Service) SetRolePermissions(
@@ -20,12 +28,16 @@ func (s Service) SetRolePermissions(
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		err = s.repo.SetRolePermissions(ctx, roleID, permissions)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to set role permissions: %w", err),
+			)
 		}
 
 		perm, err = s.repo.GetRolePermissions(ctx, roleID)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to get role permissions after setting: %w", err),
+			)
 		}
 
 		return nil
@@ -49,14 +61,17 @@ func (s Service) SetRolePermissionsByUser(
 
 	maxRole, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, role.AgglomerationID)
 	if err != nil {
-		return nil, err
+		return nil, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get account max role in agglomeration: %w", err),
+		)
 	}
+
 	if err = s.CheckPermissionsToManageRole(ctx, accountID, roleID, role.Rank); err != nil {
 		return nil, err
 	}
 	if role.Rank <= maxRole.Rank {
 		return nil, errx.ErrorNotEnoughRights.Raise(
-			nil,
+			fmt.Errorf("account does not have enough rights to set permissions for this role"),
 		)
 	}
 
@@ -64,5 +79,12 @@ func (s Service) SetRolePermissionsByUser(
 }
 
 func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
-	return s.repo.GetAllPermissions(ctx)
+	res, err := s.repo.GetAllPermissions(ctx)
+	if err != nil {
+		return nil, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get all permissions: %w", err),
+		)
+	}
+
+	return res, nil
 }

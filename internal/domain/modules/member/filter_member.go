@@ -2,8 +2,10 @@ package member
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/umisto/cities-svc/internal/domain/errx"
 	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
@@ -27,5 +29,12 @@ func (s Service) FilterMembers(
 	offset uint,
 	limit uint,
 ) (pagi.Page[[]models.Member], error) {
-	return s.repo.FilterMembers(ctx, filter, offset, limit)
+	res, err := s.repo.FilterMembers(ctx, filter, offset, limit)
+	if err != nil {
+		return pagi.Page[[]models.Member]{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to filter members: %w", err),
+		)
+	}
+
+	return res, nil
 }

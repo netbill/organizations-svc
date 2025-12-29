@@ -10,7 +10,7 @@ import (
 )
 
 func (s Service) ArchiveCity(ctx context.Context, ID uuid.UUID) (city models.City, err error) {
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
+	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		city, err = s.repo.UpdateCityStatus(ctx, ID, models.CityStatusArchived)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
@@ -25,9 +25,7 @@ func (s Service) ArchiveCity(ctx context.Context, ID uuid.UUID) (city models.Cit
 		}
 
 		return nil
-	}); err != nil {
-		return models.City{}, err
-	}
+	})
 
-	return city, nil
+	return city, err
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
-	if err := s.repo.Transaction(ctx, func(ctx context.Context) error {
+	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		err := s.repo.DeleteAgglomeration(ctx, ID)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
@@ -25,9 +25,5 @@ func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
 		}
 
 		return nil
-	}); err != nil {
-		return err
-	}
-
-	return nil
+	})
 }

@@ -13,7 +13,9 @@ import (
 func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
 	row, err := s.repo.GetMember(ctx, memberID)
 	if err != nil {
-		return models.Member{}, err
+		return models.Member{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get member with id %s: %w", memberID, err),
+		)
 	}
 	if row.IsNil() {
 		return models.Member{}, errx.ErrorMemberNotFound.Raise(
@@ -30,7 +32,10 @@ func (s Service) GetMemberByAccountAndAgglomeration(
 ) (models.Member, error) {
 	row, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
 	if err != nil {
-		return models.Member{}, err
+		return models.Member{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get member with account id %s and agglomeration id %s: %w",
+				accountID, agglomerationID, err),
+		)
 	}
 	if row.IsNil() {
 		return models.Member{}, errx.ErrorMemberNotFound.Raise(

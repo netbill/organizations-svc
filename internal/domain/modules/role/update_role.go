@@ -135,7 +135,9 @@ func (s Service) UpdateRolesRanksByUser(
 ) error {
 	maxRole, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, agglomerationID)
 	if err != nil {
-		return err
+		return errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get account max role in agglomeration: %w", err),
+		)
 	}
 
 	rolesIDs := make(map[uuid.UUID]struct{})

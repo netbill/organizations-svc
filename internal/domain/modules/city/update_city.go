@@ -80,6 +80,13 @@ func (s Service) UpdateCitySlug(
 		return models.City{}, err
 	}
 
+	if newSlug != nil {
+		err = s.checkSlugIsAvailable(ctx, *newSlug)
+		if err != nil {
+			return models.City{}, err
+		}
+	}
+
 	oldSlug := city.Slug
 
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {

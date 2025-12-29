@@ -2,8 +2,10 @@ package role
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/umisto/cities-svc/internal/domain/errx"
 	"github.com/umisto/cities-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
@@ -22,5 +24,12 @@ func (s Service) FilterRoles(
 	offset uint,
 	limit uint,
 ) (pagi.Page[[]models.Role], error) {
-	return s.repo.FilterRoles(ctx, params, offset, limit)
+	res, err := s.repo.FilterRoles(ctx, params, offset, limit)
+	if err != nil {
+		return pagi.Page[[]models.Role]{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to filter roles: %w", err),
+		)
+	}
+
+	return res, nil
 }

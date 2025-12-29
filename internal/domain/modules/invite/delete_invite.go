@@ -14,7 +14,7 @@ func (s Service) DeleteInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) error {
-	invite, err := s.repo.GetInviteByID(ctx, inviteID)
+	invite, err := s.GetInvite(ctx, inviteID)
 	if err != nil {
 		return err
 	}
@@ -24,12 +24,15 @@ func (s Service) DeleteInvite(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
 	}
-
 	if invite.Status != models.InviteStatusSent {
-		return err
+		return errx.ErrorInviteAlreadyAnswered.Raise(
+			fmt.Errorf("invite status is %s", invite.Status),
+		)
 	}
 	if invite.ExpiresAt.Before(time.Now().UTC()) {
-		return err
+		return errx.ErrorInviteExpired.Raise(
+			fmt.Errorf("invite expired at %s", invite.ExpiresAt),
+		)
 	}
 
 	if err = s.checkPermissionForManageInvite(
@@ -43,12 +46,16 @@ func (s Service) DeleteInvite(
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		err = s.repo.DeleteInvite(ctx, inviteID)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to delete invite: %w", err),
+			)
 		}
 
 		err = s.messenger.WriteDeletedInvite(ctx, invite.ID)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to write deleted invite event: %w", err),
+			)
 		}
 
 		return nil

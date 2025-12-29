@@ -2,17 +2,27 @@ package role
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/umisto/cities-svc/internal/domain/errx"
 )
 
 func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		if err := s.repo.DeleteRole(ctx, roleID); err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to delete role: %w", err),
+			)
 		}
 
-		return s.messenger.WriteRoleDeleted(ctx, roleID)
+		if err := s.messenger.WriteRoleDeleted(ctx, roleID); err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to send role deleted message: %w", err),
+			)
+		}
+
+		return nil
 	})
 }
 

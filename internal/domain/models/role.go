@@ -18,3 +18,7 @@ type Role struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+func (r Role) IsNil() bool {
+	return r.ID == uuid.Nil
+}

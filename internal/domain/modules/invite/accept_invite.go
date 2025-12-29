@@ -14,7 +14,7 @@ func (s Service) AcceptInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.repo.GetInviteByID(ctx, inviteID)
+	invite, err = s.GetInvite(ctx, accountID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -24,33 +24,44 @@ func (s Service) AcceptInvite(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
 	}
-
 	if invite.Status != models.InviteStatusSent {
-		return models.Invite{}, err
+		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
+			fmt.Errorf("invite status is %s", invite.Status),
+		)
 	}
 	if invite.ExpiresAt.Before(time.Now().UTC()) {
-		return models.Invite{}, err
+		return models.Invite{}, errx.ErrorInviteExpired.Raise(
+			fmt.Errorf("invite expired at %s", invite.ExpiresAt),
+		)
 	}
 
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusAccepted)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to update invite status: %w", err),
+			)
 		}
 
 		err = s.messenger.WriteAcceptedInvite(ctx, invite)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to write accepted invite event: %w", err),
+			)
 		}
 
 		mem, err := s.repo.CreateMember(ctx, accountID, invite.ID)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to create member from invite: %w", err),
+			)
 		}
 
 		err = s.messenger.WriteCreatedNewMember(ctx, mem)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to write created member event: %w", err),
+			)
 		}
 
 		return nil

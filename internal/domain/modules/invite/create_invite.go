@@ -2,9 +2,11 @@ package invite
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/umisto/cities-svc/internal/domain/errx"
 	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
@@ -18,12 +20,16 @@ func (s Service) CreateInvite(ctx context.Context, params CreateParams) (invite 
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.CreateInvite(ctx, params)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to create invite: %w", err),
+			)
 		}
 
 		err = s.messenger.WriteCreatedInvite(ctx, invite)
 		if err != nil {
-			return err
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to write created invite event: %w", err),
+			)
 		}
 
 		return nil
