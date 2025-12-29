@@ -36,22 +36,32 @@ func NewRolePermissionsQ(db pgx.DBTX) RolePermissionsQ {
 	}
 }
 
-func (q RolePermissionsQ) Insert(ctx context.Context, data RolePermission) (RolePermission, error) {
-	query, args, err := q.inserter.SetMap(map[string]any{
-		"role_id":       data.RoleID,
-		"permission_id": data.PermissionID,
-	}).Suffix("RETURNING " + RolePermissionsColumns).ToSql()
+func (q RolePermissionsQ) Insert(ctx context.Context, data ...RolePermission) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	ins := q.inserter.Columns("role_id", "permission_id")
+
+	for _, rp := range data {
+		ins = ins.Values(rp.RoleID, rp.PermissionID)
+	}
+
+	// если не хочешь падать на дублях — раскомментируй
+	// ins = ins.Suffix("ON CONFLICT DO NOTHING")
+
+	query, args, err := ins.ToSql()
 	if err != nil {
-		return RolePermission{}, fmt.Errorf("building insert query for %s: %w", RolePermissionsTable, err)
+		return fmt.Errorf("building insert query for %s: %w", RolePermissionsTable, err)
 	}
 
-	var rp RolePermission
-	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&rp.RoleID, &rp.PermissionID); err != nil {
-		return RolePermission{}, fmt.Errorf("executing insert query for %s: %w", RolePermissionsTable, err)
+	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("executing insert query for %s: %w", RolePermissionsTable, err)
 	}
 
-	return rp, nil
+	return nil
 }
+
 
 func (q RolePermissionsQ) Get(ctx context.Context) (RolePermission, error) {
 	query, args, err := q.selector.ToSql()
@@ -123,7 +133,7 @@ func (q RolePermissionsQ) FilterByPermissionID(permissionID uuid.UUID) RolePermi
 	return q
 }
 
-func (q RolePermissionsQ) FilterByPermissionCode(code string) RolePermissionsQ {
+func (q RolePermissionsQ) FilterByPermissionCode(code ...string) RolePermissionsQ {
 	sub := sq.
 		Select("id").
 		From(PermissionTable).
@@ -244,150 +254,3 @@ func (q RolePermissionsQ) Exists(ctx context.Context) (bool, error) {
 	}
 	return ok, nil
 }
-
-//func (q RolePermissionsQ) CheckMemberHavePermissionInAgglomerationByCode(
-//	ctx context.Context,
-//	memberID uuid.UUID,
-//	agglomerationID uuid.UUID,
-//	code string,
-//) (bool, error) {
-//	const sqlq = `
-//		SELECT EXISTS (
-//			SELECT 1
-//			FROM members m
-//			JOIN member_roles mr ON mr.member_id = m.id
-//			JOIN role_permissions rp ON rp.role_id = mr.role_id
-//			JOIN permissions p ON p.id = rp.permission_id
-//			WHERE m.id = $1
-//				AND m.agglomeration_id = $2
-//				AND p.code = $3
-//		)
-//	`
-//
-//	var ok bool
-//	if err := q.db.QueryRowContext(ctx, sqlq, memberID, agglomerationID, code).Scan(&ok); err != nil {
-//		return false, fmt.Errorf("scanning permission exists (member+code): %w", err)
-//	}
-//	return ok, nil
-//}
-//
-//func (q RolePermissionsQ) CheckMemberHavePermissionInAgglomerationByID(
-//	ctx context.Context,
-//	memberID uuid.UUID,
-//	agglomerationID uuid.UUID,
-//	permissionID uuid.UUID,
-//) (bool, error) {
-//	const sqlq = `
-//		SELECT EXISTS (
-//			SELECT 1
-//			FROM members m
-//			JOIN member_roles mr ON mr.member_id = m.id
-//			JOIN role_permissions rp ON rp.role_id = mr.role_id
-//			WHERE m.id = $1
-//				AND m.agglomeration_id = $2
-//				AND rp.permission_id = $3
-//		)
-//	`
-//
-//	var ok bool
-//	if err := q.db.QueryRowContext(ctx, sqlq, memberID, agglomerationID, permissionID).Scan(&ok); err != nil {
-//		return false, fmt.Errorf("scanning permission exists (member+id): %w", err)
-//	}
-//	return ok, nil
-//}
-//
-//func (q RolePermissionsQ) CheckMemberHavePermissionByCode(
-//	ctx context.Context,
-//	memberID uuid.UUID,
-//	code string,
-//) (bool, error) {
-//	const sqlq = `
-//		SELECT EXISTS (
-//			SELECT 1
-//			FROM member_roles mr
-//			JOIN role_permissions rp ON rp.role_id = mr.role_id
-//			JOIN permissions p ON p.id = rp.permission_id
-//			WHERE mr.member_id = $1
-//				AND p.code = $2
-//		)
-//	`
-//
-//	var ok bool
-//	if err := q.db.QueryRowContext(ctx, sqlq, memberID, code).Scan(&ok); err != nil {
-//		return false, fmt.Errorf("scanning permission exists (member+code): %w", err)
-//	}
-//	return ok, nil
-//}
-//
-//func (q RolePermissionsQ) CheckMemberHavePermissionByID(
-//	ctx context.Context,
-//	memberID uuid.UUID,
-//	permissionID uuid.UUID,
-//) (bool, error) {
-//	const sqlq = `
-//		SELECT EXISTS (
-//			SELECT 1
-//			FROM member_roles mr
-//			JOIN role_permissions rp ON rp.role_id = mr.role_id
-//			WHERE mr.member_id = $1
-//				AND rp.permission_id = $2
-//		)
-//	`
-//
-//	var ok bool
-//	if err := q.db.QueryRowContext(ctx, sqlq, memberID, permissionID).Scan(&ok); err != nil {
-//		return false, fmt.Errorf("scanning permission exists (member+id): %w", err)
-//	}
-//	return ok, nil
-//}
-//
-//func (q RolePermissionsQ) CheckAccountHavePermissionByCode(
-//	ctx context.Context,
-//	accountID uuid.UUID,
-//	agglomerationID uuid.UUID,
-//	code string,
-//) (bool, error) {
-//	const sqlq = `
-//		SELECT EXISTS (
-//			SELECT 1
-//			FROM members m
-//			JOIN member_roles mr ON mr.member_id = m.id
-//			JOIN role_permissions rp ON rp.role_id = mr.role_id
-//			JOIN permissions p ON p.id = rp.permission_id
-//			WHERE m.account_id = $1
-//				AND m.agglomeration_id = $2
-//				AND p.code = $3
-//		)
-//	`
-//
-//	var ok bool
-//	if err := q.db.QueryRowContext(ctx, sqlq, accountID, agglomerationID, code).Scan(&ok); err != nil {
-//		return false, fmt.Errorf("scanning permission exists (account+code): %w", err)
-//	}
-//	return ok, nil
-//}
-//
-//func (q RolePermissionsQ) CheckAccountHavePermissionByID(
-//	ctx context.Context,
-//	accountID uuid.UUID,
-//	agglomerationID uuid.UUID,
-//	permissionID uuid.UUID,
-//) (bool, error) {
-//	const sqlq = `
-//		SELECT EXISTS (
-//			SELECT 1
-//			FROM members m
-//			JOIN member_roles mr ON mr.member_id = m.id
-//			JOIN role_permissions rp ON rp.role_id = mr.role_id
-//			WHERE m.account_id = $1
-//				AND m.agglomeration_id = $2
-//				AND rp.permission_id = $3
-//		)
-//	`
-//
-//	var ok bool
-//	if err := q.db.QueryRowContext(ctx, sqlq, accountID, agglomerationID, permissionID).Scan(&ok); err != nil {
-//		return false, fmt.Errorf("scanning permission exists (account+id): %w", err)
-//	}
-//	return ok, nil
-//}

@@ -11,6 +11,14 @@ func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]en
 	return s.repo.GetRolePermissions(ctx, roleID)
 }
 
-func (s Service) SetRolePermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) ([]entity.Permission, error) {
-	return s.repo.SetRolePermissions(ctx, roleID, permissionIDs)
+func (s Service) SetRolePermissions(
+	ctx context.Context,
+	roleID uuid.UUID,
+	permissions map[entity.CodeRolePermission]bool,
+) ([]entity.Permission, error) {
+	return s.repo.SetRolePermissions(ctx, roleID, permissions)
+}
+
+func (s Service) GetAllPermissions(ctx context.Context) ([]entity.Permission, error) {
+	return s.repo.GetAllPermissions(ctx)
 }

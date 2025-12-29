@@ -10,4 +10,4 @@ config_docker.yaml
 
 .gitignore
 
-internal/domain/modules/permissions\
+internal/domain/modules/permissions

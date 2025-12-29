@@ -16,6 +16,13 @@ type Service struct {
 	messanger messanger
 }
 
+func New(repo repo, messanger messanger) Service {
+	return Service{
+		repo:      repo,
+		messanger: messanger,
+	}
+}
+
 type repo interface {
 	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (entity.Agglomeration, error)
 

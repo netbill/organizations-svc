@@ -15,6 +15,13 @@ type Service struct {
 	messenger messenger
 }
 
+func New(repo repo, messenger messenger) Service {
+	return Service{
+		repo:      repo,
+		messenger: messenger,
+	}
+}
+
 type repo interface {
 	CreateRole(ctx context.Context, params CreateParams) (entity.Role, error)
 
@@ -43,6 +50,13 @@ type repo interface {
 	) (entity.Member, error)
 
 	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]entity.Permission, error)
+	SetRolePermissions(
+		ctx context.Context,
+		roleID uuid.UUID,
+		permissions map[entity.CodeRolePermission]bool,
+	) error
+
+	GetAllPermissions(ctx context.Context) ([]entity.Permission, error)
 
 	GetAccountMaxRoleInAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (entity.Role, error)
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (entity.Role, error)
@@ -52,11 +66,6 @@ type repo interface {
 		accountID, agglomerationID uuid.UUID,
 		permissionKey string,
 	) (bool, error)
-
-	//CheckMemberHavePermissionByCode(ctx context.Context, memberID uuid.UUID, permissionKey string) (bool, error)
-	//CheckMemberHavePermissionByID(ctx context.Context, memberID, permissionID uuid.UUID) (bool, error)
-	//CheckAccountHavePermissionByCode(ctx context.Context, accountID, agglomerationID uuid.UUID, permissionKey string) (bool, error)
-	//CheckAccountHavePermissionByID(ctx context.Context, accountID, agglomerationID, permissionID uuid.UUID) (bool, error)
 }
 
 type messenger interface {

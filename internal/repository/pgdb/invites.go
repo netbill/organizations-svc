@@ -11,20 +11,26 @@ import (
 )
 
 const InviteTable = "invites"
-const InviteColumns = "id, agglomeration_id, status, expires_at, created_at"
-
-type InviteStatus string
+const InviteColumns = "id, agglomeration_id, account_id, status, expires_at, created_at"
 
 type Invite struct {
-	ID              uuid.UUID    `json:"id"`
-	AgglomerationID uuid.UUID    `json:"agglomeration_id"`
-	Status          InviteStatus `json:"status"`
-	ExpiresAt       time.Time    `json:"expires_at"`
-	CreatedAt       time.Time    `json:"created_at"`
+	ID              uuid.UUID `json:"id"`
+	AgglomerationID uuid.UUID `json:"agglomeration_id"`
+	AccountID       uuid.UUID `json:"account_id,omitempty"`
+	Status          string    `json:"status"`
+	ExpiresAt       time.Time `json:"expires_at"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 func (i *Invite) scan(row sq.RowScanner) error {
-	if err := row.Scan(&i.ID, &i.AgglomerationID, &i.Status, &i.ExpiresAt, &i.CreatedAt); err != nil {
+	if err := row.Scan(
+		&i.ID,
+		&i.AgglomerationID,
+		&i.AccountID,
+		&i.Status,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	); err != nil {
 		return fmt.Errorf("scanning invite: %w", err)
 	}
 	return nil
@@ -51,10 +57,16 @@ func NewInvitesQ(db pgx.DBTX) InvitesQ {
 	}
 }
 
-func (q InvitesQ) Insert(ctx context.Context, data Invite) (Invite, error) {
+type InsertInviteParams struct {
+	AgglomerationID uuid.UUID
+	AccountID       uuid.UUID
+	ExpiresAt       time.Time
+}
+
+func (q InvitesQ) Insert(ctx context.Context, data InsertInviteParams) (Invite, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"agglomeration_id": data.AgglomerationID,
-		"status":           data.Status,
+		"account_id":       data.AccountID,
 		"expires_at":       data.ExpiresAt,
 	}).Suffix("RETURNING " + InviteColumns).ToSql()
 	if err != nil {
@@ -181,7 +193,15 @@ func (q InvitesQ) FilterByAgglomerationID(id uuid.UUID) InvitesQ {
 	return q
 }
 
-func (q InvitesQ) FilterByStatus(status InviteStatus) InvitesQ {
+func (q InvitesQ) FilterByAccountID(id uuid.UUID) InvitesQ {
+	q.selector = q.selector.Where(sq.Eq{"account_id": id})
+	q.counter = q.counter.Where(sq.Eq{"account_id": id})
+	q.updater = q.updater.Where(sq.Eq{"account_id": id})
+	q.deleter = q.deleter.Where(sq.Eq{"account_id": id})
+	return q
+}
+
+func (q InvitesQ) FilterByStatus(status string) InvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"status": status})
 	q.counter = q.counter.Where(sq.Eq{"status": status})
 	q.updater = q.updater.Where(sq.Eq{"status": status})
@@ -205,7 +225,7 @@ func (q InvitesQ) FilterExpiresAfter(t time.Time) InvitesQ {
 	return q
 }
 
-func (q InvitesQ) UpdateStatus(status InviteStatus) InvitesQ {
+func (q InvitesQ) UpdateStatus(status string) InvitesQ {
 	q.updater = q.updater.Set("status", status)
 	return q
 }

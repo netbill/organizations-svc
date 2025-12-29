@@ -153,7 +153,7 @@ func (q PermissionsQ) FilterByID(id uuid.UUID) PermissionsQ {
 	return q
 }
 
-func (q PermissionsQ) FilterByCode(code string) PermissionsQ {
+func (q PermissionsQ) FilterByCode(code ...string) PermissionsQ {
 	q.selector = q.selector.Where(sq.Eq{"code": code})
 	q.counter = q.counter.Where(sq.Eq{"code": code})
 	q.updater = q.updater.Where(sq.Eq{"code": code})

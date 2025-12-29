@@ -8,12 +8,18 @@ import (
 	"github.com/umisto/cities-svc/internal/domain/entity"
 	"github.com/umisto/cities-svc/internal/domain/modules/agglomeration"
 	"github.com/umisto/cities-svc/internal/domain/modules/city"
+	"github.com/umisto/cities-svc/internal/domain/modules/invite"
 	"github.com/umisto/cities-svc/internal/domain/modules/member"
 	"github.com/umisto/cities-svc/internal/domain/modules/role"
 	"github.com/umisto/pagi"
 )
 
 type Service struct {
+	Agglomeration Agglomeration
+	City          City
+	Member        Member
+	Role          Role
+	Invite        Invite
 }
 
 type Agglomeration interface {
@@ -116,12 +122,32 @@ type Member interface {
 }
 
 type Invite interface {
-	CreateInvite(ctx context.Context, userID uuid.UUID) (entity.Invite, error)
+	CreateInvite(ctx context.Context, params invite.CreateParams) (entity.Invite, error)
+	CreateInviteByUser(
+		ctx context.Context,
+		accountID uuid.UUID,
+		params invite.CreateParams,
+	) (entity.Invite, error)
 
-	GetInvite(ctx context.Context, ID uuid.UUID) (entity.Invite, error)
+	GetInvite(ctx context.Context, id uuid.UUID) (entity.Invite, error)
+	FilterInvites(
+		ctx context.Context,
+		filter invite.FilterInviteParams,
+	) ([]entity.Invite, error)
 
-	AcceptInvite(ctx context.Context, inviteID uuid.UUID) (entity.Invite, error)
-	DeclineInvite(ctx context.Context, inviteID uuid.UUID) (entity.Invite, error)
+	DeclineInvite(
+		ctx context.Context,
+		accountID, inviteID uuid.UUID,
+	) (entity.Invite, error)
+	AcceptInvite(
+		ctx context.Context,
+		accountID, inviteID uuid.UUID,
+	) (entity.Invite, error)
+
+	DeleteInvite(
+		ctx context.Context,
+		accountID, inviteID uuid.UUID,
+	) error
 }
 
 type Role interface {
@@ -168,11 +194,19 @@ type Role interface {
 
 	DeleteRole(ctx context.Context, roleID uuid.UUID) error
 	DeleteRoleByUser(ctx context.Context, accountID, roleID uuid.UUID) error
-}
 
-type Permission interface {
 	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]entity.Permission, error)
-	SetRolePermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) ([]entity.Permission, error)
+	SetRolePermissions(ctx context.Context, roleID uuid.UUID, permissions map[entity.CodeRolePermission]bool) ([]entity.Permission, error)
 
 	GetAllPermissions(ctx context.Context) ([]entity.Permission, error)
+}
+
+func New(agglo Agglomeration, city City, member Member, role Role, invite Invite) Service {
+	return Service{
+		Agglomeration: agglo,
+		City:          city,
+		Member:        member,
+		Role:          role,
+		Invite:        invite,
+	}
 }

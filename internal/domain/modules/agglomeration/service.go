@@ -15,6 +15,13 @@ type Service struct {
 	messenger messanger
 }
 
+func New(repo repo, messenger messanger) Service {
+	return Service{
+		repo:      repo,
+		messenger: messenger,
+	}
+}
+
 type repo interface {
 	CreateAgglomeration(ctx context.Context, name string) (entity.Agglomeration, error)
 
