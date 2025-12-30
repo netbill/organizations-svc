@@ -10,8 +10,6 @@ import (
 	"github.com/umisto/logium"
 )
 
-const CitiesSvcProducer = "cities-svc"
-
 type Service struct {
 	log    logium.Logger
 	addr   []string

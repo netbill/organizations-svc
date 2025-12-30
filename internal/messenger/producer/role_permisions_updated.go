@@ -34,7 +34,7 @@ func (s Service) WriteRolePermissionsUpdated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.RolePermissionsUpdatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(CitiesSvcProducer)},
+				{Key: "Producer", Value: []byte(contracts.CitiesSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},

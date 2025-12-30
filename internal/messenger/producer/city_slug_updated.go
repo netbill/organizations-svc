@@ -36,7 +36,7 @@ func (s Service) WriteCitySlugUpdated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: header.EventType, Value: []byte(contracts.CitySlugUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(CitiesSvcProducer)},
+				{Key: header.Producer, Value: []byte(contracts.CitiesSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},

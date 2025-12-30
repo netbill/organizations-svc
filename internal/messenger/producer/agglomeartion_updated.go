@@ -36,7 +36,7 @@ func (s Service) WriteAgglomerationUpdated(
 				{Key: header.EventID, Value: []byte(eventID.String())}, // Outbox will fill this
 				{Key: header.EventType, Value: []byte(contracts.AgglomerationUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(CitiesSvcProducer)},
+				{Key: header.Producer, Value: []byte(contracts.CitiesSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},

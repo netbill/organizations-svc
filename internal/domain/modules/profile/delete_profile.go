@@ -1,0 +1,34 @@
+package profile
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/umisto/cities-svc/internal/domain/errx"
+)
+
+//TODO: if user is head of some organizations, we should handle it properly (transfer ownership or delete organizations)
+
+func (s Service) DeleteProfile(
+	ctx context.Context,
+	accountID uuid.UUID,
+) error {
+	return s.repo.Transaction(ctx, func(txCtx context.Context) error {
+		err := s.repo.DeleteProfileByAccountID(txCtx, accountID)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to delete profile: %w", err),
+			)
+		}
+
+		err = s.repo.DeleteMembershipsByAccountID(txCtx, accountID)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to delete memberships for accountID %s: %w", accountID, err),
+			)
+		}
+
+		return nil
+	})
+}

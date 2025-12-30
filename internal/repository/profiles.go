@@ -8,13 +8,25 @@ import (
 	"github.com/umisto/cities-svc/internal/repository/pgdb"
 )
 
-func (s Service) CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
+func (s Service) UpsertProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
 	row, err := s.profilesQ().Upsert(ctx, pgdb.ProfileUpsertInput{
 		AccountID: profile.AccountID,
 		Username:  profile.Username,
 		Official:  profile.Official,
 		Pseudonym: profile.Pseudonym,
 	})
+	if err != nil {
+		return models.Profile{}, err
+	}
+
+	return Profile(row), nil
+}
+
+func (s Service) UpdateUsername(ctx context.Context, accountID uuid.UUID, username string) (models.Profile, error) {
+	row, err := s.profilesQ().
+		FilterByAccountID(accountID).
+		UpdateUsername(username).
+		Get(ctx)
 	if err != nil {
 		return models.Profile{}, err
 	}

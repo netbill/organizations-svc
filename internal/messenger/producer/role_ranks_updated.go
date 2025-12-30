@@ -33,7 +33,7 @@ func (s Service) WriteRolesRanksUpdated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.RolesRanksUpdatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(CitiesSvcProducer)},
+				{Key: "Producer", Value: []byte(contracts.CitiesSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
