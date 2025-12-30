@@ -31,7 +31,8 @@ jwt:
     secret_key: "invitesuperkey"
 
 kafka:
-  broker: "re-news-kafka:XXXX"
+  brokers:
+    - "re-news-kafka:XXXX"
 
 swagger:
   enabled: true

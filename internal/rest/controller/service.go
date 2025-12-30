@@ -200,19 +200,8 @@ type Role interface {
 		ctx context.Context,
 		accountID uuid.UUID,
 		agglomerationID uuid.UUID,
-		order map[uint]uuid.UUID,
+		order map[uuid.UUID]uint,
 	) error
-	UpdateRoleRank(
-		ctx context.Context,
-		roleID uuid.UUID,
-		newRank uint,
-	) (models.Role, error)
-	UpdateRoleRankByUser(
-		ctx context.Context,
-		accountID uuid.UUID,
-		roleID uuid.UUID,
-		newRank uint,
-	) (models.Role, error)
 
 	DeleteRole(ctx context.Context, roleID uuid.UUID) error
 	DeleteRoleByUser(ctx context.Context, accountID, roleID uuid.UUID) error

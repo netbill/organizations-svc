@@ -62,18 +62,18 @@ type repo interface {
 }
 
 type messanger interface {
-	WriteCreateCity(ctx context.Context, city models.City) error
+	WriteCityCreated(ctx context.Context, city models.City) error
 
-	WriteUpdateCity(ctx context.Context, city models.City) error
+	WriteCityUpdated(ctx context.Context, city models.City) error
 
-	WriteUpdateCitySlug(ctx context.Context, cityID uuid.UUID, oldSlug, newSlug *string) error
-	WriteUpdateCityAgglomeration(ctx context.Context, cityID uuid.UUID, oldAggloID, newAggloId *uuid.UUID) error
+	WriteCitySlugUpdated(ctx context.Context, city models.City, newSlug *string) error
+	WriteCityAgglomerationUpdated(ctx context.Context, city models.City, newAggloId *uuid.UUID) error
 
-	WriteActivateCity(ctx context.Context, city models.City) error
-	WriteDeactivateCity(ctx context.Context, city models.City) error
-	WriteArchivedCity(ctx context.Context, city models.City) error
+	WriteCityActivated(ctx context.Context, city models.City) error
+	WriteCityDeactivated(ctx context.Context, city models.City) error
+	WriteCityArchived(ctx context.Context, city models.City) error
 
-	WriteDeleteCity(ctx context.Context, city models.City) error
+	WriteCityDeleted(ctx context.Context, city models.City) error
 }
 
 func (s Service) checkAgglomerationIsActiveAndExists(ctx context.Context, agglomerationID uuid.UUID) (models.Agglomeration, error) {

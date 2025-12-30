@@ -25,7 +25,7 @@ func (s Service) CreateInvite(ctx context.Context, params CreateParams) (invite 
 			)
 		}
 
-		err = s.messenger.WriteCreatedInvite(ctx, invite)
+		err = s.messenger.WriteInviteCreated(ctx, invite)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to write created invite event: %w", err),

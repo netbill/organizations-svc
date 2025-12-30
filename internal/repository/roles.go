@@ -113,7 +113,7 @@ func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank u
 func (s Service) UpdateRolesRanks(
 	ctx context.Context,
 	agglomerationID uuid.UUID,
-	order map[uint]uuid.UUID,
+	order map[uuid.UUID]uint,
 ) error {
 	_, err := s.rolesQ().UpdateRolesRanks(ctx, agglomerationID, order)
 	if err != nil {

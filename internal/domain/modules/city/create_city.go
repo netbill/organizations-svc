@@ -41,7 +41,7 @@ func (s Service) CreateCity(ctx context.Context, params CreateParams) (city mode
 			)
 		}
 
-		err = s.messanger.WriteCreateCity(ctx, city)
+		err = s.messanger.WriteCityCreated(ctx, city)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send create city message: %w", err),

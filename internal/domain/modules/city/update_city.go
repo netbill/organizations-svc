@@ -26,7 +26,7 @@ func (s Service) UpdateCity(ctx context.Context, id uuid.UUID, params UpdatePara
 			)
 		}
 
-		err = s.messanger.WriteUpdateCity(ctx, city)
+		err = s.messanger.WriteCityUpdated(ctx, city)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send update city message: %w", err),
@@ -97,7 +97,7 @@ func (s Service) UpdateCitySlug(
 			)
 		}
 
-		err = s.messanger.WriteUpdateCitySlug(ctx, city.ID, oldSlug, newSlug)
+		err = s.messanger.WriteCitySlugUpdated(ctx, city, oldSlug)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send update city slug message: %w", err),
@@ -161,12 +161,7 @@ func (s Service) UpdateCityAgglomeration(
 			)
 		}
 
-		err = s.messanger.WriteUpdateCityAgglomeration(
-			ctx,
-			city.ID,
-			oldAggloID,
-			newAggloID,
-		)
+		err = s.messanger.WriteCityAgglomerationUpdated(ctx, city, oldAggloID)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send update city agglomeration message: %w", err),

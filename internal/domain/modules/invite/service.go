@@ -56,14 +56,14 @@ type repo interface {
 }
 
 type messenger interface {
-	WriteCreatedNewMember(ctx context.Context, member models.Member) error
+	WriteMemberCreated(ctx context.Context, member models.Member) error
 
-	WriteCreatedInvite(ctx context.Context, invite models.Invite) error
+	WriteInviteCreated(ctx context.Context, invite models.Invite) error
 
-	WriteAcceptedInvite(ctx context.Context, invite models.Invite) error
-	WriteDeclinedInvite(ctx context.Context, invite models.Invite) error
+	WriteInviteAccepted(ctx context.Context, invite models.Invite) error
+	WriteInviteDeclined(ctx context.Context, invite models.Invite) error
 
-	WriteDeletedInvite(ctx context.Context, inviteID uuid.UUID) error
+	WriteInviteDeleted(ctx context.Context, invite models.Invite) error
 }
 
 func (s Service) checkPermissionForManageInvite(

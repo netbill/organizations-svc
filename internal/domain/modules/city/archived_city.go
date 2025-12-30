@@ -18,7 +18,7 @@ func (s Service) ArchiveCity(ctx context.Context, ID uuid.UUID) (city models.Cit
 			)
 		}
 
-		if err = s.messanger.WriteArchivedCity(ctx, city); err != nil {
+		if err = s.messanger.WriteCityArchived(ctx, city); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send archived city message: %w", err),
 			)

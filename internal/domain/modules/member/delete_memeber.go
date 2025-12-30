@@ -9,15 +9,20 @@ import (
 )
 
 func (s Service) DeleteMember(ctx context.Context, ID uuid.UUID) error {
+	member, err := s.GetMemberByID(ctx, ID)
+	if err != nil {
+		return err
+	}
+
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err := s.repo.DeleteMember(ctx, ID)
+		err = s.repo.DeleteMember(ctx, ID)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to delete member %s: %w", ID, err),
 			)
 		}
 
-		if err = s.messenger.WriteMemberDeleted(ctx, ID); err != nil {
+		if err = s.messenger.WriteMemberDeleted(ctx, member); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send member deleted message for member %s: %w", ID, err),
 			)

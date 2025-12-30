@@ -18,7 +18,7 @@ func (s Service) DeactivateCity(ctx context.Context, ID uuid.UUID) (city models.
 			)
 		}
 
-		if err = s.messanger.WriteDeactivateCity(ctx, city); err != nil {
+		if err = s.messanger.WriteCityDeactivated(ctx, city); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send deactivate city message: %w", err),
 			)

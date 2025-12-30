@@ -30,7 +30,7 @@ type repo interface {
 	UpdateRolesRanks(
 		ctx context.Context,
 		agglomerationID uuid.UUID,
-		order map[uint]uuid.UUID,
+		order map[uuid.UUID]uint,
 	) error
 
 	DeleteRole(ctx context.Context, roleID uuid.UUID) error
@@ -73,14 +73,14 @@ type repo interface {
 type messenger interface {
 	WriteRoleCreated(ctx context.Context, role models.Role) error
 	WriteRoleUpdated(ctx context.Context, role models.Role) error
-	WriteRoleDeleted(ctx context.Context, roleID uuid.UUID) error
+	WriteRoleDeleted(ctx context.Context, role models.Role) error
 
-	WriteRoleRanksUpdated(
+	WriteRolesRanksUpdated(
 		ctx context.Context,
 		agglomerationID uuid.UUID,
-		order map[uint]uuid.UUID,
+		order map[uuid.UUID]uint,
 	) error
-	WriteUpdatedRolePermissions(
+	WriteRolePermissionsUpdated(
 		ctx context.Context,
 		roleID uuid.UUID,
 		permissions map[models.CodeRolePermission]bool,

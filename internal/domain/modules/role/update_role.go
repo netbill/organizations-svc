@@ -56,55 +56,10 @@ func (s Service) UpdateRoleByUser(
 	return s.UpdateRole(ctx, roleID, params)
 }
 
-func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (role models.Role, err error) {
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		role, err = s.repo.UpdateRoleRank(ctx, roleID, newRank)
-		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to update role rank: %w", err),
-			)
-		}
-
-		if err = s.messenger.WriteRoleUpdated(ctx, role); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to send role updated message: %w", err),
-			)
-		}
-
-		return nil
-	}); err != nil {
-		return models.Role{}, err
-	}
-
-	return role, nil
-}
-
-func (s Service) UpdateRoleRankByUser(
-	ctx context.Context,
-	accountID uuid.UUID,
-	roleID uuid.UUID,
-	newRank uint,
-) (models.Role, error) {
-	role, err := s.GetRole(ctx, roleID)
-	if err != nil {
-		return models.Role{}, err
-	}
-
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, role.Rank); err != nil {
-		return models.Role{}, err
-	}
-
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, newRank); err != nil {
-		return models.Role{}, err
-	}
-
-	return s.UpdateRoleRank(ctx, roleID, newRank)
-}
-
 func (s Service) UpdateRolesRanks(
 	ctx context.Context,
 	agglomerationID uuid.UUID,
-	order map[uint]uuid.UUID,
+	order map[uuid.UUID]uint,
 ) error {
 	if err := s.repo.Transaction(ctx, func(ctx context.Context) error {
 		if err := s.repo.UpdateRolesRanks(ctx, agglomerationID, order); err != nil {
@@ -113,7 +68,7 @@ func (s Service) UpdateRolesRanks(
 			)
 		}
 
-		if err := s.messenger.WriteRoleRanksUpdated(ctx, agglomerationID, order); err != nil {
+		if err := s.messenger.WriteRolesRanksUpdated(ctx, agglomerationID, order); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send role ranks updated message: %w", err),
 			)
@@ -131,7 +86,7 @@ func (s Service) UpdateRolesRanksByUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	agglomerationID uuid.UUID,
-	order map[uint]uuid.UUID,
+	order map[uuid.UUID]uint,
 ) error {
 	maxRole, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, agglomerationID)
 	if err != nil {
@@ -140,12 +95,12 @@ func (s Service) UpdateRolesRanksByUser(
 		)
 	}
 
-	rolesIDs := make(map[uuid.UUID]struct{})
-	for _, roleID := range order {
+	rolesIDs := make(map[uuid.UUID]struct{}, len(order))
+	for roleID := range order {
 		rolesIDs[roleID] = struct{}{}
 	}
 
-	RolesBefore, err := s.repo.FilterRoles(
+	rolesBefore, err := s.repo.FilterRoles(
 		ctx,
 		FilterParams{
 			AgglomerationID: &agglomerationID,
@@ -159,28 +114,29 @@ func (s Service) UpdateRolesRanksByUser(
 		)
 	}
 
-	for _, role := range RolesBefore.Data {
-		if _, ok := rolesIDs[role.ID]; ok {
-			if err = s.CheckPermissionsToManageRole(ctx, accountID, agglomerationID, role.Rank); err != nil {
-				return err
-			}
-			if role.Rank < maxRole.Rank {
-				return errx.ErrorNotEnoughRights.Raise(
-					fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
-						accountID, maxRole.Rank, role.Rank),
-				)
-			}
+	for _, role := range rolesBefore.Data {
+		if _, ok := rolesIDs[role.ID]; !ok {
+			continue
+		}
+		if err = s.CheckPermissionsToManageRole(ctx, accountID, agglomerationID, role.Rank); err != nil {
+			return err
+		}
+		if role.Rank < maxRole.Rank {
+			return errx.ErrorNotEnoughRights.Raise(
+				fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
+					accountID, maxRole.Rank, role.Rank),
+			)
 		}
 	}
 
-	for rank := range order {
-		if err = s.CheckPermissionsToManageRole(ctx, accountID, agglomerationID, rank); err != nil {
+	for _, newRank := range order {
+		if err = s.CheckPermissionsToManageRole(ctx, accountID, agglomerationID, newRank); err != nil {
 			return err
 		}
-		if rank < maxRole.Rank {
+		if newRank < maxRole.Rank {
 			return errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
-					accountID, maxRole.Rank, rank),
+					accountID, maxRole.Rank, newRank),
 			)
 		}
 	}

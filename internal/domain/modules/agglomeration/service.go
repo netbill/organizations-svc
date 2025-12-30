@@ -60,7 +60,7 @@ type messanger interface {
 
 	WriteAgglomerationUpdated(ctx context.Context, agglomeration models.Agglomeration) error
 
-	WriteAgglomerationDeleted(ctx context.Context, agglomerationID uuid.UUID) error
+	WriteAgglomerationDeleted(ctx context.Context, agglomeration models.Agglomeration) error
 }
 
 func (s Service) checkPermissionForManageAgglomeration(

@@ -56,7 +56,7 @@ type repo interface {
 type messenger interface {
 	WriteMemberCreated(ctx context.Context, member models.Member) error
 	WriteMemberUpdated(ctx context.Context, member models.Member) error
-	WriteMemberDeleted(ctx context.Context, memberID uuid.UUID) error
+	WriteMemberDeleted(ctx context.Context, member models.Member) error
 }
 
 func (s Service) CheckAccessToManageOtherMember(

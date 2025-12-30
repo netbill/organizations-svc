@@ -18,7 +18,7 @@ func (s Service) ActivateCity(ctx context.Context, ID uuid.UUID) (city models.Ci
 			)
 		}
 
-		if err = s.messanger.WriteActivateCity(ctx, city); err != nil {
+		if err = s.messanger.WriteCityActivated(ctx, city); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send activate city message: %w", err),
 			)

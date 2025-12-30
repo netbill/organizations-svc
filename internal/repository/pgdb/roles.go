@@ -412,7 +412,7 @@ func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank ui
 func (q RolesQ) UpdateRolesRanks(
 	ctx context.Context,
 	agglomerationID uuid.UUID,
-	order map[uint]uuid.UUID,
+	order map[uuid.UUID]uint,
 ) ([]Role, error) {
 	roles, err := NewRolesQ(q.db).
 		FilterByAgglomerationID(agglomerationID).
@@ -425,93 +425,60 @@ func (q RolesQ) UpdateRolesRanks(
 		return nil, fmt.Errorf("no roles in agglomeration %s", agglomerationID)
 	}
 
-	n := len(roles)
+	n := uint(len(roles))
 
-	idToIndex := make(map[uuid.UUID]int, n)
+	idToRole := make(map[uuid.UUID]Role, n)
 	for i := range roles {
-		idToIndex[roles[i].ID] = i
+		idToRole[roles[i].ID] = roles[i]
 	}
 
-	seenIDs := make(map[uuid.UUID]struct{}, len(order))
-	for newRank, roleID := range order {
-		if int(newRank) < 0 || int(newRank) >= n {
+	usedRank := make(map[uint]uuid.UUID, len(order))
+	for roleID, newRank := range order {
+		if newRank < 0 || newRank >= n {
 			return nil, fmt.Errorf("rank %d out of range [0..%d]", newRank, n-1)
 		}
-		if _, ok := idToIndex[roleID]; !ok {
+		if _, ok := idToRole[roleID]; !ok {
 			return nil, fmt.Errorf("role %s not in agglomeration %s", roleID, agglomerationID)
 		}
-		if _, ok := seenIDs[roleID]; ok {
-			return nil, fmt.Errorf("duplicate role id %s in order map", roleID)
+		if prev, ok := usedRank[newRank]; ok && prev != roleID {
+			return nil, fmt.Errorf("duplicate rank %d for roles %s and %s", newRank, prev, roleID)
 		}
-		seenIDs[roleID] = struct{}{}
+		usedRank[newRank] = roleID
 	}
 
-	type mv struct {
-		rank uint
-		id   uuid.UUID
-	}
-	moves := make([]mv, 0, len(order))
-	for r, id := range order {
-		moves = append(moves, mv{rank: r, id: id})
-	}
-	for i := 0; i < len(moves); i++ {
-		for j := i + 1; j < len(moves); j++ {
-			if moves[j].rank < moves[i].rank {
-				moves[i], moves[j] = moves[j], moves[i]
-			}
-		}
+	target := make([]uuid.UUID, n)
+	filled := make([]bool, n)
+
+	for r, id := range usedRank {
+		target[r] = id
+		filled[r] = true
 	}
 
-	current := make([]uuid.UUID, 0, n)
+	rest := make([]uuid.UUID, 0, n-uint(len(order)))
 	for i := range roles {
-		current = append(current, roles[i].ID)
-	}
-
-	removeAt := func(s []uuid.UUID, idx int) []uuid.UUID {
-		copy(s[idx:], s[idx+1:])
-		return s[:len(s)-1]
-	}
-	insertAt := func(s []uuid.UUID, idx int, v uuid.UUID) []uuid.UUID {
-		s = append(s, uuid.Nil)
-		copy(s[idx+1:], s[idx:])
-		s[idx] = v
-		return s
-	}
-
-	for _, m := range moves {
-		id := m.id
-		newIdx := int(m.rank)
-
-		var oldIdx int = -1
-		for i := range current {
-			if current[i] == id {
-				oldIdx = i
-				break
-			}
-		}
-		if oldIdx == -1 {
-			return nil, fmt.Errorf("role %s not found in current order", id)
-		}
-
-		if oldIdx == newIdx {
+		id := roles[i].ID
+		if _, ok := order[id]; ok {
 			continue
 		}
+		rest = append(rest, id)
+	}
 
-		current = removeAt(current, oldIdx)
-		if oldIdx < newIdx {
-			newIdx--
+	j := 0
+	for i := 0; uint(i) < n; i++ {
+		if filled[i] {
+			continue
 		}
-		current = insertAt(current, newIdx, id)
+		target[i] = rest[j]
+		j++
 	}
 
 	changed := make([]uuid.UUID, 0, n)
 	newRanks := make([]int, 0, n)
 
-	for idx, id := range current {
-		oldIdx := idToIndex[id]
-		if oldIdx != idx {
+	for newRank, id := range target {
+		if roles[newRank].ID != id {
 			changed = append(changed, id)
-			newRanks = append(newRanks, idx)
+			newRanks = append(newRanks, newRank)
 		}
 	}
 

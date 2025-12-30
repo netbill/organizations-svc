@@ -11,8 +11,10 @@ import (
 	"github.com/umisto/cities-svc/internal/domain/modules/invite"
 	"github.com/umisto/cities-svc/internal/domain/modules/member"
 	"github.com/umisto/cities-svc/internal/domain/modules/role"
+	"github.com/umisto/cities-svc/internal/messenger/producer"
 	"github.com/umisto/cities-svc/internal/repository"
 	"github.com/umisto/cities-svc/internal/rest/controller"
+	"github.com/umisto/kafkakit/box"
 	"github.com/umisto/logium"
 )
 
@@ -31,12 +33,15 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	}
 
 	database := repository.New(pg)
+	kafkaBox := box.New(pg)
 
-	aggloSvc := agglomeration.New(database, nil)
-	citySvc := city.New(database, nil)
-	memberSvc := member.New(database, nil)
-	roleSvc := role.New(database, nil)
-	inviteSvc := invite.New(database, nil)
+	kafkaProducer := producer.New(log, cfg.Kafka.Brokers, kafkaBox)
+
+	aggloSvc := agglomeration.New(database, kafkaProducer)
+	citySvc := city.New(database, kafkaProducer)
+	memberSvc := member.New(database, kafkaProducer)
+	roleSvc := role.New(database, kafkaProducer)
+	inviteSvc := invite.New(database, kafkaProducer)
 
 	_ = controller.New(aggloSvc, citySvc, memberSvc, roleSvc, inviteSvc)
 }
