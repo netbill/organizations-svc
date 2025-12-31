@@ -16,9 +16,10 @@ type Service struct {
 }
 
 type callbacks interface {
-	CreateAccount(ctx context.Context, event kafka.Message) error
-	UpdateUsername(ctx context.Context, event kafka.Message) error
-	UpdateProfile(ctx context.Context, event kafka.Message) error
+	AccountCreated(ctx context.Context, event kafka.Message) error
+	AccountDeleted(ctx context.Context, event kafka.Message) error
+	AccountUsernameChanged(ctx context.Context, event kafka.Message) error
+	ProfileUpdated(ctx context.Context, event kafka.Message) error
 }
 
 func New(log logium.Logger, addr []string, callbacks callbacks) *Service {
@@ -43,11 +44,13 @@ func (s Service) Run(ctx context.Context) {
 
 			switch et {
 			case contracts.AccountCreatedEvent:
-				return s.callbacks.CreateAccount, true
+				return s.callbacks.AccountCreated, true
+			case contracts.AccountDeletedEvent:
+				return s.callbacks.AccountDeleted, true
 			case contracts.AccountUsernameChangeEvent:
-				return s.callbacks.UpdateUsername, true
+				return s.callbacks.AccountUsernameChanged, true
 			case contracts.ProfileUpdatedEvent:
-				return s.callbacks.UpdateProfile, true
+				return s.callbacks.ProfileUpdated, true
 			default:
 				return nil, false
 			}

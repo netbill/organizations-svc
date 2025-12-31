@@ -16,7 +16,7 @@ require (
 	github.com/umisto/ape v0.4.15
 	github.com/umisto/kafkakit v0.1.7
 	github.com/umisto/logium v0.1.4
-	github.com/umisto/pagi v0.2.6
+	github.com/umisto/pagi v0.2.8
 	github.com/umisto/pgx v0.1.0
 )
 

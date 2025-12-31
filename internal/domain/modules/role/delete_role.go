@@ -9,14 +9,19 @@ import (
 )
 
 func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+	role, err := s.GetRole(ctx, roleID)
+	if err != nil {
+		return err
+	}
+
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		if err := s.repo.DeleteRole(ctx, roleID); err != nil {
+		if err = s.repo.DeleteRole(ctx, roleID); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to delete role: %w", err),
 			)
 		}
 
-		if err := s.messenger.WriteRoleDeleted(ctx, roleID); err != nil {
+		if err = s.messenger.WriteRoleDeleted(ctx, role); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send role deleted message: %w", err),
 			)

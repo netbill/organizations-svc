@@ -23,6 +23,6 @@ type repo interface {
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
-func NewService(repo repo) Service {
+func New(repo repo) Service {
 	return Service{repo: repo}
 }

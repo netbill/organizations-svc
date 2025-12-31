@@ -145,8 +145,8 @@ func (s Service) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
 	return s.membersQ().FilterByID(memberID).Delete(ctx)
 }
 
-func (s Service) DeleteMembersByAgglomerationID(ctx context.Context, agglomerationID uuid.UUID) error {
-	return s.membersQ().FilterByAgglomerationID(agglomerationID).Delete(ctx)
+func (s Service) DeleteMembershipsByAccountID(ctx context.Context, accountID uuid.UUID) error {
+	return s.membersQ().FilterByAccountID(accountID).Delete(ctx)
 }
 
 func (s Service) CheckMemberHavePermission(

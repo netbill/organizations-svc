@@ -10,7 +10,12 @@ import (
 	"github.com/umisto/cities-svc/internal/domain/modules/city"
 	"github.com/umisto/cities-svc/internal/domain/modules/invite"
 	"github.com/umisto/cities-svc/internal/domain/modules/member"
+	"github.com/umisto/cities-svc/internal/domain/modules/profile"
 	"github.com/umisto/cities-svc/internal/domain/modules/role"
+	"github.com/umisto/cities-svc/internal/messenger/consumer"
+	"github.com/umisto/cities-svc/internal/messenger/consumer/callbacker"
+	"github.com/umisto/cities-svc/internal/messenger/consumer/inboxer"
+	"github.com/umisto/cities-svc/internal/messenger/consumer/inboxer/handler"
 	"github.com/umisto/cities-svc/internal/messenger/producer"
 	"github.com/umisto/cities-svc/internal/repository"
 	"github.com/umisto/cities-svc/internal/rest/controller"
@@ -42,6 +47,16 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	memberSvc := member.New(database, kafkaProducer)
 	roleSvc := role.New(database, kafkaProducer)
 	inviteSvc := invite.New(database, kafkaProducer)
+	profileSvc := profile.New(database)
+
+	kafkaCallbacks := callbacker.NewService(log, kafkaBox)
+	kafkaConsumer := consumer.New(log, cfg.Kafka.Brokers, kafkaCallbacks)
+	kafkaInboxWorker := inboxer.New(log, handler.New(log, profileSvc), kafkaBox)
 
 	_ = controller.New(aggloSvc, citySvc, memberSvc, roleSvc, inviteSvc)
+
+	run(func() { kafkaConsumer.Run(ctx) })
+
+	run(func() { kafkaInboxWorker.Run(ctx) })
+
 }
