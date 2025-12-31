@@ -11,19 +11,23 @@ import (
 	"github.com/umisto/cities-svc/internal/domain/modules/invite"
 	"github.com/umisto/cities-svc/internal/domain/modules/member"
 	"github.com/umisto/cities-svc/internal/domain/modules/role"
+	"github.com/umisto/logium"
 	"github.com/umisto/pagi"
 )
 
 type Service struct {
-	Agglomeration Agglomeration
-	City          City
-	Member        Member
-	Role          Role
-	Invite        Invite
+	domain struct {
+		Agglomeration Agglomeration
+		City          City
+		Member        Member
+		Role          Role
+		Invite        Invite
+	}
+	log logium.Logger
 }
 
 type Agglomeration interface {
-	CreateAgglomeration(ctx context.Context, name string) (models.Agglomeration, error)
+	CreateAgglomeration(ctx context.Context, params agglomeration.CreateParams) (models.Agglomeration, error)
 
 	GetAgglomeration(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
 	FilterAgglomerations(
@@ -221,12 +225,21 @@ type Role interface {
 	GetAllPermissions(ctx context.Context) ([]models.Permission, error)
 }
 
-func New(agglo Agglomeration, city City, member Member, role Role, invite Invite) Service {
+func New(agglo Agglomeration, city City, member Member, role Role, invite Invite, log logium.Logger) Service {
 	return Service{
-		Agglomeration: agglo,
-		City:          city,
-		Member:        member,
-		Role:          role,
-		Invite:        invite,
+		domain: struct {
+			Agglomeration Agglomeration
+			City          City
+			Member        Member
+			Role          Role
+			Invite        Invite
+		}{
+			Agglomeration: agglo,
+			City:          city,
+			Member:        member,
+			Role:          role,
+			Invite:        invite,
+		},
+		log: log,
 	}
 }

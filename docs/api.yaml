@@ -16,3 +16,16 @@ paths:
 
 components:
   schemas:
+    # requestBodies:
+    CreateAgglomeration:
+      $ref: './spec/components/schemas/CreateAgglomeration.yaml'
+    UpdateAgglomeration:
+      $ref: './spec/components/schemas/UpdateAgglomeration.yaml'
+
+    # responses:
+    Agglomeration:
+      $ref: './spec/components/schemas/Agglomeration.yaml'
+    AgglomerationsCollection:
+      $ref: './spec/components/schemas/AgglomerationsCollection.yaml'
+    PaginationData:
+      $ref: './spec/components/schemas/PaginationData.yaml'

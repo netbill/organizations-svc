@@ -62,7 +62,7 @@ func NewAgglomerationsQ(db pgx.DBTX) AgglomerationsQ {
 
 type AgglomerationsQInsertInput struct {
 	Name string
-	Icon string
+	Icon *string
 }
 
 func (q AgglomerationsQ) Insert(ctx context.Context, data AgglomerationsQInsertInput) (Agglomeration, error) {

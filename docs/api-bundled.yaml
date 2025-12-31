@@ -14,7 +14,7 @@ paths:
           description: successfully
 components:
   schemas:
-    CreateCity:
+    CreateAgglomeration:
       type: object
       required:
         - data
@@ -28,76 +28,19 @@ components:
             type:
               type: string
               enum:
-                - create_city
+                - agglomeration
             attributes:
               type: object
               required:
-                - country_id
                 - name
-                - status
-                - point
-                - timezone
               properties:
-                country_id:
-                  type: string
-                  description: country id
                 name:
                   type: string
-                  description: city name
-                status:
-                  type: string
-                  description: city status
-                point:
-                  $ref: '#/components/schemas/Point'
-                timezone:
-                  type: string
-                  description: city timezone
-                  example: Europe/Berlin
-    UpdateCity:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: city id
-            type:
-              type: string
-              enum:
-                - update_city
-            attributes:
-              type: object
-              properties:
-                point:
-                  $ref: '#/components/schemas/Point'
-                status:
-                  type: string
-                  enum:
-                    - active
-                    - inactive
-                  description: city status
-                name:
-                  type: string
-                  description: city name
+                  description: The name of the agglomeration
                 icon:
                   type: string
-                  format: uri
-                  description: city icon uri
-                slug:
-                  type: string
-                  description: city slug
-                timezone:
-                  type: string
-                  description: city timezone
-    UpdateCityStatus:
+                  description: The icon representing the agglomeration
+    UpdateAgglomeration:
       type: object
       required:
         - data
@@ -112,416 +55,100 @@ components:
             id:
               type: string
               format: uuid
-              description: city id
+              description: agglomeration ID
             type:
               type: string
               enum:
-                - update_city
+                - agglomeration
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the agglomeration
+                icon:
+                  type: string
+                  description: The icon representing the agglomeration
+    Agglomeration:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: agglomeration ID
+            type:
+              type: string
+              enum:
+                - agglomeration
             attributes:
               type: object
               required:
                 - status
-              properties:
-                status:
-                  type: string
-                  description: new city status
-    UpdateOwnCityAdmin:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: string
-              description: 'user id + city id (UUID:UUID)'
-              pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-            type:
-              type: string
-              enum:
-                - city_admin
-            attributes:
-              type: object
-              properties:
-                label:
-                  type: string
-                  description: optional label for the user in this city
-                position:
-                  type: string
-                  description: optional position for the user in this city
-    UpdateCityAdmin:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: string
-              description: 'user id + city id (UUID:UUID)'
-              pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-            type:
-              type: string
-              enum:
-                - city_admin
-            attributes:
-              type: object
-              properties:
-                role:
-                  type: string
-                  description: optional role
-                label:
-                  type: string
-                  description: optional label for the user in this city
-                position:
-                  type: string
-                  description: optional position for the user in this city
-    SentInvite:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: invite id
-            type:
-              type: string
-              enum:
-                - city_invite
-            attributes:
-              type: object
-              required:
-                - city_id
-                - user_id
-                - role
-              properties:
-                city_id:
-                  type: string
-                  format: uuid
-                  description: ID of the city the invite is for
-                user_id:
-                  type: string
-                  format: uuid
-                  description: ID of the user who was invited
-                role:
-                  type: string
-                  description: Role assigned to the invited user
-    ReplyToInvite:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: invite id
-            type:
-              type: string
-              enum:
-                - invite
-            attributes:
-              type: object
-              required:
-                - answer
-              properties:
-                answer:
-                  type: string
-                  enum:
-                    - accept
-                    - decline
-                  description: 'The answer to the invite, either ''accept'' or ''decline'''
-    City:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          $ref: '#/components/schemas/CityData'
-    CityData:
-      type: object
-      required:
-        - id
-        - type
-        - attributes
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: city id
-        type:
-          type: string
-          enum:
-            - city
-        attributes:
-          $ref: '#/components/schemas/CityAttributes'
-    CityAttributes:
-      type: object
-      required:
-        - country_id
-        - point
-        - status
-        - name
-        - timezone
-        - created_at
-        - updated_at
-      properties:
-        country_id:
-          type: string
-          description: country id
-        point:
-          $ref: '#/components/schemas/Point'
-        status:
-          type: string
-          enum:
-            - active
-            - inactive
-          description: city status
-        name:
-          type: string
-          description: city name
-        icon:
-          type: string
-          format: uri
-          description: city icon uri
-        slug:
-          type: string
-          description: city slug
-        timezone:
-          type: string
-          description: city timezone
-        created_at:
-          type: string
-          format: date-time
-          description: creation date
-        updated_at:
-          type: string
-          format: date-time
-          description: last update date
-    CitiesCollection:
-      type: object
-      required:
-        - data
-        - links
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/CityData'
-        links:
-          $ref: '#/components/schemas/PaginationData'
-    CityAdmin:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          $ref: '#/components/schemas/CityAdminData'
-    CityAdminData:
-      type: object
-      required:
-        - id
-        - type
-        - attributes
-      properties:
-        id:
-          type: string
-          format: string
-          description: 'user id + city id (UUID:UUID)'
-          pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-        type:
-          type: string
-          enum:
-            - city_admin
-        attributes:
-          $ref: '#/components/schemas/CityAdminAttributes'
-    CityAdminAttributes:
-      type: object
-      required:
-        - role
-        - created_at
-        - updated_at
-      properties:
-        role:
-          type: string
-          description: role of the user in this city
-        position:
-          type: string
-          description: optional position for the user in this city
-        label:
-          type: string
-          description: optional label for the user in this city
-        created_at:
-          type: string
-          format: date-time
-          description: record creation date
-        updated_at:
-          type: string
-          format: date-time
-          description: last update date
-    CityAdminsCollection:
-      type: object
-      required:
-        - data
-        - links
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/CityAdminData'
-        links:
-          $ref: '#/components/schemas/PaginationData'
-    Invite:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: invite id
-            type:
-              type: string
-              enum:
-                - city_invite
-            attributes:
-              type: object
-              required:
-                - status
-                - role
-                - city_id
-                - user_id
-                - initiator_id
-                - expires_at
+                - name
+                - icon
                 - created_at
+                - updated_at
               properties:
                 status:
                   type: string
-                  description: status of the invite
-                role:
+                  description: The status of the agglomeration
+                name:
                   type: string
-                  description: role of the user in this city
-                city_id:
+                  description: The name of the agglomeration
+                icon:
                   type: string
-                  format: uuid
-                  description: city id
-                user_id:
-                  type: string
-                  format: uuid
-                  description: user id
-                initiator_id:
-                  type: string
-                  format: uuid
-                  description: id of the user who initiated the invite
-                expires_at:
-                  type: string
-                  format: date-time
-                  description: timestamp when the invite will expire
+                  description: The icon representing the agglomeration
                 created_at:
                   type: string
                   format: date-time
-                  description: timestamp when the invite was created
-    Errors:
-      description: 'Standard JSON:API error'
+                  description: The date and time when the agglomeration was created
+                updated_at:
+                  type: string
+                  format: date-time
+                  description: The date and time when the agglomeration was last updated
+    AgglomerationsCollection:
       type: object
       required:
-        - errors
+        - data
+        - links
       properties:
-        errors:
+        data:
           type: array
-          description: Non empty array of errors occurred during request processing
           items:
-            type: object
-            required:
-              - title
-              - status
-            properties:
-              title:
-                type: string
-                description: 'Title is a short, human-readable summary of the problem'
-                example: Bad Request
-              detail:
-                type: string
-                description: Detail is a human-readable explanation specific to this occurrence of the problem
-                example: Request body was expected
-              status:
-                type: integer
-                description: Status is the HTTP status code applicable to this problem
-                example: 400
-                enum:
-                  - 400
-                  - 401
-                  - 403
-                  - 404
-                  - 409
-                  - 500
+            $ref: '#/components/schemas/Agglomeration/properties/data'
+        links:
+          $ref: '#/components/schemas/PaginationData'
     PaginationData:
       type: object
       required:
-        - page_number
-        - page_size
-        - total_items
+        - self
       properties:
-        page_number:
-          type: integer
-          format: int64
-          description: The current page number.
-          example: 1
-        page_size:
-          type: integer
-          format: int64
-          description: The number of items per page.
-          example: 10
-        total_items:
-          type: integer
-          format: int64
-          description: The total number of items available.
-          example: 100
-    Point:
-      type: object
-      description: city location
-      required:
-        - latitude
-        - longitude
-      properties:
-        latitude:
-          type: number
-          format: double
-          description: latitude
-        longitude:
-          type: number
-          format: double
-          description: longitude
+        self:
+          type: string
+          format: uri
+          description: link to the current page
+        first:
+          type: string
+          format: uri
+          description: link to the first page
+        last:
+          type: string
+          format: uri
+          description: link to the last page
+        prev:
+          type: string
+          format: uri
+          description: link to the previous page
+        next:
+          type: string
+          format: uri
+          description: link to the next page

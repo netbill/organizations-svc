@@ -8,9 +8,14 @@ import (
 	"github.com/umisto/cities-svc/internal/domain/models"
 )
 
-func (s Service) CreateAgglomeration(ctx context.Context, name string) (agglo models.Agglomeration, err error) {
+type CreateParams struct {
+	Name string
+	Icon *string
+}
+
+func (s Service) CreateAgglomeration(ctx context.Context, params CreateParams) (agglo models.Agglomeration, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.CreateAgglomeration(ctx, name)
+		agglo, err = s.repo.CreateAgglomeration(ctx, params)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to create agglomeration: %w", err),

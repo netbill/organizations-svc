@@ -18,9 +18,11 @@ import (
 	"github.com/umisto/cities-svc/internal/messenger/consumer/inboxer/handler"
 	"github.com/umisto/cities-svc/internal/messenger/producer"
 	"github.com/umisto/cities-svc/internal/repository"
+	"github.com/umisto/cities-svc/internal/rest"
 	"github.com/umisto/cities-svc/internal/rest/controller"
 	"github.com/umisto/kafkakit/box"
 	"github.com/umisto/logium"
+	"github.com/umisto/restkit/mdlv"
 )
 
 func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, wg *sync.WaitGroup) {
@@ -53,7 +55,11 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	kafkaConsumer := consumer.New(log, cfg.Kafka.Brokers, kafkaCallbacks)
 	kafkaInboxWorker := inboxer.New(log, handler.New(log, profileSvc), kafkaBox)
 
-	_ = controller.New(aggloSvc, citySvc, memberSvc, roleSvc, inviteSvc)
+	ctrl := controller.New(aggloSvc, citySvc, memberSvc, roleSvc, inviteSvc, log)
+	mdll := mdlv.New(cfg.JWT.User.AccessToken.SecretKey, rest.AccountDataCtxKey)
+	router := rest.New(log, mdll, ctrl)
+
+	run(func() { router.Run(ctx, cfg) })
 
 	run(func() { kafkaConsumer.Run(ctx) })
 

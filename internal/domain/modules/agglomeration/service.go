@@ -23,7 +23,7 @@ func New(repo repo, messenger messanger) Service {
 }
 
 type repo interface {
-	CreateAgglomeration(ctx context.Context, name string) (models.Agglomeration, error)
+	CreateAgglomeration(ctx context.Context, params CreateParams) (models.Agglomeration, error)
 
 	UpdateAgglomeration(
 		ctx context.Context,
