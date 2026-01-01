@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
 	"github.com/umisto/pgx"
 )
 
@@ -20,8 +20,8 @@ func (s Service) agglomerationsQ() pgdb.AgglomerationsQ {
 	return pgdb.NewAgglomerationsQ(s.db)
 }
 
-func (s Service) citiesQ() pgdb.CitiesQ {
-	return pgdb.NewCitiesQ(s.db)
+func (s Service) agglomerationsQ() pgdb.agglomerationsQ {
+	return pgdb.NewagglomerationsQ(s.db)
 }
 
 func (s Service) membersQ() pgdb.MembersQ {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/errx"
+	"github.com/umisto/agglomerations-svc/internal/domain/errx"
 )
 
 func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {

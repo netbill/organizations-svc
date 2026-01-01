@@ -101,6 +101,31 @@ func (q AgglomerationsQ) FilterByStatus(status string) AgglomerationsQ {
 	return q
 }
 
+func (q AgglomerationsQ) FilterByAccountID(accountID uuid.UUID) AgglomerationsQ {
+	sub := sq.
+		Select("agglomeration_id").
+		From(MembersTable).
+		Where(sq.Eq{"account_id": accountID})
+
+	subSQL, subArgs, err := sub.ToSql()
+	if err != nil {
+		q.selector = q.selector.Where(sq.Expr("1=0"))
+		q.updater = q.updater.Where(sq.Expr("1=0"))
+		q.deleter = q.deleter.Where(sq.Expr("1=0"))
+		q.counter = q.counter.Where(sq.Expr("1=0"))
+		return q
+	}
+
+	expr := sq.Expr("id IN ("+subSQL+")", subArgs...)
+
+	q.selector = q.selector.Where(expr)
+	q.updater = q.updater.Where(expr)
+	q.deleter = q.deleter.Where(expr)
+	q.counter = q.counter.Where(expr)
+
+	return q
+}
+
 func (q AgglomerationsQ) FilterNameLike(name string) AgglomerationsQ {
 	q.selector = q.selector.Where(sq.Like{"name": "%" + name + "%"})
 	q.counter = q.counter.Where(sq.Like{"name": "%" + name + "%"})

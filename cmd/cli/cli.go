@@ -8,9 +8,9 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kingpin"
-	"github.com/umisto/cities-svc/cmd"
-	"github.com/umisto/cities-svc/cmd/migrations"
-	"github.com/umisto/cities-svc/internal"
+	"github.com/umisto/agglomerations-svc/cmd"
+	"github.com/umisto/agglomerations-svc/cmd/migrations"
+	"github.com/umisto/agglomerations-svc/internal"
 
 	"github.com/umisto/logium"
 )

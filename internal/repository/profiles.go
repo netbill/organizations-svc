@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
 )
 
 func (s Service) UpsertProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {

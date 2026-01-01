@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/internal/domain/modules/member"
-	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/member"
+	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 

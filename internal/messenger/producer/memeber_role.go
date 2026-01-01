@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
-	"github.com/umisto/cities-svc/internal/messenger/contracts"
+	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
 )
 
 func (s Service) WriteMemberRoleAdd(
@@ -33,7 +33,7 @@ func (s Service) WriteMemberRoleAdd(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.MemberRoleAddedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -66,7 +66,7 @@ func (s Service) WriteMemberRoleRemove(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.MemberRoleRemovedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},

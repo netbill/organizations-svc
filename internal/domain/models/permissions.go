@@ -21,16 +21,16 @@ func (p CodeRolePermission) split() []string {
 }
 
 const (
-	RolePermissionManageAgglomeration CodeRolePermission = "agglomeration.manage"
-	RolePermissionManageCities        CodeRolePermission = "cities.manage"
-	RolePermissionManageRoles         CodeRolePermission = "roles.manage"
-	RolePermissionManageInvites       CodeRolePermission = "invites.manage"
-	RolePermissionManageMembers       CodeRolePermission = "members.manage"
+	RolePermissionManageAgglomeration  CodeRolePermission = "agglomeration.manage"
+	RolePermissionManageagglomerations CodeRolePermission = "agglomerations.manage"
+	RolePermissionManageRoles          CodeRolePermission = "roles.manage"
+	RolePermissionManageInvites        CodeRolePermission = "invites.manage"
+	RolePermissionManageMembers        CodeRolePermission = "members.manage"
 )
 
 var AllRolePermissions = []CodeRolePermission{
 	RolePermissionManageAgglomeration,
-	RolePermissionManageCities,
+	RolePermissionManageagglomerations,
 	RolePermissionManageRoles,
 	RolePermissionManageInvites,
 	RolePermissionManageMembers,

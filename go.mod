@@ -1,4 +1,4 @@
-module github.com/umisto/cities-svc
+module github.com/umisto/agglomerations-svc
 
 go 1.25.4
 

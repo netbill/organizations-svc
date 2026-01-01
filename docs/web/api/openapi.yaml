@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  description: API documentation for cities-svc
-  title: cities-svc API
+  description: API documentation for agglomerations-svc
+  title: agglomerations-svc API
   version: 0.1.0
 servers:
 - url: /
@@ -399,6 +399,7 @@ components:
           type: boolean
         rank:
           description: The rank of the role within the agglomeration
+          format: uint
           type: integer
         name:
           description: The name of the role

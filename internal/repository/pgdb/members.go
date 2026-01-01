@@ -12,7 +12,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-const MemberTable = "members"
+const MembersTable = "members"
 
 const MemberColumns = "id, account_id, agglomeration_id, position, label, created_at, updated_at"
 const MemberColumnsM = "m.id, m.account_id, m.agglomeration_id, m.position, m.label, m.created_at, m.updated_at"
@@ -56,11 +56,11 @@ func NewMembersQ(db pgx.DBTX) MembersQ {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return MembersQ{
 		db:       db,
-		selector: builder.Select(MemberColumnsM).From(MemberTable + " m"),
-		inserter: builder.Insert(MemberTable),
-		updater:  builder.Update(MemberTable + " m"),
-		deleter:  builder.Delete(MemberTable + " m"),
-		counter:  builder.Select("COUNT(*)").From(MemberTable + " m"),
+		selector: builder.Select(MemberColumnsM).From(MembersTable + " m"),
+		inserter: builder.Insert(MembersTable),
+		updater:  builder.Update(MembersTable + " m"),
+		deleter:  builder.Delete(MembersTable + " m"),
+		counter:  builder.Select("COUNT(*)").From(MembersTable + " m"),
 	}
 }
 
@@ -79,7 +79,7 @@ func (q MembersQ) Insert(ctx context.Context, data InsertMemberParams) (Member, 
 		"label":            data.Label,
 	}).Suffix("RETURNING " + MemberColumns).ToSql()
 	if err != nil {
-		return Member{}, fmt.Errorf("building insert query for %s: %w", MemberTable, err)
+		return Member{}, fmt.Errorf("building insert query for %s: %w", MembersTable, err)
 	}
 
 	var inserted Member
@@ -102,12 +102,12 @@ func (q MembersQ) Exists(ctx context.Context) (bool, error) {
 
 	query, args, err := existsQ.ToSql()
 	if err != nil {
-		return false, fmt.Errorf("building exists query for %s: %w", MemberTable, err)
+		return false, fmt.Errorf("building exists query for %s: %w", MembersTable, err)
 	}
 
 	var ok bool
 	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning exists for %s: %w", MemberTable, err)
+		return false, fmt.Errorf("scanning exists for %s: %w", MembersTable, err)
 	}
 
 	return ok, nil
@@ -116,7 +116,7 @@ func (q MembersQ) Exists(ctx context.Context) (bool, error) {
 func (q MembersQ) Get(ctx context.Context) (Member, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return Member{}, fmt.Errorf("building select query for %s: %w", MemberTable, err)
+		return Member{}, fmt.Errorf("building select query for %s: %w", MembersTable, err)
 	}
 
 	var m Member
@@ -131,12 +131,12 @@ func (q MembersQ) Get(ctx context.Context) (Member, error) {
 func (q MembersQ) Select(ctx context.Context) ([]Member, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("building select query for %s: %w", MemberTable, err)
+		return nil, fmt.Errorf("building select query for %s: %w", MembersTable, err)
 	}
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing select query for %s: %w", MemberTable, err)
+		return nil, fmt.Errorf("executing select query for %s: %w", MembersTable, err)
 	}
 	defer rows.Close()
 
@@ -200,7 +200,7 @@ func (q MembersQ) UpdateOne(ctx context.Context) (Member, error) {
 
 	query, args, err := q.updater.Suffix("RETURNING " + MemberColumns).ToSql()
 	if err != nil {
-		return Member{}, fmt.Errorf("building update query for %s: %w", MemberTable, err)
+		return Member{}, fmt.Errorf("building update query for %s: %w", MembersTable, err)
 	}
 
 	var updated Member
@@ -217,17 +217,17 @@ func (q MembersQ) UpdateMany(ctx context.Context) (int64, error) {
 
 	query, args, err := q.updater.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("building update query for %s: %w", MemberTable, err)
+		return 0, fmt.Errorf("building update query for %s: %w", MembersTable, err)
 	}
 
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("executing update query for %s: %w", MemberTable, err)
+		return 0, fmt.Errorf("executing update query for %s: %w", MembersTable, err)
 	}
 
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("rows affected for %s: %w", MemberTable, err)
+		return 0, fmt.Errorf("rows affected for %s: %w", MembersTable, err)
 	}
 
 	return affected, nil
@@ -246,12 +246,12 @@ func (q MembersQ) UpdateLabel(label sql.NullString) MembersQ {
 func (q MembersQ) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
-		return fmt.Errorf("building delete query for %s: %w", MemberTable, err)
+		return fmt.Errorf("building delete query for %s: %w", MembersTable, err)
 	}
 
 	_, err = q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("executing delete query for %s: %w", MemberTable, err)
+		return fmt.Errorf("executing delete query for %s: %w", MembersTable, err)
 	}
 
 	return nil
@@ -260,13 +260,13 @@ func (q MembersQ) Delete(ctx context.Context) error {
 func (q MembersQ) Count(ctx context.Context) (int64, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("building count query for %s: %w", MemberTable, err)
+		return 0, fmt.Errorf("building count query for %s: %w", MembersTable, err)
 	}
 
 	var count int64
 	err = q.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("scanning count for %s: %w", MemberTable, err)
+		return 0, fmt.Errorf("scanning count for %s: %w", MembersTable, err)
 	}
 
 	return count, nil

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/internal/messenger/contracts"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
 	"github.com/umisto/kafkakit/box"
 	"github.com/umisto/logium"
 )

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/umisto/cities-svc/resources"
+	"github.com/umisto/agglomerations-svc/resources"
 )
 
 func SentInvite(r *http.Request) (params resources.SentInvite, err error) {

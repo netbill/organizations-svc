@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/messenger/consumer/inboxer/handler"
+	"github.com/umisto/agglomerations-svc/internal/messenger/consumer/inboxer/handler"
 	"github.com/umisto/kafkakit/box"
 	"github.com/umisto/logium"
 )

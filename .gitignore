@@ -3,7 +3,7 @@ vendor
 node_modules
 
 main
-cmd/cities-svc/m ain
+cmd/agglomerations-svc/m ain
 
 config_local.yaml
 config_docker.yaml

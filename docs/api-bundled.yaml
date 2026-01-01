@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: cities-svc API
-  description: API documentation for cities-svc
+  title: agglomerations-svc API
+  description: API documentation for agglomerations-svc
   version: 0.1.0
 paths:
   /test:
@@ -390,6 +390,7 @@ components:
                   description: Indicates if this role is the head role of the agglomeration
                 rank:
                   type: integer
+                  format: uint
                   description: The rank of the role within the agglomeration
                 name:
                   type: string

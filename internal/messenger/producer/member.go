@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/internal/messenger/contracts"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
 	"github.com/umisto/kafkakit/box"
 )
 
@@ -33,7 +33,7 @@ func (s Service) WriteMemberCreated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.MemberCreatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -64,7 +64,7 @@ func (s Service) WriteMemberUpdated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.MemberUpdatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -95,7 +95,7 @@ func (s Service) WriteMemberDeleted(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.MemberDeletedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},

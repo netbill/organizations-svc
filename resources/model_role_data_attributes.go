@@ -1,7 +1,7 @@
 /*
-cities-svc API
+agglomerations-svc API
 
-API documentation for cities-svc
+API documentation for agglomerations-svc
 
 API version: 0.1.0
 */
@@ -28,7 +28,7 @@ type RoleDataAttributes struct {
 	// Indicates if this role is the head role of the agglomeration
 	Head bool `json:"head"`
 	// The rank of the role within the agglomeration
-	Rank int32 `json:"rank"`
+	Rank uint `json:"rank"`
 	// The name of the role
 	Name string `json:"name"`
 	// A brief description of the role
@@ -47,7 +47,7 @@ type _RoleDataAttributes RoleDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRoleDataAttributes(agglomerationId uuid.UUID, head bool, rank int32, name string, description string, color string, createdAt time.Time, updatedAt time.Time) *RoleDataAttributes {
+func NewRoleDataAttributes(agglomerationId uuid.UUID, head bool, rank uint, name string, description string, color string, createdAt time.Time, updatedAt time.Time) *RoleDataAttributes {
 	this := RoleDataAttributes{}
 	this.AgglomerationId = agglomerationId
 	this.Head = head
@@ -117,9 +117,9 @@ func (o *RoleDataAttributes) SetHead(v bool) {
 }
 
 // GetRank returns the Rank field value
-func (o *RoleDataAttributes) GetRank() int32 {
+func (o *RoleDataAttributes) GetRank() uint {
 	if o == nil {
-		var ret int32
+		var ret uint
 		return ret
 	}
 
@@ -128,7 +128,7 @@ func (o *RoleDataAttributes) GetRank() int32 {
 
 // GetRankOk returns a tuple with the Rank field value
 // and a boolean to check if the value has been set.
-func (o *RoleDataAttributes) GetRankOk() (*int32, bool) {
+func (o *RoleDataAttributes) GetRankOk() (*uint, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -136,7 +136,7 @@ func (o *RoleDataAttributes) GetRankOk() (*int32, bool) {
 }
 
 // SetRank sets field value
-func (o *RoleDataAttributes) SetRank(v int32) {
+func (o *RoleDataAttributes) SetRank(v uint) {
 	o.Rank = v
 }
 

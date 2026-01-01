@@ -161,7 +161,7 @@ func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
 func (q MembersQ) GetWithUserData(ctx context.Context) (MemberWithUserData, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return MemberWithUserData{}, fmt.Errorf("building select query for %s: %w", MemberTable, err)
+		return MemberWithUserData{}, fmt.Errorf("building select query for %s: %w", MembersTable, err)
 	}
 
 	var out MemberWithUserData
@@ -175,12 +175,12 @@ func (q MembersQ) GetWithUserData(ctx context.Context) (MemberWithUserData, erro
 func (q MembersQ) SelectWithUserData(ctx context.Context) ([]MemberWithUserData, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("building select query for %s: %w", MemberTable, err)
+		return nil, fmt.Errorf("building select query for %s: %w", MembersTable, err)
 	}
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing select query for %s: %w", MemberTable, err)
+		return nil, fmt.Errorf("executing select query for %s: %w", MembersTable, err)
 	}
 	defer rows.Close()
 
@@ -222,12 +222,12 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("building select query for %s: %w", MemberTable, err)
+		return nil, fmt.Errorf("building select query for %s: %w", MembersTable, err)
 	}
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing select query for %s: %w", MemberTable, err)
+		return nil, fmt.Errorf("executing select query for %s: %w", MembersTable, err)
 	}
 	defer rows.Close()
 

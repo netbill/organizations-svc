@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/internal/messenger/contracts"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
 	"github.com/umisto/kafkakit/box"
 )
 

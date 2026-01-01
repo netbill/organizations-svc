@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/resources"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/resources"
 	"github.com/umisto/pagi"
 )
 

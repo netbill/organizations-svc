@@ -19,20 +19,6 @@ CREATE TABLE agglomerations (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE cities (
-    id               UUID          PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    agglomeration_id UUID          REFERENCES agglomerations(id) ON DELETE SET NULL,
-    slug             VARCHAR(255)  UNIQUE,
-    name             VARCHAR(255)  NOT NULL,
-    icon             TEXT,
-    banner           TEXT,
-
-    point geography(Point, 4326) NOT NULL,
-
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
 CREATE TABLE profiles (
     account_id  UUID        PRIMARY KEY,
     username    VARCHAR(32) NOT NULL UNIQUE,
@@ -121,7 +107,6 @@ CREATE TABLE invites (
 
 -- +migrate Down
 DROP TABLE IF EXISTS agglomerations CASCADE;
-DROP TABLE IF EXISTS cities CASCADE;
 DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS members CASCADE;
@@ -131,5 +116,4 @@ DROP TABLE IF EXISTS permissions CASCADE;
 DROP TABLE IF EXISTS role_permissions CASCADE;
 
 DROP TYPE IF EXISTS administration_status;
-DROP TYPE IF EXISTS cities_status;
 DROP TYPE IF EXISTS invite_status;

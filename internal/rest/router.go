@@ -7,15 +7,21 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/umisto/cities-svc/internal"
+	"github.com/umisto/agglomerations-svc/internal"
 	"github.com/umisto/logium"
 	"github.com/umisto/restkit/roles"
 )
 
 type Handlers interface {
+	//Agglomeration handlers
 	CreateAgglomeration(w http.ResponseWriter, r *http.Request)
-	UpdateAgglomeration(w http.ResponseWriter, r *http.Request)
+	
 	GetAgglomeration(w http.ResponseWriter, r *http.Request)
+	GetAgglomerations(w http.ResponseWriter, r *http.Request)
+	GetMyAgglomerations(w http.ResponseWriter, r *http.Request)
+
+	UpdateAgglomeration(w http.ResponseWriter, r *http.Request)
+
 	SuspendAgglomeration(w http.ResponseWriter, r *http.Request)
 	ActivateAgglomeration(w http.ResponseWriter, r *http.Request)
 	DeactivateAgglomeration(w http.ResponseWriter, r *http.Request)
@@ -23,6 +29,7 @@ type Handlers interface {
 	GetAgglomerationMembers(w http.ResponseWriter, r *http.Request)
 	GetAgglomerationRoles(w http.ResponseWriter, r *http.Request)
 
+	//Member handlers
 	GetMember(w http.ResponseWriter, r *http.Request)
 	UpdateMember(w http.ResponseWriter, r *http.Request)
 	DeleteMember(w http.ResponseWriter, r *http.Request)
@@ -33,17 +40,17 @@ type Handlers interface {
 	AcceptInvite(w http.ResponseWriter, r *http.Request)
 	DeclineInvite(w http.ResponseWriter, r *http.Request)
 
-	CreateRole(w http.ResponseWriter, r *http.Request)
-	GetRole(w http.ResponseWriter, r *http.Request)
-	UpdateRole(w http.ResponseWriter, r *http.Request)
-	DeleteRole(w http.ResponseWriter, r *http.Request)
-
-	UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
-
-	MemberAddRole(w http.ResponseWriter, r *http.Request)
-	MemberRemoveRole(w http.ResponseWriter, r *http.Request)
-
-	RoleUpdatePermissions(w http.ResponseWriter, r *http.Request)
+	//CreateRole(w http.ResponseWriter, r *http.Request)
+	//GetRole(w http.ResponseWriter, r *http.Request)
+	//UpdateRole(w http.ResponseWriter, r *http.Request)
+	//DeleteRole(w http.ResponseWriter, r *http.Request)
+	//
+	//UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
+	//
+	//MemberAddRole(w http.ResponseWriter, r *http.Request)
+	//MemberRemoveRole(w http.ResponseWriter, r *http.Request)
+	//
+	//RoleUpdatePermissions(w http.ResponseWriter, r *http.Request)
 }
 
 type Middlewares interface {
@@ -77,18 +84,26 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 
 	r := chi.NewRouter()
 
-	r.Route("/cities-svc", func(r chi.Router) {
+	r.Route("/agglomerations-svc", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
 			r.Get("/{city_slug}", nil)
 
 			r.With(auth).Route("/agglomerations", func(r chi.Router) {
+				r.Get("/", s.handlers.GetAgglomerations)
+
 				r.Route("/{agglomeration_id}", func(r chi.Router) {
 					r.Get("/", s.handlers.GetAgglomeration)
 					r.Put("/", s.handlers.UpdateAgglomeration)
 
+					r.Patch("/activate", s.handlers.ActivateAgglomeration)
+					r.Patch("/deactivate", s.handlers.DeactivateAgglomeration)
+
 					r.Get("/members", s.handlers.GetAgglomerationMembers)
 					r.Get("/roles", s.handlers.GetAgglomerationRoles)
 				})
+
+				//TODO
+				r.Get("/me", s.handlers.GetMyAgglomerations)
 			})
 
 			r.With(auth).Route("/members", func(r chi.Router) {

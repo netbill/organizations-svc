@@ -2,7 +2,7 @@ package contracts
 
 import (
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
 )
 
 const RoleCreatedEvent = "role.created"

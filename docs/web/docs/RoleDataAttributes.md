@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AgglomerationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the agglomeration this role belongs to | 
 **Head** | **bool** | Indicates if this role is the head role of the agglomeration | 
-**Rank** | **int32** | The rank of the role within the agglomeration | 
+**Rank** | **uint** | The rank of the role within the agglomeration | 
 **Name** | **string** | The name of the role | 
 **Description** | **string** | A brief description of the role | 
 **Color** | **string** | The color associated with the role in HEX format | 
@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 
 ### NewRoleDataAttributes
 
-`func NewRoleDataAttributes(agglomerationId uuid.UUID, head bool, rank int32, name string, description string, color string, createdAt time.Time, updatedAt time.Time, ) *RoleDataAttributes`
+`func NewRoleDataAttributes(agglomerationId uuid.UUID, head bool, rank uint, name string, description string, color string, createdAt time.Time, updatedAt time.Time, ) *RoleDataAttributes`
 
 NewRoleDataAttributes instantiates a new RoleDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -74,20 +74,20 @@ SetHead sets Head field to given value.
 
 ### GetRank
 
-`func (o *RoleDataAttributes) GetRank() int32`
+`func (o *RoleDataAttributes) GetRank() uint`
 
 GetRank returns the Rank field if non-nil, zero value otherwise.
 
 ### GetRankOk
 
-`func (o *RoleDataAttributes) GetRankOk() (*int32, bool)`
+`func (o *RoleDataAttributes) GetRankOk() (*uint, bool)`
 
 GetRankOk returns a tuple with the Rank field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetRank
 
-`func (o *RoleDataAttributes) SetRank(v int32)`
+`func (o *RoleDataAttributes) SetRank(v uint)`
 
 SetRank sets Rank field to given value.
 

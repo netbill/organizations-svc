@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/internal/domain/modules/agglomeration"
-	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/agglomeration"
+	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 
@@ -122,6 +122,34 @@ func (s Service) FilterAgglomerations(
 		Total: total,
 	}, nil
 
+}
+
+func (s Service) GetAgglomerationForUser(
+	ctx context.Context,
+	accountID uuid.UUID,
+	limit, offset uint,
+) (pagi.Page[[]models.Agglomeration], error) {
+	row, err := s.agglomerationsQ().FilterByID(accountID).Page(limit, offset).Select(ctx)
+	if err != nil {
+		return pagi.Page[[]models.Agglomeration]{}, err
+	}
+
+	total, err := s.agglomerationsQ().FilterByID(accountID).Count(ctx)
+	if err != nil {
+		return pagi.Page[[]models.Agglomeration]{}, err
+	}
+
+	agglomerations := make([]models.Agglomeration, len(row))
+	for i, r := range row {
+		agglomerations[i] = Agglomeration(r)
+	}
+
+	return pagi.Page[[]models.Agglomeration]{
+		Data:  agglomerations,
+		Page:  uint(offset/limit) + 1,
+		Size:  uint(len(agglomerations)),
+		Total: total,
+	}, nil
 }
 
 func Agglomeration(db pgdb.Agglomeration) models.Agglomeration {

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: cities-svc API
-  description: API documentation for cities-svc
+  title: agglomerations-svc API
+  description: API documentation for agglomerations-svc
   version: 0.1.0
 
 paths:

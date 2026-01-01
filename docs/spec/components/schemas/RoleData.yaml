@@ -32,6 +32,7 @@ properties:
         description: "Indicates if this role is the head role of the agglomeration"
       rank:
         type: integer
+        format: uint
         description: "The rank of the role within the agglomeration"
       name:
         type: string

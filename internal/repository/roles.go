@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/internal/domain/modules/role"
-	"github.com/umisto/cities-svc/internal/repository/pgdb"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/role"
+	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
 	"github.com/umisto/pagi"
 )
 

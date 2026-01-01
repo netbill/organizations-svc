@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
-	"github.com/umisto/cities-svc/internal/domain/models"
-	"github.com/umisto/cities-svc/internal/messenger/contracts"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
 	"github.com/umisto/kafkakit/box"
 	"github.com/umisto/kafkakit/header"
 )
@@ -36,7 +36,7 @@ func (s Service) WriteAgglomerationCreated(
 				{Key: header.EventID, Value: []byte(eventID.String())}, // Outbox will fill this
 				{Key: header.EventType, Value: []byte(contracts.AgglomerationCreatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -69,7 +69,7 @@ func (s Service) WriteAgglomerationUpdated(
 				{Key: header.EventID, Value: []byte(eventID.String())}, // Outbox will fill this
 				{Key: header.EventType, Value: []byte(contracts.AgglomerationUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -102,7 +102,7 @@ func (s Service) WriteAgglomerationDeleted(
 				{Key: header.EventID, Value: []byte(eventID.String())}, // Outbox will fill this
 				{Key: header.EventType, Value: []byte(contracts.AgglomerationDeletedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -132,7 +132,7 @@ func (s Service) WriteAgglomerationActivated(ctx context.Context, agglomeration 
 				{Key: header.EventID, Value: []byte(eventID.String())}, // Outbox will fill this
 				{Key: header.EventType, Value: []byte(contracts.AgglomerationActivatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -165,7 +165,7 @@ func (s Service) WriteAgglomerationDeactivated(
 				{Key: header.EventID, Value: []byte(eventID.String())}, // Outbox will fill this
 				{Key: header.EventType, Value: []byte(contracts.AgglomerationDeactivatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -198,7 +198,7 @@ func (s Service) WriteAgglomerationSuspended(
 				{Key: header.EventID, Value: []byte(eventID.String())}, // Outbox will fill this
 				{Key: header.EventType, Value: []byte(contracts.AgglomerationSuspendedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.CitiesSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.agglomerationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},

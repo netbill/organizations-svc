@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/umisto/cities-svc/internal/domain/errx"
-	"github.com/umisto/cities-svc/internal/domain/models"
+	"github.com/google/uuid"
+	"github.com/umisto/agglomerations-svc/internal/domain/errx"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
 
@@ -23,6 +24,21 @@ func (s Service) FilterAgglomerations(
 	if err != nil {
 		return pagi.Page[[]models.Agglomeration]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("filter agglomerations: %w", err),
+		)
+	}
+
+	return res, nil
+}
+
+func (s Service) GetAgglomerationForUser(
+	ctx context.Context,
+	accountID uuid.UUID,
+	offset, limit uint,
+) (pagi.Page[[]models.Agglomeration], error) {
+	res, err := s.repo.GetAgglomerationForUser(ctx, accountID, offset, limit)
+	if err != nil {
+		return pagi.Page[[]models.Agglomeration]{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("get agglomeration for user: %w", err),
 		)
 	}
 

@@ -1,3 +1,3 @@
 package contracts
 
-const CitiesSvcGroup = "cities-svc"
+const agglomerationsSvcGroup = "agglomerations-svc"

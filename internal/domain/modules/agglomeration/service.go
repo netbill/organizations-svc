@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/cities-svc/internal/domain/errx"
-	"github.com/umisto/cities-svc/internal/domain/models"
+	"github.com/umisto/agglomerations-svc/internal/domain/errx"
+	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/pagi"
 )
 
@@ -41,6 +41,11 @@ type repo interface {
 		ctx context.Context,
 		filter FilterParams,
 		offset, limit uint,
+	) (pagi.Page[[]models.Agglomeration], error)
+	GetAgglomerationForUser(
+		ctx context.Context,
+		accountID uuid.UUID,
+		limit, offset uint,
 	) (pagi.Page[[]models.Agglomeration], error)
 
 	CheckAccountHavePermissionByCode(

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/segmentio/kafka-go"
-	"github.com/umisto/cities-svc/internal/messenger/contracts"
+	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
 	"github.com/umisto/kafkakit/subscriber"
 	"github.com/umisto/logium"
 )
@@ -31,7 +31,7 @@ func New(log logium.Logger, addr []string, callbacks callbacks) *Service {
 }
 
 func (s Service) Run(ctx context.Context) {
-	sub := subscriber.New(s.addr, contracts.AccountsTopicV1, contracts.CitiesSvcGroup)
+	sub := subscriber.New(s.addr, contracts.AccountsTopicV1, contracts.agglomerationsSvcGroup)
 
 	s.log.Info("starting events consumer", "addr", s.addr)
 
