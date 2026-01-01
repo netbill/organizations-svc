@@ -1,0 +1,52 @@
+type: object
+required:
+  - id
+  - type
+  - attributes
+properties:
+  id:
+    type: string
+    format: uuid
+    description: "member ID"
+  type:
+    type: string
+    enum: [ role ]
+  attributes:
+    type: object
+    required:
+      - agglomeration_id
+      - head
+      - rank
+      - name
+      - description
+      - color
+      - created_at
+      - updated_at
+    properties:
+      agglomeration_id:
+        type: string
+        format: uuid
+        description: "The ID of the agglomeration this role belongs to"
+      head:
+        type: boolean
+        description: "Indicates if this role is the head role of the agglomeration"
+      rank:
+        type: integer
+        description: "The rank of the role within the agglomeration"
+      name:
+        type: string
+        description: "The name of the role"
+      description:
+        type: string
+        description: "A brief description of the role"
+      color:
+        type: string
+        description: "The color associated with the role in HEX format"
+      created_at:
+        type: string
+        format: date-time
+        description: "Timestamp when the role was created"
+      updated_at:
+        type: string
+        format: date-time
+        description: "Timestamp when the role was last updated"

@@ -47,11 +47,13 @@ func (s Service) DeactivateAgglomerationByUser(
 		)
 	}
 
-	err = s.checkPermissionForManageAgglomeration(
-		ctx,
-		memberID,
-		agglomerationID,
-	)
+	if agglo.Verified == false {
+		return models.Agglomeration{}, errx.ErrorAgglomerationNotVerified.Raise(
+			fmt.Errorf("agglomeration is not verified"),
+		)
+	}
+
+	err = s.checkPermissionForManageAgglomeration(ctx, memberID, agglomerationID)
 	if err != nil {
 		return models.Agglomeration{}, err
 	}

@@ -4,15 +4,15 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | [**uuid.UUID**](uuid.UUID.md) | agglomeration ID | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | member ID | 
 **Type** | **string** |  | 
-**Attributes** | [**AgglomerationDataAttributes**](AgglomerationDataAttributes.md) |  | 
+**Attributes** | [**RoleDataAttributes**](RoleDataAttributes.md) |  | 
 
 ## Methods
 
 ### NewData
 
-`func NewData(id uuid.UUID, type_ string, attributes AgglomerationDataAttributes, ) *Data`
+`func NewData(id uuid.UUID, type_ string, attributes RoleDataAttributes, ) *Data`
 
 NewData instantiates a new Data object
 This constructor will assign default values to properties that have it defined,
@@ -69,20 +69,20 @@ SetType sets Type field to given value.
 
 ### GetAttributes
 
-`func (o *Data) GetAttributes() AgglomerationDataAttributes`
+`func (o *Data) GetAttributes() RoleDataAttributes`
 
 GetAttributes returns the Attributes field if non-nil, zero value otherwise.
 
 ### GetAttributesOk
 
-`func (o *Data) GetAttributesOk() (*AgglomerationDataAttributes, bool)`
+`func (o *Data) GetAttributesOk() (*RoleDataAttributes, bool)`
 
 GetAttributesOk returns a tuple with the Attributes field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAttributes
 
-`func (o *Data) SetAttributes(v AgglomerationDataAttributes)`
+`func (o *Data) SetAttributes(v RoleDataAttributes)`
 
 SetAttributes sets Attributes field to given value.
 

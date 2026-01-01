@@ -15,10 +15,11 @@ const AgglomerationTable = "agglomerations"
 const AgglomerationColumns = "id, status, name, icon, created_at, updated_at"
 
 type Agglomeration struct {
-	ID     uuid.UUID `json:"id"`
-	Status string    `json:"status"`
-	Name   string    `json:"name"`
-	Icon   string    `json:"icon"`
+	ID       uuid.UUID `json:"id"`
+	Status   string    `json:"status"`
+	Name     string    `json:"name"`
+	Icon     string    `json:"icon"`
+	MaxRoles uint      `json:"max_roles"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -30,6 +31,7 @@ func (a *Agglomeration) scan(row sq.RowScanner) error {
 		&a.Status,
 		&a.Name,
 		&a.Icon,
+		&a.MaxRoles,
 		&a.CreatedAt,
 		&a.UpdatedAt,
 	)
@@ -210,6 +212,11 @@ func (q AgglomerationsQ) UpdateIcon(icon string) AgglomerationsQ {
 
 func (q AgglomerationsQ) UpdateStatus(status string) AgglomerationsQ {
 	q.updater = q.updater.Set("status", status)
+	return q
+}
+
+func (q AgglomerationsQ) UpdateMaxRoles(maxRoles uint) AgglomerationsQ {
+	q.updater = q.updater.Set("max_roles", maxRoles)
 	return q
 }
 

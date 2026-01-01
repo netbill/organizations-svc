@@ -13,7 +13,6 @@ import (
 
 type FilterParams struct {
 	AgglomerationID *uuid.UUID
-	Status          *string
 	Name            *string
 }
 

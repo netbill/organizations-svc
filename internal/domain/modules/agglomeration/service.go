@@ -31,6 +31,7 @@ type repo interface {
 		params UpdateParams,
 	) (models.Agglomeration, error)
 	UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, status string) (models.Agglomeration, error)
+	UpdateAgglomerationMaxRoles(ctx context.Context, ID uuid.UUID, maxRoles uint) (models.Agglomeration, error)
 
 	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
 
@@ -48,6 +49,10 @@ type repo interface {
 		permissionKey string,
 	) (bool, error)
 
+	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
+	CreateHeadRole(ctx context.Context, agglomerationID uuid.UUID) (models.Role, error)
+	AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
+
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
@@ -61,6 +66,7 @@ type messanger interface {
 	WriteAgglomerationUpdated(ctx context.Context, agglomeration models.Agglomeration) error
 
 	WriteAgglomerationDeleted(ctx context.Context, agglomeration models.Agglomeration) error
+	WriteRoleCreated(ctx context.Context, role models.Role) error
 }
 
 func (s Service) checkPermissionForManageAgglomeration(

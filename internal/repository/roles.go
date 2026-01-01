@@ -13,7 +13,6 @@ import (
 func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error) {
 	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
 		AgglomerationID: params.AgglomerationID,
-		Head:            params.Head,
 		Rank:            params.Rank,
 		Name:            params.Name,
 		Description:     params.Description,
@@ -26,6 +25,21 @@ func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (mode
 	return Role(row), nil
 }
 
+func (s Service) CreateHeadRole(ctx context.Context, agglomerationID uuid.UUID) (models.Role, error) {
+	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
+		AgglomerationID: agglomerationID,
+		Head:            true,
+		Rank:            1,
+		Name:            "Head",
+		Description:     "Head role with all permissions",
+		Color:           "#000000",
+	})
+	if err != nil {
+		return models.Role{}, err
+	}
+
+	return Role(row), nil
+}
 func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
 	row, err := s.rolesQ().FilterByID(roleID).Get(ctx)
 	if err != nil {

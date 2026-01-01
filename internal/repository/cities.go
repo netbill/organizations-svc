@@ -74,15 +74,6 @@ func (s Service) UpdateCity(ctx context.Context, ID uuid.UUID, params city.Updat
 	return City(row), err
 }
 
-func (s Service) UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) (models.City, error) {
-	row, err := s.citiesQ().FilterByID(ID).UpdateStatus(status).UpdateOne(ctx)
-	if err != nil {
-		return models.City{}, err
-	}
-
-	return City(row), nil
-}
-
 func (s Service) UpdateCityAgglomeration(
 	ctx context.Context,
 	cityID uuid.UUID,
@@ -132,9 +123,6 @@ func (s Service) FilterCities(
 	if filter.AgglomerationID != nil {
 		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
 	}
-	if filter.Status != nil {
-		q = q.FilterByStatus(*filter.Status)
-	}
 	if filter.Name != nil {
 		q = q.FilterLikeName(*filter.Name)
 	}
@@ -172,9 +160,6 @@ func (s Service) FilterCitiesNearest(
 	if filter.AgglomerationID != nil {
 		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
 	}
-	if filter.Status != nil {
-		q = q.FilterByStatus(*filter.Status)
-	}
 	if filter.Name != nil {
 		q = q.FilterLikeName(*filter.Name)
 	}
@@ -205,7 +190,6 @@ func (s Service) FilterCitiesNearest(
 func City(c pgdb.City) models.City {
 	ent := models.City{
 		ID:        c.ID,
-		Status:    c.Status,
 		Name:      c.Name,
 		Point:     c.Point,
 		CreatedAt: c.CreatedAt,
@@ -231,7 +215,6 @@ func City(c pgdb.City) models.City {
 func CityDistance(cd pgdb.CityDistance) models.City {
 	ent := models.City{
 		ID:        cd.ID,
-		Status:    cd.Status,
 		Name:      cd.Name,
 		Point:     cd.Point,
 		CreatedAt: cd.CreatedAt,

@@ -17,6 +17,11 @@ type CreateParams struct {
 }
 
 func (s Service) CreateInvite(ctx context.Context, params CreateParams) (invite models.Invite, err error) {
+	_, err = s.checkAgglomerationIsActiveAndExists(ctx, params.AgglomerationID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.CreateInvite(ctx, params)
 		if err != nil {
@@ -40,7 +45,7 @@ func (s Service) CreateInvite(ctx context.Context, params CreateParams) (invite 
 	return invite, nil
 }
 
-func (s Service) CreateInviteByUser(
+func (s Service) SentInviteByUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params CreateParams,

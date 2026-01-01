@@ -21,11 +21,31 @@ components:
       $ref: './spec/components/schemas/CreateAgglomeration.yaml'
     UpdateAgglomeration:
       $ref: './spec/components/schemas/UpdateAgglomeration.yaml'
+    UpdateMember:
+      $ref: './spec/components/schemas/UpdateMember.yaml'
+    SentInvite:
+      $ref: './spec/components/schemas/SentInvite.yaml'
 
     # responses:
+    PaginationData:
+      $ref: './spec/components/schemas/PaginationData.yaml'
+
     Agglomeration:
       $ref: './spec/components/schemas/Agglomeration.yaml'
     AgglomerationsCollection:
       $ref: './spec/components/schemas/AgglomerationsCollection.yaml'
-    PaginationData:
-      $ref: './spec/components/schemas/PaginationData.yaml'
+
+    Member:
+      $ref: './spec/components/schemas/Member.yaml'
+    MemberCollection:
+      $ref: './spec/components/schemas/MemberCollection.yaml'
+
+    Invite:
+      $ref: './spec/components/schemas/Invite.yaml'
+    InvitesCollection:
+      $ref: './spec/components/schemas/InvitesCollection.yaml'
+
+    Role:
+      $ref: './spec/components/schemas/Role.yaml'
+    RolesCollection:
+      $ref: './spec/components/schemas/RolesCollection.yaml'

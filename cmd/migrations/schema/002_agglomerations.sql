@@ -10,23 +10,18 @@ CREATE TYPE administration_status AS ENUM (
 CREATE TABLE agglomerations (
     id         UUID                  PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     status     administration_status NOT NULL DEFAULT 'active',
+    verified   BOOLEAN               NOT NULL DEFAULT FALSE,
     name       VARCHAR(255)          NOT NULL,
     icon       TEXT,
+    max_roles  INT                   NOT NULL DEFAULT 100 CHECK ( max_roles > 0 ),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TYPE cities_status AS ENUM (
-    'active',
-    'inactive',
-    'archived'
-);
-
 CREATE TABLE cities (
     id               UUID          PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     agglomeration_id UUID          REFERENCES agglomerations(id) ON DELETE SET NULL,
-    status           cities_status NOT NULL DEFAULT 'active',
     slug             VARCHAR(255)  UNIQUE,
     name             VARCHAR(255)  NOT NULL,
     icon             TEXT,

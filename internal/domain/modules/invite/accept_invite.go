@@ -35,6 +35,11 @@ func (s Service) AcceptInvite(
 		)
 	}
 
+	_, err = s.checkAgglomerationIsActiveAndExists(ctx, invite.AgglomerationID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusAccepted)
 		if err != nil {

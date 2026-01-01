@@ -28,23 +28,18 @@ components:
           $ref: "#/components/schemas/UpdateAgglomeration_data"
       required:
       - data
-    Agglomeration:
+    UpdateMember:
       properties:
         data:
-          $ref: "#/components/schemas/Agglomeration_data"
+          $ref: "#/components/schemas/UpdateMember_data"
       required:
       - data
-    AgglomerationsCollection:
+    SentInvite:
       properties:
         data:
-          items:
-            $ref: "#/components/schemas/Agglomeration/properties/data"
-          type: array
-        links:
-          $ref: "#/components/schemas/PaginationData"
+          $ref: "#/components/schemas/SentInvite_data"
       required:
       - data
-      - links
     PaginationData:
       properties:
         self:
@@ -69,24 +64,96 @@ components:
           type: string
       required:
       - self
+    Agglomeration:
+      properties:
+        data:
+          $ref: "#/components/schemas/Agglomeration_data"
+      required:
+      - data
+    AgglomerationsCollection:
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/Agglomeration/properties/data"
+          type: array
+        links:
+          $ref: "#/components/schemas/PaginationData"
+      required:
+      - data
+      - links
+    Member:
+      properties:
+        data:
+          $ref: "#/components/schemas/Member_data"
+      required:
+      - data
+    MemberCollection:
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/Member/properties/data"
+          type: array
+        links:
+          $ref: "#/components/schemas/PaginationData"
+      required:
+      - data
+      - links
+    Invite:
+      properties:
+        data:
+          $ref: "#/components/schemas/Invite_data"
+      required:
+      - data
+    InvitesCollection:
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/Invite/properties/data"
+          type: array
+        links:
+          $ref: "#/components/schemas/PaginationData"
+      required:
+      - data
+      - links
+    Role:
+      properties:
+        data:
+          $ref: "#/components/schemas/Role_data"
+      required:
+      - data
+    RolesCollection:
+      properties:
+        data:
+          items:
+            $ref: "#/components/schemas/Role/properties/data"
+          type: array
+        links:
+          $ref: "#/components/schemas/PaginationData"
+      required:
+      - data
+      - links
     data:
       properties:
         id:
-          description: agglomeration ID
+          description: member ID
           format: uuid
           type: string
         type:
           enum:
-          - agglomeration
+          - role
           type: string
         attributes:
-          $ref: "#/components/schemas/Agglomeration_data_attributes"
+          $ref: "#/components/schemas/Role_data_attributes"
       required:
       - attributes
       - id
       - type
     CreateAgglomeration_data_attributes:
       properties:
+        head:
+          description: Account ID of the head of the agglomeration
+          format: uuid
+          type: string
         name:
           description: The name of the agglomeration
           type: string
@@ -94,6 +161,7 @@ components:
           description: The icon representing the agglomeration
           type: string
       required:
+      - head
       - name
     CreateAgglomeration_data:
       properties:
@@ -129,6 +197,54 @@ components:
       required:
       - attributes
       - id
+      - type
+    UpdateMember_data_attributes:
+      properties:
+        position:
+          description: The position or role of the member within the agglomeration
+          type: string
+        label:
+          description: A label or title associated with the member
+          type: string
+    UpdateMember_data:
+      properties:
+        id:
+          description: member ID
+          format: uuid
+          type: string
+        type:
+          enum:
+          - update_member
+          type: string
+        attributes:
+          $ref: "#/components/schemas/UpdateMember_data_attributes"
+      required:
+      - attributes
+      - id
+      - type
+    SentInvite_data_attributes:
+      properties:
+        agglomeration_id:
+          description: The ID of the agglomeration to which the invite belongs
+          format: uuid
+          type: string
+        account_id:
+          description: The ID of the account that was invited
+          format: uuid
+          type: string
+      required:
+      - account_id
+      - agglomeration_id
+    SentInvite_data:
+      properties:
+        type:
+          enum:
+          - sent_invite
+          type: string
+        attributes:
+          $ref: "#/components/schemas/SentInvite_data_attributes"
+      required:
+      - attributes
       - type
     Agglomeration_data_attributes:
       properties:
@@ -167,6 +283,161 @@ components:
           type: string
         attributes:
           $ref: "#/components/schemas/Agglomeration_data_attributes"
+      required:
+      - attributes
+      - id
+      - type
+    Member_data_attributes:
+      properties:
+        account_id:
+          description: The ID of the account associated with the member
+          format: uuid
+          type: string
+        agglomeration_id:
+          description: The ID of the agglomeration the member belongs to
+          format: uuid
+          type: string
+        position:
+          description: The position or role of the member within the agglomeration
+          type: string
+        label:
+          description: A label or title associated with the member
+          type: string
+        username:
+          description: The username of the member
+          type: string
+        official:
+          description: Indicates if the member is an official representative of the
+            agglomeration
+          type: boolean
+        created_at:
+          description: The date and time when the member was created
+          format: date-time
+          type: string
+        updated_at:
+          description: The date and time when the member was last updated
+          format: date-time
+          type: string
+      required:
+      - account_id
+      - agglomeration_id
+      - created_at
+      - official
+      - updated_at
+      - username
+    Member_data:
+      properties:
+        id:
+          description: member ID
+          format: uuid
+          type: string
+        type:
+          enum:
+          - member
+          type: string
+        attributes:
+          $ref: "#/components/schemas/Member_data_attributes"
+      required:
+      - attributes
+      - id
+      - type
+    Invite_data_attributes:
+      properties:
+        agglomeration_id:
+          description: The ID of the agglomeration to which the invite belongs
+          format: uuid
+          type: string
+        account_id:
+          description: The ID of the account that was invited
+          format: uuid
+          type: string
+        status:
+          description: The status of the invite
+          enum:
+          - sent
+          - accepted
+          - declined
+          type: string
+        expires_at:
+          description: The expiration date and time of the invite
+          format: date-time
+          type: string
+        created_at:
+          description: The date and time when the invite was created
+          format: date-time
+          type: string
+      required:
+      - account_id
+      - agglomeration_id
+      - created_at
+      - expires_at
+      - status
+    Invite_data:
+      properties:
+        id:
+          description: invite ID
+          format: uuid
+          type: string
+        type:
+          enum:
+          - invite
+          type: string
+        attributes:
+          $ref: "#/components/schemas/Invite_data_attributes"
+      required:
+      - attributes
+      - id
+      - type
+    Role_data_attributes:
+      properties:
+        agglomeration_id:
+          description: The ID of the agglomeration this role belongs to
+          format: uuid
+          type: string
+        head:
+          description: Indicates if this role is the head role of the agglomeration
+          type: boolean
+        rank:
+          description: The rank of the role within the agglomeration
+          type: integer
+        name:
+          description: The name of the role
+          type: string
+        description:
+          description: A brief description of the role
+          type: string
+        color:
+          description: The color associated with the role in HEX format
+          type: string
+        created_at:
+          description: Timestamp when the role was created
+          format: date-time
+          type: string
+        updated_at:
+          description: Timestamp when the role was last updated
+          format: date-time
+          type: string
+      required:
+      - agglomeration_id
+      - color
+      - created_at
+      - description
+      - head
+      - name
+      - rank
+      - updated_at
+    Role_data:
+      properties:
+        id:
+          description: member ID
+          format: uuid
+          type: string
+        type:
+          enum:
+          - role
+          type: string
+        attributes:
+          $ref: "#/components/schemas/Role_data_attributes"
       required:
       - attributes
       - id

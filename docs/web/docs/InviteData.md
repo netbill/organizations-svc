@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | [**uuid.UUID**](uuid.UUID.md) | invite id | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | invite ID | 
 **Type** | **string** |  | 
 **Attributes** | [**InviteDataAttributes**](InviteDataAttributes.md) |  | 
 

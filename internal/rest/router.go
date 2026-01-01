@@ -16,8 +16,34 @@ type Handlers interface {
 	CreateAgglomeration(w http.ResponseWriter, r *http.Request)
 	UpdateAgglomeration(w http.ResponseWriter, r *http.Request)
 	GetAgglomeration(w http.ResponseWriter, r *http.Request)
+	SuspendAgglomeration(w http.ResponseWriter, r *http.Request)
 	ActivateAgglomeration(w http.ResponseWriter, r *http.Request)
 	DeactivateAgglomeration(w http.ResponseWriter, r *http.Request)
+
+	GetAgglomerationMembers(w http.ResponseWriter, r *http.Request)
+	GetAgglomerationRoles(w http.ResponseWriter, r *http.Request)
+
+	GetMember(w http.ResponseWriter, r *http.Request)
+	UpdateMember(w http.ResponseWriter, r *http.Request)
+	DeleteMember(w http.ResponseWriter, r *http.Request)
+
+	CreateInvite(w http.ResponseWriter, r *http.Request)
+	GetInvite(w http.ResponseWriter, r *http.Request)
+	DeleteInvite(w http.ResponseWriter, r *http.Request)
+	AcceptInvite(w http.ResponseWriter, r *http.Request)
+	DeclineInvite(w http.ResponseWriter, r *http.Request)
+
+	CreateRole(w http.ResponseWriter, r *http.Request)
+	GetRole(w http.ResponseWriter, r *http.Request)
+	UpdateRole(w http.ResponseWriter, r *http.Request)
+	DeleteRole(w http.ResponseWriter, r *http.Request)
+
+	UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
+
+	MemberAddRole(w http.ResponseWriter, r *http.Request)
+	MemberRemoveRole(w http.ResponseWriter, r *http.Request)
+
+	RoleUpdatePermissions(w http.ResponseWriter, r *http.Request)
 }
 
 type Middlewares interface {
@@ -55,63 +81,54 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 		r.Route("/v1", func(r chi.Router) {
 			r.Get("/{city_slug}", nil)
 
-			r.Route("/agglomerations", func(r chi.Router) {
-				r.Get("/", nil)
-				r.With(sysadmin).Post("/", nil)
+			r.With(auth).Route("/agglomerations", func(r chi.Router) {
+				r.Route("/{agglomeration_id}", func(r chi.Router) {
+					r.Get("/", s.handlers.GetAgglomeration)
+					r.Put("/", s.handlers.UpdateAgglomeration)
 
-				r.With(auth).Route("/{agglomeration_id}", func(r chi.Router) {
-					r.Get("/", nil)
-					r.Put("/", nil)
-
-					r.Patch("/activate", nil)
-					r.Patch("/deactivate", nil)
-
-					r.Get("/cities", nil)
-					r.Get("/members", nil)
-					r.Get("/roles", nil)
+					r.Get("/members", s.handlers.GetAgglomerationMembers)
+					r.Get("/roles", s.handlers.GetAgglomerationRoles)
 				})
 			})
 
-			r.Route("/cities", func(r chi.Router) {
-				r.With(auth, sysadmin).Post("/", nil)
-
-				r.Route("/{city_id}", func(r chi.Router) {
-					r.Get("/", nil)
-					r.With(auth, sysadmin).Delete("/", nil)
-
-					r.With(auth).Put("/", nil)
-					r.With(auth).Patch("/slug", nil)
-					r.With(auth).Patch("/activate", nil)
-					r.With(auth).Patch("/deactivate", nil)
-				})
-			})
-
-			r.Route("/memebers", func(r chi.Router) {
+			r.With(auth).Route("/members", func(r chi.Router) {
 				r.Route("/{member_id}", func(r chi.Router) {
-					r.Get("/", nil)
-					r.With(auth).Put("/", nil)
-					r.With(auth).Delete("/", nil)
+					r.Get("/", s.handlers.GetMember)
+					r.Put("/", s.handlers.UpdateMember)
+					r.Delete("/", s.handlers.DeleteMember)
+
+					r.Route("/roles/{role_id}", func(r chi.Router) {
+						r.Post("/", s.handlers.MemberAddRole)
+						r.Delete("/", s.handlers.MemberRemoveRole)
+					})
 				})
 			})
 
-			r.Route("/invite", func(r chi.Router) {
-				r.Post("/", nil)
+			r.With(auth).Route("/invites", func(r chi.Router) {
+				r.Post("/", s.handlers.CreateInvite)
 
-				r.With(auth).Route("/{invite_id}", func(r chi.Router) {
-					r.Get("/", nil)
-					r.Patch("/accept", nil)
-					r.Patch("/decline", nil)
+				r.Route("/{invite_id}", func(r chi.Router) {
+					r.Get("/", s.handlers.GetInvite)
+					r.Patch("/accept", s.handlers.AcceptInvite)
+					r.Patch("/decline", s.handlers.DeclineInvite)
 				})
 			})
 
-			r.Route("/roles", func(r chi.Router) {
-				r.Post("/", nil)
+			r.With(auth).Route("/roles", func(r chi.Router) {
+				r.Post("/", s.handlers.CreateRole)
 
 				r.Route("/{role_id}", func(r chi.Router) {
-					r.Get("/", nil)
-					r.Put("/", nil)
-					r.Delete("/", nil)
+					r.Get("/", s.handlers.GetRole)
+					r.Put("/", s.handlers.UpdateRole)
+					r.Delete("/", s.handlers.DeleteRole)
+
+					r.Put("/permissions", s.handlers.RoleUpdatePermissions)
 				})
+			})
+
+			r.With(auth, sysadmin).Route("/agglomerations", func(r chi.Router) {
+				r.Post("/", s.handlers.CreateAgglomeration)
+				r.Patch("/", s.handlers.SuspendAgglomeration)
 			})
 		})
 	})

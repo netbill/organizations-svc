@@ -52,6 +52,8 @@ type repo interface {
 
 	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
 
+	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
+
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
@@ -88,4 +90,26 @@ func (s Service) checkPermissionForManageInvite(
 	}
 
 	return nil
+}
+
+func (s Service) checkAgglomerationIsActiveAndExists(ctx context.Context, agglomerationID uuid.UUID) (models.Agglomeration, error) {
+	agglo, err := s.repo.GetAgglomerationByID(ctx, agglomerationID)
+	if err != nil {
+		return models.Agglomeration{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get agglomeration by id: %w", err),
+		)
+	}
+	if agglo.IsNil() {
+		return models.Agglomeration{}, errx.ErrorAgglomerationNotFound.Raise(
+			fmt.Errorf("agglomeration with id %s not found", agglomerationID),
+		)
+	}
+
+	if agglo.Status != models.AgglomerationStatusActive {
+		return models.Agglomeration{}, errx.ErrorAgglomerationIsNotActive.Raise(
+			fmt.Errorf("agglomeration with id %s is not active", agglomerationID),
+		)
+	}
+
+	return agglo, nil
 }

@@ -175,32 +175,3 @@ func (s Service) UpdateCityAgglomeration(
 
 	return city, nil
 }
-
-func (s Service) UpdateCityAgglomerationByUser(
-	ctx context.Context,
-	accountID, cityID uuid.UUID,
-	newAggloID *uuid.UUID,
-) (models.City, error) {
-	city, err := s.GetCityByID(ctx, cityID)
-	if err != nil {
-		return models.City{}, err
-	}
-
-	if city.AgglomerationID == nil {
-		return models.City{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("city %s has no agglomeration", city.ID),
-		)
-	}
-
-	_, err = s.checkAgglomerationIsActiveAndExists(ctx, *city.AgglomerationID)
-	if err != nil {
-		return models.City{}, err
-	}
-
-	err = s.checkPermissionForManageCity(ctx, accountID, *city.AgglomerationID)
-	if err != nil {
-		return models.City{}, err
-	}
-
-	return s.UpdateCityAgglomeration(ctx, cityID, newAggloID)
-}

@@ -32,7 +32,6 @@ type repo interface {
 	GetCityBySlug(ctx context.Context, slug string) (models.City, error)
 
 	UpdateCity(ctx context.Context, ID uuid.UUID, params UpdateParams) (models.City, error)
-	UpdateCityStatus(ctx context.Context, ID uuid.UUID, status string) (models.City, error)
 	UpdateCitySlug(ctx context.Context, ID uuid.UUID, slug *string) (models.City, error)
 	UpdateCityAgglomeration(
 		ctx context.Context,
@@ -68,10 +67,6 @@ type messanger interface {
 
 	WriteCitySlugUpdated(ctx context.Context, city models.City, newSlug *string) error
 	WriteCityAgglomerationUpdated(ctx context.Context, city models.City, newAggloId *uuid.UUID) error
-
-	WriteCityActivated(ctx context.Context, city models.City) error
-	WriteCityDeactivated(ctx context.Context, city models.City) error
-	WriteCityArchived(ctx context.Context, city models.City) error
 
 	WriteCityDeleted(ctx context.Context, city models.City) error
 }

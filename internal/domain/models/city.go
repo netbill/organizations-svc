@@ -7,16 +7,9 @@ import (
 	"github.com/paulmach/orb"
 )
 
-const (
-	CityStatusActive   = "active"
-	CityStatusInactive = "inactive"
-	CityStatusArchived = "archived"
-)
-
 type City struct {
 	ID              uuid.UUID  `json:"id"`
 	AgglomerationID *uuid.UUID `json:"agglomeration_id,omitempty"`
-	Status          string     `json:"status"`
 	Slug            *string    `json:"slug,omitempty"`
 	Name            string     `json:"name"`
 	Icon            *string    `json:"icon,omitempty"`
@@ -30,8 +23,4 @@ type City struct {
 
 func (e City) IsNil() bool {
 	return e.ID == uuid.Nil
-}
-
-func (e City) CanInteract() bool {
-	return e.Status == CityStatusActive
 }

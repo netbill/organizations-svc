@@ -58,6 +58,19 @@ func (s Service) UpdateAgglomerationStatus(
 	return Agglomeration(row), nil
 }
 
+func (s Service) UpdateAgglomerationMaxRoles(
+	ctx context.Context,
+	ID uuid.UUID,
+	maxRoles uint,
+) (models.Agglomeration, error) {
+	row, err := s.agglomerationsQ().FilterByID(ID).UpdateMaxRoles(maxRoles).UpdateOne(ctx)
+	if err != nil {
+		return models.Agglomeration{}, err
+	}
+
+	return Agglomeration(row), nil
+}
+
 func (s Service) GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error) {
 	row, err := s.agglomerationsQ().FilterByID(ID).Get(ctx)
 	switch {
@@ -117,6 +130,7 @@ func Agglomeration(db pgdb.Agglomeration) models.Agglomeration {
 		Status:    db.Status,
 		Name:      db.Name,
 		Icon:      db.Icon,
+		MaxRoles:  db.MaxRoles,
 		CreatedAt: db.CreatedAt,
 		UpdatedAt: db.UpdatedAt,
 	}

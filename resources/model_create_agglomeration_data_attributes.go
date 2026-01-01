@@ -12,6 +12,7 @@ package resources
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"bytes"
 	"fmt"
 )
@@ -21,6 +22,8 @@ var _ MappedNullable = &CreateAgglomerationDataAttributes{}
 
 // CreateAgglomerationDataAttributes struct for CreateAgglomerationDataAttributes
 type CreateAgglomerationDataAttributes struct {
+	// Account ID of the head of the agglomeration
+	Head uuid.UUID `json:"head"`
 	// The name of the agglomeration
 	Name string `json:"name"`
 	// The icon representing the agglomeration
@@ -33,8 +36,9 @@ type _CreateAgglomerationDataAttributes CreateAgglomerationDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCreateAgglomerationDataAttributes(name string) *CreateAgglomerationDataAttributes {
+func NewCreateAgglomerationDataAttributes(head uuid.UUID, name string) *CreateAgglomerationDataAttributes {
 	this := CreateAgglomerationDataAttributes{}
+	this.Head = head
 	this.Name = name
 	return &this
 }
@@ -45,6 +49,30 @@ func NewCreateAgglomerationDataAttributes(name string) *CreateAgglomerationDataA
 func NewCreateAgglomerationDataAttributesWithDefaults() *CreateAgglomerationDataAttributes {
 	this := CreateAgglomerationDataAttributes{}
 	return &this
+}
+
+// GetHead returns the Head field value
+func (o *CreateAgglomerationDataAttributes) GetHead() uuid.UUID {
+	if o == nil {
+		var ret uuid.UUID
+		return ret
+	}
+
+	return o.Head
+}
+
+// GetHeadOk returns a tuple with the Head field value
+// and a boolean to check if the value has been set.
+func (o *CreateAgglomerationDataAttributes) GetHeadOk() (*uuid.UUID, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Head, true
+}
+
+// SetHead sets field value
+func (o *CreateAgglomerationDataAttributes) SetHead(v uuid.UUID) {
+	o.Head = v
 }
 
 // GetName returns the Name field value
@@ -113,6 +141,7 @@ func (o CreateAgglomerationDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o CreateAgglomerationDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["head"] = o.Head
 	toSerialize["name"] = o.Name
 	if !IsNil(o.Icon) {
 		toSerialize["icon"] = o.Icon
@@ -125,6 +154,7 @@ func (o *CreateAgglomerationDataAttributes) UnmarshalJSON(data []byte) (err erro
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"head",
 		"name",
 	}
 

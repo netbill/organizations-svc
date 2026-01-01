@@ -31,24 +31,6 @@ type CityAgglomerationUpdatedPayload struct {
 	OldAgglomerationID *uuid.UUID  `json:"old_agglomeration_id"`
 }
 
-const CityActivatedEvent = "city.activated"
-
-type CityActivatedPayload struct {
-	City models.City `json:"city"`
-}
-
-const CityDeactivatedEvent = "city.deactivated"
-
-type CityDeactivatedPayload struct {
-	City models.City `json:"city"`
-}
-
-const CityArchivedEvent = "city.archived"
-
-type CityArchivedPayload struct {
-	City models.City `json:"city"`
-}
-
 const CityDeletedEvent = "city.deleted"
 
 type CityDeletedPayload struct {

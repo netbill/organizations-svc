@@ -61,6 +61,12 @@ type repo interface {
 	GetAccountMaxRoleInAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Role, error)
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
+	CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error)
+
+	GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error)
+	DeleteMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
+	AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
+
 	CheckAccountHavePermissionByCode(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,

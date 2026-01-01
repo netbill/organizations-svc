@@ -11,7 +11,6 @@ import (
 
 type CreateParams struct {
 	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Head            bool      `json:"head"`
 	Rank            uint      `json:"rank"`
 	Name            string    `json:"name"`
 	Description     string    `json:"description"`

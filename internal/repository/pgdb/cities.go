@@ -21,7 +21,6 @@ const CityColumnsC = "c.id, c.agglomeration_id, c.status, c.slug, c.name, c.icon
 type City struct {
 	ID              uuid.UUID  `json:"id"`
 	AgglomerationID *uuid.UUID `json:"agglomeration_id"`
-	Status          string     `json:"status"`
 	Slug            *string    `json:"slug"`
 	Name            string     `json:"name"`
 	Icon            *string    `json:"icon"`
@@ -36,7 +35,6 @@ func (c *City) scan(row sq.RowScanner) error {
 	err := row.Scan(
 		&c.ID,
 		&c.AgglomerationID,
-		&c.Status,
 		&c.Slug,
 		&c.Name,
 		&c.Icon,
@@ -74,7 +72,6 @@ func NewCitiesQ(db pgx.DBTX) CitiesQ {
 
 type CityInsertParams struct {
 	AgglomerationID *uuid.UUID
-	Status          string
 	Slug            *string
 	Name            string
 	Icon            *string
@@ -85,7 +82,6 @@ type CityInsertParams struct {
 func (q CitiesQ) Insert(ctx context.Context, data CityInsertParams) (City, error) {
 	query, args, err := q.inserter.SetMap(map[string]interface{}{
 		"agglomeration_id": data.AgglomerationID,
-		"status":           data.Status,
 		"slug":             data.Slug,
 		"name":             data.Name,
 		"icon":             data.Icon,
@@ -117,14 +113,6 @@ func (q CitiesQ) FilterByAgglomerationID(id uuid.UUID) CitiesQ {
 	q.counter = q.counter.Where(sq.Eq{"c.agglomeration_id": id})
 	q.updater = q.updater.Where(sq.Eq{"c.agglomeration_id": id})
 	q.deleter = q.deleter.Where(sq.Eq{"c.agglomeration_id": id})
-	return q
-}
-
-func (q CitiesQ) FilterByStatus(status string) CitiesQ {
-	q.selector = q.selector.Where(sq.Eq{"c.status": status})
-	q.counter = q.counter.Where(sq.Eq{"c.status": status})
-	q.updater = q.updater.Where(sq.Eq{"c.status": status})
-	q.deleter = q.deleter.Where(sq.Eq{"c.status": status})
 	return q
 }
 

@@ -123,14 +123,14 @@ func (q MemberRolesQ) Count(ctx context.Context) (int64, error) {
 	return n, nil
 }
 
-func (q MemberRolesQ) FilterMemberID(memberID uuid.UUID) MemberRolesQ {
+func (q MemberRolesQ) FilterByMemberID(memberID uuid.UUID) MemberRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"member_id": memberID})
 	q.counter = q.counter.Where(sq.Eq{"member_id": memberID})
 	q.deleter = q.deleter.Where(sq.Eq{"member_id": memberID})
 	return q
 }
 
-func (q MemberRolesQ) FilterRoleID(roleID uuid.UUID) MemberRolesQ {
+func (q MemberRolesQ) FilterByRoleID(roleID uuid.UUID) MemberRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"role_id": roleID})
 	q.counter = q.counter.Where(sq.Eq{"role_id": roleID})
 	q.deleter = q.deleter.Where(sq.Eq{"role_id": roleID})

@@ -22,10 +22,10 @@ var _ MappedNullable = &Data{}
 
 // Data struct for Data
 type Data struct {
-	// agglomeration ID
+	// member ID
 	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
-	Attributes AgglomerationDataAttributes `json:"attributes"`
+	Attributes RoleDataAttributes `json:"attributes"`
 }
 
 type _Data Data
@@ -34,7 +34,7 @@ type _Data Data
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewData(id uuid.UUID, type_ string, attributes AgglomerationDataAttributes) *Data {
+func NewData(id uuid.UUID, type_ string, attributes RoleDataAttributes) *Data {
 	this := Data{}
 	this.Id = id
 	this.Type = type_
@@ -99,9 +99,9 @@ func (o *Data) SetType(v string) {
 }
 
 // GetAttributes returns the Attributes field value
-func (o *Data) GetAttributes() AgglomerationDataAttributes {
+func (o *Data) GetAttributes() RoleDataAttributes {
 	if o == nil {
-		var ret AgglomerationDataAttributes
+		var ret RoleDataAttributes
 		return ret
 	}
 
@@ -110,7 +110,7 @@ func (o *Data) GetAttributes() AgglomerationDataAttributes {
 
 // GetAttributesOk returns a tuple with the Attributes field value
 // and a boolean to check if the value has been set.
-func (o *Data) GetAttributesOk() (*AgglomerationDataAttributes, bool) {
+func (o *Data) GetAttributesOk() (*RoleDataAttributes, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -118,7 +118,7 @@ func (o *Data) GetAttributesOk() (*AgglomerationDataAttributes, bool) {
 }
 
 // SetAttributes sets field value
-func (o *Data) SetAttributes(v AgglomerationDataAttributes) {
+func (o *Data) SetAttributes(v RoleDataAttributes) {
 	o.Attributes = v
 }
 

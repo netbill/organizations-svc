@@ -46,11 +46,7 @@ func (s Service) ActivateAgglomerationByUser(
 		)
 	}
 
-	err = s.checkPermissionForManageAgglomeration(
-		ctx,
-		accountID,
-		agglomerationID,
-	)
+	err = s.checkPermissionForManageAgglomeration(ctx, accountID, agglomerationID)
 	if err != nil {
 		return models.Agglomeration{}, err
 	}
