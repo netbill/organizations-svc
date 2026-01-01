@@ -22,9 +22,30 @@ func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]mo
 
 func (s Service) SetRolePermissions(
 	ctx context.Context,
-	roleID uuid.UUID,
+	accountID, roleID uuid.UUID,
 	permissions map[models.CodeRolePermission]bool,
 ) (perm []models.Permission, err error) {
+	role, err := s.GetRole(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	maxRole, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, role.AgglomerationID)
+	if err != nil {
+		return nil, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get account max role in agglomeration: %w", err),
+		)
+	}
+
+	if err = s.CheckPermissionsToManageRole(ctx, accountID, roleID, role.Rank); err != nil {
+		return nil, err
+	}
+	if role.Rank <= maxRole.Rank {
+		return nil, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("account does not have enough rights to set permissions for this role"),
+		)
+	}
+
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		err = s.repo.SetRolePermissions(ctx, roleID, permissions)
 		if err != nil {
@@ -47,35 +68,6 @@ func (s Service) SetRolePermissions(
 	}
 
 	return perm, nil
-}
-
-func (s Service) SetRolePermissionsByUser(
-	ctx context.Context,
-	accountID, roleID uuid.UUID,
-	permissions map[models.CodeRolePermission]bool,
-) ([]models.Permission, error) {
-	role, err := s.GetRole(ctx, roleID)
-	if err != nil {
-		return nil, err
-	}
-
-	maxRole, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, role.AgglomerationID)
-	if err != nil {
-		return nil, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get account max role in agglomeration: %w", err),
-		)
-	}
-
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, roleID, role.Rank); err != nil {
-		return nil, err
-	}
-	if role.Rank <= maxRole.Rank {
-		return nil, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("account does not have enough rights to set permissions for this role"),
-		)
-	}
-
-	return s.SetRolePermissions(ctx, roleID, permissions)
 }
 
 func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {

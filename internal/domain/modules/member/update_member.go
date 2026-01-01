@@ -14,30 +14,7 @@ type UpdateParams struct {
 	Label    *string
 }
 
-func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (member models.Member, err error) {
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		member, err = s.repo.UpdateMember(ctx, ID, params)
-		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to update member %s: %w", ID, err),
-			)
-		}
-
-		if err = s.messenger.WriteMemberUpdated(ctx, member); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to send member updated message for member %s: %w", ID, err),
-			)
-		}
-
-		return nil
-	}); err != nil {
-		return models.Member{}, err
-	}
-
-	return member, nil
-}
-
-func (s Service) UpdateMemberByUser(
+func (s Service) UpdateMember(
 	ctx context.Context,
 	accountID, memberID uuid.UUID,
 	params UpdateParams,
@@ -52,12 +29,27 @@ func (s Service) UpdateMemberByUser(
 		return models.Member{}, err
 	}
 
-	err = s.CheckAccessToManageOtherMember(ctx, initiator.ID, member.ID)
-	if err != nil {
+	if err = s.CheckAccessToManageOtherMember(ctx, initiator.ID, member.ID); err != nil {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("initiator member %s has no permission to manage members: %w", initiator.ID, err),
 		)
 	}
 
-	return s.UpdateMember(ctx, member.ID, params)
+	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
+		member, err = s.repo.UpdateMember(ctx, memberID, params)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to update member %s: %w", memberID, err),
+			)
+		}
+
+		if err = s.messenger.WriteMemberUpdated(ctx, member); err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to send member updated message for member %s: %w", memberID, err),
+			)
+		}
+		return nil
+	})
+
+	return member, err
 }

@@ -15,7 +15,21 @@ type UpdateParams struct {
 	Color       *string `json:"color"`
 }
 
-func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params UpdateParams) (role models.Role, err error) {
+func (s Service) UpdateRole(
+	ctx context.Context,
+	accountID uuid.UUID,
+	roleID uuid.UUID,
+	params UpdateParams,
+) (models.Role, error) {
+	role, err := s.GetRole(ctx, roleID)
+	if err != nil {
+		return models.Role{}, err
+	}
+
+	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, role.Rank); err != nil {
+		return models.Role{}, err
+	}
+
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		role, err = s.repo.UpdateRole(ctx, roleID, params)
 		if err != nil {
@@ -38,51 +52,7 @@ func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params Update
 	return role, nil
 }
 
-func (s Service) UpdateRoleByUser(
-	ctx context.Context,
-	accountID uuid.UUID,
-	roleID uuid.UUID,
-	params UpdateParams,
-) (models.Role, error) {
-	role, err := s.GetRole(ctx, roleID)
-	if err != nil {
-		return models.Role{}, err
-	}
-
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, role.Rank); err != nil {
-		return models.Role{}, err
-	}
-
-	return s.UpdateRole(ctx, roleID, params)
-}
-
 func (s Service) UpdateRolesRanks(
-	ctx context.Context,
-	agglomerationID uuid.UUID,
-	order map[uuid.UUID]uint,
-) error {
-	if err := s.repo.Transaction(ctx, func(ctx context.Context) error {
-		if err := s.repo.UpdateRolesRanks(ctx, agglomerationID, order); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to update roles ranks: %w", err),
-			)
-		}
-
-		if err := s.messenger.WriteRolesRanksUpdated(ctx, agglomerationID, order); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to send role ranks updated message: %w", err),
-			)
-		}
-
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s Service) UpdateRolesRanksByUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	agglomerationID uuid.UUID,
@@ -100,13 +70,14 @@ func (s Service) UpdateRolesRanksByUser(
 		rolesIDs[roleID] = struct{}{}
 	}
 
-	rolesBefore, err := s.repo.FilterRoles(
+	//TODO optimize number of queries
+	rolesBefore, err := s.repo.GetRoles(
 		ctx,
 		FilterParams{
 			AgglomerationID: &agglomerationID,
 		},
 		0,
-		0,
+		1000,
 	)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
@@ -141,5 +112,19 @@ func (s Service) UpdateRolesRanksByUser(
 		}
 	}
 
-	return s.UpdateRolesRanks(ctx, agglomerationID, order)
+	return s.repo.Transaction(ctx, func(ctx context.Context) error {
+		if err = s.repo.UpdateRolesRanks(ctx, agglomerationID, order); err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to update roles ranks: %w", err),
+			)
+		}
+
+		if err = s.messenger.WriteRolesRanksUpdated(ctx, agglomerationID, order); err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to send role ranks updated message: %w", err),
+			)
+		}
+
+		return nil
+	})
 }

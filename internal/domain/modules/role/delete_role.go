@@ -8,9 +8,13 @@ import (
 	"github.com/umisto/agglomerations-svc/internal/domain/errx"
 )
 
-func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error {
 	role, err := s.GetRole(ctx, roleID)
 	if err != nil {
+		return err
+	}
+
+	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, role.Rank); err != nil {
 		return err
 	}
 
@@ -29,17 +33,4 @@ func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 
 		return nil
 	})
-}
-
-func (s Service) DeleteRoleByUser(ctx context.Context, accountID, roleID uuid.UUID) error {
-	role, err := s.GetRole(ctx, roleID)
-	if err != nil {
-		return err
-	}
-
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, role.Rank); err != nil {
-		return err
-	}
-
-	return s.DeleteRole(ctx, role.ID)
 }

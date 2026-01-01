@@ -36,7 +36,7 @@ func (s Service) UpdateMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.core.UpdateMemberByUser(r.Context(), initiatorID, memberId, member.UpdateParams{
+	res, err := s.core.UpdateMember(r.Context(), initiatorID, memberId, member.UpdateParams{
 		Position: req.Data.Attributes.Position,
 		Label:    req.Data.Attributes.Label,
 	})

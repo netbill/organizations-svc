@@ -33,7 +33,7 @@ func (s Service) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {
 		dict[models.CodeRolePermission(item.Code)] = item.Status
 	}
 
-	perm, err := s.core.SetRolePermissionsByUser(r.Context(), initiator.ID, req.Data.Id, dict)
+	perm, err := s.core.SetRolePermissions(r.Context(), initiator.ID, req.Data.Id, dict)
 	if err != nil {
 		s.log.WithError(err).Errorf("failed to update role permissions")
 		switch {

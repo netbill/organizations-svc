@@ -28,7 +28,7 @@ func (s Service) DeleteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = s.core.DeleteRoleByUser(r.Context(), initiator.ID, roleID); err != nil {
+	if err = s.core.DeleteRole(r.Context(), initiator.ID, roleID); err != nil {
 		s.log.WithError(err).Errorf("failed to delete role")
 		switch {
 		case errors.Is(err, errx.ErrorRoleNotFound):

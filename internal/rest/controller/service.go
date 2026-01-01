@@ -20,8 +20,7 @@ type aggloSvc interface {
 		params agglomeration.CreateParams,
 	) (models.Agglomeration, error)
 
-	GetAgglomeration(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
-	FilterAgglomerations(
+	GetAgglomerations(
 		ctx context.Context,
 		params agglomeration.FilterParams,
 		offset, limit uint,
@@ -29,46 +28,46 @@ type aggloSvc interface {
 	GetAgglomerationForUser(
 		ctx context.Context,
 		accountID uuid.UUID,
-		limit, offset uint,
+		offset, limit uint,
 	) (pagi.Page[[]models.Agglomeration], error)
+	GetAgglomeration(
+		ctx context.Context,
+		agglomerationID uuid.UUID,
+	) (models.Agglomeration, error)
 
-	UpdateAgglomeration(ctx context.Context, ID uuid.UUID, params agglomeration.UpdateParams) (models.Agglomeration, error)
-	UpdateAgglomerationByUser(
+	UpdateAgglomeration(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
 		params agglomeration.UpdateParams,
 	) (models.Agglomeration, error)
 
-	ActivateAgglomeration(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
-	ActivateAgglomerationByUser(
+	ActivateAgglomeration(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
 	) (models.Agglomeration, error)
-
-	DeactivateAgglomeration(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
-	DeactivateAgglomerationByUser(
+	DeactivateAgglomeration(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
 	) (models.Agglomeration, error)
-
 	SuspendAgglomeration(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
 
-	DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error
+	DeleteAgglomeration(
+		ctx context.Context,
+		accountID, agglomerationID uuid.UUID,
+	) error
 }
 
 type inviteSvc interface {
-	CreateInvite(ctx context.Context, params invite.CreateParams) (models.Invite, error)
-	SentInviteByUser(
+	CreateInvite(
 		ctx context.Context,
 		accountID uuid.UUID,
 		params invite.CreateParams,
 	) (models.Invite, error)
 
-	GetInvite(ctx context.Context, id uuid.UUID) (models.Invite, error)
-	FilterInvites(
+	GetInvite(
 		ctx context.Context,
-		filter invite.FilterInviteParams,
-	) ([]models.Invite, error)
+		accountID, inviteID uuid.UUID,
+	) (models.Invite, error)
 
 	DeclineInvite(
 		ctx context.Context,
@@ -83,6 +82,17 @@ type inviteSvc interface {
 		ctx context.Context,
 		accountID, inviteID uuid.UUID,
 	) error
+
+	GetAgglomerationInvites(
+		ctx context.Context,
+		agglomerationID uuid.UUID,
+		limit, offset uint,
+	) (pagi.Page[[]models.Invite], error)
+	GetAccountInvites(
+		ctx context.Context,
+		accountID uuid.UUID,
+		limit, offset uint,
+	) (pagi.Page[[]models.Invite], error)
 }
 
 type memberSvc interface {
@@ -90,76 +100,70 @@ type memberSvc interface {
 	GetMemberByAccountAndAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
 	GetInitiatorMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
 
-	FilterMembers(
+	GetMembers(
 		ctx context.Context,
 		filter member.FilterParams,
 		offset uint,
 		limit uint,
 	) (pagi.Page[[]models.Member], error)
 
-	UpdateMemberByUser(
+	UpdateMember(
 		ctx context.Context,
 		accountID, memberID uuid.UUID,
 		params member.UpdateParams,
 	) (models.Member, error)
 
-	DeleteMemberByUser(
+	DeleteMember(
 		ctx context.Context,
 		accountID, memberID uuid.UUID,
 	) error
 }
 
 type roleSvc interface {
-	CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error)
-	CreateRoleByUser(
+	CreateRole(
 		ctx context.Context,
 		initiatorID uuid.UUID,
 		params role.CreateParams,
 	) (models.Role, error)
 
 	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
-	GetRoleWithPermissions(ctx context.Context, roleID uuid.UUID) (models.Role, []models.Permission, error)
-	FilterRoles(
+	GetRoleWithPermissions(ctx context.Context, accountID, roleID uuid.UUID) (models.Role, []models.Permission, error)
+	GetRoles(
 		ctx context.Context,
 		params role.FilterParams,
 		offset uint,
 		limit uint,
 	) (pagi.Page[[]models.Role], error)
 
-	UpdateRoleByUser(
+	UpdateRole(
 		ctx context.Context,
 		accountID uuid.UUID,
 		roleID uuid.UUID,
 		params role.UpdateParams,
 	) (models.Role, error)
 
-	UpdateRolesRanksByUser(
+	UpdateRolesRanks(
 		ctx context.Context,
 		accountID uuid.UUID,
 		agglomerationID uuid.UUID,
 		order map[uuid.UUID]uint,
 	) error
 
-	DeleteRole(ctx context.Context, roleID uuid.UUID) error
-	DeleteRoleByUser(ctx context.Context, accountID, roleID uuid.UUID) error
+	DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error
 
 	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]models.Permission, error)
 	SetRolePermissions(
 		ctx context.Context,
+		accountID uuid.UUID,
 		roleID uuid.UUID,
 		permissions map[models.CodeRolePermission]bool,
 	) ([]models.Permission, error)
-	SetRolePermissionsByUser(
-		ctx context.Context,
-		accountID, roleID uuid.UUID,
-		permissions map[models.CodeRolePermission]bool,
-	) ([]models.Permission, error)
 
-	MemberAddRoleByUser(
+	MemberAddRole(
 		ctx context.Context,
 		accountID, memberID, roleID uuid.UUID,
 	) error
-	MemberRemoveRoleByUser(
+	MemberRemoveRole(
 		ctx context.Context,
 		accountID, memberID, roleID uuid.UUID,
 	) error

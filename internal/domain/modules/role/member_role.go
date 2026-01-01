@@ -20,7 +20,7 @@ func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]mode
 	return roles, nil
 }
 
-func (s Service) MemberAddRoleByUser(
+func (s Service) MemberAddRole(
 	ctx context.Context,
 	accountID, memberID, roleID uuid.UUID,
 ) error {
@@ -70,7 +70,7 @@ func (s Service) MemberAddRoleByUser(
 	return nil
 }
 
-func (s Service) MemberRemoveRoleByUser(
+func (s Service) MemberRemoveRole(
 	ctx context.Context,
 	accountID, memberID, roleID uuid.UUID,
 ) error {

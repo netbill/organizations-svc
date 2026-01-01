@@ -80,7 +80,7 @@ func (s Service) GetMemberByAccountAndAgglomeration(
 	return MemberWithUserData(row), nil
 }
 
-func (s Service) FilterMembers(
+func (s Service) GetMembers(
 	ctx context.Context,
 	filter member.FilterParams,
 	offset uint,

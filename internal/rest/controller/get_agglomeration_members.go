@@ -28,7 +28,7 @@ func (s Service) GetAgglomerationMembers(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	members, err := s.core.FilterMembers(r.Context(), member.FilterParams{
+	members, err := s.core.GetMembers(r.Context(), member.FilterParams{
 		AgglomerationID: &agglomerationID,
 	}, limit, offset)
 	if err != nil {

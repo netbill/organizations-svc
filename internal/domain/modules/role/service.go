@@ -35,7 +35,7 @@ type repo interface {
 
 	DeleteRole(ctx context.Context, roleID uuid.UUID) error
 
-	FilterRoles(
+	GetRoles(
 		ctx context.Context,
 		filter FilterParams,
 		offset uint,

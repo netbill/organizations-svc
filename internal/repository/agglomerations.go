@@ -87,7 +87,7 @@ func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
 	return s.agglomerationsQ().FilterByID(ID).Delete(ctx)
 }
 
-func (s Service) FilterAgglomerations(
+func (s Service) GetAgglomerations(
 	ctx context.Context,
 	filter agglomeration.FilterParams,
 	offset, limit uint,
@@ -124,7 +124,7 @@ func (s Service) FilterAgglomerations(
 
 }
 
-func (s Service) GetAgglomerationForUser(
+func (s Service) GetAgglomerationsForUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,

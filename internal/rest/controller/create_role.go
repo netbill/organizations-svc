@@ -28,7 +28,7 @@ func (s Service) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.core.CreateRoleByUser(r.Context(), initiator.ID, role.CreateParams{
+	res, err := s.core.CreateRole(r.Context(), initiator.ID, role.CreateParams{
 		AgglomerationID: req.Data.Attributes.AgglomerationId,
 		Name:            req.Data.Attributes.Name,
 		Rank:            req.Data.Attributes.Rank,

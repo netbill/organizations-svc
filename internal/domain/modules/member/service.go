@@ -33,7 +33,7 @@ type repo interface {
 		accountID, agglomerationID uuid.UUID,
 	) (models.Member, error)
 
-	FilterMembers(
+	GetMembers(
 		ctx context.Context,
 		filter FilterParams,
 		offset uint,

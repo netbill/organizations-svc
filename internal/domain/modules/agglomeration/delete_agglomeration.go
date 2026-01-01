@@ -8,10 +8,23 @@ import (
 	"github.com/umisto/agglomerations-svc/internal/domain/errx"
 )
 
-func (s Service) DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error {
+func (s Service) DeleteAgglomeration(ctx context.Context, accountID, ID uuid.UUID) error {
 	agglomeration, err := s.GetAgglomeration(ctx, ID)
 	if err != nil {
 		return err
+	}
+
+	role, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, ID)
+	if err != nil {
+		return errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get member max role: %w", err),
+		)
+	}
+
+	if role.Head != true {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("only agglomeration head can delete agglomeration"),
+		)
 	}
 
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {

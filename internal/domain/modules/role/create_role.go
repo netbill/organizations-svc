@@ -17,7 +17,15 @@ type CreateParams struct {
 	Color           string    `json:"color"`
 }
 
-func (s Service) CreateRole(ctx context.Context, params CreateParams) (role models.Role, err error) {
+func (s Service) CreateRole(
+	ctx context.Context,
+	accountID uuid.UUID,
+	params CreateParams,
+) (role models.Role, err error) {
+	if err = s.CheckPermissionsToManageRole(ctx, accountID, params.AgglomerationID, params.Rank); err != nil {
+		return models.Role{}, err
+	}
+
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		role, err = s.repo.CreateRole(ctx, params)
 		if err != nil {
@@ -34,20 +42,4 @@ func (s Service) CreateRole(ctx context.Context, params CreateParams) (role mode
 	}
 
 	return role, nil
-}
-
-func (s Service) CreateRoleByUser(
-	ctx context.Context,
-	accountID uuid.UUID,
-	params CreateParams,
-) (models.Role, error) {
-	if err := s.CheckPermissionsToManageRole(ctx, accountID, params.AgglomerationID, params.Rank); err != nil {
-		return models.Role{}, err
-	}
-
-	if err := s.CheckPermissionsToManageRole(ctx, accountID, params.AgglomerationID, params.Rank); err != nil {
-		return models.Role{}, err
-	}
-
-	return s.CreateRole(ctx, params)
 }

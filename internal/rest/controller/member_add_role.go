@@ -35,7 +35,7 @@ func (s Service) MemberAddRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.core.MemberAddRoleByUser(r.Context(), initiator.ID, memberID, roleID)
+	err = s.core.MemberAddRole(r.Context(), initiator.ID, memberID, roleID)
 	if err != nil {
 		s.log.WithError(err).Errorf("failed to add role to member")
 		switch {

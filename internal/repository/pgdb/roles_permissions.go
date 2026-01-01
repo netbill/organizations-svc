@@ -62,7 +62,6 @@ func (q RolePermissionsQ) Insert(ctx context.Context, data ...RolePermission) er
 	return nil
 }
 
-
 func (q RolePermissionsQ) Get(ctx context.Context) (RolePermission, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
@@ -222,13 +221,13 @@ func (q RolePermissionsQ) FilterByMemberID(memberID uuid.UUID) RolePermissionsQ 
 	return q
 }
 
-func (q RolePermissionsQ) Count(ctx context.Context) (int64, error) {
+func (q RolePermissionsQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building count query for %s: %w", RolePermissionsTable, err)
 	}
 
-	var n int64
+	var n uint
 	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", RolePermissionsTable, err)
 	}

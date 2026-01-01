@@ -28,7 +28,7 @@ func (s Service) UpdateAgglomeration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.core.UpdateAgglomerationByUser(
+	res, err := s.core.UpdateAgglomeration(
 		r.Context(),
 		initiator.ID,
 		req.Data.Id,

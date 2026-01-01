@@ -49,7 +49,7 @@ func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, er
 	return Role(row), nil
 }
 
-func (s Service) FilterRoles(
+func (s Service) GetRoles(
 	ctx context.Context,
 	filter role.FilterParams,
 	offset uint,

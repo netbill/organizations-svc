@@ -16,13 +16,24 @@ type CreateParams struct {
 	ExpiresAt       time.Time
 }
 
-func (s Service) CreateInvite(ctx context.Context, params CreateParams) (invite models.Invite, err error) {
-	_, err = s.checkAgglomerationIsActiveAndExists(ctx, params.AgglomerationID)
-	if err != nil {
+func (s Service) CreateInvite(
+	ctx context.Context,
+	accountID uuid.UUID,
+	params CreateParams,
+) (invite models.Invite, err error) {
+	if err = s.checkPermissionForManageInvite(
+		ctx,
+		accountID,
+		params.AgglomerationID,
+	); err != nil {
 		return models.Invite{}, err
 	}
 
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
+	if _, err = s.checkAgglomerationIsActiveAndExists(ctx, params.AgglomerationID); err != nil {
+		return models.Invite{}, err
+	}
+
+	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.CreateInvite(ctx, params)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
@@ -38,30 +49,7 @@ func (s Service) CreateInvite(ctx context.Context, params CreateParams) (invite 
 		}
 
 		return nil
-	}); err != nil {
-		return models.Invite{}, err
-	}
+	})
 
-	return invite, nil
-}
-
-func (s Service) SentInviteByUser(
-	ctx context.Context,
-	accountID uuid.UUID,
-	params CreateParams,
-) (models.Invite, error) {
-	if err := s.checkPermissionForManageInvite(
-		ctx,
-		accountID,
-		params.AgglomerationID,
-	); err != nil {
-		return models.Invite{}, err
-	}
-
-	res, err := s.CreateInvite(ctx, params)
-	if err != nil {
-		return models.Invite{}, err
-	}
-
-	return res, nil
+	return invite, err
 }

@@ -14,7 +14,7 @@ func (s Service) DeleteInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) error {
-	invite, err := s.GetInvite(ctx, inviteID)
+	invite, err := s.getInvite(ctx, accountID)
 	if err != nil {
 		return err
 	}

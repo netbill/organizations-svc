@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/umisto/agglomerations-svc/internal/domain/errx"
 	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/pagi"
 )
 
 func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
@@ -59,4 +60,33 @@ func (s Service) GetInitiatorMember(
 	}
 
 	return initiator, err
+}
+
+type FilterParams struct {
+	AgglomerationID *uuid.UUID
+	AccountID       *uuid.UUID
+	RoleID          *uuid.UUID
+	Username        *string
+	BestMatch       *string
+	PermissionCode  *string
+	Label           *string
+	Position        *string
+	RoleRankUp      *uint
+	RoleRankDown    *uint
+}
+
+func (s Service) GetMembers(
+	ctx context.Context,
+	filter FilterParams,
+	offset uint,
+	limit uint,
+) (pagi.Page[[]models.Member], error) {
+	res, err := s.repo.GetMembers(ctx, filter, offset, limit)
+	if err != nil {
+		return pagi.Page[[]models.Member]{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to filter members: %w", err),
+		)
+	}
+
+	return res, nil
 }

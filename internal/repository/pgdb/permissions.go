@@ -195,13 +195,13 @@ func (q PermissionsQ) Page(limit, offset uint) PermissionsQ {
 	return q
 }
 
-func (q PermissionsQ) Count(ctx context.Context) (int64, error) {
+func (q PermissionsQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building count query for %s: %w", PermissionTable, err)
 	}
 
-	var n int64
+	var n uint
 	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", PermissionTable, err)
 	}

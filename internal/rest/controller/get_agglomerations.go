@@ -31,7 +31,7 @@ func (s Service) GetAgglomerations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agglomerations, err := s.core.FilterAgglomerations(r.Context(), agglomeration.FilterParams{}, limit, offset)
+	agglomerations, err := s.core.GetAgglomerations(r.Context(), agglomeration.FilterParams{}, limit, offset)
 	if err != nil {
 		s.log.WithError(err).Errorf("failed to get agglomerations")
 		ape.RenderErr(w, problems.InternalError())

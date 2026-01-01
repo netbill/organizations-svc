@@ -7,6 +7,7 @@ import (
 	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/agglomerations-svc/internal/domain/modules/invite"
 	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
+	"github.com/umisto/pagi"
 )
 
 func (s Service) CreateInvite(
@@ -57,25 +58,23 @@ func (s Service) DeleteInvite(
 	return s.invitesQ().FilterByID(id).Delete(ctx)
 }
 
-func (s Service) FilterInvites(
+func (s Service) GetAgglomerationInvites(
 	ctx context.Context,
-	filter invite.FilterInviteParams,
-) ([]models.Invite, error) {
-	q := s.invitesQ()
-
-	if filter.AgglomerationID != nil {
-		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
-	}
-	if filter.AccountID != nil {
-		q = q.FilterByAccountID(*filter.AccountID)
-	}
-	if filter.Status != nil {
-		q = q.FilterByStatus(*filter.Status)
-	}
-
-	rows, err := q.Select(ctx)
+	agglomerationID uuid.UUID,
+	limit, offset uint,
+) (pagi.Page[[]models.Invite], error) {
+	rows, err := s.invitesQ().
+		FilterByAgglomerationID(agglomerationID).
+		Select(ctx)
 	if err != nil {
-		return []models.Invite{}, err
+		return pagi.Page[[]models.Invite]{}, err
+	}
+
+	total, err := s.invitesQ().
+		FilterByAgglomerationID(agglomerationID).
+		Count(ctx)
+	if err != nil {
+		return pagi.Page[[]models.Invite]{}, err
 	}
 
 	res := make([]models.Invite, 0, len(rows))
@@ -83,7 +82,44 @@ func (s Service) FilterInvites(
 		res = append(res, Invite(row))
 	}
 
-	return res, nil
+	return pagi.Page[[]models.Invite]{
+		Data:  res,
+		Page:  uint(offset/limit) + 1,
+		Size:  uint(len(res)),
+		Total: uint(total),
+	}, nil
+}
+
+func (s Service) GetAccountInvites(
+	ctx context.Context,
+	accountID uuid.UUID,
+	limit, offset uint,
+) (pagi.Page[[]models.Invite], error) {
+	rows, err := s.invitesQ().
+		FilterByAccountID(accountID).
+		Select(ctx)
+	if err != nil {
+		return pagi.Page[[]models.Invite]{}, err
+	}
+
+	total, err := s.invitesQ().
+		FilterByAccountID(accountID).
+		Count(ctx)
+	if err != nil {
+		return pagi.Page[[]models.Invite]{}, err
+	}
+
+	res := make([]models.Invite, 0, len(rows))
+	for _, row := range rows {
+		res = append(res, Invite(row))
+	}
+
+	return pagi.Page[[]models.Invite]{
+		Data:  res,
+		Page:  uint(offset/limit) + 1,
+		Size:  uint(len(res)),
+		Total: uint(total),
+	}, nil
 }
 
 func Invite(row pgdb.Invite) models.Invite {

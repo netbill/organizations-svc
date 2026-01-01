@@ -14,7 +14,7 @@ func (s Service) AcceptInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.GetInvite(ctx, accountID)
+	invite, err = s.getInvite(ctx, accountID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -35,8 +35,7 @@ func (s Service) AcceptInvite(
 		)
 	}
 
-	_, err = s.checkAgglomerationIsActiveAndExists(ctx, invite.AgglomerationID)
-	if err != nil {
+	if _, err = s.checkAgglomerationIsActiveAndExists(ctx, invite.AgglomerationID); err != nil {
 		return models.Invite{}, err
 	}
 
@@ -72,5 +71,5 @@ func (s Service) AcceptInvite(
 		return nil
 	})
 
-	return invite, nil
+	return invite, err
 }

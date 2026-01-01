@@ -26,7 +26,7 @@ func (s Service) DeleteMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.core.DeleteMemberByUser(r.Context(), initiatorID, memberId)
+	err = s.core.DeleteMember(r.Context(), initiatorID, memberId)
 	if err != nil {
 		s.log.WithError(err).Errorf("failed to delete member")
 		switch {

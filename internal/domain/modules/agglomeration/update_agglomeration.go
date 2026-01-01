@@ -14,9 +14,32 @@ type UpdateParams struct {
 	Icon *string `json:"icon,omitempty"`
 }
 
-func (s Service) UpdateAgglomeration(ctx context.Context, ID uuid.UUID, params UpdateParams) (agglo models.Agglomeration, err error) {
+func (s Service) UpdateAgglomeration(
+	ctx context.Context,
+	accountID, agglomerationID uuid.UUID,
+	params UpdateParams,
+) (models.Agglomeration, error) {
+	agglo, err := s.GetAgglomeration(ctx, agglomerationID)
+	if err != nil {
+		return models.Agglomeration{}, err
+	}
+
+	if agglo.Status == models.AgglomerationStatusSuspended {
+		return models.Agglomeration{}, errx.ErrorAgglomerationIsSuspended.Raise(
+			fmt.Errorf("agglomeration is suspended"),
+		)
+	}
+
+	if err = s.checkPermissionForManageAgglomeration(
+		ctx,
+		accountID,
+		agglomerationID,
+	); err != nil {
+		return models.Agglomeration{}, err
+	}
+
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.UpdateAgglomeration(ctx, ID, params)
+		agglo, err = s.repo.UpdateAgglomeration(ctx, agglomerationID, params)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to update agglomeration: %w", err),
@@ -36,32 +59,4 @@ func (s Service) UpdateAgglomeration(ctx context.Context, ID uuid.UUID, params U
 	}
 
 	return agglo, nil
-}
-
-func (s Service) UpdateAgglomerationByUser(
-	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
-	params UpdateParams,
-) (models.Agglomeration, error) {
-	agglo, err := s.GetAgglomeration(ctx, agglomerationID)
-	if err != nil {
-		return models.Agglomeration{}, err
-	}
-
-	if agglo.Status == models.AgglomerationStatusSuspended {
-		return models.Agglomeration{}, errx.ErrorAgglomerationIsSuspended.Raise(
-			fmt.Errorf("agglomeration is suspended"),
-		)
-	}
-
-	err = s.checkPermissionForManageAgglomeration(
-		ctx,
-		accountID,
-		agglomerationID,
-	)
-	if err != nil {
-		return models.Agglomeration{}, err
-	}
-
-	return s.UpdateAgglomeration(ctx, agglomerationID, params)
 }

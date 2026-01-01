@@ -32,7 +32,7 @@ type FilterPermissionsParams struct {
 	Code        *models.CodeRolePermission
 }
 
-func (s Service) FilterPermissions(
+func (s Service) GetPermissions(
 	ctx context.Context,
 	filter FilterPermissionsParams,
 	offset uint,

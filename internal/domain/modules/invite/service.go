@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/umisto/agglomerations-svc/internal/domain/errx"
 	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/umisto/pagi"
 )
 
 type Service struct {
@@ -28,10 +29,16 @@ type repo interface {
 		ctx context.Context,
 		id uuid.UUID,
 	) (models.Invite, error)
-	FilterInvites(
+	GetAgglomerationInvites(
 		ctx context.Context,
-		filter FilterInviteParams,
-	) ([]models.Invite, error)
+		agglomerationID uuid.UUID,
+		limit, offset uint,
+	) (pagi.Page[[]models.Invite], error)
+	GetAccountInvites(
+		ctx context.Context,
+		accountID uuid.UUID,
+		limit, offset uint,
+	) (pagi.Page[[]models.Invite], error)
 
 	UpdateInviteStatus(
 		ctx context.Context,
@@ -53,6 +60,10 @@ type repo interface {
 	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
 
 	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
+	GetMemberByAccountAndAgglomeration(
+		ctx context.Context,
+		accountID, agglomerationID uuid.UUID,
+	) (models.Member, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }

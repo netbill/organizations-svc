@@ -37,22 +37,24 @@ type repo interface {
 
 	DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error
 
-	FilterAgglomerations(
+	GetAgglomerations(
 		ctx context.Context,
 		filter FilterParams,
 		offset, limit uint,
 	) (pagi.Page[[]models.Agglomeration], error)
-	GetAgglomerationForUser(
+	GetAgglomerationsForUser(
 		ctx context.Context,
 		accountID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Agglomeration], error)
-
 	CheckAccountHavePermissionByCode(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
 		permissionKey string,
 	) (bool, error)
+
+	GetAccountMaxRoleInAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Role, error)
+	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
 	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
 	CreateHeadRole(ctx context.Context, agglomerationID uuid.UUID) (models.Role, error)

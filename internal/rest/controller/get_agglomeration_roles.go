@@ -28,7 +28,7 @@ func (s Service) GetAgglomerationRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roles, err := s.core.FilterRoles(r.Context(), role.FilterParams{
+	roles, err := s.core.GetRoles(r.Context(), role.FilterParams{
 		AgglomerationID: &agglomerationID,
 	}, limit, offset)
 	if err != nil {

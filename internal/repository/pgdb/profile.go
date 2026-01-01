@@ -177,13 +177,13 @@ func (q ProfilesQ) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (q ProfilesQ) Count(ctx context.Context) (int64, error) {
+func (q ProfilesQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building count query for %s: %w", ProfileTable, err)
 	}
 
-	var count int64
+	var count uint
 	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&count); err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", ProfileTable, err)
 	}

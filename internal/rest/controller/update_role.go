@@ -36,7 +36,7 @@ func (s Service) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.core.UpdateRoleByUser(r.Context(), initiator.ID, roleID, role.UpdateParams{
+	res, err := s.core.UpdateRole(r.Context(), initiator.ID, roleID, role.UpdateParams{
 		Name:        req.Data.Attributes.Name,
 		Description: req.Data.Attributes.Description,
 		Color:       req.Data.Attributes.Color,

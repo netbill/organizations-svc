@@ -14,7 +14,7 @@ func (s Service) DeclineInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.GetInvite(ctx, inviteID)
+	invite, err = s.getInvite(ctx, accountID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -35,7 +35,7 @@ func (s Service) DeclineInvite(
 		)
 	}
 
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
+	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusDeclined)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
@@ -51,9 +51,7 @@ func (s Service) DeclineInvite(
 		}
 
 		return nil
-	}); err != nil {
-		return models.Invite{}, err
-	}
+	})
 
-	return invite, nil
+	return invite, err
 }

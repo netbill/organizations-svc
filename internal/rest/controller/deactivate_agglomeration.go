@@ -29,7 +29,7 @@ func (s Service) DeactivateAgglomeration(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	res, err := s.core.DeactivateAgglomerationByUser(
+	res, err := s.core.DeactivateAgglomeration(
 		r.Context(),
 		initiator.ID,
 		agglomerationID,

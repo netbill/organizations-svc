@@ -30,7 +30,7 @@ func (s Service) UpdateRolesRanks(w http.ResponseWriter, r *http.Request) {
 		dict[item.Id] = item.Rank
 	}
 
-	err = s.core.UpdateRolesRanksByUser(r.Context(), initiator.ID, req.Data.Id, dict)
+	err = s.core.UpdateRolesRanks(r.Context(), initiator.ID, req.Data.Id, dict)
 	if err != nil {
 		s.log.WithError(err).Errorf("failed to update roles ranks")
 		ape.RenderErr(w, problems.InternalError())

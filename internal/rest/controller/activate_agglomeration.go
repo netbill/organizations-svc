@@ -29,7 +29,7 @@ func (s Service) ActivateAgglomeration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.core.ActivateAgglomerationByUser(
+	res, err := s.core.ActivateAgglomeration(
 		r.Context(),
 		initiator.ID,
 		agglomerationID,

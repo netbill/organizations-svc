@@ -29,7 +29,7 @@ func (s Service) CreateInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inv, err := s.core.SentInviteByUser(r.Context(),
+	inv, err := s.core.CreateInvite(r.Context(),
 		initiator.ID,
 		invite.CreateParams{
 			AgglomerationID: req.Data.Attributes.AgglomerationId,

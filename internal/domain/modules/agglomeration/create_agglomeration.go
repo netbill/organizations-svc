@@ -49,7 +49,7 @@ func (s Service) CreateAgglomeration(
 		return models.Agglomeration{}, err
 	}
 
-	return agglo, nil
+	return agglo, err
 }
 
 func (s Service) createRoleHead(ctx context.Context, agglomerationID uuid.UUID) (role models.Role, err error) {

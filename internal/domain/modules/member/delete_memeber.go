@@ -8,31 +8,7 @@ import (
 	"github.com/umisto/agglomerations-svc/internal/domain/errx"
 )
 
-func (s Service) DeleteMember(ctx context.Context, ID uuid.UUID) error {
-	member, err := s.GetMemberByID(ctx, ID)
-	if err != nil {
-		return err
-	}
-
-	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = s.repo.DeleteMember(ctx, ID)
-		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to delete member %s: %w", ID, err),
-			)
-		}
-
-		if err = s.messenger.WriteMemberDeleted(ctx, member); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to send member deleted message for member %s: %w", ID, err),
-			)
-		}
-
-		return nil
-	})
-}
-
-func (s Service) DeleteMemberByUser(ctx context.Context, accountID, memberID uuid.UUID) error {
+func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID) error {
 	member, err := s.GetMemberByID(ctx, memberID)
 	if err != nil {
 		return err
@@ -50,5 +26,20 @@ func (s Service) DeleteMemberByUser(ctx context.Context, accountID, memberID uui
 		)
 	}
 
-	return s.DeleteMember(ctx, member.ID)
+	return s.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = s.repo.DeleteMember(ctx, memberID)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to delete member %s: %w", memberID, err),
+			)
+		}
+
+		if err = s.messenger.WriteMemberDeleted(ctx, member); err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to send member deleted message for member %s: %w", memberID, err),
+			)
+		}
+
+		return nil
+	})
 }
