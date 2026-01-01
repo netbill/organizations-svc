@@ -33,7 +33,7 @@ func (s Service) WriteRoleCreated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.RoleCreatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -64,7 +64,7 @@ func (s Service) WriteRoleUpdated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.RoleUpdatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -97,7 +97,7 @@ func (s Service) WriteRolePermissionsUpdated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.RolePermissionsUpdatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -130,7 +130,7 @@ func (s Service) WriteRolesRanksUpdated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.RolesRanksUpdatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -161,7 +161,7 @@ func (s Service) WriteRoleDeleted(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.RoleDeletedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},

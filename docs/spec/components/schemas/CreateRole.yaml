@@ -1,0 +1,39 @@
+type: object
+required:
+  - data
+properties:
+  data:
+    type: object
+    required:
+      - type
+      - attributes
+    properties:
+      type:
+        type: string
+        enum: [ create_role ]
+      attributes:
+        type: object
+        required:
+          - agglomeration_id
+          - rank
+          - name
+          - description
+          - color
+        properties:
+          agglomeration_id:
+            type: string
+            format: uuid
+            description: "The ID of the agglomeration this role belongs to"
+          rank:
+            type: integer
+            format: uint
+            description: "The rank of the role within the agglomeration"
+          name:
+            type: string
+            description: "The name of the role"
+          description:
+            type: string
+            description: "A brief description of the role"
+          color:
+            type: string
+            description: "The color associated with the role in HEX format"

@@ -31,7 +31,7 @@ func New(log logium.Logger, addr []string, callbacks callbacks) *Service {
 }
 
 func (s Service) Run(ctx context.Context) {
-	sub := subscriber.New(s.addr, contracts.AccountsTopicV1, contracts.agglomerationsSvcGroup)
+	sub := subscriber.New(s.addr, contracts.AccountsTopicV1, contracts.AgglomerationsSvcGroup)
 
 	s.log.Info("starting events consumer", "addr", s.addr)
 

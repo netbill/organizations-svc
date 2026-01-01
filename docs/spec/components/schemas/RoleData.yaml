@@ -51,3 +51,10 @@ properties:
         type: string
         format: date-time
         description: "Timestamp when the role was last updated"
+  relationships:
+    type: object
+    properties:
+      permissions:
+        type: array
+        items:
+          $ref: './RolePermission.yaml'

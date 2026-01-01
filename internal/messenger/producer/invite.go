@@ -33,7 +33,7 @@ func (s Service) WriteInviteCreated(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.InviteCreatedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -64,7 +64,7 @@ func (s Service) WriteInviteAccepted(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.InviteAcceptedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -95,7 +95,7 @@ func (s Service) WriteInviteDeclined(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.InviteDeclinedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -126,7 +126,7 @@ func (s Service) WriteInviteDeleted(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.InviteDeletedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},

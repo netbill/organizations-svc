@@ -155,6 +155,15 @@ type roleSvc interface {
 		permissions map[models.CodeRolePermission]bool,
 	) ([]models.Permission, error)
 
+	MemberAddRoleByUser(
+		ctx context.Context,
+		accountID, memberID, roleID uuid.UUID,
+	) error
+	MemberRemoveRoleByUser(
+		ctx context.Context,
+		accountID, memberID, roleID uuid.UUID,
+	) error
+
 	GetAllPermissions(ctx context.Context) ([]models.Permission, error)
 }
 
@@ -168,4 +177,22 @@ type core struct {
 type Service struct {
 	core core
 	log  logium.Logger
+}
+
+func New(
+	aggloSvc aggloSvc,
+	memberSvc memberSvc,
+	roleSvc roleSvc,
+	inviteSvc inviteSvc,
+	log logium.Logger,
+) Service {
+	return Service{
+		core: core{
+			aggloSvc:  aggloSvc,
+			inviteSvc: inviteSvc,
+			memberSvc: memberSvc,
+			roleSvc:   roleSvc,
+		},
+		log: log,
+	}
 }

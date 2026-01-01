@@ -25,6 +25,14 @@ components:
       $ref: './spec/components/schemas/UpdateMember.yaml'
     SentInvite:
       $ref: './spec/components/schemas/SentInvite.yaml'
+    CreateRole:
+      $ref: './spec/components/schemas/CreateRole.yaml'
+    UpdateRole:
+      $ref: './spec/components/schemas/UpdateRole.yaml'
+    UpdateRolesRanks:
+      $ref: './spec/components/schemas/UpdateRolesRanks.yaml'
+    UpdateRolePermissions:
+      $ref: './spec/components/schemas/UpdateRolePermissions.yaml'
 
     # responses:
     PaginationData:
@@ -49,3 +57,7 @@ components:
       $ref: './spec/components/schemas/Role.yaml'
     RolesCollection:
       $ref: './spec/components/schemas/RolesCollection.yaml'
+    RolePermission:
+      $ref: './spec/components/schemas/RolePermission.yaml'
+    RolePermissions:
+      $ref: './spec/components/schemas/RolePermissions.yaml'

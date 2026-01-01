@@ -33,7 +33,7 @@ func (s Service) WriteMemberRoleAdd(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.MemberRoleAddedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},
@@ -66,7 +66,7 @@ func (s Service) WriteMemberRoleRemove(
 				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
 				{Key: "EventType", Value: []byte(contracts.MemberRoleRemovedEvent)},
 				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.agglomerationsSvcGroup)},
+				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
 				{Key: "ContentType", Value: []byte("application/json")},
 			},
 		},

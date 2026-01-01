@@ -1,0 +1,38 @@
+type: object
+required:
+  - data
+properties:
+  data:
+    type: object
+    required:
+      - id
+      - type
+      - attributes
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: "agglomeration ID"
+      type:
+        type: string
+        enum: [ update_roles_ranks ]
+      attributes:
+        type: object
+        properties:
+          roles:
+            type: array
+            description: "An ordered list of role IDs representing the new roles hierarchy"
+            items:
+              type: object
+              required:
+                - id
+                - rank
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  description: "role ID"
+                rank:
+                  type: integer
+                  format: uint
+                  description: "The new rank of the role in the hierarchy"

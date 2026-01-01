@@ -1,0 +1,30 @@
+type: object
+required:
+  - data
+properties:
+  data:
+    type: object
+    required:
+      - id
+      - type
+      - attributes
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: "role ID"
+      type:
+        type: string
+        enum: [ update_role ]
+      attributes:
+        type: object
+        properties:
+          name:
+            type: string
+            description: "The name of the role"
+          description:
+            type: string
+            description: "A brief description of the role"
+          color:
+            type: string
+            description: "The color associated with the role in HEX format"

@@ -54,12 +54,6 @@ func (s Service) UpdateAgglomerationByUser(
 		)
 	}
 
-	if agglo.Verified == false {
-		return models.Agglomeration{}, errx.ErrorAgglomerationNotVerified.Raise(
-			fmt.Errorf("agglomeration is not verified"),
-		)
-	}
-
 	err = s.checkPermissionForManageAgglomeration(
 		ctx,
 		accountID,

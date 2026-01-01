@@ -15,7 +15,7 @@ import (
 type Handlers interface {
 	//Agglomeration handlers
 	CreateAgglomeration(w http.ResponseWriter, r *http.Request)
-	
+
 	GetAgglomeration(w http.ResponseWriter, r *http.Request)
 	GetAgglomerations(w http.ResponseWriter, r *http.Request)
 	GetMyAgglomerations(w http.ResponseWriter, r *http.Request)
@@ -34,23 +34,23 @@ type Handlers interface {
 	UpdateMember(w http.ResponseWriter, r *http.Request)
 	DeleteMember(w http.ResponseWriter, r *http.Request)
 
+	MemberAddRole(w http.ResponseWriter, r *http.Request)
+	MemberRemoveRole(w http.ResponseWriter, r *http.Request)
+
 	CreateInvite(w http.ResponseWriter, r *http.Request)
 	GetInvite(w http.ResponseWriter, r *http.Request)
 	DeleteInvite(w http.ResponseWriter, r *http.Request)
 	AcceptInvite(w http.ResponseWriter, r *http.Request)
 	DeclineInvite(w http.ResponseWriter, r *http.Request)
 
-	//CreateRole(w http.ResponseWriter, r *http.Request)
-	//GetRole(w http.ResponseWriter, r *http.Request)
-	//UpdateRole(w http.ResponseWriter, r *http.Request)
-	//DeleteRole(w http.ResponseWriter, r *http.Request)
-	//
-	//UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
-	//
-	//MemberAddRole(w http.ResponseWriter, r *http.Request)
-	//MemberRemoveRole(w http.ResponseWriter, r *http.Request)
-	//
-	//RoleUpdatePermissions(w http.ResponseWriter, r *http.Request)
+	CreateRole(w http.ResponseWriter, r *http.Request)
+	GetRole(w http.ResponseWriter, r *http.Request)
+	UpdateRole(w http.ResponseWriter, r *http.Request)
+	DeleteRole(w http.ResponseWriter, r *http.Request)
+
+	UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
+
+	UpdateRolePermissions(w http.ResponseWriter, r *http.Request)
 }
 
 type Middlewares interface {
@@ -99,7 +99,10 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 					r.Patch("/deactivate", s.handlers.DeactivateAgglomeration)
 
 					r.Get("/members", s.handlers.GetAgglomerationMembers)
-					r.Get("/roles", s.handlers.GetAgglomerationRoles)
+					r.Route("/roles", func(r chi.Router) {
+						r.Get("/", s.handlers.GetAgglomerationRoles)
+						r.Put("/ranks", s.handlers.UpdateRolesRanks)
+					})
 				})
 
 				//TODO
@@ -137,13 +140,15 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 					r.Put("/", s.handlers.UpdateRole)
 					r.Delete("/", s.handlers.DeleteRole)
 
-					r.Put("/permissions", s.handlers.RoleUpdatePermissions)
+					r.Put("/permissions", s.handlers.UpdateRolePermissions)
 				})
 			})
 
-			r.With(auth, sysadmin).Route("/agglomerations", func(r chi.Router) {
-				r.Post("/", s.handlers.CreateAgglomeration)
-				r.Patch("/", s.handlers.SuspendAgglomeration)
+			r.With(auth, sysadmin).Route("/admin", func(r chi.Router) {
+				r.With(auth, sysadmin).Route("/agglomerations", func(r chi.Router) {
+					r.Post("/", s.handlers.CreateAgglomeration)
+					r.Patch("/", s.handlers.SuspendAgglomeration)
+				})
 			})
 		})
 	})

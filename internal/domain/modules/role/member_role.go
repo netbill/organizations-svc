@@ -20,7 +20,7 @@ func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]mode
 	return roles, nil
 }
 
-func (s Service) AddMemberRoleByUser(
+func (s Service) MemberAddRoleByUser(
 	ctx context.Context,
 	accountID, memberID, roleID uuid.UUID,
 ) error {
@@ -63,14 +63,14 @@ func (s Service) AddMemberRoleByUser(
 
 	if err = s.repo.AddMemberRole(ctx, memberID, roleID); err != nil {
 		return errx.ErrorInternal.Raise(
-			fmt.Errorf("role Service AddMemberRoleByUser: repo AddMemberRole: %w", err),
+			fmt.Errorf("role Service MemberAddRoleByUser: repo AddMemberRole: %w", err),
 		)
 	}
 
 	return nil
 }
 
-func (s Service) DeleteMemberRoleByUser(
+func (s Service) MemberRemoveRoleByUser(
 	ctx context.Context,
 	accountID, memberID, roleID uuid.UUID,
 ) error {

@@ -20,10 +20,6 @@ func (s Service) agglomerationsQ() pgdb.AgglomerationsQ {
 	return pgdb.NewAgglomerationsQ(s.db)
 }
 
-func (s Service) agglomerationsQ() pgdb.agglomerationsQ {
-	return pgdb.NewagglomerationsQ(s.db)
-}
-
 func (s Service) membersQ() pgdb.MembersQ {
 	return pgdb.NewMembersQ(s.db)
 }
