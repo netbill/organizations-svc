@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/kafkakit/header"
-	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 	"github.com/segmentio/kafka-go"
 )

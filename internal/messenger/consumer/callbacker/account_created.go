@@ -6,8 +6,8 @@ import (
 	"errors"
 
 	"github.com/netbill/kafkakit/box"
-	"github.com/netbill/organizations-svc/internal/domain/errx"
-	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 )
 

@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/domain/models"
-	"github.com/netbill/organizations-svc/internal/domain/modules/member"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 	"github.com/netbill/pagi"
 	"github.com/pkg/errors"

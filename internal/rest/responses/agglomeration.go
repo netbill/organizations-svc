@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/resources"
 	"github.com/netbill/pagi"
 )

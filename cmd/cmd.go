@@ -8,11 +8,11 @@ import (
 	"github.com/netbill/kafkakit/box"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal"
-	"github.com/netbill/organizations-svc/internal/domain/modules/invite"
-	"github.com/netbill/organizations-svc/internal/domain/modules/member"
-	"github.com/netbill/organizations-svc/internal/domain/modules/organization"
-	"github.com/netbill/organizations-svc/internal/domain/modules/profile"
-	"github.com/netbill/organizations-svc/internal/domain/modules/role"
+	"github.com/netbill/organizations-svc/internal/core/modules/invite"
+	"github.com/netbill/organizations-svc/internal/core/modules/member"
+	"github.com/netbill/organizations-svc/internal/core/modules/organization"
+	"github.com/netbill/organizations-svc/internal/core/modules/profile"
+	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/messenger/consumer"
 	"github.com/netbill/organizations-svc/internal/messenger/consumer/callbacker"
 	"github.com/netbill/organizations-svc/internal/messenger/producer"
@@ -57,4 +57,5 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 
 	run(func() { kafkaConsumer.Run(ctx) })
 
+	run(func() { kafkaProducer.Run(ctx) })
 }

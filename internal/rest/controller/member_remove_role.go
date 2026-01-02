@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
-	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest"
 )
 

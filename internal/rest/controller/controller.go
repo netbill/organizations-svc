@@ -5,11 +5,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal/domain/models"
-	"github.com/netbill/organizations-svc/internal/domain/modules/invite"
-	"github.com/netbill/organizations-svc/internal/domain/modules/member"
-	"github.com/netbill/organizations-svc/internal/domain/modules/organization"
-	"github.com/netbill/organizations-svc/internal/domain/modules/role"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/modules/invite"
+	"github.com/netbill/organizations-svc/internal/core/modules/member"
+	"github.com/netbill/organizations-svc/internal/core/modules/organization"
+	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/pagi"
 )
 

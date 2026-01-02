@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 type Callbacker struct {

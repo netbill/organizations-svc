@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/domain/models"
-	"github.com/netbill/organizations-svc/internal/domain/modules/role"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 	"github.com/netbill/pagi"
 )

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
-	"github.com/netbill/organizations-svc/internal/domain/modules/member"
+	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/pagi"
 )

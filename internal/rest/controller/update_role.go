@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
-	"github.com/netbill/organizations-svc/internal/domain/modules/role"
+	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/rest"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"

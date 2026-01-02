@@ -2,7 +2,7 @@ package contracts
 
 import (
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 const RoleCreatedEvent = "role.created"

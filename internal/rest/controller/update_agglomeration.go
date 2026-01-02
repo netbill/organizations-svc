@@ -6,8 +6,8 @@ import (
 
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
-	"github.com/netbill/organizations-svc/internal/domain/errx"
-	"github.com/netbill/organizations-svc/internal/domain/modules/organization"
+	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/rest"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
