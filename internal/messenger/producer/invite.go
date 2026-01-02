@@ -8,10 +8,10 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
-	"github.com/umisto/kafkakit/box"
+	"github.com/umisto/kafkakit/header"
 )
 
-func (s Service) WriteInviteCreated(
+func (p Producer) WriteInviteCreated(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -22,19 +22,18 @@ func (s Service) WriteInviteCreated(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		box.OutboxStatusPending,
 		kafka.Message{
 			Topic: contracts.InvitesTopicV1,
 			Key:   []byte(invite.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.InviteCreatedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.InviteCreatedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -42,7 +41,7 @@ func (s Service) WriteInviteCreated(
 	return err
 }
 
-func (s Service) WriteInviteAccepted(
+func (p Producer) WriteInviteAccepted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -53,19 +52,18 @@ func (s Service) WriteInviteAccepted(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		box.OutboxStatusPending,
 		kafka.Message{
 			Topic: contracts.InvitesTopicV1,
 			Key:   []byte(invite.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.InviteAcceptedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.InviteAcceptedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -73,7 +71,7 @@ func (s Service) WriteInviteAccepted(
 	return err
 }
 
-func (s Service) WriteInviteDeclined(
+func (p Producer) WriteInviteDeclined(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -84,19 +82,18 @@ func (s Service) WriteInviteDeclined(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		box.OutboxStatusPending,
 		kafka.Message{
 			Topic: contracts.InvitesTopicV1,
 			Key:   []byte(invite.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.InviteDeclinedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.InviteDeclinedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -104,7 +101,7 @@ func (s Service) WriteInviteDeclined(
 	return err
 }
 
-func (s Service) WriteInviteDeleted(
+func (p Producer) WriteInviteDeleted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -115,19 +112,18 @@ func (s Service) WriteInviteDeleted(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		box.OutboxStatusPending,
 		kafka.Message{
 			Topic: contracts.InvitesTopicV1,
 			Key:   []byte(invite.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.InviteDeletedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.InviteDeletedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)

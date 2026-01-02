@@ -8,10 +8,10 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
-	"github.com/umisto/kafkakit/box"
+	"github.com/umisto/kafkakit/header"
 )
 
-func (s Service) WriteRoleCreated(
+func (p Producer) WriteRoleCreated(
 	ctx context.Context,
 	role models.Role,
 ) error {
@@ -22,19 +22,18 @@ func (s Service) WriteRoleCreated(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		box.OutboxStatusPending,
 		kafka.Message{
 			Topic: contracts.RolesTopicV1,
 			Key:   []byte(role.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.RoleCreatedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.RoleCreatedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -42,7 +41,7 @@ func (s Service) WriteRoleCreated(
 	return err
 }
 
-func (s Service) WriteRoleUpdated(
+func (p Producer) WriteRoleUpdated(
 	ctx context.Context,
 	rol models.Role,
 ) error {
@@ -53,19 +52,18 @@ func (s Service) WriteRoleUpdated(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		contracts.RolesTopicV1,
 		kafka.Message{
 			Topic: contracts.RolesTopicV1,
 			Key:   []byte(rol.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.RoleUpdatedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.RoleUpdatedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -73,7 +71,7 @@ func (s Service) WriteRoleUpdated(
 	return err
 }
 
-func (s Service) WriteRolePermissionsUpdated(
+func (p Producer) WriteRolePermissionsUpdated(
 	ctx context.Context,
 	RoleID uuid.UUID,
 	permissions map[models.Permission]bool,
@@ -86,19 +84,18 @@ func (s Service) WriteRolePermissionsUpdated(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		contracts.RolesTopicV1,
 		kafka.Message{
 			Topic: contracts.RolesTopicV1,
 			Key:   []byte(RoleID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.RolePermissionsUpdatedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.RolePermissionsUpdatedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -106,7 +103,7 @@ func (s Service) WriteRolePermissionsUpdated(
 	return err
 }
 
-func (s Service) WriteRolesRanksUpdated(
+func (p Producer) WriteRolesRanksUpdated(
 	ctx context.Context,
 	agglomerationID uuid.UUID,
 	ranks map[uuid.UUID]uint,
@@ -119,19 +116,18 @@ func (s Service) WriteRolesRanksUpdated(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		contracts.RolesTopicV1,
 		kafka.Message{
 			Topic: contracts.RolesTopicV1,
 			Key:   []byte(agglomerationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.RolesRanksUpdatedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.RolesRanksUpdatedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -139,7 +135,7 @@ func (s Service) WriteRolesRanksUpdated(
 	return err
 }
 
-func (s Service) WriteRoleDeleted(
+func (p Producer) WriteRoleDeleted(
 	ctx context.Context,
 	role models.Role,
 ) error {
@@ -150,19 +146,18 @@ func (s Service) WriteRoleDeleted(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		contracts.RolesTopicV1,
 		kafka.Message{
 			Topic: contracts.RolesTopicV1,
 			Key:   []byte(role.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.RoleDeletedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.RoleDeletedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)

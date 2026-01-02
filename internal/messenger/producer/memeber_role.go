@@ -7,9 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
 	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
+	"github.com/umisto/kafkakit/header"
 )
 
-func (s Service) WriteMemberRoleAdd(
+func (p Producer) WriteMemberRoleAdd(
 	ctx context.Context,
 	memberID uuid.UUID,
 	roleID uuid.UUID,
@@ -22,19 +23,18 @@ func (s Service) WriteMemberRoleAdd(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		contracts.MembersTopicV1,
 		kafka.Message{
 			Topic: contracts.MembersTopicV1,
 			Key:   []byte(memberID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.MemberRoleAddedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.MemberRoleAddedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -42,7 +42,7 @@ func (s Service) WriteMemberRoleAdd(
 	return err
 }
 
-func (s Service) WriteMemberRoleRemove(
+func (p Producer) WriteMemberRoleRemove(
 	ctx context.Context,
 	memberID uuid.UUID,
 	roleID uuid.UUID,
@@ -55,19 +55,18 @@ func (s Service) WriteMemberRoleRemove(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		contracts.MembersTopicV1,
 		kafka.Message{
 			Topic: contracts.MembersTopicV1,
 			Key:   []byte(memberID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.MemberRoleRemovedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.MemberRoleRemovedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)

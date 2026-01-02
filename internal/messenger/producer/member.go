@@ -8,10 +8,10 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
-	"github.com/umisto/kafkakit/box"
+	"github.com/umisto/kafkakit/header"
 )
 
-func (s Service) WriteMemberCreated(
+func (p Producer) WriteMemberCreated(
 	ctx context.Context,
 	member models.Member,
 ) error {
@@ -22,19 +22,18 @@ func (s Service) WriteMemberCreated(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		box.OutboxStatusPending,
 		kafka.Message{
 			Topic: contracts.MembersTopicV1,
 			Key:   []byte(member.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.MemberCreatedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.MemberCreatedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -42,7 +41,7 @@ func (s Service) WriteMemberCreated(
 	return err
 }
 
-func (s Service) WriteMemberUpdated(
+func (p Producer) WriteMemberUpdated(
 	ctx context.Context,
 	member models.Member,
 ) error {
@@ -53,19 +52,18 @@ func (s Service) WriteMemberUpdated(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		box.OutboxStatusPending,
 		kafka.Message{
 			Topic: contracts.MembersTopicV1,
 			Key:   []byte(member.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.MemberUpdatedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.MemberUpdatedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -73,7 +71,7 @@ func (s Service) WriteMemberUpdated(
 	return err
 }
 
-func (s Service) WriteMemberDeleted(
+func (p Producer) WriteMemberDeleted(
 	ctx context.Context,
 	member models.Member,
 ) error {
@@ -84,19 +82,18 @@ func (s Service) WriteMemberDeleted(
 		return err
 	}
 
-	_, err = s.outbox.CreateOutboxEvent(
+	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
-		box.OutboxStatusPending,
 		kafka.Message{
 			Topic: contracts.MembersTopicV1,
 			Key:   []byte(member.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: "EventID", Value: []byte(uuid.New().String())}, // Outbox will fill this
-				{Key: "EventType", Value: []byte(contracts.MemberDeletedEvent)},
-				{Key: "EventVersion", Value: []byte("1")},
-				{Key: "Producer", Value: []byte(contracts.AgglomerationsSvcGroup)},
-				{Key: "ContentType", Value: []byte("application/json")},
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.MemberDeletedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)

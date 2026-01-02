@@ -13,23 +13,23 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) DeleteRole(w http.ResponseWriter, r *http.Request) {
+func (c Controller) DeleteRole(w http.ResponseWriter, r *http.Request) {
 	roleID, err := uuid.Parse(chi.URLParam(r, "role_id"))
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid role id")
+		c.log.WithError(err).Errorf("invalid role id")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid role id"))...)
 		return
 	}
 
 	initiator, err := rest.AccountData(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get initiator account data")
+		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
-	if err = s.core.DeleteRole(r.Context(), initiator.ID, roleID); err != nil {
-		s.log.WithError(err).Errorf("failed to delete role")
+	if err = c.core.DeleteRole(r.Context(), initiator.ID, roleID); err != nil {
+		c.log.WithError(err).Errorf("failed to delete role")
 		switch {
 		case errors.Is(err, errx.ErrorRoleNotFound):
 			ape.RenderErr(w, problems.NotFound("role not found"))

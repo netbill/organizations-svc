@@ -13,17 +13,17 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) GetAgglomeration(w http.ResponseWriter, r *http.Request) {
+func (c Controller) GetAgglomeration(w http.ResponseWriter, r *http.Request) {
 	agglomerationID, err := uuid.Parse(chi.URLParam(r, "agglomerationID"))
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid agglomeration ID")
+		c.log.WithError(err).Errorf("invalid agglomeration ID")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid agglomeration ID"))...)
 		return
 	}
 
-	agglo, err := s.core.GetAgglomeration(r.Context(), agglomerationID)
+	agglo, err := c.core.GetAgglomeration(r.Context(), agglomerationID)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get agglomeration")
+		c.log.WithError(err).Errorf("failed to get agglomeration")
 		switch {
 		case errors.Is(err, errx.ErrorAgglomerationNotFound):
 			ape.RenderErr(w, problems.NotFound("agglomeration not found"))

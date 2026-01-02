@@ -11,17 +11,17 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) GetMember(w http.ResponseWriter, r *http.Request) {
+func (c Controller) GetMember(w http.ResponseWriter, r *http.Request) {
 	memberId, err := uuid.Parse(r.URL.Query().Get("member_id"))
 	if err != nil {
-		s.log.Errorf("failed to parse member id, cause %s", err)
+		c.log.Errorf("failed to parse member id, cause %s", err)
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid member id"))...)
 		return
 	}
 
-	res, err := s.core.GetMemberByID(r.Context(), memberId)
+	res, err := c.core.GetMemberByID(r.Context(), memberId)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get member by id")
+		c.log.WithError(err).Errorf("failed to get member by id")
 		switch {
 		case errors.Is(err, errx.ErrorMemberNotFound):
 			ape.RenderErr(w, problems.NotFound("member not found"))

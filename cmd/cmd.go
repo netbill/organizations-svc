@@ -13,8 +13,6 @@ import (
 	"github.com/umisto/agglomerations-svc/internal/domain/modules/role"
 	"github.com/umisto/agglomerations-svc/internal/messenger/consumer"
 	"github.com/umisto/agglomerations-svc/internal/messenger/consumer/callbacker"
-	"github.com/umisto/agglomerations-svc/internal/messenger/consumer/inboxer"
-	"github.com/umisto/agglomerations-svc/internal/messenger/consumer/inboxer/handler"
 	"github.com/umisto/agglomerations-svc/internal/messenger/producer"
 	"github.com/umisto/agglomerations-svc/internal/repository"
 	"github.com/umisto/agglomerations-svc/internal/rest"
@@ -49,9 +47,7 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	inviteSvc := invite.New(database, kafkaProducer)
 	profileSvc := profile.New(database)
 
-	kafkaCallbacks := callbacker.NewService(log, kafkaBox)
-	kafkaConsumer := consumer.New(log, cfg.Kafka.Brokers, kafkaCallbacks)
-	kafkaInboxWorker := inboxer.New(log, handler.New(log, profileSvc), kafkaBox)
+	kafkaConsumer := consumer.New(log, cfg.Kafka.Brokers, box.New(pg), callbacker.New(log, profileSvc))
 
 	ctrl := controller.New(aggloSvc, memberSvc, roleSvc, inviteSvc, log)
 	mdll := mdlv.New(cfg.JWT.User.AccessToken.SecretKey, rest.AccountDataCtxKey)
@@ -60,7 +56,5 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	run(func() { router.Run(ctx, cfg) })
 
 	run(func() { kafkaConsumer.Run(ctx) })
-
-	run(func() { kafkaInboxWorker.Run(ctx) })
 
 }

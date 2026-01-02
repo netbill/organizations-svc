@@ -12,24 +12,24 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) DeleteInvite(w http.ResponseWriter, r *http.Request) {
+func (c Controller) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 	inviteID, err := uuid.Parse(chi.URLParam(r, "invite_id"))
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid invite id")
+		c.log.WithError(err).Errorf("invalid invite id")
 		http.Error(w, "invalid invite id", http.StatusBadRequest)
 		return
 	}
 
 	initiator, err := rest.AccountData(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get initiator account data")
+		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
-	err = s.core.DeleteInvite(r.Context(), initiator.ID, inviteID)
+	err = c.core.DeleteInvite(r.Context(), initiator.ID, inviteID)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to delete invite")
+		c.log.WithError(err).Errorf("failed to delete invite")
 		switch {
 		case errors.Is(err, errx.ErrorInviteNotFound):
 			ape.RenderErr(w, problems.NotFound("invite not found"))

@@ -177,7 +177,7 @@ type core struct {
 	roleSvc
 }
 
-type Service struct {
+type Controller struct {
 	core core
 	log  logium.Logger
 }
@@ -188,8 +188,8 @@ func New(
 	roleSvc roleSvc,
 	inviteSvc inviteSvc,
 	log logium.Logger,
-) Service {
-	return Service{
+) Controller {
+	return Controller{
 		core: core{
 			aggloSvc:  aggloSvc,
 			inviteSvc: inviteSvc,

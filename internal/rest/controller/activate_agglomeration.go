@@ -14,28 +14,28 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) ActivateAgglomeration(w http.ResponseWriter, r *http.Request) {
+func (c Controller) ActivateAgglomeration(w http.ResponseWriter, r *http.Request) {
 	initiator, err := rest.AccountData(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get initiator account data")
+		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
 	agglomerationID, err := uuid.Parse(chi.URLParam(r, "agglomeration_id"))
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid agglomeration id")
+		c.log.WithError(err).Errorf("invalid agglomeration id")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid agglomeration id"))...)
 		return
 	}
 
-	res, err := s.core.ActivateAgglomeration(
+	res, err := c.core.ActivateAgglomeration(
 		r.Context(),
 		initiator.ID,
 		agglomerationID,
 	)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to activate agglomeration")
+		c.log.WithError(err).Errorf("failed to activate agglomeration")
 		switch {
 		case errors.Is(err, errx.ErrorAgglomerationIsSuspended):
 			ape.RenderErr(w, problems.Forbidden("agglomeration is suspended"))

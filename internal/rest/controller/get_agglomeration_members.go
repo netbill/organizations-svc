@@ -13,26 +13,26 @@ import (
 	"github.com/umisto/pagi"
 )
 
-func (s Service) GetAgglomerationMembers(w http.ResponseWriter, r *http.Request) {
+func (c Controller) GetAgglomerationMembers(w http.ResponseWriter, r *http.Request) {
 	agglomerationID, err := uuid.Parse(chi.URLParam(r, "agglomeration_id"))
 	if err != nil {
-		s.log.Errorf("failed to parse agglomeration id, cause %s", err)
+		c.log.Errorf("failed to parse agglomeration id, cause %s", err)
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid agglomeration id"))...)
 		return
 	}
 
 	limit, offset := pagi.GetPagination(r)
 	if limit == 0 || limit > 100 {
-		s.log.WithError(fmt.Errorf("invalid pagination limit %d", limit)).Errorf("invalid pagination limit")
+		c.log.WithError(fmt.Errorf("invalid pagination limit %d", limit)).Errorf("invalid pagination limit")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("pagination limit must be between 1 and 100"))...)
 		return
 	}
 
-	members, err := s.core.GetMembers(r.Context(), member.FilterParams{
+	members, err := c.core.GetMembers(r.Context(), member.FilterParams{
 		AgglomerationID: &agglomerationID,
 	}, limit, offset)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get agglomeration members")
+		c.log.WithError(err).Errorf("failed to get agglomeration members")
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}

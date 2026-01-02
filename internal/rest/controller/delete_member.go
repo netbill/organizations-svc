@@ -11,24 +11,24 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) DeleteMember(w http.ResponseWriter, r *http.Request) {
+func (c Controller) DeleteMember(w http.ResponseWriter, r *http.Request) {
 	initiatorID, err := uuid.Parse(r.URL.Query().Get("initiator_id"))
 	if err != nil {
-		s.log.Errorf("failed to parse initiator id, cause %s", err)
+		c.log.Errorf("failed to parse initiator id, cause %s", err)
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid initiator id"))...)
 		return
 	}
 
 	memberId, err := uuid.Parse(r.URL.Query().Get("member_id"))
 	if err != nil {
-		s.log.Errorf("failed to parse member id, cause %s", err)
+		c.log.Errorf("failed to parse member id, cause %s", err)
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid member id"))...)
 		return
 	}
 
-	err = s.core.DeleteMember(r.Context(), initiatorID, memberId)
+	err = c.core.DeleteMember(r.Context(), initiatorID, memberId)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to delete member")
+		c.log.WithError(err).Errorf("failed to delete member")
 		switch {
 		case errors.Is(err, errx.ErrorMemberNotFound):
 			ape.RenderErr(w, problems.NotFound("member not found"))

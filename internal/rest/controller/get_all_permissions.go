@@ -8,10 +8,10 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) GetAllPermissions(w http.ResponseWriter, r *http.Request) {
-	perms, err := s.core.GetAllPermissions(r.Context())
+func (c Controller) GetAllPermissions(w http.ResponseWriter, r *http.Request) {
+	perms, err := c.core.GetAllPermissions(r.Context())
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get all permissions")
+		c.log.WithError(err).Errorf("failed to get all permissions")
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}

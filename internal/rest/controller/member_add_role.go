@@ -13,31 +13,31 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) MemberAddRole(w http.ResponseWriter, r *http.Request) {
+func (c Controller) MemberAddRole(w http.ResponseWriter, r *http.Request) {
 	roleID, err := uuid.Parse(chi.URLParam(r, "role_id"))
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid role id")
+		c.log.WithError(err).Errorf("invalid role id")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid role id: %s", chi.URLParam(r, "role_id")))...)
 		return
 	}
 
 	memberID, err := uuid.Parse(chi.URLParam(r, "member_id"))
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid member id")
+		c.log.WithError(err).Errorf("invalid member id")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid member id: %s", chi.URLParam(r, "member_id")))...)
 		return
 	}
 
 	initiator, err := rest.AccountData(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get initiator account data")
+		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
-	err = s.core.MemberAddRole(r.Context(), initiator.ID, memberID, roleID)
+	err = c.core.MemberAddRole(r.Context(), initiator.ID, memberID, roleID)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to add role to member")
+		c.log.WithError(err).Errorf("failed to add role to member")
 		switch {
 		case errors.Is(err, errx.ErrorMemberNotFound):
 			ape.RenderErr(w, problems.NotFound("member not found"))

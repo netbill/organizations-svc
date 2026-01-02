@@ -2,7 +2,6 @@ package contracts
 
 const (
 	AgglomerationsTopicV1 = "agglomerations.v1"
-	agglomerationsTopicV1 = "agglomerations.v1"
 	MembersTopicV1        = "members.v1"
 	InvitesTopicV1        = "invites.v1"
 	RolesTopicV1          = "roles.v1"

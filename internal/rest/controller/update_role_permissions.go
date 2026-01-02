@@ -12,17 +12,17 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {
+func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {
 	req, err := request.UpdateRolePermissions(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid update role permissions request")
+		c.log.WithError(err).Errorf("invalid update role permissions request")
 		ape.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
 	initiator, err := rest.AccountData(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get initiator account data")
+		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
@@ -32,9 +32,9 @@ func (s Service) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {
 		dict[item.Code] = item.Status
 	}
 
-	role, perm, err := s.core.SetRolePermissions(r.Context(), initiator.ID, req.Data.Id, dict)
+	role, perm, err := c.core.SetRolePermissions(r.Context(), initiator.ID, req.Data.Id, dict)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to update role permissions")
+		c.log.WithError(err).Errorf("failed to update role permissions")
 		switch {
 		case errors.Is(err, errx.ErrorRoleNotFound):
 			ape.RenderErr(w, problems.NotFound("role not found"))

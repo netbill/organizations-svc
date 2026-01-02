@@ -6,34 +6,30 @@ import (
 	"errors"
 
 	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
 	"github.com/umisto/kafkakit/box"
 )
 
-func (c Callbacker) AccountCreated(
+func (c Callbacker) AccountUsernameChanged(
 	ctx context.Context,
 	event box.InboxEvent,
 ) string {
-	var p contracts.AccountCreatedPayload
+	var p contracts.AccountUsernameChangePayload
 	if err := json.Unmarshal(event.Payload, &p); err != nil {
 		c.log.Errorf("bad payload for %s, key %s, id: %s, error: %v", event.Type, event.Key, event.ID, err)
 		return box.InboxStatusFailed
 	}
-	profile := models.Profile{
-		AccountID: p.Account.ID,
-		Username:  p.Account.Username,
-	}
-	if _, err := c.domain.UpsertProfile(ctx, profile); err != nil {
+
+	if _, err := c.domain.UpdateUsername(ctx, p.Account.ID, p.Account.Username); err != nil {
 		switch {
 		case errors.Is(err, errx.ErrorInternal):
 			c.log.Errorf(
-				"failed to upsert profile due to internal error, key %s, id: %s, error: %v",
+				"failed to update username due to internal error, key %s, id: %s, error: %v",
 				event.Key, event.ID, err,
 			)
 			return box.InboxStatusPending
 		default:
-			c.log.Errorf("failed to upsert profile, key %s, id: %s, error: %v", event.Key, event.ID, err)
+			c.log.Errorf("failed to update username, key %s, id: %s, error: %v", event.Key, event.ID, err)
 			return box.InboxStatusFailed
 		}
 	}

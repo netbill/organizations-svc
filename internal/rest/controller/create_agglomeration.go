@@ -10,15 +10,15 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) CreateAgglomeration(w http.ResponseWriter, r *http.Request) {
+func (c Controller) CreateAgglomeration(w http.ResponseWriter, r *http.Request) {
 	req, err := request.CreateAgglomeration(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid create agglomeration request")
+		c.log.WithError(err).Errorf("invalid create agglomeration request")
 		ape.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	res, err := s.core.CreateAgglomeration(
+	res, err := c.core.CreateAgglomeration(
 		r.Context(),
 		req.Data.Attributes.Head,
 		agglomeration.CreateParams{
@@ -27,7 +27,7 @@ func (s Service) CreateAgglomeration(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to create agglomeration")
+		c.log.WithError(err).Errorf("failed to create agglomeration")
 		switch {
 		default:
 			ape.RenderErr(w, problems.InternalError())

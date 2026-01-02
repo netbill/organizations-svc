@@ -11,17 +11,17 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) SuspendAgglomeration(w http.ResponseWriter, r *http.Request) {
+func (c Controller) SuspendAgglomeration(w http.ResponseWriter, r *http.Request) {
 	agglomerationID, err := uuid.Parse(chi.URLParam(r, "agglomerationID"))
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid agglomeration ID")
+		c.log.WithError(err).Errorf("invalid agglomeration ID")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid agglomeration ID"))...)
 		return
 	}
 
-	agglomeration, err := s.core.SuspendAgglomeration(r.Context(), agglomerationID)
+	agglomeration, err := c.core.SuspendAgglomeration(r.Context(), agglomerationID)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to suspend agglomeration")
+		c.log.WithError(err).Errorf("failed to suspend agglomeration")
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}

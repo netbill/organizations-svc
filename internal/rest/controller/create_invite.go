@@ -14,22 +14,22 @@ import (
 	"github.com/umisto/ape/problems"
 )
 
-func (s Service) CreateInvite(w http.ResponseWriter, r *http.Request) {
+func (c Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	req, err := request.SentInvite(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("invalid create invite request")
+		c.log.WithError(err).Errorf("invalid create invite request")
 		ape.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
 	initiator, err := rest.AccountData(r)
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to get initiator account data")
+		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
-	inv, err := s.core.CreateInvite(r.Context(),
+	inv, err := c.core.CreateInvite(r.Context(),
 		initiator.ID,
 		invite.CreateParams{
 			AgglomerationID: req.Data.Attributes.AgglomerationId,
@@ -37,7 +37,7 @@ func (s Service) CreateInvite(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt:       time.Now().UTC().Add(24 * time.Hour),
 		})
 	if err != nil {
-		s.log.WithError(err).Errorf("failed to create invite")
+		c.log.WithError(err).Errorf("failed to create invite")
 		switch {
 		case errors.Is(err, errx.ErrorNotEnoughRights):
 			ape.RenderErr(w, problems.Forbidden("not enough rights to create invite"))
