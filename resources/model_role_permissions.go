@@ -21,7 +21,7 @@ var _ MappedNullable = &RolePermissions{}
 
 // RolePermissions struct for RolePermissions
 type RolePermissions struct {
-	Data []RolePermission `json:"data"`
+	Data []RolePermissionsDataInner `json:"data"`
 }
 
 type _RolePermissions RolePermissions
@@ -30,7 +30,7 @@ type _RolePermissions RolePermissions
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRolePermissions(data []RolePermission) *RolePermissions {
+func NewRolePermissions(data []RolePermissionsDataInner) *RolePermissions {
 	this := RolePermissions{}
 	this.Data = data
 	return &this
@@ -45,9 +45,9 @@ func NewRolePermissionsWithDefaults() *RolePermissions {
 }
 
 // GetData returns the Data field value
-func (o *RolePermissions) GetData() []RolePermission {
+func (o *RolePermissions) GetData() []RolePermissionsDataInner {
 	if o == nil {
-		var ret []RolePermission
+		var ret []RolePermissionsDataInner
 		return ret
 	}
 
@@ -56,7 +56,7 @@ func (o *RolePermissions) GetData() []RolePermission {
 
 // GetDataOk returns a tuple with the Data field value
 // and a boolean to check if the value has been set.
-func (o *RolePermissions) GetDataOk() ([]RolePermission, bool) {
+func (o *RolePermissions) GetDataOk() ([]RolePermissionsDataInner, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -64,7 +64,7 @@ func (o *RolePermissions) GetDataOk() ([]RolePermission, bool) {
 }
 
 // SetData sets field value
-func (o *RolePermissions) SetData(v []RolePermission) {
+func (o *RolePermissions) SetData(v []RolePermissionsDataInner) {
 	o.Data = v
 }
 

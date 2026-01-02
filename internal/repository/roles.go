@@ -40,6 +40,7 @@ func (s Service) CreateHeadRole(ctx context.Context, agglomerationID uuid.UUID) 
 
 	return Role(row), nil
 }
+
 func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
 	row, err := s.rolesQ().FilterByID(roleID).Get(ctx)
 	if err != nil {
@@ -141,21 +142,6 @@ func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 	return s.rolesQ().DeleteAndShiftRanks(ctx, roleID)
 }
 
-func (s Service) GetAccountMaxRoleInAgglomeration(
-	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
-) (models.Role, error) {
-	res, err := s.rolesQ().
-		FilterByAgglomerationID(agglomerationID).
-		FilterByAccountID(accountID).
-		OrderByRoleRank(true).
-		Get(ctx)
-	if err != nil {
-		return models.Role{}, err
-	}
-	return Role(res), nil
-}
-
 func (s Service) GetMemberMaxRole(
 	ctx context.Context,
 	memberID uuid.UUID,
@@ -168,20 +154,6 @@ func (s Service) GetMemberMaxRole(
 		return models.Role{}, err
 	}
 	return Role(res), nil
-}
-
-func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]models.Permission, error) {
-	rows, err := s.permissionsQ().FilterByRoleID(roleID).Select(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	permissions := make([]models.Permission, 0, len(rows))
-	for _, row := range rows {
-		permissions = append(permissions, Permission(row))
-	}
-
-	return permissions, nil
 }
 
 func Role(r pgdb.Role) models.Role {

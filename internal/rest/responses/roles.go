@@ -8,7 +8,7 @@ import (
 	"github.com/umisto/pagi"
 )
 
-func Role(mod models.Role, perms []models.Permission) resources.Role {
+func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {
 	res := resources.Role{
 		Data: resources.RoleData{
 			Id:   mod.ID,
@@ -27,8 +27,19 @@ func Role(mod models.Role, perms []models.Permission) resources.Role {
 	}
 
 	if perms != nil {
+		ps := make([]resources.RoleDataRelationshipsPermissionsInner, 0, len(perms))
+
+		for perm, has := range perms {
+			ps = append(ps, resources.RoleDataRelationshipsPermissionsInner{
+				Id:          perm.ID,
+				Code:        perm.Code,
+				Description: perm.Description,
+				Enabled:     has,
+			})
+		}
+
 		res.Data.Relationships = &resources.RoleDataRelationships{
-			Permissions: RolePermissions(perms),
+			Permissions: ps,
 		}
 	}
 
@@ -49,15 +60,17 @@ func Roles(r *http.Request, mods pagi.Page[[]models.Role]) resources.RolesCollec
 	}
 }
 
-func RolePermissions(mods []models.Permission) []resources.RolePermission {
-	result := make([]resources.RolePermission, len(mods))
+func RolePermissions(mods []models.Permission) resources.RolePermissions {
+	result := make([]resources.RolePermissionsDataInner, len(mods))
 	for i, mod := range mods {
-		result[i] = resources.RolePermission{
+		result[i] = resources.RolePermissionsDataInner{
 			Id:          mod.ID,
 			Code:        string(mod.Code),
 			Description: mod.Description,
 		}
 	}
 
-	return result
+	return resources.RolePermissions{
+		Data: result,
+	}
 }

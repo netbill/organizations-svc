@@ -11,6 +11,7 @@ import (
 func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
 	memberRoles, err := s.rolesQ().
 		FilterByMemberID(memberID).
+		OrderByRoleRank(true).
 		Select(ctx)
 	if err != nil {
 		return nil, err
@@ -24,7 +25,7 @@ func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]mode
 	return result, nil
 }
 
-func (s Service) DeleteMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
+func (s Service) RemoveMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
 	return s.memberRolesQ().
 		FilterByMemberID(memberID).
 		FilterByRoleID(roleID).

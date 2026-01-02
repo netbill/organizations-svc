@@ -14,7 +14,12 @@ func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) er
 		return err
 	}
 
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, role.Rank); err != nil {
+	initiator, err := s.getInitiator(ctx, accountID, role.AgglomerationID)
+	if err != nil {
+		return err
+	}
+
+	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
 		return err
 	}
 

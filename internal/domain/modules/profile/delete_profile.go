@@ -22,7 +22,7 @@ func (s Service) DeleteProfile(
 			)
 		}
 
-		err = s.repo.DeleteMembershipsByAccountID(txCtx, accountID)
+		err = s.repo.DeleteMembersByAccountID(txCtx, accountID)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to delete memberships for accountID %s: %w", accountID, err),

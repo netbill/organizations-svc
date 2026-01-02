@@ -26,7 +26,12 @@ func (s Service) UpdateRole(
 		return models.Role{}, err
 	}
 
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, role.Rank); err != nil {
+	initiator, err := s.getInitiator(ctx, accountID, role.AgglomerationID)
+	if err != nil {
+		return models.Role{}, err
+	}
+
+	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
 		return models.Role{}, err
 	}
 
@@ -58,7 +63,12 @@ func (s Service) UpdateRolesRanks(
 	agglomerationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
-	maxRole, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, agglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, agglomerationID)
+	if err != nil {
+		return err
+	}
+
+	maxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to get account max role in agglomeration: %w", err),
@@ -70,15 +80,24 @@ func (s Service) UpdateRolesRanks(
 		rolesIDs[roleID] = struct{}{}
 	}
 
-	//TODO optimize number of queries
-	rolesBefore, err := s.repo.GetRoles(
+	hasPermission, err := s.repo.CheckMemberHavePermission(
 		ctx,
-		FilterParams{
-			AgglomerationID: &agglomerationID,
-		},
-		0,
-		1000,
+		initiator.ID,
+		models.RolePermissionManageRoles,
 	)
+	if err != nil {
+		return err
+	}
+	if !hasPermission {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("member %s does not have permission %s", initiator.ID, models.RolePermissionManageRoles),
+		)
+	}
+
+	//TODO optimize number of queries
+	rolesBefore, err := s.repo.GetRoles(ctx, FilterParams{
+		AgglomerationID: &agglomerationID,
+	}, 0, 1000)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to filter roles: %w", err),
@@ -89,9 +108,7 @@ func (s Service) UpdateRolesRanks(
 		if _, ok := rolesIDs[role.ID]; !ok {
 			continue
 		}
-		if err = s.CheckPermissionsToManageRole(ctx, accountID, agglomerationID, role.Rank); err != nil {
-			return err
-		}
+
 		if role.Rank < maxRole.Rank {
 			return errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
@@ -101,9 +118,6 @@ func (s Service) UpdateRolesRanks(
 	}
 
 	for _, newRank := range order {
-		if err = s.CheckPermissionsToManageRole(ctx, accountID, agglomerationID, newRank); err != nil {
-			return err
-		}
 		if newRank < maxRole.Rank {
 			return errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",

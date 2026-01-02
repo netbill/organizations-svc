@@ -2,11 +2,31 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
 )
+
+func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error) {
+	rows, err := s.permissionsQ().GetForRole(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[models.Permission]bool, len(rows))
+	for el, row := range rows {
+		perm := models.Permission{
+			ID:          el.ID,
+			Code:        el.Code,
+			Description: el.Description,
+		}
+		result[perm] = row
+	}
+
+	return result, nil
+}
 
 func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
 	permissions, err := s.permissionsQ().Select(ctx)
@@ -18,7 +38,7 @@ func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, er
 	for i, perm := range permissions {
 		result[i] = models.Permission{
 			ID:          perm.ID,
-			Code:        models.CodeRolePermission(perm.Code),
+			Code:        perm.Code,
 			Description: perm.Description,
 		}
 	}
@@ -29,16 +49,16 @@ func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, er
 func (s Service) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
-	permissions map[models.CodeRolePermission]bool,
+	permissions map[string]bool,
 ) error {
 	deletePermissions := make([]string, 0)
 	addPermissions := make([]string, 0)
 
 	for perm, toSet := range permissions {
 		if toSet {
-			addPermissions = append(addPermissions, perm.String())
+			addPermissions = append(addPermissions, perm)
 		} else {
-			deletePermissions = append(deletePermissions, perm.String())
+			deletePermissions = append(deletePermissions, perm)
 		}
 	}
 
@@ -56,6 +76,7 @@ func (s Service) SetRolePermissions(
 		if err != nil {
 			return err
 		}
+
 		existingPermissionsMap := make([]pgdb.RolePermission, len(p))
 		for i, perm := range p {
 			existingPermissionsMap[i] = pgdb.RolePermission{
@@ -63,7 +84,7 @@ func (s Service) SetRolePermissions(
 				PermissionID: perm.ID,
 			}
 		}
-		if err := s.rolePermissionsQ().Insert(ctx, existingPermissionsMap...); err != nil {
+		if err = s.rolePermissionsQ().Insert(ctx, existingPermissionsMap...); err != nil {
 			return err
 		}
 	}
@@ -71,49 +92,18 @@ func (s Service) SetRolePermissions(
 	return nil
 }
 
-func (s Service) CheckMemberHavePermissionsInAgglomerationByCode(
+func (s Service) CheckMemberHavePermission(
 	ctx context.Context,
-	memberID, agglomerationID uuid.UUID,
-	permission string,
+	memberID uuid.UUID,
+	permissionCode string,
 ) (bool, error) {
-	return s.rolePermissionsQ().
-		FilterByMemberID(memberID).
-		FilterByAgglomerationID(agglomerationID).
-		FilterByPermissionCode(permission).
+	have, err := s.membersQ().
+		FilterByID(memberID).
+		FilterByPermissionCode(permissionCode).
 		Exists(ctx)
-}
+	if err != nil {
+		return false, fmt.Errorf("checking member have permission: %w", err)
+	}
 
-func (s Service) CheckMemberHavePermissionsInAgglomerationByID(
-	ctx context.Context,
-	memberID, agglomerationID uuid.UUID,
-	permissionID uuid.UUID,
-) (bool, error) {
-	return s.rolePermissionsQ().
-		FilterByMemberID(memberID).
-		FilterByAgglomerationID(agglomerationID).
-		FilterByPermissionID(permissionID).
-		Exists(ctx)
-}
-
-func (s Service) CheckAccountHavePermissionByID(
-	ctx context.Context,
-	accountID, agglomerationID, permissionID uuid.UUID,
-) (bool, error) {
-	return s.rolePermissionsQ().
-		FilterByAccountID(accountID).
-		FilterByAgglomerationID(agglomerationID).
-		FilterByPermissionID(permissionID).
-		Exists(ctx)
-}
-
-func (s Service) CheckAccountHavePermissionByCode(
-	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
-	permission string,
-) (bool, error) {
-	return s.rolePermissionsQ().
-		FilterByAccountID(accountID).
-		FilterByAgglomerationID(agglomerationID).
-		FilterByPermissionCode(permission).
-		Exists(ctx)
+	return have, nil
 }

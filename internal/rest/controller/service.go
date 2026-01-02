@@ -85,7 +85,7 @@ type inviteSvc interface {
 
 	GetAgglomerationInvites(
 		ctx context.Context,
-		agglomerationID uuid.UUID,
+		accountID, agglomerationID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
 	GetAccountInvites(
@@ -127,7 +127,7 @@ type roleSvc interface {
 	) (models.Role, error)
 
 	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
-	GetRoleWithPermissions(ctx context.Context, accountID, roleID uuid.UUID) (models.Role, []models.Permission, error)
+	GetRoleWithPermissions(ctx context.Context, accountID, roleID uuid.UUID) (models.Role, map[models.Permission]bool, error)
 	GetRoles(
 		ctx context.Context,
 		params role.FilterParams,
@@ -151,19 +151,18 @@ type roleSvc interface {
 
 	DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error
 
-	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]models.Permission, error)
 	SetRolePermissions(
 		ctx context.Context,
 		accountID uuid.UUID,
 		roleID uuid.UUID,
-		permissions map[models.CodeRolePermission]bool,
-	) ([]models.Permission, error)
+		permissions map[string]bool,
+	) (models.Role, map[models.Permission]bool, error)
 
 	MemberAddRole(
 		ctx context.Context,
 		accountID, memberID, roleID uuid.UUID,
 	) error
-	MemberRemoveRole(
+	RemoveMemberRole(
 		ctx context.Context,
 		accountID, memberID, roleID uuid.UUID,
 	) error

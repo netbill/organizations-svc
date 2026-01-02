@@ -25,7 +25,12 @@ func (s Service) DeactivateAgglomeration(
 		)
 	}
 
-	err = s.checkPermissionForManageAgglomeration(ctx, accountID, agglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, agglomerationID)
+	if err != nil {
+		return models.Agglomeration{}, err
+	}
+
+	err = s.chekPermissionForManageAgglomeration(ctx, initiator.ID)
 	if err != nil {
 		return models.Agglomeration{}, err
 	}

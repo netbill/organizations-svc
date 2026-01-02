@@ -32,7 +32,6 @@ type repo interface {
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
 	) (models.Member, error)
-
 	GetMembers(
 		ctx context.Context,
 		filter FilterParams,
@@ -47,8 +46,7 @@ type repo interface {
 		memberID uuid.UUID,
 		permissionCode string,
 	) (bool, error)
-
-	CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error)
+	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
@@ -61,29 +59,56 @@ type messenger interface {
 
 func (s Service) CheckAccessToManageOtherMember(
 	ctx context.Context,
-	initiatorID, memberID uuid.UUID,
+	firstMemberID, secMemberID uuid.UUID,
 ) error {
 	hasPermission, err := s.repo.CheckMemberHavePermission(
 		ctx,
-		initiatorID,
-		models.RolePermissionManageMembers.String(),
+		firstMemberID,
+		models.RolePermissionManageMembers,
 	)
 	if err != nil {
 		return err
 	}
+
 	if !hasPermission {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member %s has no manage members permission", initiatorID),
+			fmt.Errorf("initiator member %s has no manage members permission", firstMemberID),
 		)
 	}
 
-	canInteract, err := s.repo.CanInteract(ctx, initiatorID, memberID)
+	firstMaxRole, err := s.repo.GetMemberMaxRole(ctx, firstMemberID)
 	if err != nil {
-		return err
+		return errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get max role for member %s: %w", firstMemberID, err),
+		)
 	}
-	if !canInteract {
+	if firstMaxRole.IsNil() {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("members %s and %s cannot interact", initiatorID, memberID),
+			fmt.Errorf("member %s has no roles assigned", firstMemberID),
+		)
+	}
+
+	secMaxRole, err := s.repo.GetMemberMaxRole(ctx, secMemberID)
+	if err != nil {
+		return errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get max role for member %s: %w", secMemberID, err),
+		)
+	}
+	if secMaxRole.IsNil() {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("member %s has no roles assigned", secMemberID),
+		)
+	}
+
+	if firstMaxRole.Rank >= secMaxRole.Rank {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf(
+				"member %s with rank %d cannot manage member %s with rank %d",
+				firstMemberID,
+				firstMaxRole.Rank,
+				secMemberID,
+				secMaxRole.Rank,
+			),
 		)
 	}
 

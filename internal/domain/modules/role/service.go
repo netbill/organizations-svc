@@ -25,8 +25,15 @@ func New(repo repo, messenger messenger) Service {
 type repo interface {
 	CreateRole(ctx context.Context, params CreateParams) (models.Role, error)
 
+	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
+	GetRoles(
+		ctx context.Context,
+		filter FilterParams,
+		offset uint,
+		limit uint,
+	) (pagi.Page[[]models.Role], error)
+
 	UpdateRole(ctx context.Context, roleID uuid.UUID, params UpdateParams) (models.Role, error)
-	UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (models.Role, error)
 	UpdateRolesRanks(
 		ctx context.Context,
 		agglomerationID uuid.UUID,
@@ -35,42 +42,31 @@ type repo interface {
 
 	DeleteRole(ctx context.Context, roleID uuid.UUID) error
 
-	GetRoles(
-		ctx context.Context,
-		filter FilterParams,
-		offset uint,
-		limit uint,
-	) (pagi.Page[[]models.Role], error)
-	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
-
 	GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error)
 	GetMemberByAccountAndAgglomeration(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
 	) (models.Member, error)
 
-	GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]models.Permission, error)
+	GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error)
 	SetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-		permissions map[models.CodeRolePermission]bool,
+		permissions map[string]bool,
 	) error
 
 	GetAllPermissions(ctx context.Context) ([]models.Permission, error)
 
-	GetAccountMaxRoleInAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Role, error)
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
-	CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error)
-
 	GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error)
-	DeleteMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
+	RemoveMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
 	AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
 
-	CheckAccountHavePermissionByCode(
+	CheckMemberHavePermission(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
-		permissionKey string,
+		memberID uuid.UUID,
+		permissionCode string,
 	) (bool, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
@@ -89,74 +85,89 @@ type messenger interface {
 	WriteRolePermissionsUpdated(
 		ctx context.Context,
 		roleID uuid.UUID,
-		permissions map[models.CodeRolePermission]bool,
+		permissions map[models.Permission]bool,
+	) error
+
+	WriteMemberRoleAdd(
+		ctx context.Context,
+		memberID uuid.UUID,
+		roleID uuid.UUID,
+	) error
+	WriteMemberRoleRemove(
+		ctx context.Context,
+		memberID uuid.UUID,
+		roleID uuid.UUID,
 	) error
 }
 
-func (s Service) GetInitiator(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
-	row, err := s.repo.GetMember(ctx, memberID)
-	if err != nil {
-		return models.Member{}, err
-	}
-	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
-			fmt.Errorf("member with id %s not found", memberID),
-		)
-	}
-
-	return row, nil
-}
-
-func (s Service) GetInitiatorByAccountAndAgglomeration(
+func (s Service) checkPermissionsToManageRole(
 	ctx context.Context,
-	initiatorAccountID, agglomerationID uuid.UUID,
-) (models.Member, error) {
-	initiator, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, initiatorAccountID, agglomerationID)
-	if err != nil {
-		return models.Member{}, err
-	}
-	if initiator.IsNil() {
-		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member with account id %s and agglomeration id %s not found: %w",
-				initiatorAccountID, agglomerationID, err),
-		)
-	}
-
-	return initiator, nil
-}
-
-func (s Service) CheckPermissionsToManageRole(
-	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
+	memberID uuid.UUID,
 	rank uint,
 ) error {
-	hasPermission, err := s.repo.CheckAccountHavePermissionByCode(
-		ctx, accountID, agglomerationID,
-		models.RolePermissionManageRoles.String(),
+	hasPermission, err := s.repo.CheckMemberHavePermission(
+		ctx,
+		memberID,
+		models.RolePermissionManageRoles,
 	)
 	if err != nil {
 		return err
 	}
 	if !hasPermission {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member %s does not have permission %s", accountID, models.RolePermissionManageRoles.String()),
+			fmt.Errorf("member %s does not have permission %s", memberID, models.RolePermissionManageRoles),
 		)
 	}
 
-	maxRole, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, agglomerationID)
+	maxRole, err := s.repo.GetMemberMaxRole(ctx, memberID)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get max role for member %s in agglomeration %s: %w",
-				accountID, agglomerationID, err),
+			fmt.Errorf("failed to get max role for member %s, cause: %w",
+				memberID, err),
 		)
 	}
 
 	if maxRole.Rank >= rank {
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
-				accountID, maxRole.Rank, rank),
+				memberID, maxRole.Rank, rank),
 		)
 	}
 
 	return nil
+}
+
+func (s Service) getInitiator(
+	ctx context.Context,
+	accountID, agglomerationID uuid.UUID,
+) (models.Member, error) {
+	initiator, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
+	if err != nil {
+		return models.Member{}, err
+	}
+	if initiator.IsNil() {
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("initiator member with account id %s and agglomeration id %s not found: %w",
+				accountID, agglomerationID, err),
+		)
+	}
+
+	return initiator, nil
+}
+
+func (s Service) getMember(
+	ctx context.Context,
+	memberID uuid.UUID,
+) (models.Member, error) {
+	initiator, err := s.repo.GetMember(ctx, memberID)
+	if err != nil {
+		return models.Member{}, err
+	}
+	if initiator.IsNil() {
+		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+			fmt.Errorf("initiator member with id %s not found", memberID),
+		)
+	}
+
+	return initiator, nil
 }

@@ -156,29 +156,11 @@ components:
       required:
       - data
       - links
-    RolePermission:
-      properties:
-        id:
-          description: Unique identifier for the permission
-          format: uuid
-          type: string
-        code:
-          description: A short code representing the permission
-          example: agglmeration.manage
-          type: string
-        description:
-          description: A detailed description of what the permission allows
-          example: Allows managing agglomeration
-          type: string
-      required:
-      - code
-      - description
-      - id
     RolePermissions:
       properties:
         data:
           items:
-            $ref: "#/components/schemas/RolePermission"
+            $ref: "#/components/schemas/RolePermissions_data_inner"
           type: array
       required:
       - data
@@ -612,11 +594,33 @@ components:
       - name
       - rank
       - updated_at
+    Role_data_relationships_permissions_inner:
+      properties:
+        id:
+          description: Unique identifier for the permission
+          format: uuid
+          type: string
+        code:
+          description: A short code representing the permission
+          example: agglmeration.manage
+          type: string
+        description:
+          description: A detailed description of what the permission allows
+          example: Allows managing agglomeration
+          type: string
+        enabled:
+          description: Indicates if the role has this permission
+          type: boolean
+      required:
+      - code
+      - description
+      - enabled
+      - id
     Role_data_relationships:
       properties:
         permissions:
           items:
-            $ref: "#/components/schemas/RolePermission"
+            $ref: "#/components/schemas/Role_data_relationships_permissions_inner"
           type: array
     Role_data:
       properties:
@@ -636,3 +640,21 @@ components:
       - attributes
       - id
       - type
+    RolePermissions_data_inner:
+      properties:
+        id:
+          description: Unique identifier for the permission
+          format: uuid
+          type: string
+        code:
+          description: A short code representing the permission
+          example: agglmeration.manage
+          type: string
+        description:
+          description: A detailed description of what the permission allows
+          example: Allows managing agglomeration
+          type: string
+      required:
+      - code
+      - description
+      - id

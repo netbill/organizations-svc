@@ -25,7 +25,7 @@ func New(repo repo, messenger messenger) Service {
 type repo interface {
 	CreateInvite(ctx context.Context, params CreateParams) (models.Invite, error)
 
-	GetInviteByID(
+	GetInvite(
 		ctx context.Context,
 		id uuid.UUID,
 	) (models.Invite, error)
@@ -51,10 +51,10 @@ type repo interface {
 		id uuid.UUID,
 	) error
 
-	CheckAccountHavePermissionByCode(
+	CheckMemberHavePermission(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
-		permissionKey string,
+		memberID uuid.UUID,
+		permissionCode string,
 	) (bool, error)
 
 	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
@@ -81,14 +81,12 @@ type messenger interface {
 
 func (s Service) checkPermissionForManageInvite(
 	ctx context.Context,
-	accountID uuid.UUID,
-	agglomerationID uuid.UUID,
+	memberID uuid.UUID,
 ) error {
-	access, err := s.repo.CheckAccountHavePermissionByCode(
+	access, err := s.repo.CheckMemberHavePermission(
 		ctx,
-		accountID,
-		agglomerationID,
-		models.RolePermissionManageInvites.String(),
+		memberID,
+		models.RolePermissionManageInvites,
 	)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
@@ -123,4 +121,21 @@ func (s Service) checkAgglomerationIsActiveAndExists(ctx context.Context, agglom
 	}
 
 	return agglo, nil
+}
+
+func (s Service) getInitiator(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error) {
+	row, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
+	if err != nil {
+		return models.Member{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get member with account id %s and agglomeration id %s: %w",
+				accountID, agglomerationID, err),
+		)
+	}
+	if row.IsNil() {
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("member with account id %s and agglomeration id %s not found", accountID, agglomerationID),
+		)
+	}
+
+	return row, nil
 }

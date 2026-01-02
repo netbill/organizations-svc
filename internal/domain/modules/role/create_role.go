@@ -22,7 +22,12 @@ func (s Service) CreateRole(
 	accountID uuid.UUID,
 	params CreateParams,
 ) (role models.Role, err error) {
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, params.AgglomerationID, params.Rank); err != nil {
+	initiator, err := s.getInitiator(ctx, accountID, params.AgglomerationID)
+	if err != nil {
+		return role, err
+	}
+
+	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, params.Rank); err != nil {
 		return models.Role{}, err
 	}
 
@@ -34,11 +39,16 @@ func (s Service) CreateRole(
 			)
 		}
 
-		return s.messenger.WriteRoleCreated(ctx, role)
+		err = s.messenger.WriteRoleCreated(ctx, role)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to write role to member %w", err),
+			)
+		}
+
+		return nil
 	}); err != nil {
-		return models.Role{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("transaction failed when creating role: %w", err),
-		)
+		return models.Role{}, err
 	}
 
 	return role, nil

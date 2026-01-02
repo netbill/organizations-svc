@@ -26,7 +26,7 @@ func (s Service) CreateInvite(
 	return Invite(row), nil
 }
 
-func (s Service) GetInviteByID(
+func (s Service) GetInvite(
 	ctx context.Context,
 	id uuid.UUID,
 ) (models.Invite, error) {

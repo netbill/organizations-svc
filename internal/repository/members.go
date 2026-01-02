@@ -13,7 +13,10 @@ import (
 	"github.com/umisto/pagi"
 )
 
-func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error) {
+func (s Service) CreateMember(
+	ctx context.Context,
+	accountID, agglomerationID uuid.UUID,
+) (models.Member, error) {
 	row, err := s.membersQ().Insert(ctx, pgdb.InsertMemberParams{
 		AccountID:       accountID,
 		AgglomerationID: agglomerationID,
@@ -25,7 +28,8 @@ func (s Service) CreateMember(ctx context.Context, accountID, agglomerationID uu
 	return s.GetMember(ctx, row.ID)
 }
 
-func (s Service) UpdateMember(ctx context.Context, ID uuid.UUID, params member.UpdateParams) (models.Member, error) {
+func (s Service) UpdateMember(
+	ctx context.Context, ID uuid.UUID, params member.UpdateParams) (models.Member, error) {
 	q := s.membersQ().FilterByID(ID)
 	if params.Position != nil {
 		if *params.Position == "" {
@@ -137,7 +141,7 @@ func (s Service) GetMembers(
 		Data:  collection,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(collection)),
-		Total: uint(total),
+		Total: total,
 	}, nil
 }
 
@@ -145,23 +149,8 @@ func (s Service) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
 	return s.membersQ().FilterByID(memberID).Delete(ctx)
 }
 
-func (s Service) DeleteMembershipsByAccountID(ctx context.Context, accountID uuid.UUID) error {
+func (s Service) DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error {
 	return s.membersQ().FilterByAccountID(accountID).Delete(ctx)
-}
-
-func (s Service) CheckMemberHavePermission(
-	ctx context.Context,
-	memberID uuid.UUID,
-	permissionCode string,
-) (bool, error) {
-	have, err := s.membersQ().
-		FilterByID(memberID).
-		FilterByPermissionCode(permissionCode).Exists(ctx)
-	if err != nil {
-		return false, fmt.Errorf("checking member have permission: %w", err)
-	}
-
-	return have, nil
 }
 
 func (s Service) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {

@@ -29,8 +29,9 @@ docs/Role.md
 docs/RoleData.md
 docs/RoleDataAttributes.md
 docs/RoleDataRelationships.md
-docs/RolePermission.md
+docs/RoleDataRelationshipsPermissionsInner.md
 docs/RolePermissions.md
+docs/RolePermissionsDataInner.md
 docs/RolesCollection.md
 docs/SentInvite.md
 docs/SentInviteData.md
@@ -80,8 +81,9 @@ model_role.go
 model_role_data.go
 model_role_data_attributes.go
 model_role_data_relationships.go
-model_role_permission.go
+model_role_data_relationships_permissions_inner.go
 model_role_permissions.go
+model_role_permissions_data_inner.go
 model_roles_collection.go
 model_sent_invite.go
 model_sent_invite_data.go

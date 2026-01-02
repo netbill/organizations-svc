@@ -57,7 +57,5 @@ components:
       $ref: './spec/components/schemas/Role.yaml'
     RolesCollection:
       $ref: './spec/components/schemas/RolesCollection.yaml'
-    RolePermission:
-      $ref: './spec/components/schemas/RolePermission.yaml'
     RolePermissions:
       $ref: './spec/components/schemas/RolePermissions.yaml'

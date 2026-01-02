@@ -30,10 +30,14 @@ func (s Service) UpdateAgglomeration(
 		)
 	}
 
-	if err = s.checkPermissionForManageAgglomeration(
+	initiator, err := s.getInitiator(ctx, accountID, agglo.ID)
+	if err != nil {
+		return models.Agglomeration{}, err
+	}
+
+	if err = s.chekPermissionForManageAgglomeration(
 		ctx,
-		accountID,
-		agglomerationID,
+		initiator.ID,
 	); err != nil {
 		return models.Agglomeration{}, err
 	}

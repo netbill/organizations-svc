@@ -17,11 +17,11 @@ import (
 	"fmt"
 )
 
-// checks if the RolePermission type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &RolePermission{}
+// checks if the RolePermissionsDataInner type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &RolePermissionsDataInner{}
 
-// RolePermission struct for RolePermission
-type RolePermission struct {
+// RolePermissionsDataInner struct for RolePermissionsDataInner
+type RolePermissionsDataInner struct {
 	// Unique identifier for the permission
 	Id uuid.UUID `json:"id"`
 	// A short code representing the permission
@@ -30,30 +30,30 @@ type RolePermission struct {
 	Description string `json:"description"`
 }
 
-type _RolePermission RolePermission
+type _RolePermissionsDataInner RolePermissionsDataInner
 
-// NewRolePermission instantiates a new RolePermission object
+// NewRolePermissionsDataInner instantiates a new RolePermissionsDataInner object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRolePermission(id uuid.UUID, code string, description string) *RolePermission {
-	this := RolePermission{}
+func NewRolePermissionsDataInner(id uuid.UUID, code string, description string) *RolePermissionsDataInner {
+	this := RolePermissionsDataInner{}
 	this.Id = id
 	this.Code = code
 	this.Description = description
 	return &this
 }
 
-// NewRolePermissionWithDefaults instantiates a new RolePermission object
+// NewRolePermissionsDataInnerWithDefaults instantiates a new RolePermissionsDataInner object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewRolePermissionWithDefaults() *RolePermission {
-	this := RolePermission{}
+func NewRolePermissionsDataInnerWithDefaults() *RolePermissionsDataInner {
+	this := RolePermissionsDataInner{}
 	return &this
 }
 
 // GetId returns the Id field value
-func (o *RolePermission) GetId() uuid.UUID {
+func (o *RolePermissionsDataInner) GetId() uuid.UUID {
 	if o == nil {
 		var ret uuid.UUID
 		return ret
@@ -64,7 +64,7 @@ func (o *RolePermission) GetId() uuid.UUID {
 
 // GetIdOk returns a tuple with the Id field value
 // and a boolean to check if the value has been set.
-func (o *RolePermission) GetIdOk() (*uuid.UUID, bool) {
+func (o *RolePermissionsDataInner) GetIdOk() (*uuid.UUID, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -72,12 +72,12 @@ func (o *RolePermission) GetIdOk() (*uuid.UUID, bool) {
 }
 
 // SetId sets field value
-func (o *RolePermission) SetId(v uuid.UUID) {
+func (o *RolePermissionsDataInner) SetId(v uuid.UUID) {
 	o.Id = v
 }
 
 // GetCode returns the Code field value
-func (o *RolePermission) GetCode() string {
+func (o *RolePermissionsDataInner) GetCode() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -88,7 +88,7 @@ func (o *RolePermission) GetCode() string {
 
 // GetCodeOk returns a tuple with the Code field value
 // and a boolean to check if the value has been set.
-func (o *RolePermission) GetCodeOk() (*string, bool) {
+func (o *RolePermissionsDataInner) GetCodeOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -96,12 +96,12 @@ func (o *RolePermission) GetCodeOk() (*string, bool) {
 }
 
 // SetCode sets field value
-func (o *RolePermission) SetCode(v string) {
+func (o *RolePermissionsDataInner) SetCode(v string) {
 	o.Code = v
 }
 
 // GetDescription returns the Description field value
-func (o *RolePermission) GetDescription() string {
+func (o *RolePermissionsDataInner) GetDescription() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -112,7 +112,7 @@ func (o *RolePermission) GetDescription() string {
 
 // GetDescriptionOk returns a tuple with the Description field value
 // and a boolean to check if the value has been set.
-func (o *RolePermission) GetDescriptionOk() (*string, bool) {
+func (o *RolePermissionsDataInner) GetDescriptionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -120,11 +120,11 @@ func (o *RolePermission) GetDescriptionOk() (*string, bool) {
 }
 
 // SetDescription sets field value
-func (o *RolePermission) SetDescription(v string) {
+func (o *RolePermissionsDataInner) SetDescription(v string) {
 	o.Description = v
 }
 
-func (o RolePermission) MarshalJSON() ([]byte, error) {
+func (o RolePermissionsDataInner) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -132,7 +132,7 @@ func (o RolePermission) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o RolePermission) ToMap() (map[string]interface{}, error) {
+func (o RolePermissionsDataInner) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["code"] = o.Code
@@ -140,7 +140,7 @@ func (o RolePermission) ToMap() (map[string]interface{}, error) {
 	return toSerialize, nil
 }
 
-func (o *RolePermission) UnmarshalJSON(data []byte) (err error) {
+func (o *RolePermissionsDataInner) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -164,53 +164,53 @@ func (o *RolePermission) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varRolePermission := _RolePermission{}
+	varRolePermissionsDataInner := _RolePermissionsDataInner{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varRolePermission)
+	err = decoder.Decode(&varRolePermissionsDataInner)
 
 	if err != nil {
 		return err
 	}
 
-	*o = RolePermission(varRolePermission)
+	*o = RolePermissionsDataInner(varRolePermissionsDataInner)
 
 	return err
 }
 
-type NullableRolePermission struct {
-	value *RolePermission
+type NullableRolePermissionsDataInner struct {
+	value *RolePermissionsDataInner
 	isSet bool
 }
 
-func (v NullableRolePermission) Get() *RolePermission {
+func (v NullableRolePermissionsDataInner) Get() *RolePermissionsDataInner {
 	return v.value
 }
 
-func (v *NullableRolePermission) Set(val *RolePermission) {
+func (v *NullableRolePermissionsDataInner) Set(val *RolePermissionsDataInner) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableRolePermission) IsSet() bool {
+func (v NullableRolePermissionsDataInner) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableRolePermission) Unset() {
+func (v *NullableRolePermissionsDataInner) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableRolePermission(val *RolePermission) *NullableRolePermission {
-	return &NullableRolePermission{value: val, isSet: true}
+func NewNullableRolePermissionsDataInner(val *RolePermissionsDataInner) *NullableRolePermissionsDataInner {
+	return &NullableRolePermissionsDataInner{value: val, isSet: true}
 }
 
-func (v NullableRolePermission) MarshalJSON() ([]byte, error) {
+func (v NullableRolePermissionsDataInner) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableRolePermission) UnmarshalJSON(src []byte) error {
+func (v *NullableRolePermissionsDataInner) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

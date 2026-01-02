@@ -25,18 +25,7 @@ func New(repo repo, messenger messanger) Service {
 type repo interface {
 	CreateAgglomeration(ctx context.Context, params CreateParams) (models.Agglomeration, error)
 
-	UpdateAgglomeration(
-		ctx context.Context,
-		ID uuid.UUID,
-		params UpdateParams,
-	) (models.Agglomeration, error)
-	UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, status string) (models.Agglomeration, error)
-	UpdateAgglomerationMaxRoles(ctx context.Context, ID uuid.UUID, maxRoles uint) (models.Agglomeration, error)
-
 	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
-
-	DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error
-
 	GetAgglomerations(
 		ctx context.Context,
 		filter FilterParams,
@@ -47,13 +36,27 @@ type repo interface {
 		accountID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Agglomeration], error)
-	CheckAccountHavePermissionByCode(
+
+	UpdateAgglomeration(
+		ctx context.Context,
+		ID uuid.UUID,
+		params UpdateParams,
+	) (models.Agglomeration, error)
+	UpdateAgglomerationStatus(ctx context.Context, ID uuid.UUID, status string) (models.Agglomeration, error)
+	UpdateAgglomerationMaxRoles(ctx context.Context, ID uuid.UUID, maxRoles uint) (models.Agglomeration, error)
+
+	DeleteAgglomeration(ctx context.Context, ID uuid.UUID) error
+
+	CheckMemberHavePermission(
+		ctx context.Context,
+		memberID uuid.UUID,
+		permissionCode string,
+	) (bool, error)
+	GetMemberByAccountAndAgglomeration(
 		ctx context.Context,
 		accountID, agglomerationID uuid.UUID,
-		permissionKey string,
-	) (bool, error)
+	) (models.Member, error)
 
-	GetAccountMaxRoleInAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Role, error)
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
 	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
@@ -76,16 +79,14 @@ type messanger interface {
 	WriteRoleCreated(ctx context.Context, role models.Role) error
 }
 
-func (s Service) checkPermissionForManageAgglomeration(
+func (s Service) chekPermissionForManageAgglomeration(
 	ctx context.Context,
-	accountID uuid.UUID,
-	agglomerationID uuid.UUID,
+	memberID uuid.UUID,
 ) error {
-	access, err := s.repo.CheckAccountHavePermissionByCode(
+	access, err := s.repo.CheckMemberHavePermission(
 		ctx,
-		accountID,
-		agglomerationID,
-		models.RolePermissionManageAgglomeration.String(),
+		memberID,
+		models.RolePermissionManageAgglomeration,
 	)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
@@ -98,4 +99,21 @@ func (s Service) checkPermissionForManageAgglomeration(
 	}
 
 	return nil
+}
+
+func (s Service) getInitiator(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error) {
+	row, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
+	if err != nil {
+		return models.Member{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get member with account id %s and agglomeration id %s: %w",
+				accountID, agglomerationID, err),
+		)
+	}
+	if row.IsNil() {
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("member with account id %s and agglomeration id %s not found", accountID, agglomerationID),
+		)
+	}
+
+	return row, nil
 }

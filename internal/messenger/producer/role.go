@@ -76,7 +76,7 @@ func (s Service) WriteRoleUpdated(
 func (s Service) WriteRolePermissionsUpdated(
 	ctx context.Context,
 	RoleID uuid.UUID,
-	permissions map[models.CodeRolePermission]bool,
+	permissions map[models.Permission]bool,
 ) error {
 	payload, err := json.Marshal(contracts.RolePermissionsUpdatedPayload{
 		RoleID:      RoleID,

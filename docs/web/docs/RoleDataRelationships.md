@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Permissions** | Pointer to [**[]RolePermission**](RolePermission.md) |  | [optional] 
+**Permissions** | Pointer to [**[]RoleDataRelationshipsPermissionsInner**](RoleDataRelationshipsPermissionsInner.md) |  | [optional] 
 
 ## Methods
 
@@ -27,20 +27,20 @@ but it doesn't guarantee that properties required by API are set
 
 ### GetPermissions
 
-`func (o *RoleDataRelationships) GetPermissions() []RolePermission`
+`func (o *RoleDataRelationships) GetPermissions() []RoleDataRelationshipsPermissionsInner`
 
 GetPermissions returns the Permissions field if non-nil, zero value otherwise.
 
 ### GetPermissionsOk
 
-`func (o *RoleDataRelationships) GetPermissionsOk() (*[]RolePermission, bool)`
+`func (o *RoleDataRelationships) GetPermissionsOk() (*[]RoleDataRelationshipsPermissionsInner, bool)`
 
 GetPermissionsOk returns a tuple with the Permissions field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetPermissions
 
-`func (o *RoleDataRelationships) SetPermissions(v []RolePermission)`
+`func (o *RoleDataRelationships) SetPermissions(v []RoleDataRelationshipsPermissionsInner)`
 
 SetPermissions sets Permissions field to given value.
 

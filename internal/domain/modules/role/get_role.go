@@ -26,13 +26,18 @@ func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, er
 	return role, nil
 }
 
-func (s Service) GetRoleWithPermissions(ctx context.Context, accountID, roleID uuid.UUID) (models.Role, []models.Permission, error) {
+func (s Service) GetRoleWithPermissions(ctx context.Context, accountID, roleID uuid.UUID) (models.Role, map[models.Permission]bool, error) {
 	role, err := s.GetRole(ctx, roleID)
 	if err != nil {
 		return models.Role{}, nil, err
 	}
 
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, role.AgglomerationID, role.Rank); err != nil {
+	initiator, err := s.getInitiator(ctx, accountID, role.AgglomerationID)
+	if err != nil {
+		return models.Role{}, nil, err
+	}
+
+	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
 		return models.Role{}, nil, err
 	}
 

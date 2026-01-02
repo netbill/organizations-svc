@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
 	"github.com/umisto/agglomerations-svc/internal/rest"
 	"github.com/umisto/agglomerations-svc/internal/rest/request"
 	"github.com/umisto/agglomerations-svc/internal/rest/responses"
@@ -28,12 +27,12 @@ func (s Service) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dict := make(map[models.CodeRolePermission]bool)
+	dict := make(map[string]bool)
 	for _, item := range req.Data.Attributes.Roles {
-		dict[models.CodeRolePermission(item.Code)] = item.Status
+		dict[item.Code] = item.Status
 	}
 
-	perm, err := s.core.SetRolePermissions(r.Context(), initiator.ID, req.Data.Id, dict)
+	role, perm, err := s.core.SetRolePermissions(r.Context(), initiator.ID, req.Data.Id, dict)
 	if err != nil {
 		s.log.WithError(err).Errorf("failed to update role permissions")
 		switch {
@@ -47,5 +46,5 @@ func (s Service) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.RolePermissions(perm))
+	ape.Render(w, http.StatusOK, responses.Role(role, perm))
 }

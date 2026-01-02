@@ -9,41 +9,23 @@ import (
 	"github.com/umisto/agglomerations-svc/internal/domain/models"
 )
 
-func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]models.Permission, error) {
-	permission, err := s.repo.GetRolePermissions(ctx, roleID)
-	if err != nil {
-		return nil, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get role permissions: %w", err),
-		)
-	}
-
-	return permission, nil
-}
-
 func (s Service) SetRolePermissions(
 	ctx context.Context,
 	accountID, roleID uuid.UUID,
-	permissions map[models.CodeRolePermission]bool,
-) (perm []models.Permission, err error) {
-	role, err := s.GetRole(ctx, roleID)
+	permissions map[string]bool,
+) (role models.Role, perm map[models.Permission]bool, err error) {
+	role, err = s.GetRole(ctx, roleID)
 	if err != nil {
-		return nil, err
+		return models.Role{}, nil, err
 	}
 
-	maxRole, err := s.repo.GetAccountMaxRoleInAgglomeration(ctx, accountID, role.AgglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, role.AgglomerationID)
 	if err != nil {
-		return nil, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get account max role in agglomeration: %w", err),
-		)
+		return models.Role{}, nil, err
 	}
 
-	if err = s.CheckPermissionsToManageRole(ctx, accountID, roleID, role.Rank); err != nil {
-		return nil, err
-	}
-	if role.Rank <= maxRole.Rank {
-		return nil, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("account does not have enough rights to set permissions for this role"),
-		)
+	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
+		return models.Role{}, nil, err
 	}
 
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -61,13 +43,20 @@ func (s Service) SetRolePermissions(
 			)
 		}
 
+		err = s.messenger.WriteRolePermissionsUpdated(ctx, roleID, perm)
+		if err != nil {
+			return errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to send role permissions updated message: %w", err),
+			)
+		}
+
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return models.Role{}, nil, err
 	}
 
-	return perm, nil
+	return role, perm, nil
 }
 
 func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {

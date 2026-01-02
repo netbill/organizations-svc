@@ -11,7 +11,7 @@ import (
 )
 
 func (s Service) getInvite(ctx context.Context, ID uuid.UUID) (models.Invite, error) {
-	res, err := s.repo.GetInviteByID(ctx, ID)
+	res, err := s.repo.GetInvite(ctx, ID)
 	if err != nil {
 		return models.Invite{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to get invite by ID %s: %w", ID.String(), err),
@@ -59,9 +59,14 @@ func (s Service) GetInvite(
 
 func (s Service) GetAgglomerationInvites(
 	ctx context.Context,
-	agglomerationID uuid.UUID,
+	accountID, agglomerationID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
+	_, err := s.getInitiator(ctx, accountID, agglomerationID)
+	if err != nil {
+		return pagi.Page[[]models.Invite]{}, err
+	}
+
 	res, err := s.repo.GetAgglomerationInvites(ctx, agglomerationID, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, errx.ErrorInternal.Raise(

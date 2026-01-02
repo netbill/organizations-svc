@@ -26,6 +26,7 @@ type Handlers interface {
 	ActivateAgglomeration(w http.ResponseWriter, r *http.Request)
 	DeactivateAgglomeration(w http.ResponseWriter, r *http.Request)
 
+	GetAgglomerationInvites(w http.ResponseWriter, r *http.Request)
 	GetAgglomerationMembers(w http.ResponseWriter, r *http.Request)
 	GetAgglomerationRoles(w http.ResponseWriter, r *http.Request)
 
@@ -37,12 +38,14 @@ type Handlers interface {
 	MemberAddRole(w http.ResponseWriter, r *http.Request)
 	MemberRemoveRole(w http.ResponseWriter, r *http.Request)
 
+	//Invite handlers
 	CreateInvite(w http.ResponseWriter, r *http.Request)
 	GetInvite(w http.ResponseWriter, r *http.Request)
 	DeleteInvite(w http.ResponseWriter, r *http.Request)
 	AcceptInvite(w http.ResponseWriter, r *http.Request)
 	DeclineInvite(w http.ResponseWriter, r *http.Request)
 
+	//Role handlers
 	CreateRole(w http.ResponseWriter, r *http.Request)
 	GetRole(w http.ResponseWriter, r *http.Request)
 	UpdateRole(w http.ResponseWriter, r *http.Request)
@@ -51,6 +54,7 @@ type Handlers interface {
 	UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
 
 	UpdateRolePermissions(w http.ResponseWriter, r *http.Request)
+	GetAllPermissions(w http.ResponseWriter, r *http.Request)
 }
 
 type Middlewares interface {
@@ -99,6 +103,7 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 					r.Patch("/deactivate", s.handlers.DeactivateAgglomeration)
 
 					r.Get("/members", s.handlers.GetAgglomerationMembers)
+					r.Get("/invites", s.handlers.GetAgglomerationInvites)
 					r.Route("/roles", func(r chi.Router) {
 						r.Get("/", s.handlers.GetAgglomerationRoles)
 						r.Put("/ranks", s.handlers.UpdateRolesRanks)
@@ -134,6 +139,7 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 
 			r.With(auth).Route("/roles", func(r chi.Router) {
 				r.Post("/", s.handlers.CreateRole)
+				r.Get("/permissions", s.handlers.GetAllPermissions)
 
 				r.Route("/{role_id}", func(r chi.Router) {
 					r.Get("/", s.handlers.GetRole)

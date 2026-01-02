@@ -12,7 +12,10 @@ import (
 	"github.com/umisto/pagi"
 )
 
-func (s Service) CreateAgglomeration(ctx context.Context, params agglomeration.CreateParams) (models.Agglomeration, error) {
+func (s Service) CreateAgglomeration(
+	ctx context.Context,
+	params agglomeration.CreateParams,
+) (models.Agglomeration, error) {
 	row, err := s.agglomerationsQ().Insert(ctx, pgdb.AgglomerationsQInsertInput{
 		Name: params.Name,
 		Icon: params.Icon,

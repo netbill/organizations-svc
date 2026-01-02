@@ -35,10 +35,14 @@ func (s Service) DeleteInvite(
 		)
 	}
 
+	initiator, err := s.getInitiator(ctx, accountID, invite.AgglomerationID)
+	if err != nil {
+		return err
+	}
+
 	if err = s.checkPermissionForManageInvite(
 		ctx,
-		accountID,
-		invite.AgglomerationID,
+		initiator.ID,
 	); err != nil {
 		return err
 	}

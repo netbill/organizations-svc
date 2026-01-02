@@ -566,7 +566,28 @@ components:
                 permissions:
                   type: array
                   items:
-                    $ref: '#/components/schemas/RolePermission'
+                    type: object
+                    required:
+                      - id
+                      - code
+                      - description
+                      - enabled
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        description: Unique identifier for the permission
+                      code:
+                        type: string
+                        example: agglmeration.manage
+                        description: A short code representing the permission
+                      description:
+                        type: string
+                        example: Allows managing agglomeration
+                        description: A detailed description of what the permission allows
+                      enabled:
+                        type: boolean
+                        description: Indicates if the role has this permission
     RolesCollection:
       type: object
       required:
@@ -579,25 +600,6 @@ components:
             $ref: '#/components/schemas/Role/properties/data'
         links:
           $ref: '#/components/schemas/PaginationData'
-    RolePermission:
-      type: object
-      required:
-        - id
-        - code
-        - description
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique identifier for the permission
-        code:
-          type: string
-          example: agglmeration.manage
-          description: A short code representing the permission
-        description:
-          type: string
-          example: Allows managing agglomeration
-          description: A detailed description of what the permission allows
     RolePermissions:
       type: object
       required:
@@ -606,4 +608,21 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/RolePermission'
+            type: object
+            required:
+              - id
+              - code
+              - description
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier for the permission
+              code:
+                type: string
+                example: agglmeration.manage
+                description: A short code representing the permission
+              description:
+                type: string
+                example: Allows managing agglomeration
+                description: A detailed description of what the permission allows

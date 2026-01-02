@@ -35,7 +35,7 @@ func (s Service) MemberRemoveRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.core.MemberRemoveRole(r.Context(), initiator.ID, memberID, roleID)
+	err = s.core.RemoveMemberRole(r.Context(), initiator.ID, memberID, roleID)
 	if err != nil {
 		s.log.WithError(err).Errorf("failed to remove role to member")
 		switch {

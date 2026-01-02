@@ -18,7 +18,7 @@ type repo interface {
 	GetProfileByUsername(ctx context.Context, username string) (models.Profile, error)
 	DeleteProfileByAccountID(ctx context.Context, accountID uuid.UUID) error
 
-	DeleteMembershipsByAccountID(ctx context.Context, accountID uuid.UUID) error
+	DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }

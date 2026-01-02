@@ -21,10 +21,14 @@ func (s Service) CreateInvite(
 	accountID uuid.UUID,
 	params CreateParams,
 ) (invite models.Invite, err error) {
+	initiator, err := s.getInitiator(ctx, accountID, params.AgglomerationID)
+	if err != nil {
+		return invite, err
+	}
+
 	if err = s.checkPermissionForManageInvite(
 		ctx,
-		accountID,
-		params.AgglomerationID,
+		initiator.ID,
 	); err != nil {
 		return models.Invite{}, err
 	}

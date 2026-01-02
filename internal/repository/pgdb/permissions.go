@@ -180,30 +180,51 @@ func (q PermissionsQ) FilterLikeDescription(description string) PermissionsQ {
 	return q
 }
 
-func (q PermissionsQ) UpdateCode(code string) PermissionsQ {
-	q.updater = q.updater.Set("code", code)
-	return q
-}
+func (q PermissionsQ) GetForRole(
+	ctx context.Context,
+	roleID uuid.UUID,
+) (map[Permission]bool, error) {
 
-func (q PermissionsQ) UpdateDescription(description string) PermissionsQ {
-	q.updater = q.updater.Set("description", description)
-	return q
-}
+	const sqlq = `
+		SELECT
+			p.id,
+			p.code,
+			p.description,
+			(rp.permission_id IS NOT NULL) AS enabled
+		FROM permissions p
+		LEFT JOIN role_permissions rp
+			ON rp.permission_id = p.id
+			AND rp.role_id = $1
+		ORDER BY p.code
+	`
 
-func (q PermissionsQ) Page(limit, offset uint) PermissionsQ {
-	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
-	return q
-}
-
-func (q PermissionsQ) Count(ctx context.Context) (uint, error) {
-	query, args, err := q.counter.ToSql()
+	rows, err := q.db.QueryContext(ctx, sqlq, roleID)
 	if err != nil {
-		return 0, fmt.Errorf("building count query for %s: %w", PermissionTable, err)
+		return nil, fmt.Errorf("query permissions for role: %w", err)
+	}
+	defer rows.Close()
+
+	out := make(map[Permission]bool)
+
+	for rows.Next() {
+		var p Permission
+		var enabled bool
+
+		if err := rows.Scan(
+			&p.ID,
+			&p.Code,
+			&p.Description,
+			&enabled,
+		); err != nil {
+			return nil, fmt.Errorf("scanning permission for role: %w", err)
+		}
+
+		out[p] = enabled
 	}
 
-	var n uint
-	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
-		return 0, fmt.Errorf("scanning count for %s: %w", PermissionTable, err)
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
-	return n, nil
+
+	return out, nil
 }

@@ -19,7 +19,7 @@ var _ MappedNullable = &RoleDataRelationships{}
 
 // RoleDataRelationships struct for RoleDataRelationships
 type RoleDataRelationships struct {
-	Permissions []RolePermission `json:"permissions,omitempty"`
+	Permissions []RoleDataRelationshipsPermissionsInner `json:"permissions,omitempty"`
 }
 
 // NewRoleDataRelationships instantiates a new RoleDataRelationships object
@@ -40,9 +40,9 @@ func NewRoleDataRelationshipsWithDefaults() *RoleDataRelationships {
 }
 
 // GetPermissions returns the Permissions field value if set, zero value otherwise.
-func (o *RoleDataRelationships) GetPermissions() []RolePermission {
+func (o *RoleDataRelationships) GetPermissions() []RoleDataRelationshipsPermissionsInner {
 	if o == nil || IsNil(o.Permissions) {
-		var ret []RolePermission
+		var ret []RoleDataRelationshipsPermissionsInner
 		return ret
 	}
 	return o.Permissions
@@ -50,7 +50,7 @@ func (o *RoleDataRelationships) GetPermissions() []RolePermission {
 
 // GetPermissionsOk returns a tuple with the Permissions field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *RoleDataRelationships) GetPermissionsOk() ([]RolePermission, bool) {
+func (o *RoleDataRelationships) GetPermissionsOk() ([]RoleDataRelationshipsPermissionsInner, bool) {
 	if o == nil || IsNil(o.Permissions) {
 		return nil, false
 	}
@@ -66,8 +66,8 @@ func (o *RoleDataRelationships) HasPermissions() bool {
 	return false
 }
 
-// SetPermissions gets a reference to the given []RolePermission and assigns it to the Permissions field.
-func (o *RoleDataRelationships) SetPermissions(v []RolePermission) {
+// SetPermissions gets a reference to the given []RoleDataRelationshipsPermissionsInner and assigns it to the Permissions field.
+func (o *RoleDataRelationships) SetPermissions(v []RoleDataRelationshipsPermissionsInner) {
 	o.Permissions = v
 }
 
