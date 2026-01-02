@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Position** | Pointer to **string** | The position or role of the member within the agglomeration | [optional] 
+**Position** | Pointer to **string** | The position or role of the member within the organization | [optional] 
 **Label** | Pointer to **string** | A label or title associated with the member | [optional] 
 
 ## Methods

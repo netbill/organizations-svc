@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/pagi"
 )
 
 type Service struct {
@@ -23,14 +23,14 @@ func New(repo repo, messenger messenger) Service {
 }
 
 type repo interface {
-	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
+	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 
 	UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (models.Member, error)
 
 	GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error)
-	GetMemberByAccountAndAgglomeration(
+	GetMemberByAccountAndOrganization(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
+		accountID, organizationID uuid.UUID,
 	) (models.Member, error)
 	GetMembers(
 		ctx context.Context,

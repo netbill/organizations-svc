@@ -7,11 +7,11 @@ import (
 )
 
 type Member struct {
-	ID              uuid.UUID `json:"id"`
-	AccountID       uuid.UUID `json:"account_id"`
-	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Position        *string   `json:"position,omitempty"`
-	Label           *string   `json:"label,omitempty"`
+	ID             uuid.UUID `json:"id"`
+	AccountID      uuid.UUID `json:"account_id"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Position       *string   `json:"position,omitempty"`
+	Label          *string   `json:"label,omitempty"`
 
 	Username  string  `json:"username"`
 	Pseudonym *string `json:"pseudonym,omitempty"`

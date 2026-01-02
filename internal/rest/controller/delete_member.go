@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
 )
 
 func (c Controller) DeleteMember(w http.ResponseWriter, r *http.Request) {

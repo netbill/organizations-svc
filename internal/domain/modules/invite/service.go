@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/pagi"
 )
 
 type Service struct {
@@ -29,9 +29,9 @@ type repo interface {
 		ctx context.Context,
 		id uuid.UUID,
 	) (models.Invite, error)
-	GetAgglomerationInvites(
+	GetOrganizationInvites(
 		ctx context.Context,
-		agglomerationID uuid.UUID,
+		organizationID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
 	GetAccountInvites(
@@ -57,12 +57,12 @@ type repo interface {
 		permissionCode string,
 	) (bool, error)
 
-	CreateMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
+	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 
-	GetAgglomerationByID(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
-	GetMemberByAccountAndAgglomeration(
+	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
+	GetMemberByAccountAndOrganization(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
+		accountID, organizationID uuid.UUID,
 	) (models.Member, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
@@ -94,46 +94,46 @@ func (s Service) checkPermissionForManageInvite(
 	}
 	if !access {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator has no access to activate agglomeration"),
+			fmt.Errorf("initiator has no access to activate organization"),
 		)
 	}
 
 	return nil
 }
 
-func (s Service) checkAgglomerationIsActiveAndExists(ctx context.Context, agglomerationID uuid.UUID) (models.Agglomeration, error) {
-	agglo, err := s.repo.GetAgglomerationByID(ctx, agglomerationID)
+func (s Service) checkOrganizationIsActiveAndExists(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
+	agglo, err := s.repo.GetOrganizationByID(ctx, organizationID)
 	if err != nil {
-		return models.Agglomeration{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get agglomeration by id: %w", err),
+		return models.Organization{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get organization by id: %w", err),
 		)
 	}
 	if agglo.IsNil() {
-		return models.Agglomeration{}, errx.ErrorAgglomerationNotFound.Raise(
-			fmt.Errorf("agglomeration with id %s not found", agglomerationID),
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization with id %s not found", organizationID),
 		)
 	}
 
-	if agglo.Status != models.AgglomerationStatusActive {
-		return models.Agglomeration{}, errx.ErrorAgglomerationIsNotActive.Raise(
-			fmt.Errorf("agglomeration with id %s is not active", agglomerationID),
+	if agglo.Status != models.OrganizationStatusActive {
+		return models.Organization{}, errx.ErrorOrganizationIsNotActive.Raise(
+			fmt.Errorf("organization with id %s is not active", organizationID),
 		)
 	}
 
 	return agglo, nil
 }
 
-func (s Service) getInitiator(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error) {
-	row, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
+func (s Service) getInitiator(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error) {
+	row, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
 		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get member with account id %s and agglomeration id %s: %w",
-				accountID, agglomerationID, err),
+			fmt.Errorf("failed to get member with account id %s and organization id %s: %w",
+				accountID, organizationID, err),
 		)
 	}
 	if row.IsNil() {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member with account id %s and agglomeration id %s not found", accountID, agglomerationID),
+			fmt.Errorf("member with account id %s and organization id %s not found", accountID, organizationID),
 		)
 	}
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
 )
 
 func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error {
@@ -14,7 +14,7 @@ func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) er
 		return err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, role.AgglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, role.OrganizationID)
 	if err != nil {
 		return err
 	}

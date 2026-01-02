@@ -6,6 +6,6 @@ properties:
   data:
     type: array
     items:
-      $ref: './AgglomerationData.yaml'
+      $ref: './OrganizationData.yaml'
   links:
     $ref: './PaginationData.yaml'

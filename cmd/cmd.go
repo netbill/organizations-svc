@@ -5,21 +5,21 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/umisto/agglomerations-svc/internal"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/agglomeration"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/invite"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/member"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/profile"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/role"
-	"github.com/umisto/agglomerations-svc/internal/messenger/consumer"
-	"github.com/umisto/agglomerations-svc/internal/messenger/consumer/callbacker"
-	"github.com/umisto/agglomerations-svc/internal/messenger/producer"
-	"github.com/umisto/agglomerations-svc/internal/repository"
-	"github.com/umisto/agglomerations-svc/internal/rest"
-	"github.com/umisto/agglomerations-svc/internal/rest/controller"
-	"github.com/umisto/kafkakit/box"
-	"github.com/umisto/logium"
-	"github.com/umisto/restkit/mdlv"
+	"github.com/netbill/kafkakit/box"
+	"github.com/netbill/logium"
+	"github.com/netbill/organizations-svc/internal"
+	"github.com/netbill/organizations-svc/internal/domain/modules/invite"
+	"github.com/netbill/organizations-svc/internal/domain/modules/member"
+	"github.com/netbill/organizations-svc/internal/domain/modules/organization"
+	"github.com/netbill/organizations-svc/internal/domain/modules/profile"
+	"github.com/netbill/organizations-svc/internal/domain/modules/role"
+	"github.com/netbill/organizations-svc/internal/messenger/consumer"
+	"github.com/netbill/organizations-svc/internal/messenger/consumer/callbacker"
+	"github.com/netbill/organizations-svc/internal/messenger/producer"
+	"github.com/netbill/organizations-svc/internal/repository"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/controller"
+	"github.com/netbill/restkit/mdlv"
 )
 
 func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, wg *sync.WaitGroup) {
@@ -41,7 +41,7 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 
 	kafkaProducer := producer.New(log, cfg.Kafka.Brokers, kafkaBox)
 
-	aggloSvc := agglomeration.New(database, kafkaProducer)
+	aggloSvc := organization.New(database, kafkaProducer)
 	memberSvc := member.New(database, kafkaProducer)
 	roleSvc := role.New(database, kafkaProducer)
 	inviteSvc := invite.New(database, kafkaProducer)

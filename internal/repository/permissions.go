@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 )
 
 func (s Service) GetPermission(ctx context.Context, ID uuid.UUID) (models.Permission, error) {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
 )
 
 func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID) error {
@@ -14,7 +14,7 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 		return err
 	}
 
-	initiator, err := s.GetInitiatorMember(ctx, accountID, member.AgglomerationID)
+	initiator, err := s.GetInitiatorMember(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return err
 	}

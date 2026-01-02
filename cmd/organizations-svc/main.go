@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/umisto/agglomerations-svc/cmd/cli"
+	"github.com/netbill/organizations-svc/cmd/cli"
 )
 
 func main() {

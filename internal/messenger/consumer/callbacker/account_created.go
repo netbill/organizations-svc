@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
-	"github.com/umisto/kafkakit/box"
+	"github.com/netbill/kafkakit/box"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 )
 
 func (c Callbacker) AccountCreated(

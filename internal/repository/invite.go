@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/invite"
-	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/modules/invite"
+	"github.com/netbill/organizations-svc/internal/repository/pgdb"
+	"github.com/netbill/pagi"
 )
 
 func (s Service) CreateInvite(
@@ -15,9 +15,9 @@ func (s Service) CreateInvite(
 	params invite.CreateParams,
 ) (models.Invite, error) {
 	row, err := s.invitesQ().Insert(ctx, pgdb.InsertInviteParams{
-		AgglomerationID: params.AgglomerationID,
-		AccountID:       params.AccountID,
-		ExpiresAt:       params.ExpiresAt,
+		OrganizationID: params.OrganizationID,
+		AccountID:      params.AccountID,
+		ExpiresAt:      params.ExpiresAt,
 	})
 	if err != nil {
 		return models.Invite{}, err
@@ -58,20 +58,20 @@ func (s Service) DeleteInvite(
 	return s.invitesQ().FilterByID(id).Delete(ctx)
 }
 
-func (s Service) GetAgglomerationInvites(
+func (s Service) GetOrganizationInvites(
 	ctx context.Context,
-	agglomerationID uuid.UUID,
+	organizationID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
 	rows, err := s.invitesQ().
-		FilterByAgglomerationID(agglomerationID).
+		FilterByOrganizationID(organizationID).
 		Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}
 
 	total, err := s.invitesQ().
-		FilterByAgglomerationID(agglomerationID).
+		FilterByOrganizationID(organizationID).
 		Count(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
@@ -124,11 +124,11 @@ func (s Service) GetAccountInvites(
 
 func Invite(row pgdb.Invite) models.Invite {
 	return models.Invite{
-		ID:              row.ID,
-		AgglomerationID: row.AgglomerationID,
-		AccountID:       row.AccountID,
-		Status:          row.Status,
-		ExpiresAt:       row.ExpiresAt,
-		CreatedAt:       row.CreatedAt,
+		ID:             row.ID,
+		OrganizationID: row.OrganizationID,
+		AccountID:      row.AccountID,
+		Status:         row.Status,
+		ExpiresAt:      row.ExpiresAt,
+		CreatedAt:      row.CreatedAt,
 	}
 }

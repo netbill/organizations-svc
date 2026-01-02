@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/netbill/kafkakit/header"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 	"github.com/segmentio/kafka-go"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
-	"github.com/umisto/kafkakit/header"
 )
 
 func (p Producer) WriteRoleCreated(
@@ -32,7 +32,7 @@ func (p Producer) WriteRoleCreated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RoleCreatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -62,7 +62,7 @@ func (p Producer) WriteRoleUpdated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RoleUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -94,7 +94,7 @@ func (p Producer) WriteRolePermissionsUpdated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RolePermissionsUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -105,12 +105,12 @@ func (p Producer) WriteRolePermissionsUpdated(
 
 func (p Producer) WriteRolesRanksUpdated(
 	ctx context.Context,
-	agglomerationID uuid.UUID,
+	organizationID uuid.UUID,
 	ranks map[uuid.UUID]uint,
 ) error {
 	payload, err := json.Marshal(contracts.RolesRanksUpdatedPayload{
-		AgglomerationID: agglomerationID,
-		Ranks:           ranks,
+		OrganizationID: organizationID,
+		Ranks:          ranks,
 	})
 	if err != nil {
 		return err
@@ -120,13 +120,13 @@ func (p Producer) WriteRolesRanksUpdated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.RolesTopicV1,
-			Key:   []byte(agglomerationID.String()),
+			Key:   []byte(organizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RolesRanksUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -156,7 +156,7 @@ func (p Producer) WriteRoleDeleted(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RoleDeletedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},

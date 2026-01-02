@@ -1,4 +1,4 @@
-module github.com/umisto/agglomerations-svc
+module github.com/netbill/organizations-svc
 
 go 1.25.4
 
@@ -9,17 +9,17 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
+	github.com/netbill/ape v0.1.0
+	github.com/netbill/kafkakit v0.1.0
+	github.com/netbill/logium v0.1.0
+	github.com/netbill/pagi v0.1.0
+	github.com/netbill/pgx v0.1.0
+	github.com/netbill/restkit v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v1.8.0
 	github.com/segmentio/kafka-go v0.4.49
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.21.0
-	github.com/umisto/ape v0.4.15
-	github.com/umisto/kafkakit v0.1.8
-	github.com/umisto/logium v0.1.4
-	github.com/umisto/pagi v0.2.8
-	github.com/umisto/pgx v0.1.0
-	github.com/umisto/restkit v0.4.4
 	golang.org/x/sync v0.16.0
 )
 

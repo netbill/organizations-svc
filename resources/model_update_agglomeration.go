@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -16,38 +16,38 @@ import (
 	"fmt"
 )
 
-// checks if the UpdateAgglomeration type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &UpdateAgglomeration{}
+// checks if the UpdateOrganization type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &UpdateOrganization{}
 
-// UpdateAgglomeration struct for UpdateAgglomeration
-type UpdateAgglomeration struct {
-	Data UpdateAgglomerationData `json:"data"`
+// UpdateOrganization struct for UpdateOrganization
+type UpdateOrganization struct {
+	Data UpdateOrganizationData `json:"data"`
 }
 
-type _UpdateAgglomeration UpdateAgglomeration
+type _UpdateOrganization UpdateOrganization
 
-// NewUpdateAgglomeration instantiates a new UpdateAgglomeration object
+// NewUpdateOrganization instantiates a new UpdateOrganization object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUpdateAgglomeration(data UpdateAgglomerationData) *UpdateAgglomeration {
-	this := UpdateAgglomeration{}
+func NewUpdateOrganization(data UpdateOrganizationData) *UpdateOrganization {
+	this := UpdateOrganization{}
 	this.Data = data
 	return &this
 }
 
-// NewUpdateAgglomerationWithDefaults instantiates a new UpdateAgglomeration object
+// NewUpdateOrganizationWithDefaults instantiates a new UpdateOrganization object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewUpdateAgglomerationWithDefaults() *UpdateAgglomeration {
-	this := UpdateAgglomeration{}
+func NewUpdateOrganizationWithDefaults() *UpdateOrganization {
+	this := UpdateOrganization{}
 	return &this
 }
 
 // GetData returns the Data field value
-func (o *UpdateAgglomeration) GetData() UpdateAgglomerationData {
+func (o *UpdateOrganization) GetData() UpdateOrganizationData {
 	if o == nil {
-		var ret UpdateAgglomerationData
+		var ret UpdateOrganizationData
 		return ret
 	}
 
@@ -56,7 +56,7 @@ func (o *UpdateAgglomeration) GetData() UpdateAgglomerationData {
 
 // GetDataOk returns a tuple with the Data field value
 // and a boolean to check if the value has been set.
-func (o *UpdateAgglomeration) GetDataOk() (*UpdateAgglomerationData, bool) {
+func (o *UpdateOrganization) GetDataOk() (*UpdateOrganizationData, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -64,11 +64,11 @@ func (o *UpdateAgglomeration) GetDataOk() (*UpdateAgglomerationData, bool) {
 }
 
 // SetData sets field value
-func (o *UpdateAgglomeration) SetData(v UpdateAgglomerationData) {
+func (o *UpdateOrganization) SetData(v UpdateOrganizationData) {
 	o.Data = v
 }
 
-func (o UpdateAgglomeration) MarshalJSON() ([]byte, error) {
+func (o UpdateOrganization) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -76,13 +76,13 @@ func (o UpdateAgglomeration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o UpdateAgglomeration) ToMap() (map[string]interface{}, error) {
+func (o UpdateOrganization) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["data"] = o.Data
 	return toSerialize, nil
 }
 
-func (o *UpdateAgglomeration) UnmarshalJSON(data []byte) (err error) {
+func (o *UpdateOrganization) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -104,53 +104,53 @@ func (o *UpdateAgglomeration) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varUpdateAgglomeration := _UpdateAgglomeration{}
+	varUpdateOrganization := _UpdateOrganization{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varUpdateAgglomeration)
+	err = decoder.Decode(&varUpdateOrganization)
 
 	if err != nil {
 		return err
 	}
 
-	*o = UpdateAgglomeration(varUpdateAgglomeration)
+	*o = UpdateOrganization(varUpdateOrganization)
 
 	return err
 }
 
-type NullableUpdateAgglomeration struct {
-	value *UpdateAgglomeration
+type NullableUpdateOrganization struct {
+	value *UpdateOrganization
 	isSet bool
 }
 
-func (v NullableUpdateAgglomeration) Get() *UpdateAgglomeration {
+func (v NullableUpdateOrganization) Get() *UpdateOrganization {
 	return v.value
 }
 
-func (v *NullableUpdateAgglomeration) Set(val *UpdateAgglomeration) {
+func (v *NullableUpdateOrganization) Set(val *UpdateOrganization) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableUpdateAgglomeration) IsSet() bool {
+func (v NullableUpdateOrganization) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableUpdateAgglomeration) Unset() {
+func (v *NullableUpdateOrganization) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableUpdateAgglomeration(val *UpdateAgglomeration) *NullableUpdateAgglomeration {
-	return &NullableUpdateAgglomeration{value: val, isSet: true}
+func NewNullableUpdateOrganization(val *UpdateOrganization) *NullableUpdateOrganization {
+	return &NullableUpdateOrganization{value: val, isSet: true}
 }
 
-func (v NullableUpdateAgglomeration) MarshalJSON() ([]byte, error) {
+func (v NullableUpdateOrganization) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableUpdateAgglomeration) UnmarshalJSON(src []byte) error {
+func (v *NullableUpdateOrganization) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

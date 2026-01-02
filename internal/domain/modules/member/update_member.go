@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
 )
 
 type UpdateParams struct {

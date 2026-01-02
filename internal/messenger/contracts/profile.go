@@ -1,7 +1,7 @@
 package contracts
 
 import (
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/models"
 )
 
 const ProfileUpdatedEvent = "profile.updated"

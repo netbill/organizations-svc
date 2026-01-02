@@ -3,4 +3,4 @@ required:
   - data
 properties:
   data:
-    $ref: './AgglomerationData.yaml'
+    $ref: './OrganizationData.yaml'

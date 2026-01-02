@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/invite"
-	"github.com/umisto/agglomerations-svc/internal/rest"
-	"github.com/umisto/agglomerations-svc/internal/rest/request"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/modules/invite"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
 func (c Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
@@ -32,9 +32,9 @@ func (c Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	inv, err := c.core.CreateInvite(r.Context(),
 		initiator.ID,
 		invite.CreateParams{
-			AgglomerationID: req.Data.Attributes.AgglomerationId,
-			AccountID:       req.Data.Attributes.AccountId,
-			ExpiresAt:       time.Now().UTC().Add(24 * time.Hour),
+			OrganizationID: req.Data.Attributes.OrganizationId,
+			AccountID:      req.Data.Attributes.AccountId,
+			ExpiresAt:      time.Now().UTC().Add(24 * time.Hour),
 		})
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to create invite")

@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AgglomerationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the agglomeration this role belongs to | 
-**Head** | **bool** | Indicates if this role is the head role of the agglomeration | 
-**Rank** | **uint** | The rank of the role within the agglomeration | 
+**OrganizationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the organization this role belongs to | 
+**Head** | **bool** | Indicates if this role is the head role of the organization | 
+**Rank** | **uint** | The rank of the role within the organization | 
 **Name** | **string** | The name of the role | 
 **Description** | **string** | A brief description of the role | 
 **Color** | **string** | The color associated with the role in HEX format | 
@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 
 ### NewRoleDataAttributes
 
-`func NewRoleDataAttributes(agglomerationId uuid.UUID, head bool, rank uint, name string, description string, color string, createdAt time.Time, updatedAt time.Time, ) *RoleDataAttributes`
+`func NewRoleDataAttributes(organizationId uuid.UUID, head bool, rank uint, name string, description string, color string, createdAt time.Time, updatedAt time.Time, ) *RoleDataAttributes`
 
 NewRoleDataAttributes instantiates a new RoleDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -32,24 +32,24 @@ NewRoleDataAttributesWithDefaults instantiates a new RoleDataAttributes object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetAgglomerationId
+### GetOrganizationId
 
-`func (o *RoleDataAttributes) GetAgglomerationId() uuid.UUID`
+`func (o *RoleDataAttributes) GetOrganizationId() uuid.UUID`
 
-GetAgglomerationId returns the AgglomerationId field if non-nil, zero value otherwise.
+GetOrganizationId returns the OrganizationId field if non-nil, zero value otherwise.
 
-### GetAgglomerationIdOk
+### GetOrganizationIdOk
 
-`func (o *RoleDataAttributes) GetAgglomerationIdOk() (*uuid.UUID, bool)`
+`func (o *RoleDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool)`
 
-GetAgglomerationIdOk returns a tuple with the AgglomerationId field if it's non-nil, zero value otherwise
+GetOrganizationIdOk returns a tuple with the OrganizationId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetAgglomerationId
+### SetOrganizationId
 
-`func (o *RoleDataAttributes) SetAgglomerationId(v uuid.UUID)`
+`func (o *RoleDataAttributes) SetOrganizationId(v uuid.UUID)`
 
-SetAgglomerationId sets AgglomerationId field to given value.
+SetOrganizationId sets OrganizationId field to given value.
 
 
 ### GetHead

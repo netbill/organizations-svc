@@ -1,6 +1,6 @@
 package errx
 
-import "github.com/umisto/ape"
+import "github.com/netbill/ape"
 
 var (
 	ErrorInviteNotFound = ape.DeclareError("INVITE_NOT_FOUND")

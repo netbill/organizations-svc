@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -19,7 +19,7 @@ var _ MappedNullable = &UpdateMemberDataAttributes{}
 
 // UpdateMemberDataAttributes struct for UpdateMemberDataAttributes
 type UpdateMemberDataAttributes struct {
-	// The position or role of the member within the agglomeration
+	// The position or role of the member within the organization
 	Position *string `json:"position,omitempty"`
 	// A label or title associated with the member
 	Label *string `json:"label,omitempty"`

@@ -4,19 +4,19 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/role"
-	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/modules/role"
+	"github.com/netbill/organizations-svc/internal/repository/pgdb"
+	"github.com/netbill/pagi"
 )
 
 func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error) {
 	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
-		AgglomerationID: params.AgglomerationID,
-		Rank:            params.Rank,
-		Name:            params.Name,
-		Description:     params.Description,
-		Color:           params.Color,
+		OrganizationID: params.OrganizationID,
+		Rank:           params.Rank,
+		Name:           params.Name,
+		Description:    params.Description,
+		Color:          params.Color,
 	})
 	if err != nil {
 		return models.Role{}, err
@@ -25,14 +25,14 @@ func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (mode
 	return Role(row), nil
 }
 
-func (s Service) CreateHeadRole(ctx context.Context, agglomerationID uuid.UUID) (models.Role, error) {
+func (s Service) CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (models.Role, error) {
 	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
-		AgglomerationID: agglomerationID,
-		Head:            true,
-		Rank:            1,
-		Name:            "Head",
-		Description:     "Head role with all permissions",
-		Color:           "#000000",
+		OrganizationID: organizationID,
+		Head:           true,
+		Rank:           1,
+		Name:           "Head",
+		Description:    "Head role with all permissions",
+		Color:          "#000000",
 	})
 	if err != nil {
 		return models.Role{}, err
@@ -57,8 +57,8 @@ func (s Service) GetRoles(
 	limit uint,
 ) (pagi.Page[[]models.Role], error) {
 	q := s.rolesQ()
-	if filter.AgglomerationID != nil {
-		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
+	if filter.OrganizationID != nil {
+		q = q.FilterByOrganizationID(*filter.OrganizationID)
 	}
 	if filter.RolesID != nil && len(*filter.RolesID) > 0 {
 		q = q.FilterByID(*filter.RolesID...)
@@ -127,10 +127,10 @@ func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank u
 
 func (s Service) UpdateRolesRanks(
 	ctx context.Context,
-	agglomerationID uuid.UUID,
+	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
-	_, err := s.rolesQ().UpdateRolesRanks(ctx, agglomerationID, order)
+	_, err := s.rolesQ().UpdateRolesRanks(ctx, organizationID, order)
 	if err != nil {
 		return err
 	}
@@ -158,14 +158,14 @@ func (s Service) GetMemberMaxRole(
 
 func Role(r pgdb.Role) models.Role {
 	return models.Role{
-		ID:              r.ID,
-		AgglomerationID: r.AgglomerationID,
-		Head:            r.Head,
-		Rank:            r.Rank,
-		Name:            r.Name,
-		Description:     r.Description,
-		Color:           r.Color,
-		CreatedAt:       r.CreatedAt,
-		UpdatedAt:       r.UpdatedAt,
+		ID:             r.ID,
+		OrganizationID: r.OrganizationID,
+		Head:           r.Head,
+		Rank:           r.Rank,
+		Name:           r.Name,
+		Description:    r.Description,
+		Color:          r.Color,
+		CreatedAt:      r.CreatedAt,
+		UpdatedAt:      r.UpdatedAt,
 	}
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
-	"github.com/umisto/pgx"
+	"github.com/netbill/organizations-svc/internal/repository/pgdb"
+	"github.com/netbill/pgx"
 )
 
 type Service struct {
@@ -16,8 +16,8 @@ func New(db *sql.DB) Service {
 	return Service{db: db}
 }
 
-func (s Service) agglomerationsQ() pgdb.AgglomerationsQ {
-	return pgdb.NewAgglomerationsQ(s.db)
+func (s Service) organizationsQ() pgdb.OrganizationsQ {
+	return pgdb.NewOrganizationsQ(s.db)
 }
 
 func (s Service) membersQ() pgdb.MembersQ {

@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/umisto/pgx"
+	"github.com/netbill/pgx"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
-const AgglomerationTable = "agglomerations"
-const AgglomerationColumns = "id, status, name, icon, created_at, updated_at"
+const OrganizationTable = "organizations"
+const OrganizationColumns = "id, status, name, icon, created_at, updated_at"
 
-type Agglomeration struct {
+type Organization struct {
 	ID       uuid.UUID `json:"id"`
 	Status   string    `json:"status"`
 	Name     string    `json:"name"`
@@ -25,7 +25,7 @@ type Agglomeration struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (a *Agglomeration) scan(row sq.RowScanner) error {
+func (a *Organization) scan(row sq.RowScanner) error {
 	err := row.Scan(
 		&a.ID,
 		&a.Status,
@@ -36,12 +36,12 @@ func (a *Agglomeration) scan(row sq.RowScanner) error {
 		&a.UpdatedAt,
 	)
 	if err != nil {
-		return fmt.Errorf("scanning agglomeration: %w", err)
+		return fmt.Errorf("scanning organization: %w", err)
 	}
 	return nil
 }
 
-type AgglomerationsQ struct {
+type OrganizationsQ struct {
 	db       pgx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
@@ -50,42 +50,42 @@ type AgglomerationsQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewAgglomerationsQ(db pgx.DBTX) AgglomerationsQ {
+func NewOrganizationsQ(db pgx.DBTX) OrganizationsQ {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	return AgglomerationsQ{
+	return OrganizationsQ{
 		db:       db,
-		selector: builder.Select(AgglomerationColumns).From(AgglomerationTable),
-		inserter: builder.Insert(AgglomerationTable),
-		updater:  builder.Update(AgglomerationTable),
-		deleter:  builder.Delete(AgglomerationTable),
-		counter:  builder.Select("COUNT(*) AS count").From(AgglomerationTable),
+		selector: builder.Select(OrganizationColumns).From(OrganizationTable),
+		inserter: builder.Insert(OrganizationTable),
+		updater:  builder.Update(OrganizationTable),
+		deleter:  builder.Delete(OrganizationTable),
+		counter:  builder.Select("COUNT(*) AS count").From(OrganizationTable),
 	}
 }
 
-type AgglomerationsQInsertInput struct {
+type OrganizationsQInsertInput struct {
 	Name string
 	Icon *string
 }
 
-func (q AgglomerationsQ) Insert(ctx context.Context, data AgglomerationsQInsertInput) (Agglomeration, error) {
+func (q OrganizationsQ) Insert(ctx context.Context, data OrganizationsQInsertInput) (Organization, error) {
 	query, args, err := q.inserter.SetMap(map[string]interface{}{
 		"name": data.Name,
 		"icon": data.Icon,
-	}).Suffix("RETURNING " + AgglomerationColumns).ToSql()
+	}).Suffix("RETURNING " + OrganizationColumns).ToSql()
 	if err != nil {
-		return Agglomeration{}, fmt.Errorf("building insert query for %s: %w", AgglomerationTable, err)
+		return Organization{}, fmt.Errorf("building insert query for %s: %w", OrganizationTable, err)
 	}
 
-	var inserted Agglomeration
+	var inserted Organization
 	err = inserted.scan(q.db.QueryRowContext(ctx, query, args...))
 	if err != nil {
-		return Agglomeration{}, err
+		return Organization{}, err
 	}
 
 	return inserted, nil
 }
 
-func (q AgglomerationsQ) FilterByID(id uuid.UUID) AgglomerationsQ {
+func (q OrganizationsQ) FilterByID(id uuid.UUID) OrganizationsQ {
 	q.selector = q.selector.Where(sq.Eq{"id": id})
 	q.counter = q.counter.Where(sq.Eq{"id": id})
 	q.updater = q.updater.Where(sq.Eq{"id": id})
@@ -93,7 +93,7 @@ func (q AgglomerationsQ) FilterByID(id uuid.UUID) AgglomerationsQ {
 	return q
 }
 
-func (q AgglomerationsQ) FilterByStatus(status string) AgglomerationsQ {
+func (q OrganizationsQ) FilterByStatus(status string) OrganizationsQ {
 	q.selector = q.selector.Where(sq.Eq{"status": status})
 	q.counter = q.counter.Where(sq.Eq{"status": status})
 	q.updater = q.updater.Where(sq.Eq{"status": status})
@@ -101,9 +101,9 @@ func (q AgglomerationsQ) FilterByStatus(status string) AgglomerationsQ {
 	return q
 }
 
-func (q AgglomerationsQ) FilterByAccountID(accountID uuid.UUID) AgglomerationsQ {
+func (q OrganizationsQ) FilterByAccountID(accountID uuid.UUID) OrganizationsQ {
 	sub := sq.
-		Select("agglomeration_id").
+		Select("organization_id").
 		From(MembersTable).
 		Where(sq.Eq{"account_id": accountID})
 
@@ -126,13 +126,13 @@ func (q AgglomerationsQ) FilterByAccountID(accountID uuid.UUID) AgglomerationsQ 
 	return q
 }
 
-func (q AgglomerationsQ) FilterNameLike(name string) AgglomerationsQ {
+func (q OrganizationsQ) FilterNameLike(name string) OrganizationsQ {
 	q.selector = q.selector.Where(sq.Like{"name": "%" + name + "%"})
 	q.counter = q.counter.Where(sq.Like{"name": "%" + name + "%"})
 	return q
 }
 
-func (q AgglomerationsQ) OrderName(asc bool) AgglomerationsQ {
+func (q OrganizationsQ) OrderName(asc bool) OrganizationsQ {
 	if asc {
 		q.selector = q.selector.OrderBy("name ASC", "id ASC")
 	} else {
@@ -141,133 +141,133 @@ func (q AgglomerationsQ) OrderName(asc bool) AgglomerationsQ {
 	return q
 }
 
-func (q AgglomerationsQ) Get(ctx context.Context) (Agglomeration, error) {
+func (q OrganizationsQ) Get(ctx context.Context) (Organization, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return Agglomeration{}, fmt.Errorf("building select query for %s: %w", AgglomerationTable, err)
+		return Organization{}, fmt.Errorf("building select query for %s: %w", OrganizationTable, err)
 	}
 
 	row := q.db.QueryRowContext(ctx, query, args...)
 
-	var a Agglomeration
+	var a Organization
 	if err = a.scan(row); err != nil {
-		return Agglomeration{}, err
+		return Organization{}, err
 	}
 
 	return a, nil
 
 }
 
-func (q AgglomerationsQ) Select(ctx context.Context) ([]Agglomeration, error) {
+func (q OrganizationsQ) Select(ctx context.Context) ([]Organization, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("building select query for %s: %w", AgglomerationTable, err)
+		return nil, fmt.Errorf("building select query for %s: %w", OrganizationTable, err)
 	}
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing select query for %s: %w", AgglomerationTable, err)
+		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationTable, err)
 	}
 	defer rows.Close()
 
-	var agglomerations []Agglomeration
+	var organizations []Organization
 	for rows.Next() {
-		var agglomeration Agglomeration
-		err = agglomeration.scan(rows)
+		var organization Organization
+		err = organization.scan(rows)
 		if err != nil {
 			return nil, err
 		}
-		agglomerations = append(agglomerations, agglomeration)
+		organizations = append(organizations, organization)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return agglomerations, nil
+	return organizations, nil
 }
 
-func (q AgglomerationsQ) UpdateOne(ctx context.Context) (Agglomeration, error) {
+func (q OrganizationsQ) UpdateOne(ctx context.Context) (Organization, error) {
 	q.updater = q.updater.Set("updated_at", time.Now().UTC())
 
 	query, args, err := q.updater.
-		Suffix("RETURNING " + AgglomerationColumns).
+		Suffix("RETURNING " + OrganizationColumns).
 		ToSql()
 	if err != nil {
-		return Agglomeration{}, fmt.Errorf("building update query for %s: %w", AgglomerationTable, err)
+		return Organization{}, fmt.Errorf("building update query for %s: %w", OrganizationTable, err)
 	}
 
-	var updated Agglomeration
+	var updated Organization
 	if err = updated.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		return Agglomeration{}, err
+		return Organization{}, err
 	}
 
 	return updated, nil
 }
 
-func (q AgglomerationsQ) UpdateMany(ctx context.Context) (int64, error) {
+func (q OrganizationsQ) UpdateMany(ctx context.Context) (int64, error) {
 	q.updater = q.updater.Set("updated_at", time.Now().UTC())
 
 	query, args, err := q.updater.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("building update query for %s: %w", AgglomerationTable, err)
+		return 0, fmt.Errorf("building update query for %s: %w", OrganizationTable, err)
 	}
 
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("executing update query for %s: %w", AgglomerationTable, err)
+		return 0, fmt.Errorf("executing update query for %s: %w", OrganizationTable, err)
 	}
 
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("rows affected for %s: %w", AgglomerationTable, err)
+		return 0, fmt.Errorf("rows affected for %s: %w", OrganizationTable, err)
 	}
 
 	return affected, nil
 }
 
-func (q AgglomerationsQ) UpdateName(name string) AgglomerationsQ {
+func (q OrganizationsQ) UpdateName(name string) OrganizationsQ {
 	q.updater = q.updater.Set("name", name)
 	return q
 }
 
-func (q AgglomerationsQ) UpdateIcon(icon string) AgglomerationsQ {
+func (q OrganizationsQ) UpdateIcon(icon string) OrganizationsQ {
 	q.updater = q.updater.Set("icon", icon)
 	return q
 }
 
-func (q AgglomerationsQ) UpdateStatus(status string) AgglomerationsQ {
+func (q OrganizationsQ) UpdateStatus(status string) OrganizationsQ {
 	q.updater = q.updater.Set("status", status)
 	return q
 }
 
-func (q AgglomerationsQ) UpdateMaxRoles(maxRoles uint) AgglomerationsQ {
+func (q OrganizationsQ) UpdateMaxRoles(maxRoles uint) OrganizationsQ {
 	q.updater = q.updater.Set("max_roles", maxRoles)
 	return q
 }
 
-func (q AgglomerationsQ) Delete(ctx context.Context) error {
+func (q OrganizationsQ) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
-		return fmt.Errorf("building delete query for %s: %w", AgglomerationTable, err)
+		return fmt.Errorf("building delete query for %s: %w", OrganizationTable, err)
 	}
 
 	_, err = q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("executing delete query for %s: %w", AgglomerationTable, err)
+		return fmt.Errorf("executing delete query for %s: %w", OrganizationTable, err)
 	}
 
 	return nil
 }
 
-func (q AgglomerationsQ) Page(limit, offset uint) AgglomerationsQ {
+func (q OrganizationsQ) Page(limit, offset uint) OrganizationsQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }
 
-func (q AgglomerationsQ) Count(ctx context.Context) (uint, error) {
+func (q OrganizationsQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("building count query for %s: %w", AgglomerationTable, err)
+		return 0, fmt.Errorf("building count query for %s: %w", OrganizationTable, err)
 	}
 
 	row := q.db.QueryRowContext(ctx, query, args...)
@@ -275,7 +275,7 @@ func (q AgglomerationsQ) Count(ctx context.Context) (uint, error) {
 	var count uint
 	err = row.Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("scanning count for %s: %w", AgglomerationTable, err)
+		return 0, fmt.Errorf("scanning count for %s: %w", OrganizationTable, err)
 	}
 
 	return count, nil

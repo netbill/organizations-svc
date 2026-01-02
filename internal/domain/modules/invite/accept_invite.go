@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
 )
 
 func (s Service) AcceptInvite(
@@ -35,7 +35,7 @@ func (s Service) AcceptInvite(
 		)
 	}
 
-	if _, err = s.checkAgglomerationIsActiveAndExists(ctx, invite.AgglomerationID); err != nil {
+	if _, err = s.checkOrganizationIsActiveAndExists(ctx, invite.OrganizationID); err != nil {
 		return models.Invite{}, err
 	}
 

@@ -14,7 +14,7 @@ properties:
   attributes:
     type: object
     required:
-      - agglomeration_id
+      - organization_id
       - head
       - rank
       - name
@@ -23,17 +23,17 @@ properties:
       - created_at
       - updated_at
     properties:
-      agglomeration_id:
+      organization_id:
         type: string
         format: uuid
-        description: "The ID of the agglomeration this role belongs to"
+        description: "The ID of the organization this role belongs to"
       head:
         type: boolean
-        description: "Indicates if this role is the head role of the agglomeration"
+        description: "Indicates if this role is the head role of the organization"
       rank:
         type: integer
         format: uint
-        description: "The rank of the role within the agglomeration"
+        description: "The rank of the role within the organization"
       name:
         type: string
         description: "The name of the role"
@@ -74,7 +74,7 @@ properties:
               description: "A short code representing the permission"
             description:
               type: string
-              example: "Allows managing agglomeration"
+              example: "Allows managing organization"
               description: "A detailed description of what the permission allows"
             enabled:
               type: boolean

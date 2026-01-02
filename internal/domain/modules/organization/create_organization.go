@@ -1,12 +1,12 @@
-package agglomeration
+package organization
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
 )
 
 type CreateParams struct {
@@ -14,23 +14,23 @@ type CreateParams struct {
 	Icon *string
 }
 
-func (s Service) CreateAgglomeration(
+func (s Service) CreateOrganization(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params CreateParams,
-) (agglo models.Agglomeration, err error) {
+) (agglo models.Organization, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.CreateAgglomeration(ctx, params)
+		agglo, err = s.repo.CreateOrganization(ctx, params)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to create agglomeration: %w", err),
+				fmt.Errorf("failed to create organization: %w", err),
 			)
 		}
 
-		err = s.messenger.WriteAgglomerationCreated(ctx, agglo)
+		err = s.messenger.WriteOrganizationCreated(ctx, agglo)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to publish agglomeration create event: %w", err),
+				fmt.Errorf("failed to publish organization create event: %w", err),
 			)
 		}
 
@@ -46,14 +46,14 @@ func (s Service) CreateAgglomeration(
 
 		return nil
 	}); err != nil {
-		return models.Agglomeration{}, err
+		return models.Organization{}, err
 	}
 
 	return agglo, err
 }
 
-func (s Service) createRoleHead(ctx context.Context, agglomerationID uuid.UUID) (role models.Role, err error) {
-	role, err = s.repo.CreateHeadRole(ctx, agglomerationID)
+func (s Service) createRoleHead(ctx context.Context, organizationID uuid.UUID) (role models.Role, err error) {
+	role, err = s.repo.CreateHeadRole(ctx, organizationID)
 	if err != nil {
 		return models.Role{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to create role: %w", err),
@@ -73,10 +73,10 @@ func (s Service) createRoleHead(ctx context.Context, agglomerationID uuid.UUID) 
 func (s Service) createMemberHead(
 	ctx context.Context,
 	accountID uuid.UUID,
-	agglomerationID uuid.UUID,
+	organizationID uuid.UUID,
 	roleID uuid.UUID,
 ) (member models.Member, err error) {
-	member, err = s.repo.CreateMember(ctx, accountID, agglomerationID)
+	member, err = s.repo.CreateMember(ctx, accountID, organizationID)
 	if err != nil {
 		return models.Member{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to create member: %w", err),

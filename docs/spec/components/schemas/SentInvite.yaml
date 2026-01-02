@@ -14,13 +14,13 @@ properties:
       attributes:
         type: object
         required:
-          - agglomeration_id
+          - organization_id
           - account_id
         properties:
-          agglomeration_id:
+          organization_id:
             type: string
             format: uuid
-            description: "The ID of the agglomeration to which the invite belongs"
+            description: "The ID of the organization to which the invite belongs"
           account_id:
             type: string
             format: uuid

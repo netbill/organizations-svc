@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | [**uuid.UUID**](uuid.UUID.md) | agglomeration ID | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | organization ID | 
 **Type** | **string** |  | 
 **Attributes** | [**UpdateRolesRanksDataAttributes**](UpdateRolesRanksDataAttributes.md) |  | 
 

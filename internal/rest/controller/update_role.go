@@ -6,12 +6,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/role"
-	"github.com/umisto/agglomerations-svc/internal/rest"
-	"github.com/umisto/agglomerations-svc/internal/rest/request"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/domain/modules/role"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
 func (c Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {

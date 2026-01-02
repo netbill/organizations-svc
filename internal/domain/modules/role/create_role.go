@@ -5,16 +5,16 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
 )
 
 type CreateParams struct {
-	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Rank            uint      `json:"rank"`
-	Name            string    `json:"name"`
-	Description     string    `json:"description"`
-	Color           string    `json:"color"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Rank           uint      `json:"rank"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	Color          string    `json:"color"`
 }
 
 func (s Service) CreateRole(
@@ -22,7 +22,7 @@ func (s Service) CreateRole(
 	accountID uuid.UUID,
 	params CreateParams,
 ) (role models.Role, err error) {
-	initiator, err := s.getInitiator(ctx, accountID, params.AgglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, params.OrganizationID)
 	if err != nil {
 		return role, err
 	}

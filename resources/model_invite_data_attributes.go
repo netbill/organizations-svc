@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -23,8 +23,8 @@ var _ MappedNullable = &InviteDataAttributes{}
 
 // InviteDataAttributes struct for InviteDataAttributes
 type InviteDataAttributes struct {
-	// The ID of the agglomeration to which the invite belongs
-	AgglomerationId uuid.UUID `json:"agglomeration_id"`
+	// The ID of the organization to which the invite belongs
+	OrganizationId uuid.UUID `json:"organization_id"`
 	// The ID of the account that was invited
 	AccountId uuid.UUID `json:"account_id"`
 	// The status of the invite
@@ -41,9 +41,9 @@ type _InviteDataAttributes InviteDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInviteDataAttributes(agglomerationId uuid.UUID, accountId uuid.UUID, status string, expiresAt time.Time, createdAt time.Time) *InviteDataAttributes {
+func NewInviteDataAttributes(organizationId uuid.UUID, accountId uuid.UUID, status string, expiresAt time.Time, createdAt time.Time) *InviteDataAttributes {
 	this := InviteDataAttributes{}
-	this.AgglomerationId = agglomerationId
+	this.OrganizationId = organizationId
 	this.AccountId = accountId
 	this.Status = status
 	this.ExpiresAt = expiresAt
@@ -59,28 +59,28 @@ func NewInviteDataAttributesWithDefaults() *InviteDataAttributes {
 	return &this
 }
 
-// GetAgglomerationId returns the AgglomerationId field value
-func (o *InviteDataAttributes) GetAgglomerationId() uuid.UUID {
+// GetOrganizationId returns the OrganizationId field value
+func (o *InviteDataAttributes) GetOrganizationId() uuid.UUID {
 	if o == nil {
 		var ret uuid.UUID
 		return ret
 	}
 
-	return o.AgglomerationId
+	return o.OrganizationId
 }
 
-// GetAgglomerationIdOk returns a tuple with the AgglomerationId field value
+// GetOrganizationIdOk returns a tuple with the OrganizationId field value
 // and a boolean to check if the value has been set.
-func (o *InviteDataAttributes) GetAgglomerationIdOk() (*uuid.UUID, bool) {
+func (o *InviteDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.AgglomerationId, true
+	return &o.OrganizationId, true
 }
 
-// SetAgglomerationId sets field value
-func (o *InviteDataAttributes) SetAgglomerationId(v uuid.UUID) {
-	o.AgglomerationId = v
+// SetOrganizationId sets field value
+func (o *InviteDataAttributes) SetOrganizationId(v uuid.UUID) {
+	o.OrganizationId = v
 }
 
 // GetAccountId returns the AccountId field value
@@ -189,7 +189,7 @@ func (o InviteDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o InviteDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["agglomeration_id"] = o.AgglomerationId
+	toSerialize["organization_id"] = o.OrganizationId
 	toSerialize["account_id"] = o.AccountId
 	toSerialize["status"] = o.Status
 	toSerialize["expires_at"] = o.ExpiresAt
@@ -202,7 +202,7 @@ func (o *InviteDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"agglomeration_id",
+		"organization_id",
 		"account_id",
 		"status",
 		"expires_at",

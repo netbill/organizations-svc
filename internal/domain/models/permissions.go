@@ -5,16 +5,16 @@ import (
 )
 
 const (
-	RolePermissionManageAgglomeration  = "agglomeration.manage"
-	RolePermissionManageagglomerations = "agglomerations.manage"
-	RolePermissionManageRoles          = "roles.manage"
-	RolePermissionManageInvites        = "invites.manage"
-	RolePermissionManageMembers        = "members.manage"
+	RolePermissionManageOrganization  = "organization.manage"
+	RolePermissionManageorganizations = "organizations.manage"
+	RolePermissionManageRoles         = "roles.manage"
+	RolePermissionManageInvites       = "invites.manage"
+	RolePermissionManageMembers       = "members.manage"
 )
 
 var AllRolePermissions = []string{
-	RolePermissionManageAgglomeration,
-	RolePermissionManageagglomerations,
+	RolePermissionManageOrganization,
+	RolePermissionManageorganizations,
 	RolePermissionManageRoles,
 	RolePermissionManageInvites,
 	RolePermissionManageMembers,

@@ -6,25 +6,25 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
-func (c Controller) SuspendAgglomeration(w http.ResponseWriter, r *http.Request) {
-	agglomerationID, err := uuid.Parse(chi.URLParam(r, "agglomerationID"))
+func (c Controller) SuspendOrganization(w http.ResponseWriter, r *http.Request) {
+	organizationID, err := uuid.Parse(chi.URLParam(r, "organizationID"))
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid agglomeration ID")
-		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid agglomeration ID"))...)
+		c.log.WithError(err).Errorf("invalid organization ID")
+		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid organization ID"))...)
 		return
 	}
 
-	agglomeration, err := c.core.SuspendAgglomeration(r.Context(), agglomerationID)
+	organization, err := c.core.SuspendOrganization(r.Context(), organizationID)
 	if err != nil {
-		c.log.WithError(err).Errorf("failed to suspend agglomeration")
+		c.log.WithError(err).Errorf("failed to suspend organization")
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Agglomeration(agglomeration))
+	ape.Render(w, http.StatusOK, responses.Organization(organization))
 }

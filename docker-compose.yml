@@ -1,7 +1,7 @@
 services:
-  agglomerations-svc:
+  organizations-svc:
     build: .
-    container_name: agglomerations-svc
+    container_name: organizations-svc
     environment:
       - KV_VIPER_FILE=./config_docker.yaml
     ports:
@@ -9,9 +9,9 @@ services:
     networks:
       - chains-net
 
-  agglomerations-svc-postgres:
+  organizations-svc-postgres:
     image: postgres:15
-    container_name:  agglomerations-svc-postgres
+    container_name:  organizations-svc-postgres
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

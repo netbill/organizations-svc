@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/agglomeration"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
-	"github.com/umisto/pagi"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/domain/modules/organization"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/pagi"
 )
 
-func (c Controller) GetAgglomerations(w http.ResponseWriter, r *http.Request) {
+func (c Controller) GetOrganizations(w http.ResponseWriter, r *http.Request) {
 	if name := r.URL.Query().Get("name"); name != "" {
 		c.log.WithError(fmt.Errorf("filter by name is not supported yet")).Errorf("filter by name is not supported yet")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("filter by name is not supported yet"))...)
@@ -31,12 +31,12 @@ func (c Controller) GetAgglomerations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agglomerations, err := c.core.GetAgglomerations(r.Context(), agglomeration.FilterParams{}, limit, offset)
+	organizations, err := c.core.GetOrganizations(r.Context(), organization.FilterParams{}, limit, offset)
 	if err != nil {
-		c.log.WithError(err).Errorf("failed to get agglomerations")
+		c.log.WithError(err).Errorf("failed to get organizations")
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Agglomerations(r, agglomerations))
+	ape.Render(w, http.StatusOK, responses.Organizations(r, organizations))
 }

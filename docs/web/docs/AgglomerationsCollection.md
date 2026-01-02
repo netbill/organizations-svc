@@ -1,67 +1,67 @@
-# AgglomerationsCollection
+# OrganizationsCollection
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Data** | [**[]AgglomerationData**](AgglomerationData.md) |  | 
+**Data** | [**[]OrganizationData**](OrganizationData.md) |  | 
 **Links** | [**PaginationData**](PaginationData.md) |  | 
 
 ## Methods
 
-### NewAgglomerationsCollection
+### NewOrganizationsCollection
 
-`func NewAgglomerationsCollection(data []AgglomerationData, links PaginationData, ) *AgglomerationsCollection`
+`func NewOrganizationsCollection(data []OrganizationData, links PaginationData, ) *OrganizationsCollection`
 
-NewAgglomerationsCollection instantiates a new AgglomerationsCollection object
+NewOrganizationsCollection instantiates a new OrganizationsCollection object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### NewAgglomerationsCollectionWithDefaults
+### NewOrganizationsCollectionWithDefaults
 
-`func NewAgglomerationsCollectionWithDefaults() *AgglomerationsCollection`
+`func NewOrganizationsCollectionWithDefaults() *OrganizationsCollection`
 
-NewAgglomerationsCollectionWithDefaults instantiates a new AgglomerationsCollection object
+NewOrganizationsCollectionWithDefaults instantiates a new OrganizationsCollection object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetData
 
-`func (o *AgglomerationsCollection) GetData() []AgglomerationData`
+`func (o *OrganizationsCollection) GetData() []OrganizationData`
 
 GetData returns the Data field if non-nil, zero value otherwise.
 
 ### GetDataOk
 
-`func (o *AgglomerationsCollection) GetDataOk() (*[]AgglomerationData, bool)`
+`func (o *OrganizationsCollection) GetDataOk() (*[]OrganizationData, bool)`
 
 GetDataOk returns a tuple with the Data field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetData
 
-`func (o *AgglomerationsCollection) SetData(v []AgglomerationData)`
+`func (o *OrganizationsCollection) SetData(v []OrganizationData)`
 
 SetData sets Data field to given value.
 
 
 ### GetLinks
 
-`func (o *AgglomerationsCollection) GetLinks() PaginationData`
+`func (o *OrganizationsCollection) GetLinks() PaginationData`
 
 GetLinks returns the Links field if non-nil, zero value otherwise.
 
 ### GetLinksOk
 
-`func (o *AgglomerationsCollection) GetLinksOk() (*PaginationData, bool)`
+`func (o *OrganizationsCollection) GetLinksOk() (*PaginationData, bool)`
 
 GetLinksOk returns a tuple with the Links field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetLinks
 
-`func (o *AgglomerationsCollection) SetLinks(v PaginationData)`
+`func (o *OrganizationsCollection) SetLinks(v PaginationData)`
 
 SetLinks sets Links field to given value.
 

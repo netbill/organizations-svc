@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
 )
 
 type UpdateParams struct {
@@ -26,7 +26,7 @@ func (s Service) UpdateRole(
 		return models.Role{}, err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, role.AgglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, role.OrganizationID)
 	if err != nil {
 		return models.Role{}, err
 	}
@@ -60,10 +60,10 @@ func (s Service) UpdateRole(
 func (s Service) UpdateRolesRanks(
 	ctx context.Context,
 	accountID uuid.UUID,
-	agglomerationID uuid.UUID,
+	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
-	initiator, err := s.getInitiator(ctx, accountID, agglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, organizationID)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (s Service) UpdateRolesRanks(
 	maxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get account max role in agglomeration: %w", err),
+			fmt.Errorf("failed to get account max role in organization: %w", err),
 		)
 	}
 
@@ -96,7 +96,7 @@ func (s Service) UpdateRolesRanks(
 
 	//TODO optimize number of queries
 	rolesBefore, err := s.repo.GetRoles(ctx, FilterParams{
-		AgglomerationID: &agglomerationID,
+		OrganizationID: &organizationID,
 	}, 0, 1000)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
@@ -127,13 +127,13 @@ func (s Service) UpdateRolesRanks(
 	}
 
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		if err = s.repo.UpdateRolesRanks(ctx, agglomerationID, order); err != nil {
+		if err = s.repo.UpdateRolesRanks(ctx, organizationID, order); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to update roles ranks: %w", err),
 			)
 		}
 
-		if err = s.messenger.WriteRolesRanksUpdated(ctx, agglomerationID, order); err != nil {
+		if err = s.messenger.WriteRolesRanksUpdated(ctx, organizationID, order); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send role ranks updated message: %w", err),
 			)

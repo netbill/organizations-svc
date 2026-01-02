@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -25,15 +25,15 @@ var _ MappedNullable = &MemberDataAttributes{}
 type MemberDataAttributes struct {
 	// The ID of the account associated with the member
 	AccountId uuid.UUID `json:"account_id"`
-	// The ID of the agglomeration the member belongs to
-	AgglomerationId uuid.UUID `json:"agglomeration_id"`
-	// The position or role of the member within the agglomeration
+	// The ID of the organization the member belongs to
+	OrganizationId uuid.UUID `json:"organization_id"`
+	// The position or role of the member within the organization
 	Position *string `json:"position,omitempty"`
 	// A label or title associated with the member
 	Label *string `json:"label,omitempty"`
 	// The username of the member
 	Username string `json:"username"`
-	// Indicates if the member is an official representative of the agglomeration
+	// Indicates if the member is an official representative of the organization
 	Official bool `json:"official"`
 	// The date and time when the member was created
 	CreatedAt time.Time `json:"created_at"`
@@ -47,10 +47,10 @@ type _MemberDataAttributes MemberDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewMemberDataAttributes(accountId uuid.UUID, agglomerationId uuid.UUID, username string, official bool, createdAt time.Time, updatedAt time.Time) *MemberDataAttributes {
+func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, username string, official bool, createdAt time.Time, updatedAt time.Time) *MemberDataAttributes {
 	this := MemberDataAttributes{}
 	this.AccountId = accountId
-	this.AgglomerationId = agglomerationId
+	this.OrganizationId = organizationId
 	this.Username = username
 	this.Official = official
 	this.CreatedAt = createdAt
@@ -90,28 +90,28 @@ func (o *MemberDataAttributes) SetAccountId(v uuid.UUID) {
 	o.AccountId = v
 }
 
-// GetAgglomerationId returns the AgglomerationId field value
-func (o *MemberDataAttributes) GetAgglomerationId() uuid.UUID {
+// GetOrganizationId returns the OrganizationId field value
+func (o *MemberDataAttributes) GetOrganizationId() uuid.UUID {
 	if o == nil {
 		var ret uuid.UUID
 		return ret
 	}
 
-	return o.AgglomerationId
+	return o.OrganizationId
 }
 
-// GetAgglomerationIdOk returns a tuple with the AgglomerationId field value
+// GetOrganizationIdOk returns a tuple with the OrganizationId field value
 // and a boolean to check if the value has been set.
-func (o *MemberDataAttributes) GetAgglomerationIdOk() (*uuid.UUID, bool) {
+func (o *MemberDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.AgglomerationId, true
+	return &o.OrganizationId, true
 }
 
-// SetAgglomerationId sets field value
-func (o *MemberDataAttributes) SetAgglomerationId(v uuid.UUID) {
-	o.AgglomerationId = v
+// SetOrganizationId sets field value
+func (o *MemberDataAttributes) SetOrganizationId(v uuid.UUID) {
+	o.OrganizationId = v
 }
 
 // GetPosition returns the Position field value if set, zero value otherwise.
@@ -285,7 +285,7 @@ func (o MemberDataAttributes) MarshalJSON() ([]byte, error) {
 func (o MemberDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["account_id"] = o.AccountId
-	toSerialize["agglomeration_id"] = o.AgglomerationId
+	toSerialize["organization_id"] = o.OrganizationId
 	if !IsNil(o.Position) {
 		toSerialize["position"] = o.Position
 	}
@@ -305,7 +305,7 @@ func (o *MemberDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"account_id",
-		"agglomeration_id",
+		"organization_id",
 		"username",
 		"official",
 		"created_at",

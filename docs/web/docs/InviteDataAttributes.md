@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AgglomerationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the agglomeration to which the invite belongs | 
+**OrganizationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the organization to which the invite belongs | 
 **AccountId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the account that was invited | 
 **Status** | **string** | The status of the invite | 
 **ExpiresAt** | **time.Time** | The expiration date and time of the invite | 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 
 ### NewInviteDataAttributes
 
-`func NewInviteDataAttributes(agglomerationId uuid.UUID, accountId uuid.UUID, status string, expiresAt time.Time, createdAt time.Time, ) *InviteDataAttributes`
+`func NewInviteDataAttributes(organizationId uuid.UUID, accountId uuid.UUID, status string, expiresAt time.Time, createdAt time.Time, ) *InviteDataAttributes`
 
 NewInviteDataAttributes instantiates a new InviteDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -29,24 +29,24 @@ NewInviteDataAttributesWithDefaults instantiates a new InviteDataAttributes obje
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetAgglomerationId
+### GetOrganizationId
 
-`func (o *InviteDataAttributes) GetAgglomerationId() uuid.UUID`
+`func (o *InviteDataAttributes) GetOrganizationId() uuid.UUID`
 
-GetAgglomerationId returns the AgglomerationId field if non-nil, zero value otherwise.
+GetOrganizationId returns the OrganizationId field if non-nil, zero value otherwise.
 
-### GetAgglomerationIdOk
+### GetOrganizationIdOk
 
-`func (o *InviteDataAttributes) GetAgglomerationIdOk() (*uuid.UUID, bool)`
+`func (o *InviteDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool)`
 
-GetAgglomerationIdOk returns a tuple with the AgglomerationId field if it's non-nil, zero value otherwise
+GetOrganizationIdOk returns a tuple with the OrganizationId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetAgglomerationId
+### SetOrganizationId
 
-`func (o *InviteDataAttributes) SetAgglomerationId(v uuid.UUID)`
+`func (o *InviteDataAttributes) SetOrganizationId(v uuid.UUID)`
 
-SetAgglomerationId sets AgglomerationId field to given value.
+SetOrganizationId sets OrganizationId field to given value.
 
 
 ### GetAccountId

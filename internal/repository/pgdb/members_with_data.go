@@ -20,7 +20,7 @@ func (mwd *MemberWithUserData) scan(row sq.RowScanner) error {
 	err := row.Scan(
 		&mwd.ID,
 		&mwd.AccountID,
-		&mwd.AgglomerationID,
+		&mwd.OrganizationID,
 		&mwd.Position,
 		&mwd.Label,
 		&mwd.CreatedAt,
@@ -245,7 +245,7 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 		if err = rows.Scan(
 			&mwd.ID,
 			&mwd.AccountID,
-			&mwd.AgglomerationID,
+			&mwd.OrganizationID,
 			&mwd.Position,
 			&mwd.Label,
 			&mwd.CreatedAt,
@@ -294,7 +294,7 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 func (q MembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
 	const sqlq = `
 		SELECT
-			(m1.agglomeration_id = m2.agglomeration_id)
+			(m1.organization_id = m2.organization_id)
 			AND (COALESCE(r1.min_rank, 2147483647) < COALESCE(r2.min_rank, 2147483647)) AS can
 		FROM members m1
 		JOIN members m2 ON m2.id = $2

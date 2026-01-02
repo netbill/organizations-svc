@@ -15,7 +15,7 @@ properties:
     type: object
     required:
       - account_id
-      - agglomeration_id
+      - organization_id
       - username
       - official
       - created_at
@@ -25,13 +25,13 @@ properties:
         type: string
         format: uuid
         description: "The ID of the account associated with the member"
-      agglomeration_id:
+      organization_id:
         type: string
         format: uuid
-        description: "The ID of the agglomeration the member belongs to"
+        description: "The ID of the organization the member belongs to"
       position:
         type: string
-        description: "The position or role of the member within the agglomeration"
+        description: "The position or role of the member within the organization"
       label:
         type: string
         description: "A label or title associated with the member"
@@ -40,7 +40,7 @@ properties:
         description: "The username of the member"
       official:
         type: boolean
-        description: "Indicates if the member is an official representative of the agglomeration"
+        description: "Indicates if the member is an official representative of the organization"
       created_at:
         type: string
         format: date-time

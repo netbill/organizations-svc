@@ -7,31 +7,31 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/umisto/pgx"
+	"github.com/netbill/pgx"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
 const MembersTable = "members"
 
-const MemberColumns = "id, account_id, agglomeration_id, position, label, created_at, updated_at"
-const MemberColumnsM = "m.id, m.account_id, m.agglomeration_id, m.position, m.label, m.created_at, m.updated_at"
+const MemberColumns = "id, account_id, organization_id, position, label, created_at, updated_at"
+const MemberColumnsM = "m.id, m.account_id, m.organization_id, m.position, m.label, m.created_at, m.updated_at"
 
 type Member struct {
-	ID              uuid.UUID `json:"id"`
-	AccountID       uuid.UUID `json:"account_id"`
-	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Position        *string   `json:"position"`
-	Label           *string   `json:"label"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID             uuid.UUID `json:"id"`
+	AccountID      uuid.UUID `json:"account_id"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Position       *string   `json:"position"`
+	Label          *string   `json:"label"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func (m *Member) scan(row sq.RowScanner) error {
 	err := row.Scan(
 		&m.ID,
 		&m.AccountID,
-		&m.AgglomerationID,
+		&m.OrganizationID,
 		&m.Position,
 		&m.Label,
 		&m.CreatedAt,
@@ -65,18 +65,18 @@ func NewMembersQ(db pgx.DBTX) MembersQ {
 }
 
 type InsertMemberParams struct {
-	AccountID       uuid.UUID
-	AgglomerationID uuid.UUID
-	Position        *string
-	Label           *string
+	AccountID      uuid.UUID
+	OrganizationID uuid.UUID
+	Position       *string
+	Label          *string
 }
 
 func (q MembersQ) Insert(ctx context.Context, data InsertMemberParams) (Member, error) {
 	query, args, err := q.inserter.SetMap(map[string]interface{}{
-		"account_id":       data.AccountID,
-		"agglomeration_id": data.AgglomerationID,
-		"position":         data.Position,
-		"label":            data.Label,
+		"account_id":      data.AccountID,
+		"organization_id": data.OrganizationID,
+		"position":        data.Position,
+		"label":           data.Label,
 	}).Suffix("RETURNING " + MemberColumns).ToSql()
 	if err != nil {
 		return Member{}, fmt.Errorf("building insert query for %s: %w", MembersTable, err)
@@ -171,11 +171,11 @@ func (q MembersQ) FilterByAccountID(accountID uuid.UUID) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterByAgglomerationID(agglomerationID uuid.UUID) MembersQ {
-	q.selector = q.selector.Where(sq.Eq{"m.agglomeration_id": agglomerationID})
-	q.counter = q.counter.Where(sq.Eq{"m.agglomeration_id": agglomerationID})
-	q.updater = q.updater.Where(sq.Eq{"m.agglomeration_id": agglomerationID})
-	q.deleter = q.deleter.Where(sq.Eq{"m.agglomeration_id": agglomerationID})
+func (q MembersQ) FilterByOrganizationID(organizationID uuid.UUID) MembersQ {
+	q.selector = q.selector.Where(sq.Eq{"m.organization_id": organizationID})
+	q.counter = q.counter.Where(sq.Eq{"m.organization_id": organizationID})
+	q.updater = q.updater.Where(sq.Eq{"m.organization_id": organizationID})
+	q.deleter = q.deleter.Where(sq.Eq{"m.organization_id": organizationID})
 	return q
 }
 

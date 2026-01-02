@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -22,7 +22,7 @@ var _ MappedNullable = &UpdateRolesRanksData{}
 
 // UpdateRolesRanksData struct for UpdateRolesRanksData
 type UpdateRolesRanksData struct {
-	// agglomeration ID
+	// organization ID
 	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
 	Attributes UpdateRolesRanksDataAttributes `json:"attributes"`

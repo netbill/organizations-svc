@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/pagi"
 )
 
 func (s Service) getInvite(ctx context.Context, ID uuid.UUID) (models.Invite, error) {
@@ -36,20 +36,20 @@ func (s Service) GetInvite(
 	}
 
 	if res.AccountID != accountID {
-		member, err := s.repo.GetMemberByAccountAndAgglomeration(
+		member, err := s.repo.GetMemberByAccountAndOrganization(
 			ctx,
 			accountID,
-			res.AgglomerationID,
+			res.OrganizationID,
 		)
 		if err != nil {
 			return models.Invite{}, errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to get member by account %s and agglomeration %s: %w",
-					accountID.String(), res.AgglomerationID.String(), err),
+				fmt.Errorf("failed to get member by account %s and organization %s: %w",
+					accountID.String(), res.OrganizationID.String(), err),
 			)
 		}
 		if member.IsNil() {
 			return models.Invite{}, errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("account is not a member of the agglomeration"),
+				fmt.Errorf("account is not a member of the organization"),
 			)
 		}
 	}
@@ -57,20 +57,20 @@ func (s Service) GetInvite(
 	return res, nil
 }
 
-func (s Service) GetAgglomerationInvites(
+func (s Service) GetOrganizationInvites(
 	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
+	accountID, organizationID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	_, err := s.getInitiator(ctx, accountID, agglomerationID)
+	_, err := s.getInitiator(ctx, accountID, organizationID)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}
 
-	res, err := s.repo.GetAgglomerationInvites(ctx, agglomerationID, limit, offset)
+	res, err := s.repo.GetOrganizationInvites(ctx, organizationID, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get agglomeration invites: %w", err),
+			fmt.Errorf("failed to get organization invites: %w", err),
 		)
 	}
 

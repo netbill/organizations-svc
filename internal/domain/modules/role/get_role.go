@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/pagi"
 )
 
 func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
@@ -32,7 +32,7 @@ func (s Service) GetRoleWithPermissions(ctx context.Context, accountID, roleID u
 		return models.Role{}, nil, err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, role.AgglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, role.OrganizationID)
 	if err != nil {
 		return models.Role{}, nil, err
 	}
@@ -52,11 +52,11 @@ func (s Service) GetRoleWithPermissions(ctx context.Context, accountID, roleID u
 }
 
 type FilterParams struct {
-	AgglomerationID *uuid.UUID
-	RolesID         *[]uuid.UUID
-	Head            *bool
-	Rank            *int
-	Name            *string
+	OrganizationID *uuid.UUID
+	RolesID        *[]uuid.UUID
+	Head           *bool
+	Rank           *int
+	Name           *string
 }
 
 func (s Service) GetRoles(

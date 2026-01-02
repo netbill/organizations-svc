@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: agglomerations-svc API
-  description: API documentation for agglomerations-svc
+  title: organizations-svc API
+  description: API documentation for organizations-svc
   version: 0.1.0
 
 paths:
@@ -17,10 +17,10 @@ paths:
 components:
   schemas:
     # requestBodies:
-    CreateAgglomeration:
-      $ref: './spec/components/schemas/CreateAgglomeration.yaml'
-    UpdateAgglomeration:
-      $ref: './spec/components/schemas/UpdateAgglomeration.yaml'
+    CreateOrganization:
+      $ref: './spec/components/schemas/CreateOrganization.yaml'
+    UpdateOrganization:
+      $ref: './spec/components/schemas/UpdateOrganization.yaml'
     UpdateMember:
       $ref: './spec/components/schemas/UpdateMember.yaml'
     SentInvite:
@@ -38,10 +38,10 @@ components:
     PaginationData:
       $ref: './spec/components/schemas/PaginationData.yaml'
 
-    Agglomeration:
-      $ref: './spec/components/schemas/Agglomeration.yaml'
-    AgglomerationsCollection:
-      $ref: './spec/components/schemas/AgglomerationsCollection.yaml'
+    Organization:
+      $ref: './spec/components/schemas/Organization.yaml'
+    OrganizationsCollection:
+      $ref: './spec/components/schemas/OrganizationsCollection.yaml'
 
     Member:
       $ref: './spec/components/schemas/Member.yaml'

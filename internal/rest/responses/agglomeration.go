@@ -4,36 +4,36 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/resources"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/resources"
+	"github.com/netbill/pagi"
 )
 
-func Agglomeration(agglomeration models.Agglomeration) resources.Agglomeration {
-	return resources.Agglomeration{
-		Data: resources.AgglomerationData{
-			Id:   agglomeration.ID,
-			Type: "agglomeration",
-			Attributes: resources.AgglomerationDataAttributes{
-				Status:    agglomeration.Status,
-				Name:      agglomeration.Name,
-				Icon:      agglomeration.Icon,
-				CreatedAt: agglomeration.CreatedAt,
-				UpdatedAt: agglomeration.UpdatedAt,
+func Organization(organization models.Organization) resources.Organization {
+	return resources.Organization{
+		Data: resources.OrganizationData{
+			Id:   organization.ID,
+			Type: "organization",
+			Attributes: resources.OrganizationDataAttributes{
+				Status:    organization.Status,
+				Name:      organization.Name,
+				Icon:      organization.Icon,
+				CreatedAt: organization.CreatedAt,
+				UpdatedAt: organization.UpdatedAt,
 			},
 		},
 	}
 }
 
-func Agglomerations(r *http.Request, page pagi.Page[[]models.Agglomeration]) resources.AgglomerationsCollection {
-	data := make([]resources.AgglomerationData, len(page.Data))
+func Organizations(r *http.Request, page pagi.Page[[]models.Organization]) resources.OrganizationsCollection {
+	data := make([]resources.OrganizationData, len(page.Data))
 	for i, ag := range page.Data {
-		data[i] = Agglomeration(ag).Data
+		data[i] = Organization(ag).Data
 	}
 
 	links := BuildPageLinks(r, page.Page, page.Size, page.Total)
 
-	return resources.AgglomerationsCollection{
+	return resources.OrganizationsCollection{
 		Data:  data,
 		Links: links,
 	}

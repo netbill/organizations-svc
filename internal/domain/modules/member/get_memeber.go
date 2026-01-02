@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/pagi"
 )
 
 func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
@@ -27,20 +27,20 @@ func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (models.
 	return row, nil
 }
 
-func (s Service) GetMemberByAccountAndAgglomeration(
+func (s Service) GetMemberByAccountAndOrganization(
 	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
+	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
+	row, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
 		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get member with account id %s and agglomeration id %s: %w",
-				accountID, agglomerationID, err),
+			fmt.Errorf("failed to get member with account id %s and organization id %s: %w",
+				accountID, organizationID, err),
 		)
 	}
 	if row.IsNil() {
 		return models.Member{}, errx.ErrorMemberNotFound.Raise(
-			fmt.Errorf("member with account id %s and agglomeration id %s not found", accountID, agglomerationID),
+			fmt.Errorf("member with account id %s and organization id %s not found", accountID, organizationID),
 		)
 	}
 
@@ -49,13 +49,13 @@ func (s Service) GetMemberByAccountAndAgglomeration(
 
 func (s Service) GetInitiatorMember(
 	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
+	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	initiator, err := s.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
+	initiator, err := s.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if errors.Is(err, errx.ErrorMemberNotFound) {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member with account id %s and agglomeration id %s not found: %w",
-				accountID, agglomerationID, err.Error()),
+			fmt.Errorf("initiator member with account id %s and organization id %s not found: %w",
+				accountID, organizationID, err.Error()),
 		)
 	}
 
@@ -63,16 +63,16 @@ func (s Service) GetInitiatorMember(
 }
 
 type FilterParams struct {
-	AgglomerationID *uuid.UUID
-	AccountID       *uuid.UUID
-	RoleID          *uuid.UUID
-	Username        *string
-	BestMatch       *string
-	PermissionCode  *string
-	Label           *string
-	Position        *string
-	RoleRankUp      *uint
-	RoleRankDown    *uint
+	OrganizationID *uuid.UUID
+	AccountID      *uuid.UUID
+	RoleID         *uuid.UUID
+	Username       *string
+	BestMatch      *string
+	PermissionCode *string
+	Label          *string
+	Position       *string
+	RoleRankUp     *uint
+	RoleRankDown   *uint
 }
 
 func (s Service) GetMembers(

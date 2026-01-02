@@ -4,13 +4,13 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/role"
-	"github.com/umisto/agglomerations-svc/internal/rest"
-	"github.com/umisto/agglomerations-svc/internal/rest/request"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/modules/role"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
 func (c Controller) CreateRole(w http.ResponseWriter, r *http.Request) {
@@ -29,11 +29,11 @@ func (c Controller) CreateRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := c.core.CreateRole(r.Context(), initiator.ID, role.CreateParams{
-		AgglomerationID: req.Data.Attributes.AgglomerationId,
-		Name:            req.Data.Attributes.Name,
-		Rank:            req.Data.Attributes.Rank,
-		Description:     req.Data.Attributes.Description,
-		Color:           req.Data.Attributes.Color,
+		OrganizationID: req.Data.Attributes.OrganizationId,
+		Name:           req.Data.Attributes.Name,
+		Rank:           req.Data.Attributes.Rank,
+		Description:    req.Data.Attributes.Description,
+		Color:          req.Data.Attributes.Color,
 	})
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to create role")

@@ -7,31 +7,31 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
-func (c Controller) GetAgglomeration(w http.ResponseWriter, r *http.Request) {
-	agglomerationID, err := uuid.Parse(chi.URLParam(r, "agglomerationID"))
+func (c Controller) GetOrganization(w http.ResponseWriter, r *http.Request) {
+	organizationID, err := uuid.Parse(chi.URLParam(r, "organizationID"))
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid agglomeration ID")
-		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid agglomeration ID"))...)
+		c.log.WithError(err).Errorf("invalid organization ID")
+		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid organization ID"))...)
 		return
 	}
 
-	agglo, err := c.core.GetAgglomeration(r.Context(), agglomerationID)
+	agglo, err := c.core.GetOrganization(r.Context(), organizationID)
 	if err != nil {
-		c.log.WithError(err).Errorf("failed to get agglomeration")
+		c.log.WithError(err).Errorf("failed to get organization")
 		switch {
-		case errors.Is(err, errx.ErrorAgglomerationNotFound):
-			ape.RenderErr(w, problems.NotFound("agglomeration not found"))
+		case errors.Is(err, errx.ErrorOrganizationNotFound):
+			ape.RenderErr(w, problems.NotFound("organization not found"))
 		default:
 			ape.RenderErr(w, problems.InternalError())
 		}
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Agglomeration(agglo))
+	ape.Render(w, http.StatusOK, responses.Organization(agglo))
 }

@@ -7,7 +7,7 @@ CREATE TYPE administration_status AS ENUM (
     'suspended'
 );
 
-CREATE TABLE agglomerations (
+CREATE TABLE organizations (
     id         UUID                  PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     status     administration_status NOT NULL DEFAULT 'active',
     verified   BOOLEAN               NOT NULL DEFAULT FALSE,
@@ -32,19 +32,19 @@ CREATE TABLE profiles (
 CREATE TABLE members (
     id               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     account_id       UUID NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
-    agglomeration_id UUID NOT NULL REFERENCES agglomerations(id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     position         TEXT,
     label            TEXT,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
 
-    UNIQUE(account_id, agglomeration_id)
+    UNIQUE(account_id, organization_id)
 );
 
 CREATE TABLE roles (
     id               UUID    PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    agglomeration_id UUID    NOT NULL REFERENCES agglomerations(id) ON DELETE CASCADE,
+    organization_id UUID    NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     head             BOOLEAN NOT NULL DEFAULT false,
     rank             INT     NOT NULL DEFAULT 0 CHECK ( rank >= 0 ),
     name             TEXT    NOT NULL,
@@ -54,20 +54,20 @@ CREATE TABLE roles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    UNIQUE(agglomeration_id, name),
+    UNIQUE(organization_id, name),
 );
 
-CREATE UNIQUE INDEX roles_one_head_per_agglomeration
-    ON roles (agglomeration_id)
+CREATE UNIQUE INDEX roles_one_head_per_organization
+    ON roles (organization_id)
     WHERE head = true;
 
-CREATE UNIQUE INDEX roles_one_rank0_per_agglomeration
-    ON roles (agglomeration_id)
+CREATE UNIQUE INDEX roles_one_rank0_per_organization
+    ON roles (organization_id)
     WHERE rank = 0;
 
 -- ALTER TABLE roles
---     ADD CONSTRAINT roles_agglomeration_id_rank_key
---     UNIQUE (agglomeration_id, rank)
+--     ADD CONSTRAINT roles_organization_id_rank_key
+--     UNIQUE (organization_id, rank)
 --     DEFERRABLE INITIALLY DEFERRED;
 
 CREATE TABLE member_roles (
@@ -98,7 +98,7 @@ CREATE TYPE invite_status AS ENUM (
 
 CREATE TABLE invites (
     id               UUID          PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    agglomeration_id UUID          NOT NULL REFERENCES agglomerations(id) ON DELETE CASCADE,
+    organization_id UUID          NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     status           invite_status NOT NULL DEFAULT 'sent',
 
     expires_at       TIMESTAMPTZ NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE invites (
 );
 
 -- +migrate Down
-DROP TABLE IF EXISTS agglomerations CASCADE;
+DROP TABLE IF EXISTS organizations CASCADE;
 DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS members CASCADE;

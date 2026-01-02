@@ -7,10 +7,10 @@ properties:
   id:
     type: string
     format: uuid
-    description: "agglomeration ID"
+    description: "organization ID"
   type:
     type: string
-    enum: [ agglomeration ]
+    enum: [ organization ]
   attributes:
     type: object
     required:
@@ -22,18 +22,18 @@ properties:
     properties:
       status:
         type: string
-        description: "The status of the agglomeration"
+        description: "The status of the organization"
       name:
         type: string
-        description: "The name of the agglomeration"
+        description: "The name of the organization"
       icon:
         type: string
-        description: "The icon representing the agglomeration"
+        description: "The icon representing the organization"
       created_at:
         type: string
         format: date-time
-        description: "The date and time when the agglomeration was created"
+        description: "The date and time when the organization was created"
       updated_at:
         type: string
         format: date-time
-        description: "The date and time when the agglomeration was last updated"
+        description: "The date and time when the organization was last updated"

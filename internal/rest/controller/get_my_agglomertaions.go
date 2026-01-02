@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/umisto/agglomerations-svc/internal/rest"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
-	"github.com/umisto/pagi"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/pagi"
 )
 
-func (c Controller) GetMyAgglomerations(w http.ResponseWriter, r *http.Request) {
+func (c Controller) GetMyOrganizations(w http.ResponseWriter, r *http.Request) {
 	initiator, err := rest.AccountData(r)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
@@ -26,12 +26,12 @@ func (c Controller) GetMyAgglomerations(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res, err := c.core.GetAgglomerationForUser(r.Context(), initiator.ID, limit, offset)
+	res, err := c.core.GetOrganizationForUser(r.Context(), initiator.ID, limit, offset)
 	if err != nil {
-		c.log.WithError(err).Errorf("failed to get agglomerations")
+		c.log.WithError(err).Errorf("failed to get organizations")
 		ape.RenderErr(w, problems.InternalError())
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Agglomerations(r, res))
+	ape.Render(w, http.StatusOK, responses.Organizations(r, res))
 }

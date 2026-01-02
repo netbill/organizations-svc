@@ -12,16 +12,16 @@ properties:
       id:
         type: string
         format: uuid
-        description: "agglomeration ID"
+        description: "organization ID"
       type:
         type: string
-        enum: [ agglomeration ]
+        enum: [ organization ]
       attributes:
         type: object
         properties:
           name:
             type: string
-            description: "The name of the agglomeration"
+            description: "The name of the organization"
           icon:
             type: string
-            description: "The icon representing the agglomeration"
+            description: "The icon representing the organization"

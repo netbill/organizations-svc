@@ -1,6 +1,6 @@
 package contracts
 
-import "github.com/umisto/agglomerations-svc/internal/domain/models"
+import "github.com/netbill/organizations-svc/internal/domain/models"
 
 const InviteCreatedEvent = "invite.created"
 

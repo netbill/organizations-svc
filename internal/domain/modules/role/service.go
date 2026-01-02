@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
+	"github.com/netbill/pagi"
 )
 
 type Service struct {
@@ -36,16 +36,16 @@ type repo interface {
 	UpdateRole(ctx context.Context, roleID uuid.UUID, params UpdateParams) (models.Role, error)
 	UpdateRolesRanks(
 		ctx context.Context,
-		agglomerationID uuid.UUID,
+		organizationID uuid.UUID,
 		order map[uuid.UUID]uint,
 	) error
 
 	DeleteRole(ctx context.Context, roleID uuid.UUID) error
 
 	GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error)
-	GetMemberByAccountAndAgglomeration(
+	GetMemberByAccountAndOrganization(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
+		accountID, organizationID uuid.UUID,
 	) (models.Member, error)
 
 	GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error)
@@ -79,7 +79,7 @@ type messenger interface {
 
 	WriteRolesRanksUpdated(
 		ctx context.Context,
-		agglomerationID uuid.UUID,
+		organizationID uuid.UUID,
 		order map[uuid.UUID]uint,
 	) error
 	WriteRolePermissionsUpdated(
@@ -139,16 +139,16 @@ func (s Service) checkPermissionsToManageRole(
 
 func (s Service) getInitiator(
 	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
+	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	initiator, err := s.repo.GetMemberByAccountAndAgglomeration(ctx, accountID, agglomerationID)
+	initiator, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
 	if initiator.IsNil() {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member with account id %s and agglomeration id %s not found: %w",
-				accountID, agglomerationID, err),
+			fmt.Errorf("initiator member with account id %s and organization id %s not found: %w",
+				accountID, organizationID, err),
 		)
 	}
 

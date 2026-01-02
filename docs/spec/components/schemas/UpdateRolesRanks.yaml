@@ -12,7 +12,7 @@ properties:
       id:
         type: string
         format: uuid
-        description: "agglomeration ID"
+        description: "organization ID"
       type:
         type: string
         enum: [ update_roles_ranks ]

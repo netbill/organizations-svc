@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/domain/errx"
+	"github.com/netbill/organizations-svc/internal/domain/models"
 )
 
 func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
@@ -40,7 +40,7 @@ func (s Service) MemberAddRole(
 		return err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, member.AgglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return err
 	}
@@ -50,9 +50,9 @@ func (s Service) MemberAddRole(
 		return err
 	}
 
-	if role.AgglomerationID != member.AgglomerationID {
+	if role.OrganizationID != member.OrganizationID {
 		return errx.ErrorRoleNotFound.Raise(
-			fmt.Errorf("role with id %s is not available in agglomeration %s", role.ID, role.AgglomerationID),
+			fmt.Errorf("role with id %s is not available in organization %s", role.ID, role.OrganizationID),
 		)
 	}
 
@@ -86,7 +86,7 @@ func (s Service) RemoveMemberRole(
 		return err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, member.AgglomerationID)
+	initiator, err := s.getInitiator(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return err
 	}
@@ -96,9 +96,9 @@ func (s Service) RemoveMemberRole(
 		return err
 	}
 
-	if role.AgglomerationID != member.AgglomerationID {
+	if role.OrganizationID != member.OrganizationID {
 		return errx.ErrorRoleNotFound.Raise(
-			fmt.Errorf("role with id %s is not available in agglomeration %s", role.ID, role.AgglomerationID),
+			fmt.Errorf("role with id %s is not available in organization %s", role.ID, role.OrganizationID),
 		)
 	}
 

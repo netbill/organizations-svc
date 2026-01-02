@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	AgglomerationStatusActive    = "active"
-	AgglomerationStatusInactive  = "inactive"
-	AgglomerationStatusSuspended = "suspended"
+	OrganizationStatusActive    = "active"
+	OrganizationStatusInactive  = "inactive"
+	OrganizationStatusSuspended = "suspended"
 )
 
-type Agglomeration struct {
+type Organization struct {
 	ID       uuid.UUID `json:"id"`
 	Status   string    `json:"status"`
 	Name     string    `json:"name"`
@@ -23,6 +23,6 @@ type Agglomeration struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (e Agglomeration) IsNil() bool {
+func (e Organization) IsNil() bool {
 	return e.ID == uuid.Nil
 }
