@@ -1,5 +1,5 @@
 server:
-  name: "cities-svc"
+  name: "agglomerations-svc"
 
 profile:
   url: "http://localhost:8002/profiles-svc/v1/profiles"
@@ -31,7 +31,8 @@ jwt:
     secret_key: "invitesuperkey"
 
 kafka:
-  broker: "re-news-kafka:XXXX"
+  brokers:
+    - "re-news-kafka:XXXX"
 
 swagger:
   enabled: true

@@ -6,97 +6,169 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chains-lab/cities-svc/internal"
-	"github.com/chains-lab/cities-svc/internal/rest/meta"
-	"github.com/chains-lab/logium"
-	"github.com/chains-lab/restkit/roles"
 	"github.com/go-chi/chi/v5"
+	"github.com/umisto/agglomerations-svc/internal"
+	"github.com/umisto/logium"
+	"github.com/umisto/restkit/roles"
 )
 
 type Handlers interface {
-	ListCities(w http.ResponseWriter, r *http.Request)
-	CreateCity(w http.ResponseWriter, r *http.Request)
-	GetCity(w http.ResponseWriter, r *http.Request)
-	UpdateCity(w http.ResponseWriter, r *http.Request)
-	UpdateCityStatus(w http.ResponseWriter, r *http.Request)
+	//Agglomeration handlers
+	CreateAgglomeration(w http.ResponseWriter, r *http.Request)
 
-	GetCityBySlug(w http.ResponseWriter, r *http.Request)
-	ListAdmins(w http.ResponseWriter, r *http.Request)
-	SentInvite(w http.ResponseWriter, r *http.Request)
-	ReplyInvite(w http.ResponseWriter, r *http.Request)
-	GetCityAdmin(w http.ResponseWriter, r *http.Request)
-	DeleteCityAdmin(w http.ResponseWriter, r *http.Request)
+	GetAgglomeration(w http.ResponseWriter, r *http.Request)
+	GetAgglomerations(w http.ResponseWriter, r *http.Request)
+	GetMyAgglomerations(w http.ResponseWriter, r *http.Request)
 
-	GetMyCityAdmin(w http.ResponseWriter, r *http.Request)
-	UpdateCityAdmin(w http.ResponseWriter, r *http.Request)
-	UpdateMyCityAdmin(w http.ResponseWriter, r *http.Request)
-	RefuseMyCityAdmin(w http.ResponseWriter, r *http.Request)
+	UpdateAgglomeration(w http.ResponseWriter, r *http.Request)
+
+	SuspendAgglomeration(w http.ResponseWriter, r *http.Request)
+	ActivateAgglomeration(w http.ResponseWriter, r *http.Request)
+	DeactivateAgglomeration(w http.ResponseWriter, r *http.Request)
+
+	GetAgglomerationInvites(w http.ResponseWriter, r *http.Request)
+	GetAgglomerationMembers(w http.ResponseWriter, r *http.Request)
+	GetAgglomerationRoles(w http.ResponseWriter, r *http.Request)
+
+	//Member handlers
+	GetMember(w http.ResponseWriter, r *http.Request)
+	UpdateMember(w http.ResponseWriter, r *http.Request)
+	DeleteMember(w http.ResponseWriter, r *http.Request)
+
+	MemberAddRole(w http.ResponseWriter, r *http.Request)
+	MemberRemoveRole(w http.ResponseWriter, r *http.Request)
+
+	//Invite handlers
+	CreateInvite(w http.ResponseWriter, r *http.Request)
+	GetInvite(w http.ResponseWriter, r *http.Request)
+	DeleteInvite(w http.ResponseWriter, r *http.Request)
+	AcceptInvite(w http.ResponseWriter, r *http.Request)
+	DeclineInvite(w http.ResponseWriter, r *http.Request)
+
+	//Role handlers
+	CreateRole(w http.ResponseWriter, r *http.Request)
+	GetRole(w http.ResponseWriter, r *http.Request)
+	UpdateRole(w http.ResponseWriter, r *http.Request)
+	DeleteRole(w http.ResponseWriter, r *http.Request)
+
+	UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
+
+	UpdateRolePermissions(w http.ResponseWriter, r *http.Request)
+	GetAllPermissions(w http.ResponseWriter, r *http.Request)
 }
 
 type Middlewares interface {
-	Auth(userCtxKey interface{}, skUser string) func(http.Handler) http.Handler
-	RoleGrant(userCtxKey interface{}, allowedRoles map[string]bool) func(http.Handler) http.Handler
+	Auth() func(http.Handler) http.Handler
+	SystemRoleGrant(allowedRoles map[string]bool) func(http.Handler) http.Handler
 }
 
-func Run(ctx context.Context, cfg internal.Config, log logium.Logger, m Middlewares, h Handlers) {
-	auth := m.Auth(meta.UserCtxKey, cfg.JWT.User.AccessToken.SecretKey)
+type Service struct {
+	handlers    Handlers
+	middlewares Middlewares
+	log         logium.Logger
+}
 
-	sysadmin := m.RoleGrant(meta.UserCtxKey, map[string]bool{
+func New(
+	log logium.Logger,
+	middlewares Middlewares,
+	handlers Handlers,
+) *Service {
+	return &Service{
+		log:         log,
+		middlewares: middlewares,
+		handlers:    handlers,
+	}
+}
+
+func (s *Service) Run(ctx context.Context, cfg internal.Config) {
+	auth := s.middlewares.Auth()
+	sysadmin := s.middlewares.SystemRoleGrant(map[string]bool{
 		roles.SystemAdmin: true,
 	})
 
 	r := chi.NewRouter()
 
-	r.Route("/cities-svc/", func(r chi.Router) {
+	r.Route("/agglomerations-svc", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
-			r.Get("/city/{slug}", h.GetCityBySlug)
+			r.Get("/{city_slug}", nil)
 
-			r.Route("/cities", func(r chi.Router) {
-				r.Get("/", h.ListCities)
+			r.With(auth).Route("/agglomerations", func(r chi.Router) {
+				r.Get("/", s.handlers.GetAgglomerations)
 
-				r.With(auth, sysadmin).Post("/", h.CreateCity)
+				r.Route("/{agglomeration_id}", func(r chi.Router) {
+					r.Get("/", s.handlers.GetAgglomeration)
+					r.Put("/", s.handlers.UpdateAgglomeration)
 
-				r.Route("/{city_id}", func(r chi.Router) {
-					r.Get("/", h.GetCity)
+					r.Patch("/activate", s.handlers.ActivateAgglomeration)
+					r.Patch("/deactivate", s.handlers.DeactivateAgglomeration)
 
-					r.With(auth).Put("/", h.UpdateCity)
-					r.With(auth, sysadmin).Patch("/status", h.UpdateCityStatus)
-
-					r.Route("/admins", func(r chi.Router) {
-						r.Get("/", h.ListAdmins)
-
-						r.With(auth).Route("/invite", func(r chi.Router) {
-							r.Post("/", h.SentInvite)
-							r.Post("/", h.ReplyInvite)
-						})
-
-						r.With(auth).Route("/me", func(r chi.Router) {
-							r.Get("/", h.GetMyCityAdmin)
-							r.Put("/", h.UpdateMyCityAdmin)
-							r.Delete("/", h.RefuseMyCityAdmin)
-						})
-
-						r.Route("/{user_id}", func(r chi.Router) {
-							r.Get("/", h.GetCityAdmin)
-							r.With(auth).Put("/", h.UpdateCityAdmin)
-							r.With(auth).Delete("/", h.DeleteCityAdmin)
-						})
+					r.Get("/members", s.handlers.GetAgglomerationMembers)
+					r.Get("/invites", s.handlers.GetAgglomerationInvites)
+					r.Route("/roles", func(r chi.Router) {
+						r.Get("/", s.handlers.GetAgglomerationRoles)
+						r.Put("/ranks", s.handlers.UpdateRolesRanks)
 					})
+				})
+
+				//TODO
+				r.Get("/me", s.handlers.GetMyAgglomerations)
+			})
+
+			r.With(auth).Route("/members", func(r chi.Router) {
+				r.Route("/{member_id}", func(r chi.Router) {
+					r.Get("/", s.handlers.GetMember)
+					r.Put("/", s.handlers.UpdateMember)
+					r.Delete("/", s.handlers.DeleteMember)
+
+					r.Route("/roles/{role_id}", func(r chi.Router) {
+						r.Post("/", s.handlers.MemberAddRole)
+						r.Delete("/", s.handlers.MemberRemoveRole)
+					})
+				})
+			})
+
+			r.With(auth).Route("/invites", func(r chi.Router) {
+				r.Post("/", s.handlers.CreateInvite)
+
+				r.Route("/{invite_id}", func(r chi.Router) {
+					r.Get("/", s.handlers.GetInvite)
+					r.Patch("/accept", s.handlers.AcceptInvite)
+					r.Patch("/decline", s.handlers.DeclineInvite)
+				})
+			})
+
+			r.With(auth).Route("/roles", func(r chi.Router) {
+				r.Post("/", s.handlers.CreateRole)
+				r.Get("/permissions", s.handlers.GetAllPermissions)
+
+				r.Route("/{role_id}", func(r chi.Router) {
+					r.Get("/", s.handlers.GetRole)
+					r.Put("/", s.handlers.UpdateRole)
+					r.Delete("/", s.handlers.DeleteRole)
+
+					r.Put("/permissions", s.handlers.UpdateRolePermissions)
+				})
+			})
+
+			r.With(auth, sysadmin).Route("/admin", func(r chi.Router) {
+				r.With(auth, sysadmin).Route("/agglomerations", func(r chi.Router) {
+					r.Post("/", s.handlers.CreateAgglomeration)
+					r.Patch("/", s.handlers.SuspendAgglomeration)
 				})
 			})
 		})
 	})
 
 	srv := &http.Server{
-		Addr:              cfg.Rest.Port,
 		Handler:           r,
+		Addr:              cfg.Rest.Port,
 		ReadTimeout:       cfg.Rest.Timeouts.Read,
 		ReadHeaderTimeout: cfg.Rest.Timeouts.ReadHeader,
 		WriteTimeout:      cfg.Rest.Timeouts.Write,
 		IdleTimeout:       cfg.Rest.Timeouts.Idle,
 	}
 
-	log.Infof("starting REST service on %s", cfg.Rest.Port)
+	s.log.Infof("starting REST service on %s", cfg.Rest.Port)
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -109,18 +181,18 @@ func Run(ctx context.Context, cfg internal.Config, log logium.Logger, m Middlewa
 
 	select {
 	case <-ctx.Done():
-		log.Info("shutting down REST service...")
+		s.log.Info("shutting down REST service...")
 	case err := <-errCh:
 		if err != nil {
-			log.Errorf("REST server error: %v", err)
+			s.log.Errorf("REST server error: %v", err)
 		}
 	}
 
 	shCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shCtx); err != nil {
-		log.Errorf("REST shutdown error: %v", err)
+		s.log.Errorf("REST shutdown error: %v", err)
 	} else {
-		log.Info("REST server stopped")
+		s.log.Info("REST server stopped")
 	}
 }

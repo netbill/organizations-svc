@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: cities-svc API
-  description: API documentation for cities-svc
+  title: agglomerations-svc API
+  description: API documentation for agglomerations-svc
   version: 0.1.0
 
 paths:
@@ -16,46 +16,46 @@ paths:
 
 components:
   schemas:
-    CreateCity:
-      $ref: './spec/components/schemas/CreateCity.yaml'
-    UpdateCity:
-      $ref: './spec/components/schemas/UpdateCity.yaml'
-    UpdateCityStatus:
-      $ref: './spec/components/schemas/UpdateCityStatus.yaml'
-    UpdateOwnCityAdmin:
-      $ref: './spec/components/schemas/UpdateOwnCityAdmin.yaml'
-    UpdateCityAdmin:
-      $ref: './spec/components/schemas/UpdateCityAdmin.yaml'
-
+    # requestBodies:
+    CreateAgglomeration:
+      $ref: './spec/components/schemas/CreateAgglomeration.yaml'
+    UpdateAgglomeration:
+      $ref: './spec/components/schemas/UpdateAgglomeration.yaml'
+    UpdateMember:
+      $ref: './spec/components/schemas/UpdateMember.yaml'
     SentInvite:
       $ref: './spec/components/schemas/SentInvite.yaml'
-    ReplyToInvite:
-      $ref: './spec/components/schemas/ReplyToInvite.yaml'
+    CreateRole:
+      $ref: './spec/components/schemas/CreateRole.yaml'
+    UpdateRole:
+      $ref: './spec/components/schemas/UpdateRole.yaml'
+    UpdateRolesRanks:
+      $ref: './spec/components/schemas/UpdateRolesRanks.yaml'
+    UpdateRolePermissions:
+      $ref: './spec/components/schemas/UpdateRolePermissions.yaml'
 
-    City:
-      $ref: './spec/components/schemas/City.yaml'
-    CityData:
-      $ref: './spec/components/schemas/CityData.yaml'
-    CityAttributes:
-      $ref: './spec/components/schemas/CityAttributes.yaml'
-    CitiesCollection:
-      $ref: './spec/components/schemas/CitiesCollection.yaml'
+    # responses:
+    PaginationData:
+      $ref: './spec/components/schemas/PaginationData.yaml'
 
-    CityAdmin:
-      $ref: './spec/components/schemas/CityAdmin.yaml'
-    CityAdminData:
-      $ref: './spec/components/schemas/CityAdminData.yaml'
-    CityAdminAttributes:
-      $ref: './spec/components/schemas/CityAdminAttributes.yaml'
-    CityAdminsCollection:
-      $ref: './spec/components/schemas/CityAdminsCollection.yaml'
+    Agglomeration:
+      $ref: './spec/components/schemas/Agglomeration.yaml'
+    AgglomerationsCollection:
+      $ref: './spec/components/schemas/AgglomerationsCollection.yaml'
+
+    Member:
+      $ref: './spec/components/schemas/Member.yaml'
+    MemberCollection:
+      $ref: './spec/components/schemas/MemberCollection.yaml'
 
     Invite:
       $ref: './spec/components/schemas/Invite.yaml'
+    InvitesCollection:
+      $ref: './spec/components/schemas/InvitesCollection.yaml'
 
-    Errors:
-      $ref: './spec/components/schemas/Errors.yaml'
-    PaginationData:
-      $ref: './spec/components/schemas/PaginationData.yaml'
-    Point:
-      $ref: './spec/components/schemas/Point.yaml'
+    Role:
+      $ref: './spec/components/schemas/Role.yaml'
+    RolesCollection:
+      $ref: './spec/components/schemas/RolesCollection.yaml'
+    RolePermissions:
+      $ref: './spec/components/schemas/RolePermissions.yaml'

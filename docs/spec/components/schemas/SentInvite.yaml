@@ -5,32 +5,23 @@ properties:
   data:
     type: object
     required:
-      - id
       - type
       - attributes
     properties:
-      id:
-        type: string
-        format: uuid
-        description: "invite id"
       type:
         type: string
-        enum: [ city_invite ]
+        enum: [ sent_invite ]
       attributes:
         type: object
         required:
-          - city_id
-          - user_id
-          - role
+          - agglomeration_id
+          - account_id
         properties:
-          city_id:
+          agglomeration_id:
             type: string
             format: uuid
-            description: "ID of the city the invite is for"
-          user_id:
+            description: "The ID of the agglomeration to which the invite belongs"
+          account_id:
             type: string
             format: uuid
-            description: "ID of the user who was invited"
-          role:
-            type: string
-            description: "Role assigned to the invited user"
+            description: "The ID of the account that was invited"

@@ -5,81 +5,47 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chains-lab/ape"
-	"github.com/chains-lab/ape/problems"
-	"github.com/chains-lab/cities-svc/internal/domain/errx"
-	"github.com/chains-lab/cities-svc/internal/domain/models"
-	"github.com/chains-lab/cities-svc/internal/domain/services/invite"
-	"github.com/chains-lab/cities-svc/internal/rest/meta"
-	"github.com/chains-lab/cities-svc/internal/rest/requests"
-	"github.com/chains-lab/cities-svc/internal/rest/responses"
-	"github.com/chains-lab/restkit/roles"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/umisto/agglomerations-svc/internal/domain/errx"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/invite"
+	"github.com/umisto/agglomerations-svc/internal/rest"
+	"github.com/umisto/agglomerations-svc/internal/rest/request"
+	"github.com/umisto/agglomerations-svc/internal/rest/responses"
+	"github.com/umisto/ape"
+	"github.com/umisto/ape/problems"
 )
 
-func (s Service) SentInvite(w http.ResponseWriter, r *http.Request) {
-	initiator, err := meta.User(r.Context())
+func (c Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
+	req, err := request.SentInvite(r)
 	if err != nil {
-		s.log.WithError(err).Error("failed to get user from context")
-		ape.RenderErr(w, problems.Unauthorized("failed to get user from context"))
-
-		return
-	}
-
-	req, err := requests.CreateInvite(r)
-	if err != nil {
-		s.log.WithError(err).Error("failed to parse create city admin request")
+		c.log.WithError(err).Errorf("invalid create invite request")
 		ape.RenderErr(w, problems.BadRequest(err)...)
-
 		return
 	}
 
-	var result models.Invite
-	switch initiator.Role {
-	case roles.SystemUser:
-		result, err = s.domain.invite.CreateByCityAdmin(
-			r.Context(),
-			initiator.ID,
-			invite.CreateParams{
-				UserID:   req.Data.Attributes.UserId,
-				CityID:   req.Data.Attributes.CityId,
-				Role:     req.Data.Attributes.Role,
-				Duration: 24 * time.Hour,
-			},
-		)
-	default:
-		result, err = s.domain.invite.CreateBySysAdmin(
-			r.Context(),
-			initiator.ID,
-			invite.CreateParams{
-				UserID:   req.Data.Attributes.UserId,
-				CityID:   req.Data.Attributes.CityId,
-				Role:     req.Data.Attributes.Role,
-				Duration: 24 * time.Hour,
-			},
-		)
-	}
+	initiator, err := rest.AccountData(r)
 	if err != nil {
-		s.log.WithError(err).Error("failed to create city admin")
+		c.log.WithError(err).Errorf("failed to get initiator account data")
+		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
+		return
+	}
+
+	inv, err := c.core.CreateInvite(r.Context(),
+		initiator.ID,
+		invite.CreateParams{
+			AgglomerationID: req.Data.Attributes.AgglomerationId,
+			AccountID:       req.Data.Attributes.AccountId,
+			ExpiresAt:       time.Now().UTC().Add(24 * time.Hour),
+		})
+	if err != nil {
+		c.log.WithError(err).Errorf("failed to create invite")
 		switch {
-		case errors.Is(err, errx.ErrorNotEnoughRight):
-			ape.RenderErr(w, problems.Conflict("initiator have no rights for this action"))
-		case errors.Is(err, errx.ErrorCityAdminAlreadyExists):
-			ape.RenderErr(w, problems.Conflict("city admin already exists"))
-		case errors.Is(err, errx.ErrorInvalidCityAdminRole):
-			ape.RenderErr(w, problems.BadRequest(validation.Errors{
-				"role": err,
-			})...)
-		case errors.Is(err, errx.ErrorCityIsNotSupported):
-			ape.RenderErr(w, problems.Forbidden("cannot create invite for not official city"))
+		case errors.Is(err, errx.ErrorNotEnoughRights):
+			ape.RenderErr(w, problems.Forbidden("not enough rights to create invite"))
 		default:
 			ape.RenderErr(w, problems.InternalError())
 		}
-
 		return
 	}
 
-	s.log.Infof("admin %s created successfully by user %s", result.ID, initiator.ID)
-
-	ape.Render(w, http.StatusCreated, responses.Invite(result))
+	ape.Render(w, http.StatusCreated, responses.Invite(inv))
 }

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: cities-svc API
-  description: API documentation for cities-svc
+  title: agglomerations-svc API
+  description: API documentation for agglomerations-svc
   version: 0.1.0
 paths:
   /test:
@@ -14,7 +14,7 @@ paths:
           description: successfully
 components:
   schemas:
-    CreateCity:
+    CreateAgglomeration:
       type: object
       required:
         - data
@@ -28,76 +28,24 @@ components:
             type:
               type: string
               enum:
-                - create_city
+                - agglomeration
             attributes:
               type: object
               required:
-                - country_id
+                - head
                 - name
-                - status
-                - point
-                - timezone
               properties:
-                country_id:
+                head:
                   type: string
-                  description: country id
+                  format: uuid
+                  description: Account ID of the head of the agglomeration
                 name:
                   type: string
-                  description: city name
-                status:
-                  type: string
-                  description: city status
-                point:
-                  $ref: '#/components/schemas/Point'
-                timezone:
-                  type: string
-                  description: city timezone
-                  example: Europe/Berlin
-    UpdateCity:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: city id
-            type:
-              type: string
-              enum:
-                - update_city
-            attributes:
-              type: object
-              properties:
-                point:
-                  $ref: '#/components/schemas/Point'
-                status:
-                  type: string
-                  enum:
-                    - active
-                    - inactive
-                  description: city status
-                name:
-                  type: string
-                  description: city name
+                  description: The name of the agglomeration
                 icon:
                   type: string
-                  format: uri
-                  description: city icon uri
-                slug:
-                  type: string
-                  description: city slug
-                timezone:
-                  type: string
-                  description: city timezone
-    UpdateCityStatus:
+                  description: The icon representing the agglomeration
+    UpdateAgglomeration:
       type: object
       required:
         - data
@@ -112,20 +60,21 @@ components:
             id:
               type: string
               format: uuid
-              description: city id
+              description: agglomeration ID
             type:
               type: string
               enum:
-                - update_city
+                - agglomeration
             attributes:
               type: object
-              required:
-                - status
               properties:
-                status:
+                name:
                   type: string
-                  description: new city status
-    UpdateOwnCityAdmin:
+                  description: The name of the agglomeration
+                icon:
+                  type: string
+                  description: The icon representing the agglomeration
+    UpdateMember:
       type: object
       required:
         - data
@@ -139,55 +88,21 @@ components:
           properties:
             id:
               type: string
-              format: string
-              description: 'user id + city id (UUID:UUID)'
-              pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+              format: uuid
+              description: member ID
             type:
               type: string
               enum:
-                - city_admin
+                - update_member
             attributes:
               type: object
               properties:
-                label:
-                  type: string
-                  description: optional label for the user in this city
                 position:
                   type: string
-                  description: optional position for the user in this city
-    UpdateCityAdmin:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: string
-              description: 'user id + city id (UUID:UUID)'
-              pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-            type:
-              type: string
-              enum:
-                - city_admin
-            attributes:
-              type: object
-              properties:
-                role:
-                  type: string
-                  description: optional role
+                  description: The position or role of the member within the agglomeration
                 label:
                   type: string
-                  description: optional label for the user in this city
-                position:
-                  type: string
-                  description: optional position for the user in this city
+                  description: A label or title associated with the member
     SentInvite:
       type: object
       required:
@@ -196,37 +111,69 @@ components:
         data:
           type: object
           required:
-            - id
             - type
             - attributes
           properties:
-            id:
-              type: string
-              format: uuid
-              description: invite id
             type:
               type: string
               enum:
-                - city_invite
+                - sent_invite
             attributes:
               type: object
               required:
-                - city_id
-                - user_id
-                - role
+                - agglomeration_id
+                - account_id
               properties:
-                city_id:
+                agglomeration_id:
                   type: string
                   format: uuid
-                  description: ID of the city the invite is for
-                user_id:
+                  description: The ID of the agglomeration to which the invite belongs
+                account_id:
                   type: string
                   format: uuid
-                  description: ID of the user who was invited
-                role:
+                  description: The ID of the account that was invited
+    CreateRole:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - create_role
+            attributes:
+              type: object
+              required:
+                - agglomeration_id
+                - rank
+                - name
+                - description
+                - color
+              properties:
+                agglomeration_id:
                   type: string
-                  description: Role assigned to the invited user
-    ReplyToInvite:
+                  format: uuid
+                  description: The ID of the agglomeration this role belongs to
+                rank:
+                  type: integer
+                  format: uint
+                  description: The rank of the role within the agglomeration
+                name:
+                  type: string
+                  description: The name of the role
+                description:
+                  type: string
+                  description: A brief description of the role
+                color:
+                  type: string
+                  description: The color associated with the role in HEX format
+    UpdateRole:
       type: object
       required:
         - data
@@ -241,90 +188,173 @@ components:
             id:
               type: string
               format: uuid
-              description: invite id
+              description: role ID
             type:
               type: string
               enum:
-                - invite
+                - update_role
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the role
+                description:
+                  type: string
+                  description: A brief description of the role
+                color:
+                  type: string
+                  description: The color associated with the role in HEX format
+    UpdateRolesRanks:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: agglomeration ID
+            type:
+              type: string
+              enum:
+                - update_roles_ranks
+            attributes:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  description: An ordered list of role IDs representing the new roles hierarchy
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - rank
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        description: role ID
+                      rank:
+                        type: integer
+                        format: uint
+                        description: The new rank of the role in the hierarchy
+    UpdateRolePermissions:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: role ID
+            type:
+              type: string
+              enum:
+                - update_roles_permission
+            attributes:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  description: An ordered list of role IDs representing the new roles hierarchy
+                  items:
+                    type: object
+                    required:
+                      - code
+                      - status
+                    properties:
+                      code:
+                        type: string
+                        description: permission code
+                      status:
+                        type: boolean
+                        description: The new status of the permission for the role
+    PaginationData:
+      type: object
+      required:
+        - self
+      properties:
+        self:
+          type: string
+          format: uri
+          description: link to the current page
+        first:
+          type: string
+          format: uri
+          description: link to the first page
+        last:
+          type: string
+          format: uri
+          description: link to the last page
+        prev:
+          type: string
+          format: uri
+          description: link to the previous page
+        next:
+          type: string
+          format: uri
+          description: link to the next page
+    Agglomeration:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: agglomeration ID
+            type:
+              type: string
+              enum:
+                - agglomeration
             attributes:
               type: object
               required:
-                - answer
+                - status
+                - name
+                - icon
+                - created_at
+                - updated_at
               properties:
-                answer:
+                status:
                   type: string
-                  enum:
-                    - accept
-                    - decline
-                  description: 'The answer to the invite, either ''accept'' or ''decline'''
-    City:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          $ref: '#/components/schemas/CityData'
-    CityData:
-      type: object
-      required:
-        - id
-        - type
-        - attributes
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: city id
-        type:
-          type: string
-          enum:
-            - city
-        attributes:
-          $ref: '#/components/schemas/CityAttributes'
-    CityAttributes:
-      type: object
-      required:
-        - country_id
-        - point
-        - status
-        - name
-        - timezone
-        - created_at
-        - updated_at
-      properties:
-        country_id:
-          type: string
-          description: country id
-        point:
-          $ref: '#/components/schemas/Point'
-        status:
-          type: string
-          enum:
-            - active
-            - inactive
-          description: city status
-        name:
-          type: string
-          description: city name
-        icon:
-          type: string
-          format: uri
-          description: city icon uri
-        slug:
-          type: string
-          description: city slug
-        timezone:
-          type: string
-          description: city timezone
-        created_at:
-          type: string
-          format: date-time
-          description: creation date
-        updated_at:
-          type: string
-          format: date-time
-          description: last update date
-    CitiesCollection:
+                  description: The status of the agglomeration
+                name:
+                  type: string
+                  description: The name of the agglomeration
+                icon:
+                  type: string
+                  description: The icon representing the agglomeration
+                created_at:
+                  type: string
+                  format: date-time
+                  description: The date and time when the agglomeration was created
+                updated_at:
+                  type: string
+                  format: date-time
+                  description: The date and time when the agglomeration was last updated
+    AgglomerationsCollection:
       type: object
       required:
         - data
@@ -333,59 +363,68 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/CityData'
+            $ref: '#/components/schemas/Agglomeration/properties/data'
         links:
           $ref: '#/components/schemas/PaginationData'
-    CityAdmin:
+    Member:
       type: object
       required:
         - data
       properties:
         data:
-          $ref: '#/components/schemas/CityAdminData'
-    CityAdminData:
-      type: object
-      required:
-        - id
-        - type
-        - attributes
-      properties:
-        id:
-          type: string
-          format: string
-          description: 'user id + city id (UUID:UUID)'
-          pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-        type:
-          type: string
-          enum:
-            - city_admin
-        attributes:
-          $ref: '#/components/schemas/CityAdminAttributes'
-    CityAdminAttributes:
-      type: object
-      required:
-        - role
-        - created_at
-        - updated_at
-      properties:
-        role:
-          type: string
-          description: role of the user in this city
-        position:
-          type: string
-          description: optional position for the user in this city
-        label:
-          type: string
-          description: optional label for the user in this city
-        created_at:
-          type: string
-          format: date-time
-          description: record creation date
-        updated_at:
-          type: string
-          format: date-time
-          description: last update date
-    CityAdminsCollection:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: member ID
+            type:
+              type: string
+              enum:
+                - member
+            attributes:
+              type: object
+              required:
+                - account_id
+                - agglomeration_id
+                - username
+                - official
+                - created_at
+                - updated_at
+              properties:
+                account_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the account associated with the member
+                agglomeration_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the agglomeration the member belongs to
+                position:
+                  type: string
+                  description: The position or role of the member within the agglomeration
+                label:
+                  type: string
+                  description: A label or title associated with the member
+                username:
+                  type: string
+                  description: The username of the member
+                official:
+                  type: boolean
+                  description: Indicates if the member is an official representative of the agglomeration
+                created_at:
+                  type: string
+                  format: date-time
+                  description: The date and time when the member was created
+                updated_at:
+                  type: string
+                  format: date-time
+                  description: The date and time when the member was last updated
+    MemberCollection:
       type: object
       required:
         - data
@@ -394,7 +433,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/CityAdminData'
+            $ref: '#/components/schemas/Member/properties/data'
         links:
           $ref: '#/components/schemas/PaginationData'
     Invite:
@@ -412,116 +451,178 @@ components:
             id:
               type: string
               format: uuid
-              description: invite id
+              description: invite ID
             type:
               type: string
               enum:
-                - city_invite
+                - invite
             attributes:
               type: object
               required:
+                - agglomeration_id
+                - account_id
                 - status
-                - role
-                - city_id
-                - user_id
-                - initiator_id
                 - expires_at
                 - created_at
               properties:
+                agglomeration_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the agglomeration to which the invite belongs
+                account_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the account that was invited
                 status:
                   type: string
-                  description: status of the invite
-                role:
-                  type: string
-                  description: role of the user in this city
-                city_id:
-                  type: string
-                  format: uuid
-                  description: city id
-                user_id:
-                  type: string
-                  format: uuid
-                  description: user id
-                initiator_id:
-                  type: string
-                  format: uuid
-                  description: id of the user who initiated the invite
+                  enum:
+                    - sent
+                    - accepted
+                    - declined
+                  description: The status of the invite
                 expires_at:
                   type: string
                   format: date-time
-                  description: timestamp when the invite will expire
+                  description: The expiration date and time of the invite
                 created_at:
                   type: string
                   format: date-time
-                  description: timestamp when the invite was created
-    Errors:
-      description: 'Standard JSON:API error'
+                  description: The date and time when the invite was created
+    InvitesCollection:
       type: object
       required:
-        - errors
+        - data
+        - links
       properties:
-        errors:
+        data:
           type: array
-          description: Non empty array of errors occurred during request processing
+          items:
+            $ref: '#/components/schemas/Invite/properties/data'
+        links:
+          $ref: '#/components/schemas/PaginationData'
+    Role:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: member ID
+            type:
+              type: string
+              enum:
+                - role
+            attributes:
+              type: object
+              required:
+                - agglomeration_id
+                - head
+                - rank
+                - name
+                - description
+                - color
+                - created_at
+                - updated_at
+              properties:
+                agglomeration_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the agglomeration this role belongs to
+                head:
+                  type: boolean
+                  description: Indicates if this role is the head role of the agglomeration
+                rank:
+                  type: integer
+                  format: uint
+                  description: The rank of the role within the agglomeration
+                name:
+                  type: string
+                  description: The name of the role
+                description:
+                  type: string
+                  description: A brief description of the role
+                color:
+                  type: string
+                  description: The color associated with the role in HEX format
+                created_at:
+                  type: string
+                  format: date-time
+                  description: Timestamp when the role was created
+                updated_at:
+                  type: string
+                  format: date-time
+                  description: Timestamp when the role was last updated
+            relationships:
+              type: object
+              properties:
+                permissions:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - code
+                      - description
+                      - enabled
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        description: Unique identifier for the permission
+                      code:
+                        type: string
+                        example: agglmeration.manage
+                        description: A short code representing the permission
+                      description:
+                        type: string
+                        example: Allows managing agglomeration
+                        description: A detailed description of what the permission allows
+                      enabled:
+                        type: boolean
+                        description: Indicates if the role has this permission
+    RolesCollection:
+      type: object
+      required:
+        - data
+        - links
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role/properties/data'
+        links:
+          $ref: '#/components/schemas/PaginationData'
+    RolePermissions:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
           items:
             type: object
             required:
-              - title
-              - status
+              - id
+              - code
+              - description
             properties:
-              title:
+              id:
                 type: string
-                description: 'Title is a short, human-readable summary of the problem'
-                example: Bad Request
-              detail:
+                format: uuid
+                description: Unique identifier for the permission
+              code:
                 type: string
-                description: Detail is a human-readable explanation specific to this occurrence of the problem
-                example: Request body was expected
-              status:
-                type: integer
-                description: Status is the HTTP status code applicable to this problem
-                example: 400
-                enum:
-                  - 400
-                  - 401
-                  - 403
-                  - 404
-                  - 409
-                  - 500
-    PaginationData:
-      type: object
-      required:
-        - page_number
-        - page_size
-        - total_items
-      properties:
-        page_number:
-          type: integer
-          format: int64
-          description: The current page number.
-          example: 1
-        page_size:
-          type: integer
-          format: int64
-          description: The number of items per page.
-          example: 10
-        total_items:
-          type: integer
-          format: int64
-          description: The total number of items available.
-          example: 100
-    Point:
-      type: object
-      description: city location
-      required:
-        - latitude
-        - longitude
-      properties:
-        latitude:
-          type: number
-          format: double
-          description: latitude
-        longitude:
-          type: number
-          format: double
-          description: longitude
+                example: agglmeration.manage
+                description: A short code representing the permission
+              description:
+                type: string
+                example: Allows managing agglomeration
+                description: A detailed description of what the permission allows

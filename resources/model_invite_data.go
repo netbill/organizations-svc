@@ -1,7 +1,7 @@
 /*
-cities-svc API
+agglomerations-svc API
 
-API documentation for cities-svc
+API documentation for agglomerations-svc
 
 API version: 0.1.0
 */
@@ -22,7 +22,7 @@ var _ MappedNullable = &InviteData{}
 
 // InviteData struct for InviteData
 type InviteData struct {
-	// invite id
+	// invite ID
 	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
 	Attributes InviteDataAttributes `json:"attributes"`

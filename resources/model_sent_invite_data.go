@@ -1,7 +1,7 @@
 /*
-cities-svc API
+agglomerations-svc API
 
-API documentation for cities-svc
+API documentation for agglomerations-svc
 
 API version: 0.1.0
 */
@@ -12,7 +12,6 @@ package resources
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"bytes"
 	"fmt"
 )
@@ -22,8 +21,6 @@ var _ MappedNullable = &SentInviteData{}
 
 // SentInviteData struct for SentInviteData
 type SentInviteData struct {
-	// invite id
-	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
 	Attributes SentInviteDataAttributes `json:"attributes"`
 }
@@ -34,9 +31,8 @@ type _SentInviteData SentInviteData
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSentInviteData(id uuid.UUID, type_ string, attributes SentInviteDataAttributes) *SentInviteData {
+func NewSentInviteData(type_ string, attributes SentInviteDataAttributes) *SentInviteData {
 	this := SentInviteData{}
-	this.Id = id
 	this.Type = type_
 	this.Attributes = attributes
 	return &this
@@ -48,30 +44,6 @@ func NewSentInviteData(id uuid.UUID, type_ string, attributes SentInviteDataAttr
 func NewSentInviteDataWithDefaults() *SentInviteData {
 	this := SentInviteData{}
 	return &this
-}
-
-// GetId returns the Id field value
-func (o *SentInviteData) GetId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.Id
-}
-
-// GetIdOk returns a tuple with the Id field value
-// and a boolean to check if the value has been set.
-func (o *SentInviteData) GetIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Id, true
-}
-
-// SetId sets field value
-func (o *SentInviteData) SetId(v uuid.UUID) {
-	o.Id = v
 }
 
 // GetType returns the Type field value
@@ -132,7 +104,6 @@ func (o SentInviteData) MarshalJSON() ([]byte, error) {
 
 func (o SentInviteData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["id"] = o.Id
 	toSerialize["type"] = o.Type
 	toSerialize["attributes"] = o.Attributes
 	return toSerialize, nil
@@ -143,7 +114,6 @@ func (o *SentInviteData) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"id",
 		"type",
 		"attributes",
 	}

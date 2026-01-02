@@ -1,0 +1,36 @@
+type: object
+required:
+  - data
+properties:
+  data:
+    type: object
+    required:
+      - id
+      - type
+      - attributes
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: "role ID"
+      type:
+        type: string
+        enum: [ update_roles_permission ]
+      attributes:
+        type: object
+        properties:
+          roles:
+            type: array
+            description: "An ordered list of role IDs representing the new roles hierarchy"
+            items:
+              type: object
+              required:
+                - code
+                - status
+              properties:
+                code:
+                  type: string
+                  description: "permission code"
+                status:
+                  type: boolean
+                  description: "The new status of the permission for the role"

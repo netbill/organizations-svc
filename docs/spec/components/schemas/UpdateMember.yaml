@@ -1,0 +1,27 @@
+type: object
+required:
+  - data
+properties:
+  data:
+    type: object
+    required:
+      - id
+      - type
+      - attributes
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: "member ID"
+      type:
+        type: string
+        enum: [ update_member ]
+      attributes:
+        type: object
+        properties:
+          position:
+            type: string
+            description: "The position or role of the member within the agglomeration"
+          label:
+            type: string
+            description: "A label or title associated with the member"

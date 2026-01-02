@@ -19,29 +19,27 @@ generate-models:
 		-i $(API_BUNDLED) -g go \
 		-o $(OUTPUT_DIR) \
 		--additional-properties=packageName=resources \
-		--import-mappings uuid.UUID=github.com/google/uuid --type-mappings string+uuid=uuid.UUID
+		--import-mappings uuid.UUID=github.com/google/uuid --type-mappings string+uuid=uuid.UUID \
+		--import-mappings uint --type-mappings integer+uint=uint \
 
 	mkdir -p $(RESOURCES_DIR)
 	find $(OUTPUT_DIR) -name '*.go' -exec mv {} $(RESOURCES_DIR)/ \;
 	find $(RESOURCES_DIR) -type f -name "*_test.go" -delete
 
-sqlc-build:
-	KV_VIPER_FILE=$(CONFIG_FILE) sqlc generate
-
 build:
-	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/cities-svc/main ./cmd/cities-svc/main.go
+	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/agglomerations-svc/main ./cmd/agglomerations-svc/main.go
 
 migrate-up:
-	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/cities-svc/main ./cmd/cities-svc/main.go
-	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/cities-svc/main migrate up
+	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/agglomerations-svc/main ./cmd/agglomerations-svc/main.go
+	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/agglomerations-svc/main migrate up
 
 migrate-down:
-	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/cities-svc/main ./cmd/cities-svc/main.go
-	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/cities-svc/main migrate down
+	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/agglomerations-svc/main ./cmd/agglomerations-svc/main.go
+	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/agglomerations-svc/main migrate down
 
 run-server:
-	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/cities-svc/main ./cmd/cities-svc/main.go
-	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/cities-svc/main run service
+	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/agglomerations-svc/main ./cmd/agglomerations-svc/main.go
+	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/agglomerations-svc/main run service
 
 docker-uo:
 	docker compose up -d

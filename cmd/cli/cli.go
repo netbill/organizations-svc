@@ -8,11 +8,11 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kingpin"
-	"github.com/chains-lab/cities-svc/cmd"
-	"github.com/chains-lab/cities-svc/cmd/migrations"
-	"github.com/chains-lab/cities-svc/internal"
+	"github.com/umisto/agglomerations-svc/cmd"
+	"github.com/umisto/agglomerations-svc/cmd/migrations"
+	"github.com/umisto/agglomerations-svc/internal"
 
-	"github.com/chains-lab/logium"
+	"github.com/umisto/logium"
 )
 
 func Run(args []string) bool {

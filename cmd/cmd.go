@@ -5,18 +5,21 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/chains-lab/cities-svc/internal"
-	"github.com/chains-lab/cities-svc/internal/domain/services/admin"
-	"github.com/chains-lab/cities-svc/internal/domain/services/city"
-	"github.com/chains-lab/cities-svc/internal/events/publisher"
-	"github.com/chains-lab/cities-svc/internal/repo"
-
-	"github.com/chains-lab/cities-svc/internal/domain/services/invite"
-	"github.com/chains-lab/cities-svc/internal/rest"
-	"github.com/chains-lab/cities-svc/internal/rest/controller"
-	"github.com/chains-lab/cities-svc/internal/rest/middlewares"
-
-	"github.com/chains-lab/logium"
+	"github.com/umisto/agglomerations-svc/internal"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/agglomeration"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/invite"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/member"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/profile"
+	"github.com/umisto/agglomerations-svc/internal/domain/modules/role"
+	"github.com/umisto/agglomerations-svc/internal/messenger/consumer"
+	"github.com/umisto/agglomerations-svc/internal/messenger/consumer/callbacker"
+	"github.com/umisto/agglomerations-svc/internal/messenger/producer"
+	"github.com/umisto/agglomerations-svc/internal/repository"
+	"github.com/umisto/agglomerations-svc/internal/rest"
+	"github.com/umisto/agglomerations-svc/internal/rest/controller"
+	"github.com/umisto/kafkakit/box"
+	"github.com/umisto/logium"
+	"github.com/umisto/restkit/mdlv"
 )
 
 func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, wg *sync.WaitGroup) {
@@ -33,16 +36,25 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 		log.Fatal("failed to connect to database", "error", err)
 	}
 
-	database := repo.NewDatabase(pg)
+	database := repository.New(pg)
+	kafkaBox := box.New(pg)
 
-	eventPublish := publisher.New(cfg.Kafka.Broker)
+	kafkaProducer := producer.New(log, cfg.Kafka.Brokers, kafkaBox)
 
-	citySvc := city.NewService(database, eventPublish)
-	cityAdminSvc := admin.NewService(database, eventPublish)
-	inviteSvc := invite.NewService(database, eventPublish)
+	aggloSvc := agglomeration.New(database, kafkaProducer)
+	memberSvc := member.New(database, kafkaProducer)
+	roleSvc := role.New(database, kafkaProducer)
+	inviteSvc := invite.New(database, kafkaProducer)
+	profileSvc := profile.New(database)
 
-	ctrl := controller.New(log, citySvc, cityAdminSvc, inviteSvc)
-	mdlv := middlewares.New(log)
+	kafkaConsumer := consumer.New(log, cfg.Kafka.Brokers, box.New(pg), callbacker.New(log, profileSvc))
 
-	run(func() { rest.Run(ctx, cfg, log, mdlv, ctrl) })
+	ctrl := controller.New(aggloSvc, memberSvc, roleSvc, inviteSvc, log)
+	mdll := mdlv.New(cfg.JWT.User.AccessToken.SecretKey, rest.AccountDataCtxKey)
+	router := rest.New(log, mdll, ctrl)
+
+	run(func() { router.Run(ctx, cfg) })
+
+	run(func() { kafkaConsumer.Run(ctx) })
+
 }

@@ -1,0 +1,25 @@
+type: object
+required:
+  - data
+properties:
+  data:
+    type: array
+    items:
+      type: object
+      required:
+        - id
+        - code
+        - description
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Unique identifier for the permission"
+        code:
+          type: string
+          example: "agglmeration.manage"
+          description: "A short code representing the permission"
+        description:
+          type: string
+          example: "Allows managing agglomeration"
+          description: "A detailed description of what the permission allows"

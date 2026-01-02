@@ -1,7 +1,7 @@
 /*
-cities-svc API
+agglomerations-svc API
 
-API documentation for cities-svc
+API documentation for agglomerations-svc
 
 API version: 0.1.0
 */
@@ -23,19 +23,15 @@ var _ MappedNullable = &InviteDataAttributes{}
 
 // InviteDataAttributes struct for InviteDataAttributes
 type InviteDataAttributes struct {
-	// status of the invite
+	// The ID of the agglomeration to which the invite belongs
+	AgglomerationId uuid.UUID `json:"agglomeration_id"`
+	// The ID of the account that was invited
+	AccountId uuid.UUID `json:"account_id"`
+	// The status of the invite
 	Status string `json:"status"`
-	// role of the user in this city
-	Role string `json:"role"`
-	// city id
-	CityId uuid.UUID `json:"city_id"`
-	// user id
-	UserId uuid.UUID `json:"user_id"`
-	// id of the user who initiated the invite
-	InitiatorId uuid.UUID `json:"initiator_id"`
-	// timestamp when the invite will expire
+	// The expiration date and time of the invite
 	ExpiresAt time.Time `json:"expires_at"`
-	// timestamp when the invite was created
+	// The date and time when the invite was created
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -45,13 +41,11 @@ type _InviteDataAttributes InviteDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInviteDataAttributes(status string, role string, cityId uuid.UUID, userId uuid.UUID, initiatorId uuid.UUID, expiresAt time.Time, createdAt time.Time) *InviteDataAttributes {
+func NewInviteDataAttributes(agglomerationId uuid.UUID, accountId uuid.UUID, status string, expiresAt time.Time, createdAt time.Time) *InviteDataAttributes {
 	this := InviteDataAttributes{}
+	this.AgglomerationId = agglomerationId
+	this.AccountId = accountId
 	this.Status = status
-	this.Role = role
-	this.CityId = cityId
-	this.UserId = userId
-	this.InitiatorId = initiatorId
 	this.ExpiresAt = expiresAt
 	this.CreatedAt = createdAt
 	return &this
@@ -63,6 +57,54 @@ func NewInviteDataAttributes(status string, role string, cityId uuid.UUID, userI
 func NewInviteDataAttributesWithDefaults() *InviteDataAttributes {
 	this := InviteDataAttributes{}
 	return &this
+}
+
+// GetAgglomerationId returns the AgglomerationId field value
+func (o *InviteDataAttributes) GetAgglomerationId() uuid.UUID {
+	if o == nil {
+		var ret uuid.UUID
+		return ret
+	}
+
+	return o.AgglomerationId
+}
+
+// GetAgglomerationIdOk returns a tuple with the AgglomerationId field value
+// and a boolean to check if the value has been set.
+func (o *InviteDataAttributes) GetAgglomerationIdOk() (*uuid.UUID, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.AgglomerationId, true
+}
+
+// SetAgglomerationId sets field value
+func (o *InviteDataAttributes) SetAgglomerationId(v uuid.UUID) {
+	o.AgglomerationId = v
+}
+
+// GetAccountId returns the AccountId field value
+func (o *InviteDataAttributes) GetAccountId() uuid.UUID {
+	if o == nil {
+		var ret uuid.UUID
+		return ret
+	}
+
+	return o.AccountId
+}
+
+// GetAccountIdOk returns a tuple with the AccountId field value
+// and a boolean to check if the value has been set.
+func (o *InviteDataAttributes) GetAccountIdOk() (*uuid.UUID, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.AccountId, true
+}
+
+// SetAccountId sets field value
+func (o *InviteDataAttributes) SetAccountId(v uuid.UUID) {
+	o.AccountId = v
 }
 
 // GetStatus returns the Status field value
@@ -87,102 +129,6 @@ func (o *InviteDataAttributes) GetStatusOk() (*string, bool) {
 // SetStatus sets field value
 func (o *InviteDataAttributes) SetStatus(v string) {
 	o.Status = v
-}
-
-// GetRole returns the Role field value
-func (o *InviteDataAttributes) GetRole() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Role
-}
-
-// GetRoleOk returns a tuple with the Role field value
-// and a boolean to check if the value has been set.
-func (o *InviteDataAttributes) GetRoleOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Role, true
-}
-
-// SetRole sets field value
-func (o *InviteDataAttributes) SetRole(v string) {
-	o.Role = v
-}
-
-// GetCityId returns the CityId field value
-func (o *InviteDataAttributes) GetCityId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.CityId
-}
-
-// GetCityIdOk returns a tuple with the CityId field value
-// and a boolean to check if the value has been set.
-func (o *InviteDataAttributes) GetCityIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.CityId, true
-}
-
-// SetCityId sets field value
-func (o *InviteDataAttributes) SetCityId(v uuid.UUID) {
-	o.CityId = v
-}
-
-// GetUserId returns the UserId field value
-func (o *InviteDataAttributes) GetUserId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.UserId
-}
-
-// GetUserIdOk returns a tuple with the UserId field value
-// and a boolean to check if the value has been set.
-func (o *InviteDataAttributes) GetUserIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.UserId, true
-}
-
-// SetUserId sets field value
-func (o *InviteDataAttributes) SetUserId(v uuid.UUID) {
-	o.UserId = v
-}
-
-// GetInitiatorId returns the InitiatorId field value
-func (o *InviteDataAttributes) GetInitiatorId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.InitiatorId
-}
-
-// GetInitiatorIdOk returns a tuple with the InitiatorId field value
-// and a boolean to check if the value has been set.
-func (o *InviteDataAttributes) GetInitiatorIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.InitiatorId, true
-}
-
-// SetInitiatorId sets field value
-func (o *InviteDataAttributes) SetInitiatorId(v uuid.UUID) {
-	o.InitiatorId = v
 }
 
 // GetExpiresAt returns the ExpiresAt field value
@@ -243,11 +189,9 @@ func (o InviteDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o InviteDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["agglomeration_id"] = o.AgglomerationId
+	toSerialize["account_id"] = o.AccountId
 	toSerialize["status"] = o.Status
-	toSerialize["role"] = o.Role
-	toSerialize["city_id"] = o.CityId
-	toSerialize["user_id"] = o.UserId
-	toSerialize["initiator_id"] = o.InitiatorId
 	toSerialize["expires_at"] = o.ExpiresAt
 	toSerialize["created_at"] = o.CreatedAt
 	return toSerialize, nil
@@ -258,11 +202,9 @@ func (o *InviteDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"agglomeration_id",
+		"account_id",
 		"status",
-		"role",
-		"city_id",
-		"user_id",
-		"initiator_id",
 		"expires_at",
 		"created_at",
 	}

@@ -4,19 +4,17 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Status** | **string** | status of the invite | 
-**Role** | **string** | role of the user in this city | 
-**CityId** | [**uuid.UUID**](uuid.UUID.md) | city id | 
-**UserId** | [**uuid.UUID**](uuid.UUID.md) | user id | 
-**InitiatorId** | [**uuid.UUID**](uuid.UUID.md) | id of the user who initiated the invite | 
-**ExpiresAt** | **time.Time** | timestamp when the invite will expire | 
-**CreatedAt** | **time.Time** | timestamp when the invite was created | 
+**AgglomerationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the agglomeration to which the invite belongs | 
+**AccountId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the account that was invited | 
+**Status** | **string** | The status of the invite | 
+**ExpiresAt** | **time.Time** | The expiration date and time of the invite | 
+**CreatedAt** | **time.Time** | The date and time when the invite was created | 
 
 ## Methods
 
 ### NewInviteDataAttributes
 
-`func NewInviteDataAttributes(status string, role string, cityId uuid.UUID, userId uuid.UUID, initiatorId uuid.UUID, expiresAt time.Time, createdAt time.Time, ) *InviteDataAttributes`
+`func NewInviteDataAttributes(agglomerationId uuid.UUID, accountId uuid.UUID, status string, expiresAt time.Time, createdAt time.Time, ) *InviteDataAttributes`
 
 NewInviteDataAttributes instantiates a new InviteDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -30,6 +28,46 @@ will change when the set of required properties is changed
 NewInviteDataAttributesWithDefaults instantiates a new InviteDataAttributes object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
+
+### GetAgglomerationId
+
+`func (o *InviteDataAttributes) GetAgglomerationId() uuid.UUID`
+
+GetAgglomerationId returns the AgglomerationId field if non-nil, zero value otherwise.
+
+### GetAgglomerationIdOk
+
+`func (o *InviteDataAttributes) GetAgglomerationIdOk() (*uuid.UUID, bool)`
+
+GetAgglomerationIdOk returns a tuple with the AgglomerationId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAgglomerationId
+
+`func (o *InviteDataAttributes) SetAgglomerationId(v uuid.UUID)`
+
+SetAgglomerationId sets AgglomerationId field to given value.
+
+
+### GetAccountId
+
+`func (o *InviteDataAttributes) GetAccountId() uuid.UUID`
+
+GetAccountId returns the AccountId field if non-nil, zero value otherwise.
+
+### GetAccountIdOk
+
+`func (o *InviteDataAttributes) GetAccountIdOk() (*uuid.UUID, bool)`
+
+GetAccountIdOk returns a tuple with the AccountId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAccountId
+
+`func (o *InviteDataAttributes) SetAccountId(v uuid.UUID)`
+
+SetAccountId sets AccountId field to given value.
+
 
 ### GetStatus
 
@@ -49,86 +87,6 @@ and a boolean to check if the value has been set.
 `func (o *InviteDataAttributes) SetStatus(v string)`
 
 SetStatus sets Status field to given value.
-
-
-### GetRole
-
-`func (o *InviteDataAttributes) GetRole() string`
-
-GetRole returns the Role field if non-nil, zero value otherwise.
-
-### GetRoleOk
-
-`func (o *InviteDataAttributes) GetRoleOk() (*string, bool)`
-
-GetRoleOk returns a tuple with the Role field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetRole
-
-`func (o *InviteDataAttributes) SetRole(v string)`
-
-SetRole sets Role field to given value.
-
-
-### GetCityId
-
-`func (o *InviteDataAttributes) GetCityId() uuid.UUID`
-
-GetCityId returns the CityId field if non-nil, zero value otherwise.
-
-### GetCityIdOk
-
-`func (o *InviteDataAttributes) GetCityIdOk() (*uuid.UUID, bool)`
-
-GetCityIdOk returns a tuple with the CityId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetCityId
-
-`func (o *InviteDataAttributes) SetCityId(v uuid.UUID)`
-
-SetCityId sets CityId field to given value.
-
-
-### GetUserId
-
-`func (o *InviteDataAttributes) GetUserId() uuid.UUID`
-
-GetUserId returns the UserId field if non-nil, zero value otherwise.
-
-### GetUserIdOk
-
-`func (o *InviteDataAttributes) GetUserIdOk() (*uuid.UUID, bool)`
-
-GetUserIdOk returns a tuple with the UserId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetUserId
-
-`func (o *InviteDataAttributes) SetUserId(v uuid.UUID)`
-
-SetUserId sets UserId field to given value.
-
-
-### GetInitiatorId
-
-`func (o *InviteDataAttributes) GetInitiatorId() uuid.UUID`
-
-GetInitiatorId returns the InitiatorId field if non-nil, zero value otherwise.
-
-### GetInitiatorIdOk
-
-`func (o *InviteDataAttributes) GetInitiatorIdOk() (*uuid.UUID, bool)`
-
-GetInitiatorIdOk returns a tuple with the InitiatorId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetInitiatorId
-
-`func (o *InviteDataAttributes) SetInitiatorId(v uuid.UUID)`
-
-SetInitiatorId sets InitiatorId field to given value.
 
 
 ### GetExpiresAt

@@ -4,15 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | [**uuid.UUID**](uuid.UUID.md) | city id | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | member ID | 
 **Type** | **string** |  | 
-**Attributes** | [**DataAttributes**](DataAttributes.md) |  | 
+**Attributes** | [**RoleDataAttributes**](RoleDataAttributes.md) |  | 
+**Relationships** | Pointer to [**RoleDataRelationships**](RoleDataRelationships.md) |  | [optional] 
 
 ## Methods
 
 ### NewData
 
-`func NewData(id uuid.UUID, type_ string, attributes DataAttributes, ) *Data`
+`func NewData(id uuid.UUID, type_ string, attributes RoleDataAttributes, ) *Data`
 
 NewData instantiates a new Data object
 This constructor will assign default values to properties that have it defined,
@@ -69,23 +70,48 @@ SetType sets Type field to given value.
 
 ### GetAttributes
 
-`func (o *Data) GetAttributes() DataAttributes`
+`func (o *Data) GetAttributes() RoleDataAttributes`
 
 GetAttributes returns the Attributes field if non-nil, zero value otherwise.
 
 ### GetAttributesOk
 
-`func (o *Data) GetAttributesOk() (*DataAttributes, bool)`
+`func (o *Data) GetAttributesOk() (*RoleDataAttributes, bool)`
 
 GetAttributesOk returns a tuple with the Attributes field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAttributes
 
-`func (o *Data) SetAttributes(v DataAttributes)`
+`func (o *Data) SetAttributes(v RoleDataAttributes)`
 
 SetAttributes sets Attributes field to given value.
 
+
+### GetRelationships
+
+`func (o *Data) GetRelationships() RoleDataRelationships`
+
+GetRelationships returns the Relationships field if non-nil, zero value otherwise.
+
+### GetRelationshipsOk
+
+`func (o *Data) GetRelationshipsOk() (*RoleDataRelationships, bool)`
+
+GetRelationshipsOk returns a tuple with the Relationships field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRelationships
+
+`func (o *Data) SetRelationships(v RoleDataRelationships)`
+
+SetRelationships sets Relationships field to given value.
+
+### HasRelationships
+
+`func (o *Data) HasRelationships() bool`
+
+HasRelationships returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
