@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: agglomerations-svc API
-  description: API documentation for agglomerations-svc
+  title: organizations-svc API
+  description: API documentation for organizations-svc
   version: 0.1.0
 paths:
   /test:
@@ -14,7 +14,7 @@ paths:
           description: successfully
 components:
   schemas:
-    CreateAgglomeration:
+    CreateOrganization:
       type: object
       required:
         - data
@@ -28,7 +28,7 @@ components:
             type:
               type: string
               enum:
-                - agglomeration
+                - organization
             attributes:
               type: object
               required:
@@ -38,14 +38,14 @@ components:
                 head:
                   type: string
                   format: uuid
-                  description: Account ID of the head of the agglomeration
+                  description: Account ID of the head of the organization
                 name:
                   type: string
-                  description: The name of the agglomeration
+                  description: The name of the organization
                 icon:
                   type: string
-                  description: The icon representing the agglomeration
-    UpdateAgglomeration:
+                  description: The icon representing the organization
+    UpdateOrganization:
       type: object
       required:
         - data
@@ -60,20 +60,20 @@ components:
             id:
               type: string
               format: uuid
-              description: agglomeration ID
+              description: organization ID
             type:
               type: string
               enum:
-                - agglomeration
+                - organization
             attributes:
               type: object
               properties:
                 name:
                   type: string
-                  description: The name of the agglomeration
+                  description: The name of the organization
                 icon:
                   type: string
-                  description: The icon representing the agglomeration
+                  description: The icon representing the organization
     UpdateMember:
       type: object
       required:
@@ -99,7 +99,7 @@ components:
               properties:
                 position:
                   type: string
-                  description: The position or role of the member within the agglomeration
+                  description: The position or role of the member within the organization
                 label:
                   type: string
                   description: A label or title associated with the member
@@ -121,13 +121,13 @@ components:
             attributes:
               type: object
               required:
-                - agglomeration_id
+                - organization_id
                 - account_id
               properties:
-                agglomeration_id:
+                organization_id:
                   type: string
                   format: uuid
-                  description: The ID of the agglomeration to which the invite belongs
+                  description: The ID of the organization to which the invite belongs
                 account_id:
                   type: string
                   format: uuid
@@ -150,20 +150,20 @@ components:
             attributes:
               type: object
               required:
-                - agglomeration_id
+                - organization_id
                 - rank
                 - name
                 - description
                 - color
               properties:
-                agglomeration_id:
+                organization_id:
                   type: string
                   format: uuid
-                  description: The ID of the agglomeration this role belongs to
+                  description: The ID of the organization this role belongs to
                 rank:
                   type: integer
                   format: uint
-                  description: The rank of the role within the agglomeration
+                  description: The rank of the role within the organization
                 name:
                   type: string
                   description: The name of the role
@@ -220,7 +220,7 @@ components:
             id:
               type: string
               format: uuid
-              description: agglomeration ID
+              description: organization ID
             type:
               type: string
               enum:
@@ -308,7 +308,7 @@ components:
           type: string
           format: uri
           description: link to the next page
-    Agglomeration:
+    Organization:
       type: object
       required:
         - data
@@ -323,11 +323,11 @@ components:
             id:
               type: string
               format: uuid
-              description: agglomeration ID
+              description: organization ID
             type:
               type: string
               enum:
-                - agglomeration
+                - organization
             attributes:
               type: object
               required:
@@ -339,22 +339,22 @@ components:
               properties:
                 status:
                   type: string
-                  description: The status of the agglomeration
+                  description: The status of the organization
                 name:
                   type: string
-                  description: The name of the agglomeration
+                  description: The name of the organization
                 icon:
                   type: string
-                  description: The icon representing the agglomeration
+                  description: The icon representing the organization
                 created_at:
                   type: string
                   format: date-time
-                  description: The date and time when the agglomeration was created
+                  description: The date and time when the organization was created
                 updated_at:
                   type: string
                   format: date-time
-                  description: The date and time when the agglomeration was last updated
-    AgglomerationsCollection:
+                  description: The date and time when the organization was last updated
+    OrganizationsCollection:
       type: object
       required:
         - data
@@ -363,7 +363,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Agglomeration/properties/data'
+            $ref: '#/components/schemas/Organization/properties/data'
         links:
           $ref: '#/components/schemas/PaginationData'
     Member:
@@ -390,7 +390,7 @@ components:
               type: object
               required:
                 - account_id
-                - agglomeration_id
+                - organization_id
                 - username
                 - official
                 - created_at
@@ -400,13 +400,13 @@ components:
                   type: string
                   format: uuid
                   description: The ID of the account associated with the member
-                agglomeration_id:
+                organization_id:
                   type: string
                   format: uuid
-                  description: The ID of the agglomeration the member belongs to
+                  description: The ID of the organization the member belongs to
                 position:
                   type: string
-                  description: The position or role of the member within the agglomeration
+                  description: The position or role of the member within the organization
                 label:
                   type: string
                   description: A label or title associated with the member
@@ -415,7 +415,7 @@ components:
                   description: The username of the member
                 official:
                   type: boolean
-                  description: Indicates if the member is an official representative of the agglomeration
+                  description: Indicates if the member is an official representative of the organization
                 created_at:
                   type: string
                   format: date-time
@@ -459,16 +459,16 @@ components:
             attributes:
               type: object
               required:
-                - agglomeration_id
+                - organization_id
                 - account_id
                 - status
                 - expires_at
                 - created_at
               properties:
-                agglomeration_id:
+                organization_id:
                   type: string
                   format: uuid
-                  description: The ID of the agglomeration to which the invite belongs
+                  description: The ID of the organization to which the invite belongs
                 account_id:
                   type: string
                   format: uuid
@@ -523,7 +523,7 @@ components:
             attributes:
               type: object
               required:
-                - agglomeration_id
+                - organization_id
                 - head
                 - rank
                 - name
@@ -532,17 +532,17 @@ components:
                 - created_at
                 - updated_at
               properties:
-                agglomeration_id:
+                organization_id:
                   type: string
                   format: uuid
-                  description: The ID of the agglomeration this role belongs to
+                  description: The ID of the organization this role belongs to
                 head:
                   type: boolean
-                  description: Indicates if this role is the head role of the agglomeration
+                  description: Indicates if this role is the head role of the organization
                 rank:
                   type: integer
                   format: uint
-                  description: The rank of the role within the agglomeration
+                  description: The rank of the role within the organization
                 name:
                   type: string
                   description: The name of the role
@@ -583,7 +583,7 @@ components:
                         description: A short code representing the permission
                       description:
                         type: string
-                        example: Allows managing agglomeration
+                        example: Allows managing organization
                         description: A detailed description of what the permission allows
                       enabled:
                         type: boolean
@@ -624,5 +624,5 @@ components:
                 description: A short code representing the permission
               description:
                 type: string
-                example: Allows managing agglomeration
+                example: Allows managing organization
                 description: A detailed description of what the permission allows

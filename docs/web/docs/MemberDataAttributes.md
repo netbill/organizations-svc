@@ -5,11 +5,11 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AccountId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the account associated with the member | 
-**AgglomerationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the agglomeration the member belongs to | 
-**Position** | Pointer to **string** | The position or role of the member within the agglomeration | [optional] 
+**OrganizationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the organization the member belongs to | 
+**Position** | Pointer to **string** | The position or role of the member within the organization | [optional] 
 **Label** | Pointer to **string** | A label or title associated with the member | [optional] 
 **Username** | **string** | The username of the member | 
-**Official** | **bool** | Indicates if the member is an official representative of the agglomeration | 
+**Official** | **bool** | Indicates if the member is an official representative of the organization | 
 **CreatedAt** | **time.Time** | The date and time when the member was created | 
 **UpdatedAt** | **time.Time** | The date and time when the member was last updated | 
 
@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 
 ### NewMemberDataAttributes
 
-`func NewMemberDataAttributes(accountId uuid.UUID, agglomerationId uuid.UUID, username string, official bool, createdAt time.Time, updatedAt time.Time, ) *MemberDataAttributes`
+`func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, username string, official bool, createdAt time.Time, updatedAt time.Time, ) *MemberDataAttributes`
 
 NewMemberDataAttributes instantiates a new MemberDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -52,24 +52,24 @@ and a boolean to check if the value has been set.
 SetAccountId sets AccountId field to given value.
 
 
-### GetAgglomerationId
+### GetOrganizationId
 
-`func (o *MemberDataAttributes) GetAgglomerationId() uuid.UUID`
+`func (o *MemberDataAttributes) GetOrganizationId() uuid.UUID`
 
-GetAgglomerationId returns the AgglomerationId field if non-nil, zero value otherwise.
+GetOrganizationId returns the OrganizationId field if non-nil, zero value otherwise.
 
-### GetAgglomerationIdOk
+### GetOrganizationIdOk
 
-`func (o *MemberDataAttributes) GetAgglomerationIdOk() (*uuid.UUID, bool)`
+`func (o *MemberDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool)`
 
-GetAgglomerationIdOk returns a tuple with the AgglomerationId field if it's non-nil, zero value otherwise
+GetOrganizationIdOk returns a tuple with the OrganizationId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetAgglomerationId
+### SetOrganizationId
 
-`func (o *MemberDataAttributes) SetAgglomerationId(v uuid.UUID)`
+`func (o *MemberDataAttributes) SetOrganizationId(v uuid.UUID)`
 
-SetAgglomerationId sets AgglomerationId field to given value.
+SetOrganizationId sets OrganizationId field to given value.
 
 
 ### GetPosition

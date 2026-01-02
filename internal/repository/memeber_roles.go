@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 )
 
 func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {

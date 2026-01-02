@@ -7,25 +7,25 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/umisto/pgx"
+	"github.com/netbill/pgx"
 )
 
 const InviteTable = "invites"
-const InviteColumns = "id, agglomeration_id, account_id, status, expires_at, created_at"
+const InviteColumns = "id, organization_id, account_id, status, expires_at, created_at"
 
 type Invite struct {
-	ID              uuid.UUID `json:"id"`
-	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	AccountID       uuid.UUID `json:"account_id,omitempty"`
-	Status          string    `json:"status"`
-	ExpiresAt       time.Time `json:"expires_at"`
-	CreatedAt       time.Time `json:"created_at"`
+	ID             uuid.UUID `json:"id"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	AccountID      uuid.UUID `json:"account_id,omitempty"`
+	Status         string    `json:"status"`
+	ExpiresAt      time.Time `json:"expires_at"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 func (i *Invite) scan(row sq.RowScanner) error {
 	if err := row.Scan(
 		&i.ID,
-		&i.AgglomerationID,
+		&i.OrganizationID,
 		&i.AccountID,
 		&i.Status,
 		&i.ExpiresAt,
@@ -58,16 +58,16 @@ func NewInvitesQ(db pgx.DBTX) InvitesQ {
 }
 
 type InsertInviteParams struct {
-	AgglomerationID uuid.UUID
-	AccountID       uuid.UUID
-	ExpiresAt       time.Time
+	OrganizationID uuid.UUID
+	AccountID      uuid.UUID
+	ExpiresAt      time.Time
 }
 
 func (q InvitesQ) Insert(ctx context.Context, data InsertInviteParams) (Invite, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
-		"agglomeration_id": data.AgglomerationID,
-		"account_id":       data.AccountID,
-		"expires_at":       data.ExpiresAt,
+		"organization_id": data.OrganizationID,
+		"account_id":      data.AccountID,
+		"expires_at":      data.ExpiresAt,
 	}).Suffix("RETURNING " + InviteColumns).ToSql()
 	if err != nil {
 		return Invite{}, fmt.Errorf("building insert query for %s: %w", InviteTable, err)
@@ -185,11 +185,11 @@ func (q InvitesQ) FilterByID(id uuid.UUID) InvitesQ {
 	return q
 }
 
-func (q InvitesQ) FilterByAgglomerationID(id uuid.UUID) InvitesQ {
-	q.selector = q.selector.Where(sq.Eq{"agglomeration_id": id})
-	q.counter = q.counter.Where(sq.Eq{"agglomeration_id": id})
-	q.updater = q.updater.Where(sq.Eq{"agglomeration_id": id})
-	q.deleter = q.deleter.Where(sq.Eq{"agglomeration_id": id})
+func (q InvitesQ) FilterByOrganizationID(id uuid.UUID) InvitesQ {
+	q.selector = q.selector.Where(sq.Eq{"organization_id": id})
+	q.counter = q.counter.Where(sq.Eq{"organization_id": id})
+	q.updater = q.updater.Where(sq.Eq{"organization_id": id})
+	q.deleter = q.deleter.Where(sq.Eq{"organization_id": id})
 	return q
 }
 

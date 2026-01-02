@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -41,7 +41,7 @@ var (
 	queryDescape    = strings.NewReplacer( "%5B", "[", "%5D", "]" )
 )
 
-// APIClient manages communication with the agglomerations-svc API API v0.1.0
+// APIClient manages communication with the organizations-svc API API v0.1.0
 // In most cases there should be only one, shared, APIClient.
 type APIClient struct {
 	cfg    *Configuration

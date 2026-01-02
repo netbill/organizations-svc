@@ -6,7 +6,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/umisto/pgx"
+	"github.com/netbill/pgx"
 )
 
 const RolePermissionsTable = "role_permissions"
@@ -177,11 +177,11 @@ func (q RolePermissionsQ) FilterByAccountID(accountID uuid.UUID) RolePermissions
 	return q
 }
 
-func (q RolePermissionsQ) FilterByAgglomerationID(agglomerationID uuid.UUID) RolePermissionsQ {
+func (q RolePermissionsQ) FilterByOrganizationID(organizationID uuid.UUID) RolePermissionsQ {
 	sub := sq.
 		Select("id").
 		From("roles").
-		Where(sq.Eq{"agglomeration_id": agglomerationID})
+		Where(sq.Eq{"organization_id": organizationID})
 
 	subSQL, subArgs, err := sub.ToSql()
 	if err != nil {

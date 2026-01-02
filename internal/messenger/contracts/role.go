@@ -2,7 +2,7 @@ package contracts
 
 import (
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 const RoleCreatedEvent = "role.created"
@@ -26,8 +26,8 @@ type RoleDeletedPayload struct {
 const RolesRanksUpdatedEvent = "roles.ranks.updated"
 
 type RolesRanksUpdatedPayload struct {
-	AgglomerationID uuid.UUID          `json:"agglomeration_id"`
-	Ranks           map[uuid.UUID]uint `json:"ranks"`
+	OrganizationID uuid.UUID          `json:"organization_id"`
+	Ranks          map[uuid.UUID]uint `json:"ranks"`
 }
 
 const RolePermissionsUpdatedEvent = "role.permissions.updated"

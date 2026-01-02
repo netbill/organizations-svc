@@ -3,9 +3,9 @@ package responses
 import (
 	"net/http"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/resources"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/resources"
+	"github.com/netbill/pagi"
 )
 
 func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {
@@ -14,14 +14,14 @@ func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {
 			Id:   mod.ID,
 			Type: "role",
 			Attributes: resources.RoleDataAttributes{
-				AgglomerationId: mod.AgglomerationID,
-				Head:            mod.Head,
-				Rank:            mod.Rank,
-				Name:            mod.Name,
-				Description:     mod.Description,
-				Color:           mod.Color,
-				CreatedAt:       mod.CreatedAt,
-				UpdatedAt:       mod.UpdatedAt,
+				OrganizationId: mod.OrganizationID,
+				Head:           mod.Head,
+				Rank:           mod.Rank,
+				Name:           mod.Name,
+				Description:    mod.Description,
+				Color:          mod.Color,
+				CreatedAt:      mod.CreatedAt,
+				UpdatedAt:      mod.UpdatedAt,
 			},
 		},
 	}

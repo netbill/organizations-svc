@@ -12,7 +12,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -o main \
-    ./cmd/agglomerations-svc
+    ./cmd/organizations-svc
 
 # ==============================
 # 2) FINAL STAGE

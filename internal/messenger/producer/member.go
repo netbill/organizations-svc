@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/netbill/kafkakit/header"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 	"github.com/segmentio/kafka-go"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
-	"github.com/umisto/kafkakit/header"
 )
 
 func (p Producer) WriteMemberCreated(
@@ -32,7 +32,7 @@ func (p Producer) WriteMemberCreated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.MemberCreatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -62,7 +62,7 @@ func (p Producer) WriteMemberUpdated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.MemberUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -92,7 +92,7 @@ func (p Producer) WriteMemberDeleted(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.MemberDeletedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.AgglomerationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},

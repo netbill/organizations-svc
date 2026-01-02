@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/kafkakit/box"
+	"github.com/netbill/kafkakit/subscriber"
+	"github.com/netbill/logium"
+	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 	"github.com/segmentio/kafka-go"
-	"github.com/umisto/agglomerations-svc/internal/messenger/contracts"
-	"github.com/umisto/kafkakit/box"
-	"github.com/umisto/kafkakit/subscriber"
-	"github.com/umisto/logium"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -95,7 +95,7 @@ func (c Consumer) Run(ctx context.Context) {
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		accountSub := subscriber.New(c.addr, contracts.AccountsTopicV1, contracts.AgglomerationsSvcGroup)
+		accountSub := subscriber.New(c.addr, contracts.AccountsTopicV1, contracts.OrganizationsSvcGroup)
 		err := accountSub.Consume(ctx, func(m kafka.Message) (subscriber.HandlerFunc, bool) {
 			et, ok := subscriber.Header(m, "event_type")
 			if !ok {
@@ -119,7 +119,7 @@ func (c Consumer) Run(ctx context.Context) {
 	})
 
 	g.Go(func() error {
-		profileSub := subscriber.New(c.addr, contracts.ProfilesTopicV1, contracts.AgglomerationsSvcGroup)
+		profileSub := subscriber.New(c.addr, contracts.ProfilesTopicV1, contracts.OrganizationsSvcGroup)
 		err := profileSub.Consume(ctx, func(m kafka.Message) (subscriber.HandlerFunc, bool) {
 			et, ok := subscriber.Header(m, "event_type")
 			if !ok {

@@ -6,24 +6,24 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/umisto/pgx"
+	"github.com/netbill/pgx"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
 const RoleTable = "roles"
 
-const RoleColumns = "id, agglomeration_id, head, rank, name, description, color, created_at, updated_at"
-const RoleColumnsR = "r.id, r.agglomeration_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at"
+const RoleColumns = "id, organization_id, head, rank, name, description, color, created_at, updated_at"
+const RoleColumnsR = "r.id, r.organization_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at"
 
 type Role struct {
-	ID              uuid.UUID `json:"id"`
-	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Head            bool      `json:"head"`
-	Rank            uint      `json:"rank"`
-	Name            string    `json:"name"`
-	Description     string    `json:"description"`
-	Color           string    `json:"color"`
+	ID             uuid.UUID `json:"id"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Head           bool      `json:"head"`
+	Rank           uint      `json:"rank"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	Color          string    `json:"color"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -32,7 +32,7 @@ type Role struct {
 func (r *Role) scan(row sq.RowScanner) error {
 	err := row.Scan(
 		&r.ID,
-		&r.AgglomerationID,
+		&r.OrganizationID,
 		&r.Head,
 		&r.Rank,
 		&r.Name,
@@ -70,12 +70,12 @@ func NewRolesQ(db pgx.DBTX) RolesQ {
 }
 
 type InsertRoleParams struct {
-	AgglomerationID uuid.UUID `json:"agglomeration_id"`
-	Head            bool      `json:"head"`
-	Rank            uint      `json:"rank"`
-	Name            string    `json:"name"`
-	Description     string    `json:"description"`
-	Color           string    `json:"color"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Head           bool      `json:"head"`
+	Rank           uint      `json:"rank"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	Color          string    `json:"color"`
 }
 
 func (q RolesQ) Insert(ctx context.Context, data InsertRoleParams) (Role, error) {
@@ -85,21 +85,21 @@ func (q RolesQ) Insert(ctx context.Context, data InsertRoleParams) (Role, error)
 			SET
 				rank = rank + 1,
 				updated_at = now()
-			WHERE agglomeration_id = $1
+			WHERE organization_id = $1
 			  AND rank >= $2
 			RETURNING 1
 		),
 		ins AS (
-			INSERT INTO roles (agglomeration_id, head, rank, name, description, color)
+			INSERT INTO roles (organization_id, head, rank, name, description, color)
 			VALUES ($1, $3, $2, $4, $5, $6)
-			RETURNING id, agglomeration_id, head, rank, name, description, color, created_at, updated_at
+			RETURNING id, organization_id, head, rank, name, description, color, created_at, updated_at
 		)
-		SELECT id, agglomeration_id, head, rank, name, description, color, created_at, updated_at
+		SELECT id, organization_id, head, rank, name, description, color, created_at, updated_at
 		FROM ins;
 	`
 
 	args := []any{
-		data.AgglomerationID,
+		data.OrganizationID,
 		data.Rank,
 		data.Head,
 		data.Name,
@@ -244,11 +244,11 @@ func (q RolesQ) FilterByID(id ...uuid.UUID) RolesQ {
 	return q
 }
 
-func (q RolesQ) FilterByAgglomerationID(id uuid.UUID) RolesQ {
-	q.selector = q.selector.Where(sq.Eq{"r.agglomeration_id": id})
-	q.counter = q.counter.Where(sq.Eq{"r.agglomeration_id": id})
-	q.updater = q.updater.Where(sq.Eq{"r.agglomeration_id": id})
-	q.deleter = q.deleter.Where(sq.Eq{"r.agglomeration_id": id})
+func (q RolesQ) FilterByOrganizationID(id uuid.UUID) RolesQ {
+	q.selector = q.selector.Where(sq.Eq{"r.organization_id": id})
+	q.counter = q.counter.Where(sq.Eq{"r.organization_id": id})
+	q.updater = q.updater.Where(sq.Eq{"r.organization_id": id})
+	q.deleter = q.deleter.Where(sq.Eq{"r.organization_id": id})
 	return q
 }
 
@@ -341,20 +341,20 @@ func (q RolesQ) Page(limit, offset uint) RolesQ {
 	return q
 }
 
-//Special methods to interact with role ranks in agglomeration
+//Special methods to interact with role ranks in organization
 
 func (q RolesQ) DeleteAndShiftRanks(ctx context.Context, roleID uuid.UUID) error {
 	const sqlq = `
 		WITH del AS (
 			DELETE FROM roles
 			WHERE id = $1
-			RETURNING agglomeration_id, rank
+			RETURNING organization_id, rank
 		)
 		UPDATE roles r
 		SET rank = r.rank - 1,
 		    updated_at = now()
 		FROM del
-		WHERE r.agglomeration_id = del.agglomeration_id
+		WHERE r.organization_id = del.organization_id
 		  AND r.rank > del.rank
 	`
 
@@ -370,7 +370,7 @@ func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank ui
 	var oldRank int
 
 	{
-		const sqlGet = `SELECT agglomeration_id, rank FROM roles WHERE id = $1 LIMIT 1`
+		const sqlGet = `SELECT organization_id, rank FROM roles WHERE id = $1 LIMIT 1`
 		if err := q.db.QueryRowContext(ctx, sqlGet, roleID).Scan(&aggID, &oldRank); err != nil {
 			return Role{}, fmt.Errorf("scanning role rank: %w", err)
 		}
@@ -391,10 +391,10 @@ func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank ui
 					ELSE rank
 				END,
 				updated_at = now()
-			WHERE agglomeration_id = $4
-			RETURNING id, agglomeration_id, head, rank, name, description, color, created_at, updated_at
+			WHERE organization_id = $4
+			RETURNING id, organization_id, head, rank, name, description, color, created_at, updated_at
 		)
-		SELECT id, agglomeration_id, head, rank, name, description, color, created_at, updated_at
+		SELECT id, organization_id, head, rank, name, description, color, created_at, updated_at
 		FROM upd
 		WHERE id = $1
 	`
@@ -411,18 +411,18 @@ func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank ui
 
 func (q RolesQ) UpdateRolesRanks(
 	ctx context.Context,
-	agglomerationID uuid.UUID,
+	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) ([]Role, error) {
 	roles, err := NewRolesQ(q.db).
-		FilterByAgglomerationID(agglomerationID).
+		FilterByOrganizationID(organizationID).
 		OrderByRoleRank(true).
 		Select(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("select roles by agglomeration: %w", err)
+		return nil, fmt.Errorf("select roles by organization: %w", err)
 	}
 	if len(roles) == 0 {
-		return nil, fmt.Errorf("no roles in agglomeration %s", agglomerationID)
+		return nil, fmt.Errorf("no roles in organization %s", organizationID)
 	}
 
 	n := uint(len(roles))
@@ -438,7 +438,7 @@ func (q RolesQ) UpdateRolesRanks(
 			return nil, fmt.Errorf("rank %d out of range [0..%d]", newRank, n-1)
 		}
 		if _, ok := idToRole[roleID]; !ok {
-			return nil, fmt.Errorf("role %s not in agglomeration %s", roleID, agglomerationID)
+			return nil, fmt.Errorf("role %s not in organization %s", roleID, organizationID)
 		}
 		if prev, ok := usedRank[newRank]; ok && prev != roleID {
 			return nil, fmt.Errorf("duplicate rank %d for roles %s and %s", newRank, prev, roleID)
@@ -495,11 +495,11 @@ func (q RolesQ) UpdateRolesRanks(
 			SELECT UNNEST($1::uuid[]) AS id, UNNEST($2::int[]) AS rank
 		) v
 		WHERE r.id = v.id
-		  AND r.agglomeration_id = $3
-		RETURNING r.id, r.agglomeration_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at
+		  AND r.organization_id = $3
+		RETURNING r.id, r.organization_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at
 	`
 
-	rows, err := q.db.QueryContext(ctx, sqlUpdate, changed, newRanks, agglomerationID)
+	rows, err := q.db.QueryContext(ctx, sqlUpdate, changed, newRanks, organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("updating roles ranks: %w", err)
 	}

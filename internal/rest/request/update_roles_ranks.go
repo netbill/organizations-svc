@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/umisto/agglomerations-svc/resources"
+	"github.com/netbill/organizations-svc/resources"
 )
 
 func UpdateRolesRanks(r *http.Request) (req resources.UpdateRolesRanks, err error) {
@@ -20,8 +20,8 @@ func UpdateRolesRanks(r *http.Request) (req resources.UpdateRolesRanks, err erro
 		"data/attributes": validation.Validate(req.Data.Attributes, validation.Required),
 	}
 
-	if req.Data.Id.String() != chi.URLParam(r, "agglomeration_id") {
-		errs["data/id"] = validation.NewError("mismatch", "query agglomeration_id and body data/id do not match")
+	if req.Data.Id.String() != chi.URLParam(r, "organization_id") {
+		errs["data/id"] = validation.NewError("mismatch", "query organization_id and body data/id do not match")
 	}
 
 	return req, errs.Filter()

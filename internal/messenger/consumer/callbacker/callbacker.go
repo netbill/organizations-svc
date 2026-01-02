@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/logium"
+	"github.com/netbill/logium"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 type Callbacker struct {

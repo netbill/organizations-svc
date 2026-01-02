@@ -21,7 +21,7 @@ properties:
         properties:
           position:
             type: string
-            description: "The position or role of the member within the agglomeration"
+            description: "The position or role of the member within the organization"
           label:
             type: string
             description: "A label or title associated with the member"

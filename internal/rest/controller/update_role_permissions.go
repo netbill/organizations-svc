@@ -4,12 +4,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/rest"
-	"github.com/umisto/agglomerations-svc/internal/rest/request"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
 func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {

@@ -1,94 +1,94 @@
-# CreateAgglomerationDataAttributes
+# CreateOrganizationDataAttributes
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Head** | [**uuid.UUID**](uuid.UUID.md) | Account ID of the head of the agglomeration | 
-**Name** | **string** | The name of the agglomeration | 
-**Icon** | Pointer to **string** | The icon representing the agglomeration | [optional] 
+**Head** | [**uuid.UUID**](uuid.UUID.md) | Account ID of the head of the organization | 
+**Name** | **string** | The name of the organization | 
+**Icon** | Pointer to **string** | The icon representing the organization | [optional] 
 
 ## Methods
 
-### NewCreateAgglomerationDataAttributes
+### NewCreateOrganizationDataAttributes
 
-`func NewCreateAgglomerationDataAttributes(head uuid.UUID, name string, ) *CreateAgglomerationDataAttributes`
+`func NewCreateOrganizationDataAttributes(head uuid.UUID, name string, ) *CreateOrganizationDataAttributes`
 
-NewCreateAgglomerationDataAttributes instantiates a new CreateAgglomerationDataAttributes object
+NewCreateOrganizationDataAttributes instantiates a new CreateOrganizationDataAttributes object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### NewCreateAgglomerationDataAttributesWithDefaults
+### NewCreateOrganizationDataAttributesWithDefaults
 
-`func NewCreateAgglomerationDataAttributesWithDefaults() *CreateAgglomerationDataAttributes`
+`func NewCreateOrganizationDataAttributesWithDefaults() *CreateOrganizationDataAttributes`
 
-NewCreateAgglomerationDataAttributesWithDefaults instantiates a new CreateAgglomerationDataAttributes object
+NewCreateOrganizationDataAttributesWithDefaults instantiates a new CreateOrganizationDataAttributes object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetHead
 
-`func (o *CreateAgglomerationDataAttributes) GetHead() uuid.UUID`
+`func (o *CreateOrganizationDataAttributes) GetHead() uuid.UUID`
 
 GetHead returns the Head field if non-nil, zero value otherwise.
 
 ### GetHeadOk
 
-`func (o *CreateAgglomerationDataAttributes) GetHeadOk() (*uuid.UUID, bool)`
+`func (o *CreateOrganizationDataAttributes) GetHeadOk() (*uuid.UUID, bool)`
 
 GetHeadOk returns a tuple with the Head field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetHead
 
-`func (o *CreateAgglomerationDataAttributes) SetHead(v uuid.UUID)`
+`func (o *CreateOrganizationDataAttributes) SetHead(v uuid.UUID)`
 
 SetHead sets Head field to given value.
 
 
 ### GetName
 
-`func (o *CreateAgglomerationDataAttributes) GetName() string`
+`func (o *CreateOrganizationDataAttributes) GetName() string`
 
 GetName returns the Name field if non-nil, zero value otherwise.
 
 ### GetNameOk
 
-`func (o *CreateAgglomerationDataAttributes) GetNameOk() (*string, bool)`
+`func (o *CreateOrganizationDataAttributes) GetNameOk() (*string, bool)`
 
 GetNameOk returns a tuple with the Name field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetName
 
-`func (o *CreateAgglomerationDataAttributes) SetName(v string)`
+`func (o *CreateOrganizationDataAttributes) SetName(v string)`
 
 SetName sets Name field to given value.
 
 
 ### GetIcon
 
-`func (o *CreateAgglomerationDataAttributes) GetIcon() string`
+`func (o *CreateOrganizationDataAttributes) GetIcon() string`
 
 GetIcon returns the Icon field if non-nil, zero value otherwise.
 
 ### GetIconOk
 
-`func (o *CreateAgglomerationDataAttributes) GetIconOk() (*string, bool)`
+`func (o *CreateOrganizationDataAttributes) GetIconOk() (*string, bool)`
 
 GetIconOk returns a tuple with the Icon field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetIcon
 
-`func (o *CreateAgglomerationDataAttributes) SetIcon(v string)`
+`func (o *CreateOrganizationDataAttributes) SetIcon(v string)`
 
 SetIcon sets Icon field to given value.
 
 ### HasIcon
 
-`func (o *CreateAgglomerationDataAttributes) HasIcon() bool`
+`func (o *CreateOrganizationDataAttributes) HasIcon() bool`
 
 HasIcon returns a boolean if a field has been set.
 

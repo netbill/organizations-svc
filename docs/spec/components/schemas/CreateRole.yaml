@@ -14,20 +14,20 @@ properties:
       attributes:
         type: object
         required:
-          - agglomeration_id
+          - organization_id
           - rank
           - name
           - description
           - color
         properties:
-          agglomeration_id:
+          organization_id:
             type: string
             format: uuid
-            description: "The ID of the agglomeration this role belongs to"
+            description: "The ID of the organization this role belongs to"
           rank:
             type: integer
             format: uint
-            description: "The rank of the role within the agglomeration"
+            description: "The rank of the role within the organization"
           name:
             type: string
             description: "The name of the role"

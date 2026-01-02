@@ -7,28 +7,28 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/umisto/agglomerations-svc/internal"
-	"github.com/umisto/logium"
-	"github.com/umisto/restkit/roles"
+	"github.com/netbill/logium"
+	"github.com/netbill/organizations-svc/internal"
+	"github.com/netbill/restkit/roles"
 )
 
 type Handlers interface {
-	//Agglomeration handlers
-	CreateAgglomeration(w http.ResponseWriter, r *http.Request)
+	//Organization handlers
+	CreateOrganization(w http.ResponseWriter, r *http.Request)
 
-	GetAgglomeration(w http.ResponseWriter, r *http.Request)
-	GetAgglomerations(w http.ResponseWriter, r *http.Request)
-	GetMyAgglomerations(w http.ResponseWriter, r *http.Request)
+	GetOrganization(w http.ResponseWriter, r *http.Request)
+	GetOrganizations(w http.ResponseWriter, r *http.Request)
+	GetMyOrganizations(w http.ResponseWriter, r *http.Request)
 
-	UpdateAgglomeration(w http.ResponseWriter, r *http.Request)
+	UpdateOrganization(w http.ResponseWriter, r *http.Request)
 
-	SuspendAgglomeration(w http.ResponseWriter, r *http.Request)
-	ActivateAgglomeration(w http.ResponseWriter, r *http.Request)
-	DeactivateAgglomeration(w http.ResponseWriter, r *http.Request)
+	SuspendOrganization(w http.ResponseWriter, r *http.Request)
+	ActivateOrganization(w http.ResponseWriter, r *http.Request)
+	DeactivateOrganization(w http.ResponseWriter, r *http.Request)
 
-	GetAgglomerationInvites(w http.ResponseWriter, r *http.Request)
-	GetAgglomerationMembers(w http.ResponseWriter, r *http.Request)
-	GetAgglomerationRoles(w http.ResponseWriter, r *http.Request)
+	GetOrganizationInvites(w http.ResponseWriter, r *http.Request)
+	GetOrganizationMembers(w http.ResponseWriter, r *http.Request)
+	GetOrganizationRoles(w http.ResponseWriter, r *http.Request)
 
 	//Member handlers
 	GetMember(w http.ResponseWriter, r *http.Request)
@@ -59,7 +59,7 @@ type Handlers interface {
 
 type Middlewares interface {
 	Auth() func(http.Handler) http.Handler
-	SystemRoleGrant(allowedRoles map[string]bool) func(http.Handler) http.Handler
+	RoleGrant(allowedRoles map[string]bool) func(http.Handler) http.Handler
 }
 
 type Service struct {
@@ -82,36 +82,36 @@ func New(
 
 func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 	auth := s.middlewares.Auth()
-	sysadmin := s.middlewares.SystemRoleGrant(map[string]bool{
+	sysadmin := s.middlewares.RoleGrant(map[string]bool{
 		roles.SystemAdmin: true,
 	})
 
 	r := chi.NewRouter()
 
-	r.Route("/agglomerations-svc", func(r chi.Router) {
+	r.Route("/organizations-svc", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
 			r.Get("/{city_slug}", nil)
 
-			r.With(auth).Route("/agglomerations", func(r chi.Router) {
-				r.Get("/", s.handlers.GetAgglomerations)
+			r.With(auth).Route("/organizations", func(r chi.Router) {
+				r.Get("/", s.handlers.GetOrganizations)
 
-				r.Route("/{agglomeration_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetAgglomeration)
-					r.Put("/", s.handlers.UpdateAgglomeration)
+				r.Route("/{organization_id}", func(r chi.Router) {
+					r.Get("/", s.handlers.GetOrganization)
+					r.Put("/", s.handlers.UpdateOrganization)
 
-					r.Patch("/activate", s.handlers.ActivateAgglomeration)
-					r.Patch("/deactivate", s.handlers.DeactivateAgglomeration)
+					r.Patch("/activate", s.handlers.ActivateOrganization)
+					r.Patch("/deactivate", s.handlers.DeactivateOrganization)
 
-					r.Get("/members", s.handlers.GetAgglomerationMembers)
-					r.Get("/invites", s.handlers.GetAgglomerationInvites)
+					r.Get("/members", s.handlers.GetOrganizationMembers)
+					r.Get("/invites", s.handlers.GetOrganizationInvites)
 					r.Route("/roles", func(r chi.Router) {
-						r.Get("/", s.handlers.GetAgglomerationRoles)
+						r.Get("/", s.handlers.GetOrganizationRoles)
 						r.Put("/ranks", s.handlers.UpdateRolesRanks)
 					})
 				})
 
 				//TODO
-				r.Get("/me", s.handlers.GetMyAgglomerations)
+				r.Get("/me", s.handlers.GetMyOrganizations)
 			})
 
 			r.With(auth).Route("/members", func(r chi.Router) {
@@ -151,9 +151,9 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 			})
 
 			r.With(auth, sysadmin).Route("/admin", func(r chi.Router) {
-				r.With(auth, sysadmin).Route("/agglomerations", func(r chi.Router) {
-					r.Post("/", s.handlers.CreateAgglomeration)
-					r.Patch("/", s.handlers.SuspendAgglomeration)
+				r.With(auth, sysadmin).Route("/organizations", func(r chi.Router) {
+					r.Post("/", s.handlers.CreateOrganization)
+					r.Patch("/", s.handlers.SuspendOrganization)
 				})
 			})
 		})

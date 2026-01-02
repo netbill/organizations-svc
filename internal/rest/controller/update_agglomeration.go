@@ -4,16 +4,16 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/errx"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/agglomeration"
-	"github.com/umisto/agglomerations-svc/internal/rest"
-	"github.com/umisto/agglomerations-svc/internal/rest/request"
-	"github.com/umisto/agglomerations-svc/internal/rest/responses"
-	"github.com/umisto/ape"
-	"github.com/umisto/ape/problems"
+	"github.com/netbill/ape"
+	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/modules/organization"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
-func (c Controller) UpdateAgglomeration(w http.ResponseWriter, r *http.Request) {
+func (c Controller) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
 	initiator, err := rest.AccountData(r)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
@@ -21,36 +21,36 @@ func (c Controller) UpdateAgglomeration(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	req, err := request.UpdateAgglomeration(r)
+	req, err := request.UpdateOrganization(r)
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid update agglomeration request")
+		c.log.WithError(err).Errorf("invalid update organization request")
 		ape.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	res, err := c.core.UpdateAgglomeration(
+	res, err := c.core.UpdateOrganization(
 		r.Context(),
 		initiator.ID,
 		req.Data.Id,
-		agglomeration.UpdateParams{
+		organization.UpdateParams{
 			Name: req.Data.Attributes.Name,
 			Icon: req.Data.Attributes.Icon,
 		},
 	)
 	if err != nil {
-		c.log.WithError(err).Errorf("failed to update agglomeration")
+		c.log.WithError(err).Errorf("failed to update organization")
 		switch {
-		case errors.Is(err, errx.ErrorAgglomerationIsSuspended):
-			ape.RenderErr(w, problems.Forbidden("agglomeration is suspended"))
-		case errors.Is(err, errx.ErrorAgglomerationNotFound):
-			ape.RenderErr(w, problems.NotFound("agglomeration not found"))
+		case errors.Is(err, errx.ErrorOrganizationIsSuspended):
+			ape.RenderErr(w, problems.Forbidden("organization is suspended"))
+		case errors.Is(err, errx.ErrorOrganizationNotFound):
+			ape.RenderErr(w, problems.NotFound("organization not found"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
-			ape.RenderErr(w, problems.Forbidden("not enough rights to update agglomeration"))
+			ape.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
 		default:
 			ape.RenderErr(w, problems.InternalError())
 		}
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Agglomeration(res))
+	ape.Render(w, http.StatusOK, responses.Organization(res))
 }

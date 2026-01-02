@@ -1,88 +1,88 @@
-# AgglomerationData
+# OrganizationData
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | [**uuid.UUID**](uuid.UUID.md) | agglomeration ID | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | organization ID | 
 **Type** | **string** |  | 
-**Attributes** | [**AgglomerationDataAttributes**](AgglomerationDataAttributes.md) |  | 
+**Attributes** | [**OrganizationDataAttributes**](OrganizationDataAttributes.md) |  | 
 
 ## Methods
 
-### NewAgglomerationData
+### NewOrganizationData
 
-`func NewAgglomerationData(id uuid.UUID, type_ string, attributes AgglomerationDataAttributes, ) *AgglomerationData`
+`func NewOrganizationData(id uuid.UUID, type_ string, attributes OrganizationDataAttributes, ) *OrganizationData`
 
-NewAgglomerationData instantiates a new AgglomerationData object
+NewOrganizationData instantiates a new OrganizationData object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### NewAgglomerationDataWithDefaults
+### NewOrganizationDataWithDefaults
 
-`func NewAgglomerationDataWithDefaults() *AgglomerationData`
+`func NewOrganizationDataWithDefaults() *OrganizationData`
 
-NewAgglomerationDataWithDefaults instantiates a new AgglomerationData object
+NewOrganizationDataWithDefaults instantiates a new OrganizationData object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetId
 
-`func (o *AgglomerationData) GetId() uuid.UUID`
+`func (o *OrganizationData) GetId() uuid.UUID`
 
 GetId returns the Id field if non-nil, zero value otherwise.
 
 ### GetIdOk
 
-`func (o *AgglomerationData) GetIdOk() (*uuid.UUID, bool)`
+`func (o *OrganizationData) GetIdOk() (*uuid.UUID, bool)`
 
 GetIdOk returns a tuple with the Id field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetId
 
-`func (o *AgglomerationData) SetId(v uuid.UUID)`
+`func (o *OrganizationData) SetId(v uuid.UUID)`
 
 SetId sets Id field to given value.
 
 
 ### GetType
 
-`func (o *AgglomerationData) GetType() string`
+`func (o *OrganizationData) GetType() string`
 
 GetType returns the Type field if non-nil, zero value otherwise.
 
 ### GetTypeOk
 
-`func (o *AgglomerationData) GetTypeOk() (*string, bool)`
+`func (o *OrganizationData) GetTypeOk() (*string, bool)`
 
 GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetType
 
-`func (o *AgglomerationData) SetType(v string)`
+`func (o *OrganizationData) SetType(v string)`
 
 SetType sets Type field to given value.
 
 
 ### GetAttributes
 
-`func (o *AgglomerationData) GetAttributes() AgglomerationDataAttributes`
+`func (o *OrganizationData) GetAttributes() OrganizationDataAttributes`
 
 GetAttributes returns the Attributes field if non-nil, zero value otherwise.
 
 ### GetAttributesOk
 
-`func (o *AgglomerationData) GetAttributesOk() (*AgglomerationDataAttributes, bool)`
+`func (o *OrganizationData) GetAttributesOk() (*OrganizationDataAttributes, bool)`
 
 GetAttributesOk returns a tuple with the Attributes field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAttributes
 
-`func (o *AgglomerationData) SetAttributes(v AgglomerationDataAttributes)`
+`func (o *OrganizationData) SetAttributes(v OrganizationDataAttributes)`
 
 SetAttributes sets Attributes field to given value.
 

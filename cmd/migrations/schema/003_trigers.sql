@@ -78,14 +78,14 @@ FOR EACH ROW
 EXECUTE FUNCTION prevent_delete_head_role_permissions();
 -- +migrate StatementEnd
 
--- 4) ban change of agglomeration_id for roles
+-- 4) ban change of organization_id for roles
 
 -- +migrate StatementBegin
-CREATE OR REPLACE FUNCTION prevent_role_agglomeration_change()
+CREATE OR REPLACE FUNCTION prevent_role_organization_change()
 RETURNS trigger AS $$
 BEGIN
-    IF NEW.agglomeration_id <> OLD.agglomeration_id THEN
-        RAISE EXCEPTION 'cannot change agglomeration_id for role %', OLD.id
+    IF NEW.organization_id <> OLD.organization_id THEN
+        RAISE EXCEPTION 'cannot change organization_id for role %', OLD.id
             USING ERRCODE = '23514';
     END IF;
 
@@ -93,11 +93,11 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_roles_prevent_agglomeration_change ON roles;
-CREATE TRIGGER trg_roles_prevent_agglomeration_change
-BEFORE UPDATE OF agglomeration_id ON roles
+DROP TRIGGER IF EXISTS trg_roles_prevent_organization_change ON roles;
+CREATE TRIGGER trg_roles_prevent_organization_change
+BEFORE UPDATE OF organization_id ON roles
 FOR EACH ROW
-EXECUTE FUNCTION prevent_role_agglomeration_change();
+EXECUTE FUNCTION prevent_role_organization_change();
 -- +migrate StatementEnd
 
 -- 5) ban delete head-roles (roles)
@@ -158,8 +158,8 @@ DROP FUNCTION IF EXISTS prevent_remove_head_role_from_member();
 DROP TRIGGER IF EXISTS trg_roles_prevent_delete_head ON roles;
 DROP FUNCTION IF EXISTS prevent_delete_head_role();
 
-DROP TRIGGER IF EXISTS trg_roles_prevent_agglomeration_change ON roles;
-DROP FUNCTION IF EXISTS prevent_role_agglomeration_change();
+DROP TRIGGER IF EXISTS trg_roles_prevent_organization_change ON roles;
+DROP FUNCTION IF EXISTS prevent_role_organization_change();
 
 DROP TRIGGER IF EXISTS trg_role_permissions_prevent_delete_head ON role_permissions;
 DROP FUNCTION IF EXISTS prevent_delete_head_role_permissions();

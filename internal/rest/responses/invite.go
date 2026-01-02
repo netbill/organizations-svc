@@ -3,9 +3,9 @@ package responses
 import (
 	"net/http"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/resources"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/resources"
+	"github.com/netbill/pagi"
 )
 
 func Invite(mod models.Invite) resources.Invite {
@@ -14,11 +14,11 @@ func Invite(mod models.Invite) resources.Invite {
 			Id:   mod.ID,
 			Type: "invite",
 			Attributes: resources.InviteDataAttributes{
-				AgglomerationId: mod.AgglomerationID,
-				AccountId:       mod.AccountID,
-				Status:          mod.Status,
-				CreatedAt:       mod.CreatedAt,
-				ExpiresAt:       mod.ExpiresAt,
+				OrganizationId: mod.OrganizationID,
+				AccountId:      mod.AccountID,
+				Status:         mod.Status,
+				CreatedAt:      mod.CreatedAt,
+				ExpiresAt:      mod.ExpiresAt,
 			},
 		},
 	}

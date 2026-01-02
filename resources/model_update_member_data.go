@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */

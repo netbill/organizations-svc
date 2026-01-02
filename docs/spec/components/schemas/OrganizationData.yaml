@@ -1,0 +1,39 @@
+type: object
+required:
+  - id
+  - type
+  - attributes
+properties:
+  id:
+    type: string
+    format: uuid
+    description: "organization ID"
+  type:
+    type: string
+    enum: [ organization ]
+  attributes:
+    type: object
+    required:
+      - status
+      - name
+      - icon
+      - created_at
+      - updated_at
+    properties:
+      status:
+        type: string
+        description: "The status of the organization"
+      name:
+        type: string
+        description: "The name of the organization"
+      icon:
+        type: string
+        description: "The icon representing the organization"
+      created_at:
+        type: string
+        format: date-time
+        description: "The date and time when the organization was created"
+      updated_at:
+        type: string
+        format: date-time
+        description: "The date and time when the organization was last updated"

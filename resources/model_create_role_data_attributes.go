@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -22,9 +22,9 @@ var _ MappedNullable = &CreateRoleDataAttributes{}
 
 // CreateRoleDataAttributes struct for CreateRoleDataAttributes
 type CreateRoleDataAttributes struct {
-	// The ID of the agglomeration this role belongs to
-	AgglomerationId uuid.UUID `json:"agglomeration_id"`
-	// The rank of the role within the agglomeration
+	// The ID of the organization this role belongs to
+	OrganizationId uuid.UUID `json:"organization_id"`
+	// The rank of the role within the organization
 	Rank uint `json:"rank"`
 	// The name of the role
 	Name string `json:"name"`
@@ -40,9 +40,9 @@ type _CreateRoleDataAttributes CreateRoleDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCreateRoleDataAttributes(agglomerationId uuid.UUID, rank uint, name string, description string, color string) *CreateRoleDataAttributes {
+func NewCreateRoleDataAttributes(organizationId uuid.UUID, rank uint, name string, description string, color string) *CreateRoleDataAttributes {
 	this := CreateRoleDataAttributes{}
-	this.AgglomerationId = agglomerationId
+	this.OrganizationId = organizationId
 	this.Rank = rank
 	this.Name = name
 	this.Description = description
@@ -58,28 +58,28 @@ func NewCreateRoleDataAttributesWithDefaults() *CreateRoleDataAttributes {
 	return &this
 }
 
-// GetAgglomerationId returns the AgglomerationId field value
-func (o *CreateRoleDataAttributes) GetAgglomerationId() uuid.UUID {
+// GetOrganizationId returns the OrganizationId field value
+func (o *CreateRoleDataAttributes) GetOrganizationId() uuid.UUID {
 	if o == nil {
 		var ret uuid.UUID
 		return ret
 	}
 
-	return o.AgglomerationId
+	return o.OrganizationId
 }
 
-// GetAgglomerationIdOk returns a tuple with the AgglomerationId field value
+// GetOrganizationIdOk returns a tuple with the OrganizationId field value
 // and a boolean to check if the value has been set.
-func (o *CreateRoleDataAttributes) GetAgglomerationIdOk() (*uuid.UUID, bool) {
+func (o *CreateRoleDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.AgglomerationId, true
+	return &o.OrganizationId, true
 }
 
-// SetAgglomerationId sets field value
-func (o *CreateRoleDataAttributes) SetAgglomerationId(v uuid.UUID) {
-	o.AgglomerationId = v
+// SetOrganizationId sets field value
+func (o *CreateRoleDataAttributes) SetOrganizationId(v uuid.UUID) {
+	o.OrganizationId = v
 }
 
 // GetRank returns the Rank field value
@@ -188,7 +188,7 @@ func (o CreateRoleDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o CreateRoleDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["agglomeration_id"] = o.AgglomerationId
+	toSerialize["organization_id"] = o.OrganizationId
 	toSerialize["rank"] = o.Rank
 	toSerialize["name"] = o.Name
 	toSerialize["description"] = o.Description
@@ -201,7 +201,7 @@ func (o *CreateRoleDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"agglomeration_id",
+		"organization_id",
 		"rank",
 		"name",
 		"description",

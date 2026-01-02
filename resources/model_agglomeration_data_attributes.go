@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -17,31 +17,31 @@ import (
 	"fmt"
 )
 
-// checks if the AgglomerationDataAttributes type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &AgglomerationDataAttributes{}
+// checks if the OrganizationDataAttributes type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &OrganizationDataAttributes{}
 
-// AgglomerationDataAttributes struct for AgglomerationDataAttributes
-type AgglomerationDataAttributes struct {
-	// The status of the agglomeration
+// OrganizationDataAttributes struct for OrganizationDataAttributes
+type OrganizationDataAttributes struct {
+	// The status of the organization
 	Status string `json:"status"`
-	// The name of the agglomeration
+	// The name of the organization
 	Name string `json:"name"`
-	// The icon representing the agglomeration
+	// The icon representing the organization
 	Icon string `json:"icon"`
-	// The date and time when the agglomeration was created
+	// The date and time when the organization was created
 	CreatedAt time.Time `json:"created_at"`
-	// The date and time when the agglomeration was last updated
+	// The date and time when the organization was last updated
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type _AgglomerationDataAttributes AgglomerationDataAttributes
+type _OrganizationDataAttributes OrganizationDataAttributes
 
-// NewAgglomerationDataAttributes instantiates a new AgglomerationDataAttributes object
+// NewOrganizationDataAttributes instantiates a new OrganizationDataAttributes object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewAgglomerationDataAttributes(status string, name string, icon string, createdAt time.Time, updatedAt time.Time) *AgglomerationDataAttributes {
-	this := AgglomerationDataAttributes{}
+func NewOrganizationDataAttributes(status string, name string, icon string, createdAt time.Time, updatedAt time.Time) *OrganizationDataAttributes {
+	this := OrganizationDataAttributes{}
 	this.Status = status
 	this.Name = name
 	this.Icon = icon
@@ -50,16 +50,16 @@ func NewAgglomerationDataAttributes(status string, name string, icon string, cre
 	return &this
 }
 
-// NewAgglomerationDataAttributesWithDefaults instantiates a new AgglomerationDataAttributes object
+// NewOrganizationDataAttributesWithDefaults instantiates a new OrganizationDataAttributes object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewAgglomerationDataAttributesWithDefaults() *AgglomerationDataAttributes {
-	this := AgglomerationDataAttributes{}
+func NewOrganizationDataAttributesWithDefaults() *OrganizationDataAttributes {
+	this := OrganizationDataAttributes{}
 	return &this
 }
 
 // GetStatus returns the Status field value
-func (o *AgglomerationDataAttributes) GetStatus() string {
+func (o *OrganizationDataAttributes) GetStatus() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -70,7 +70,7 @@ func (o *AgglomerationDataAttributes) GetStatus() string {
 
 // GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *AgglomerationDataAttributes) GetStatusOk() (*string, bool) {
+func (o *OrganizationDataAttributes) GetStatusOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -78,12 +78,12 @@ func (o *AgglomerationDataAttributes) GetStatusOk() (*string, bool) {
 }
 
 // SetStatus sets field value
-func (o *AgglomerationDataAttributes) SetStatus(v string) {
+func (o *OrganizationDataAttributes) SetStatus(v string) {
 	o.Status = v
 }
 
 // GetName returns the Name field value
-func (o *AgglomerationDataAttributes) GetName() string {
+func (o *OrganizationDataAttributes) GetName() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -94,7 +94,7 @@ func (o *AgglomerationDataAttributes) GetName() string {
 
 // GetNameOk returns a tuple with the Name field value
 // and a boolean to check if the value has been set.
-func (o *AgglomerationDataAttributes) GetNameOk() (*string, bool) {
+func (o *OrganizationDataAttributes) GetNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -102,12 +102,12 @@ func (o *AgglomerationDataAttributes) GetNameOk() (*string, bool) {
 }
 
 // SetName sets field value
-func (o *AgglomerationDataAttributes) SetName(v string) {
+func (o *OrganizationDataAttributes) SetName(v string) {
 	o.Name = v
 }
 
 // GetIcon returns the Icon field value
-func (o *AgglomerationDataAttributes) GetIcon() string {
+func (o *OrganizationDataAttributes) GetIcon() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -118,7 +118,7 @@ func (o *AgglomerationDataAttributes) GetIcon() string {
 
 // GetIconOk returns a tuple with the Icon field value
 // and a boolean to check if the value has been set.
-func (o *AgglomerationDataAttributes) GetIconOk() (*string, bool) {
+func (o *OrganizationDataAttributes) GetIconOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -126,12 +126,12 @@ func (o *AgglomerationDataAttributes) GetIconOk() (*string, bool) {
 }
 
 // SetIcon sets field value
-func (o *AgglomerationDataAttributes) SetIcon(v string) {
+func (o *OrganizationDataAttributes) SetIcon(v string) {
 	o.Icon = v
 }
 
 // GetCreatedAt returns the CreatedAt field value
-func (o *AgglomerationDataAttributes) GetCreatedAt() time.Time {
+func (o *OrganizationDataAttributes) GetCreatedAt() time.Time {
 	if o == nil {
 		var ret time.Time
 		return ret
@@ -142,7 +142,7 @@ func (o *AgglomerationDataAttributes) GetCreatedAt() time.Time {
 
 // GetCreatedAtOk returns a tuple with the CreatedAt field value
 // and a boolean to check if the value has been set.
-func (o *AgglomerationDataAttributes) GetCreatedAtOk() (*time.Time, bool) {
+func (o *OrganizationDataAttributes) GetCreatedAtOk() (*time.Time, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -150,12 +150,12 @@ func (o *AgglomerationDataAttributes) GetCreatedAtOk() (*time.Time, bool) {
 }
 
 // SetCreatedAt sets field value
-func (o *AgglomerationDataAttributes) SetCreatedAt(v time.Time) {
+func (o *OrganizationDataAttributes) SetCreatedAt(v time.Time) {
 	o.CreatedAt = v
 }
 
 // GetUpdatedAt returns the UpdatedAt field value
-func (o *AgglomerationDataAttributes) GetUpdatedAt() time.Time {
+func (o *OrganizationDataAttributes) GetUpdatedAt() time.Time {
 	if o == nil {
 		var ret time.Time
 		return ret
@@ -166,7 +166,7 @@ func (o *AgglomerationDataAttributes) GetUpdatedAt() time.Time {
 
 // GetUpdatedAtOk returns a tuple with the UpdatedAt field value
 // and a boolean to check if the value has been set.
-func (o *AgglomerationDataAttributes) GetUpdatedAtOk() (*time.Time, bool) {
+func (o *OrganizationDataAttributes) GetUpdatedAtOk() (*time.Time, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -174,11 +174,11 @@ func (o *AgglomerationDataAttributes) GetUpdatedAtOk() (*time.Time, bool) {
 }
 
 // SetUpdatedAt sets field value
-func (o *AgglomerationDataAttributes) SetUpdatedAt(v time.Time) {
+func (o *OrganizationDataAttributes) SetUpdatedAt(v time.Time) {
 	o.UpdatedAt = v
 }
 
-func (o AgglomerationDataAttributes) MarshalJSON() ([]byte, error) {
+func (o OrganizationDataAttributes) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -186,7 +186,7 @@ func (o AgglomerationDataAttributes) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o AgglomerationDataAttributes) ToMap() (map[string]interface{}, error) {
+func (o OrganizationDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["status"] = o.Status
 	toSerialize["name"] = o.Name
@@ -196,7 +196,7 @@ func (o AgglomerationDataAttributes) ToMap() (map[string]interface{}, error) {
 	return toSerialize, nil
 }
 
-func (o *AgglomerationDataAttributes) UnmarshalJSON(data []byte) (err error) {
+func (o *OrganizationDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -222,53 +222,53 @@ func (o *AgglomerationDataAttributes) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varAgglomerationDataAttributes := _AgglomerationDataAttributes{}
+	varOrganizationDataAttributes := _OrganizationDataAttributes{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varAgglomerationDataAttributes)
+	err = decoder.Decode(&varOrganizationDataAttributes)
 
 	if err != nil {
 		return err
 	}
 
-	*o = AgglomerationDataAttributes(varAgglomerationDataAttributes)
+	*o = OrganizationDataAttributes(varOrganizationDataAttributes)
 
 	return err
 }
 
-type NullableAgglomerationDataAttributes struct {
-	value *AgglomerationDataAttributes
+type NullableOrganizationDataAttributes struct {
+	value *OrganizationDataAttributes
 	isSet bool
 }
 
-func (v NullableAgglomerationDataAttributes) Get() *AgglomerationDataAttributes {
+func (v NullableOrganizationDataAttributes) Get() *OrganizationDataAttributes {
 	return v.value
 }
 
-func (v *NullableAgglomerationDataAttributes) Set(val *AgglomerationDataAttributes) {
+func (v *NullableOrganizationDataAttributes) Set(val *OrganizationDataAttributes) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableAgglomerationDataAttributes) IsSet() bool {
+func (v NullableOrganizationDataAttributes) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableAgglomerationDataAttributes) Unset() {
+func (v *NullableOrganizationDataAttributes) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableAgglomerationDataAttributes(val *AgglomerationDataAttributes) *NullableAgglomerationDataAttributes {
-	return &NullableAgglomerationDataAttributes{value: val, isSet: true}
+func NewNullableOrganizationDataAttributes(val *OrganizationDataAttributes) *NullableOrganizationDataAttributes {
+	return &NullableOrganizationDataAttributes{value: val, isSet: true}
 }
 
-func (v NullableAgglomerationDataAttributes) MarshalJSON() ([]byte, error) {
+func (v NullableOrganizationDataAttributes) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableAgglomerationDataAttributes) UnmarshalJSON(src []byte) error {
+func (v *NullableOrganizationDataAttributes) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

@@ -1,7 +1,7 @@
 /*
-agglomerations-svc API
+organizations-svc API
 
-API documentation for agglomerations-svc
+API documentation for organizations-svc
 
 API version: 0.1.0
 */
@@ -16,40 +16,40 @@ import (
 	"fmt"
 )
 
-// checks if the AgglomerationsCollection type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &AgglomerationsCollection{}
+// checks if the OrganizationsCollection type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &OrganizationsCollection{}
 
-// AgglomerationsCollection struct for AgglomerationsCollection
-type AgglomerationsCollection struct {
-	Data []AgglomerationData `json:"data"`
+// OrganizationsCollection struct for OrganizationsCollection
+type OrganizationsCollection struct {
+	Data []OrganizationData `json:"data"`
 	Links PaginationData `json:"links"`
 }
 
-type _AgglomerationsCollection AgglomerationsCollection
+type _OrganizationsCollection OrganizationsCollection
 
-// NewAgglomerationsCollection instantiates a new AgglomerationsCollection object
+// NewOrganizationsCollection instantiates a new OrganizationsCollection object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewAgglomerationsCollection(data []AgglomerationData, links PaginationData) *AgglomerationsCollection {
-	this := AgglomerationsCollection{}
+func NewOrganizationsCollection(data []OrganizationData, links PaginationData) *OrganizationsCollection {
+	this := OrganizationsCollection{}
 	this.Data = data
 	this.Links = links
 	return &this
 }
 
-// NewAgglomerationsCollectionWithDefaults instantiates a new AgglomerationsCollection object
+// NewOrganizationsCollectionWithDefaults instantiates a new OrganizationsCollection object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewAgglomerationsCollectionWithDefaults() *AgglomerationsCollection {
-	this := AgglomerationsCollection{}
+func NewOrganizationsCollectionWithDefaults() *OrganizationsCollection {
+	this := OrganizationsCollection{}
 	return &this
 }
 
 // GetData returns the Data field value
-func (o *AgglomerationsCollection) GetData() []AgglomerationData {
+func (o *OrganizationsCollection) GetData() []OrganizationData {
 	if o == nil {
-		var ret []AgglomerationData
+		var ret []OrganizationData
 		return ret
 	}
 
@@ -58,7 +58,7 @@ func (o *AgglomerationsCollection) GetData() []AgglomerationData {
 
 // GetDataOk returns a tuple with the Data field value
 // and a boolean to check if the value has been set.
-func (o *AgglomerationsCollection) GetDataOk() ([]AgglomerationData, bool) {
+func (o *OrganizationsCollection) GetDataOk() ([]OrganizationData, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -66,12 +66,12 @@ func (o *AgglomerationsCollection) GetDataOk() ([]AgglomerationData, bool) {
 }
 
 // SetData sets field value
-func (o *AgglomerationsCollection) SetData(v []AgglomerationData) {
+func (o *OrganizationsCollection) SetData(v []OrganizationData) {
 	o.Data = v
 }
 
 // GetLinks returns the Links field value
-func (o *AgglomerationsCollection) GetLinks() PaginationData {
+func (o *OrganizationsCollection) GetLinks() PaginationData {
 	if o == nil {
 		var ret PaginationData
 		return ret
@@ -82,7 +82,7 @@ func (o *AgglomerationsCollection) GetLinks() PaginationData {
 
 // GetLinksOk returns a tuple with the Links field value
 // and a boolean to check if the value has been set.
-func (o *AgglomerationsCollection) GetLinksOk() (*PaginationData, bool) {
+func (o *OrganizationsCollection) GetLinksOk() (*PaginationData, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -90,11 +90,11 @@ func (o *AgglomerationsCollection) GetLinksOk() (*PaginationData, bool) {
 }
 
 // SetLinks sets field value
-func (o *AgglomerationsCollection) SetLinks(v PaginationData) {
+func (o *OrganizationsCollection) SetLinks(v PaginationData) {
 	o.Links = v
 }
 
-func (o AgglomerationsCollection) MarshalJSON() ([]byte, error) {
+func (o OrganizationsCollection) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -102,14 +102,14 @@ func (o AgglomerationsCollection) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o AgglomerationsCollection) ToMap() (map[string]interface{}, error) {
+func (o OrganizationsCollection) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["data"] = o.Data
 	toSerialize["links"] = o.Links
 	return toSerialize, nil
 }
 
-func (o *AgglomerationsCollection) UnmarshalJSON(data []byte) (err error) {
+func (o *OrganizationsCollection) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -132,53 +132,53 @@ func (o *AgglomerationsCollection) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varAgglomerationsCollection := _AgglomerationsCollection{}
+	varOrganizationsCollection := _OrganizationsCollection{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varAgglomerationsCollection)
+	err = decoder.Decode(&varOrganizationsCollection)
 
 	if err != nil {
 		return err
 	}
 
-	*o = AgglomerationsCollection(varAgglomerationsCollection)
+	*o = OrganizationsCollection(varOrganizationsCollection)
 
 	return err
 }
 
-type NullableAgglomerationsCollection struct {
-	value *AgglomerationsCollection
+type NullableOrganizationsCollection struct {
+	value *OrganizationsCollection
 	isSet bool
 }
 
-func (v NullableAgglomerationsCollection) Get() *AgglomerationsCollection {
+func (v NullableOrganizationsCollection) Get() *OrganizationsCollection {
 	return v.value
 }
 
-func (v *NullableAgglomerationsCollection) Set(val *AgglomerationsCollection) {
+func (v *NullableOrganizationsCollection) Set(val *OrganizationsCollection) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableAgglomerationsCollection) IsSet() bool {
+func (v NullableOrganizationsCollection) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableAgglomerationsCollection) Unset() {
+func (v *NullableOrganizationsCollection) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableAgglomerationsCollection(val *AgglomerationsCollection) *NullableAgglomerationsCollection {
-	return &NullableAgglomerationsCollection{value: val, isSet: true}
+func NewNullableOrganizationsCollection(val *OrganizationsCollection) *NullableOrganizationsCollection {
+	return &NullableOrganizationsCollection{value: val, isSet: true}
 }
 
-func (v NullableAgglomerationsCollection) MarshalJSON() ([]byte, error) {
+func (v NullableOrganizationsCollection) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableAgglomerationsCollection) UnmarshalJSON(src []byte) error {
+func (v *NullableOrganizationsCollection) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

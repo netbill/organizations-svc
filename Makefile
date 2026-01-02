@@ -27,19 +27,19 @@ generate-models:
 	find $(RESOURCES_DIR) -type f -name "*_test.go" -delete
 
 build:
-	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/agglomerations-svc/main ./cmd/agglomerations-svc/main.go
+	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/organizations-svc/main ./cmd/organizations-svc/main.go
 
 migrate-up:
-	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/agglomerations-svc/main ./cmd/agglomerations-svc/main.go
-	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/agglomerations-svc/main migrate up
+	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/organizations-svc/main ./cmd/organizations-svc/main.go
+	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/organizations-svc/main migrate up
 
 migrate-down:
-	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/agglomerations-svc/main ./cmd/agglomerations-svc/main.go
-	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/agglomerations-svc/main migrate down
+	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/organizations-svc/main ./cmd/organizations-svc/main.go
+	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/organizations-svc/main migrate down
 
 run-server:
-	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/agglomerations-svc/main ./cmd/agglomerations-svc/main.go
-	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/agglomerations-svc/main run service
+	KV_VIPER_FILE=$(CONFIG_FILE) go build -o ./cmd/organizations-svc/main ./cmd/organizations-svc/main.go
+	KV_VIPER_FILE=$(CONFIG_FILE) ./cmd/organizations-svc/main run service
 
 docker-uo:
 	docker compose up -d

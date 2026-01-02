@@ -4,56 +4,56 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/agglomeration"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/invite"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/member"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/role"
-	"github.com/umisto/logium"
-	"github.com/umisto/pagi"
+	"github.com/netbill/logium"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/modules/invite"
+	"github.com/netbill/organizations-svc/internal/core/modules/member"
+	"github.com/netbill/organizations-svc/internal/core/modules/organization"
+	"github.com/netbill/organizations-svc/internal/core/modules/role"
+	"github.com/netbill/pagi"
 )
 
 type aggloSvc interface {
-	CreateAgglomeration(
+	CreateOrganization(
 		ctx context.Context,
 		accountID uuid.UUID,
-		params agglomeration.CreateParams,
-	) (models.Agglomeration, error)
+		params organization.CreateParams,
+	) (models.Organization, error)
 
-	GetAgglomerations(
+	GetOrganizations(
 		ctx context.Context,
-		params agglomeration.FilterParams,
+		params organization.FilterParams,
 		offset, limit uint,
-	) (pagi.Page[[]models.Agglomeration], error)
-	GetAgglomerationForUser(
+	) (pagi.Page[[]models.Organization], error)
+	GetOrganizationForUser(
 		ctx context.Context,
 		accountID uuid.UUID,
 		offset, limit uint,
-	) (pagi.Page[[]models.Agglomeration], error)
-	GetAgglomeration(
+	) (pagi.Page[[]models.Organization], error)
+	GetOrganization(
 		ctx context.Context,
-		agglomerationID uuid.UUID,
-	) (models.Agglomeration, error)
+		organizationID uuid.UUID,
+	) (models.Organization, error)
 
-	UpdateAgglomeration(
+	UpdateOrganization(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
-		params agglomeration.UpdateParams,
-	) (models.Agglomeration, error)
+		accountID, organizationID uuid.UUID,
+		params organization.UpdateParams,
+	) (models.Organization, error)
 
-	ActivateAgglomeration(
+	ActivateOrganization(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
-	) (models.Agglomeration, error)
-	DeactivateAgglomeration(
+		accountID, organizationID uuid.UUID,
+	) (models.Organization, error)
+	DeactivateOrganization(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
-	) (models.Agglomeration, error)
-	SuspendAgglomeration(ctx context.Context, ID uuid.UUID) (models.Agglomeration, error)
+		accountID, organizationID uuid.UUID,
+	) (models.Organization, error)
+	SuspendOrganization(ctx context.Context, ID uuid.UUID) (models.Organization, error)
 
-	DeleteAgglomeration(
+	DeleteOrganization(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
+		accountID, organizationID uuid.UUID,
 	) error
 }
 
@@ -83,9 +83,9 @@ type inviteSvc interface {
 		accountID, inviteID uuid.UUID,
 	) error
 
-	GetAgglomerationInvites(
+	GetOrganizationInvites(
 		ctx context.Context,
-		accountID, agglomerationID uuid.UUID,
+		accountID, organizationID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
 	GetAccountInvites(
@@ -97,8 +97,8 @@ type inviteSvc interface {
 
 type memberSvc interface {
 	GetMemberByID(ctx context.Context, ID uuid.UUID) (models.Member, error)
-	GetMemberByAccountAndAgglomeration(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
-	GetInitiatorMember(ctx context.Context, accountID, agglomerationID uuid.UUID) (models.Member, error)
+	GetMemberByAccountAndOrganization(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
+	GetInitiatorMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 
 	GetMembers(
 		ctx context.Context,
@@ -145,7 +145,7 @@ type roleSvc interface {
 	UpdateRolesRanks(
 		ctx context.Context,
 		accountID uuid.UUID,
-		agglomerationID uuid.UUID,
+		organizationID uuid.UUID,
 		order map[uuid.UUID]uint,
 	) error
 

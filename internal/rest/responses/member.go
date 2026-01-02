@@ -3,9 +3,9 @@ package responses
 import (
 	"net/http"
 
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/resources"
-	"github.com/umisto/pagi"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/resources"
+	"github.com/netbill/pagi"
 )
 
 func Member(mod models.Member) resources.Member {
@@ -14,14 +14,14 @@ func Member(mod models.Member) resources.Member {
 			Id:   mod.ID,
 			Type: "member",
 			Attributes: resources.MemberDataAttributes{
-				AgglomerationId: mod.AgglomerationID,
-				AccountId:       mod.AccountID,
-				Position:        mod.Position,
-				Label:           mod.Label,
-				Username:        mod.Username,
-				Official:        mod.Official,
-				CreatedAt:       mod.CreatedAt,
-				UpdatedAt:       mod.UpdatedAt,
+				OrganizationId: mod.OrganizationID,
+				AccountId:      mod.AccountID,
+				Position:       mod.Position,
+				Label:          mod.Label,
+				Username:       mod.Username,
+				Official:       mod.Official,
+				CreatedAt:      mod.CreatedAt,
+				UpdatedAt:      mod.UpdatedAt,
 			},
 		},
 	}

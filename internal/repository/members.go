@@ -6,20 +6,20 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/modules/member"
+	"github.com/netbill/organizations-svc/internal/repository/pgdb"
+	"github.com/netbill/pagi"
 	"github.com/pkg/errors"
-	"github.com/umisto/agglomerations-svc/internal/domain/models"
-	"github.com/umisto/agglomerations-svc/internal/domain/modules/member"
-	"github.com/umisto/agglomerations-svc/internal/repository/pgdb"
-	"github.com/umisto/pagi"
 )
 
 func (s Service) CreateMember(
 	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
+	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
 	row, err := s.membersQ().Insert(ctx, pgdb.InsertMemberParams{
-		AccountID:       accountID,
-		AgglomerationID: agglomerationID,
+		AccountID:      accountID,
+		OrganizationID: organizationID,
 	})
 	if err != nil {
 		return models.Member{}, err
@@ -66,19 +66,19 @@ func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (models.Memb
 	return MemberWithUserData(row), nil
 }
 
-func (s Service) GetMemberByAccountAndAgglomeration(
+func (s Service) GetMemberByAccountAndOrganization(
 	ctx context.Context,
-	accountID, agglomerationID uuid.UUID,
+	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
 	row, err := s.membersQ().
 		FilterByAccountID(accountID).
-		FilterByAgglomerationID(agglomerationID).
+		FilterByOrganizationID(organizationID).
 		GetWithUserData(ctx)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return models.Member{}, nil
 	case err != nil:
-		return models.Member{}, fmt.Errorf("getting member by account and agglomeration: %w", err)
+		return models.Member{}, fmt.Errorf("getting member by account and organization: %w", err)
 	}
 
 	return MemberWithUserData(row), nil
@@ -91,8 +91,8 @@ func (s Service) GetMembers(
 	limit uint,
 ) (pagi.Page[[]models.Member], error) {
 	q := s.membersQ()
-	if filter.AgglomerationID != nil {
-		q = q.FilterByAgglomerationID(*filter.AgglomerationID)
+	if filter.OrganizationID != nil {
+		q = q.FilterByOrganizationID(*filter.OrganizationID)
 	}
 	if filter.AccountID != nil {
 		q = q.FilterByAccountID(*filter.AccountID)
@@ -164,15 +164,15 @@ func (s Service) CanInteract(ctx context.Context, firstMemberID, secondMemberID 
 
 func MemberWithUserData(db pgdb.MemberWithUserData) models.Member {
 	return models.Member{
-		ID:              db.ID,
-		AccountID:       db.AccountID,
-		AgglomerationID: db.AgglomerationID,
-		Position:        db.Position,
-		Label:           db.Label,
-		Username:        db.Username,
-		Pseudonym:       db.Pseudonym,
-		Official:        db.Official,
-		CreatedAt:       db.CreatedAt,
-		UpdatedAt:       db.UpdatedAt,
+		ID:             db.ID,
+		AccountID:      db.AccountID,
+		OrganizationID: db.OrganizationID,
+		Position:       db.Position,
+		Label:          db.Label,
+		Username:       db.Username,
+		Pseudonym:      db.Pseudonym,
+		Official:       db.Official,
+		CreatedAt:      db.CreatedAt,
+		UpdatedAt:      db.UpdatedAt,
 	}
 }
