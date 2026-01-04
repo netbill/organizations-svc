@@ -30,10 +30,16 @@ func Invites(r *http.Request, mods pagi.Page[[]models.Invite]) resources.Invites
 		data[i] = Invite(mod).Data
 	}
 
-	links := BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
+	links := pagi.BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
 
 	return resources.InvitesCollection{
-		Data:  data,
-		Links: links,
+		Data: data,
+		Links: resources.PaginationData{
+			First: links.First,
+			Last:  links.Last,
+			Prev:  links.Prev,
+			Next:  links.Next,
+			Self:  links.Self,
+		},
 	}
 }

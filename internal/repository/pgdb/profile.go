@@ -2,6 +2,8 @@ package pgdb
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -131,7 +133,12 @@ func (q ProfilesQ) Get(ctx context.Context) (Profile, error) {
 
 	var p Profile
 	if err = p.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		return Profile{}, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return Profile{}, nil
+		default:
+			return Profile{}, err
+		}
 	}
 	return p, nil
 }

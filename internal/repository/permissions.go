@@ -9,7 +9,7 @@ import (
 )
 
 func (s Service) GetPermission(ctx context.Context, ID uuid.UUID) (models.Permission, error) {
-	res, err := s.permissionsQ().FilterByID(ID).Get(ctx)
+	res, err := s.permissionsQ(ctx).FilterByID(ID).Get(ctx)
 	if err != nil {
 		return models.Permission{}, err
 	}

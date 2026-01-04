@@ -45,6 +45,8 @@ func (c Controller) MemberRemoveRole(w http.ResponseWriter, r *http.Request) {
 			ape.RenderErr(w, problems.NotFound("role not found"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
 			ape.RenderErr(w, problems.Forbidden("not enough rights to remove role to member"))
+		case errors.Is(err, errx.ErrorCannotRemoveHeadRoleFromMember):
+			ape.RenderErr(w, problems.Forbidden("cannot remove head role from member"))
 		default:
 			ape.RenderErr(w, problems.InternalError())
 		}

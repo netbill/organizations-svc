@@ -2,6 +2,8 @@ package pgdb
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -88,7 +90,12 @@ func (q InvitesQ) Get(ctx context.Context) (Invite, error) {
 
 	var out Invite
 	if err = out.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		return Invite{}, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return Invite{}, nil
+		default:
+			return Invite{}, err
+		}
 	}
 	return out, nil
 }
@@ -130,19 +137,6 @@ func (q InvitesQ) Delete(ctx context.Context) error {
 		return fmt.Errorf("executing delete query for %s: %w", InviteTable, err)
 	}
 	return nil
-}
-
-func (q InvitesQ) Count(ctx context.Context) (uint, error) {
-	query, args, err := q.counter.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("building count query for %s: %w", InviteTable, err)
-	}
-
-	var n uint
-	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
-		return 0, fmt.Errorf("scanning count for %s: %w", InviteTable, err)
-	}
-	return n, nil
 }
 
 func (q InvitesQ) UpdateOne(ctx context.Context) (Invite, error) {
@@ -235,20 +229,20 @@ func (q InvitesQ) UpdateExpiresAt(t time.Time) InvitesQ {
 	return q
 }
 
-func (q InvitesQ) CursorCreatedAt(limit uint, asc bool, createdAt time.Time, id uuid.UUID) InvitesQ {
-	if asc {
-		q.selector = q.selector.OrderBy("created_at ASC", "id ASC")
-	} else {
-		q.selector = q.selector.OrderBy("created_at DESC", "id DESC")
+func (q InvitesQ) Count(ctx context.Context) (uint, error) {
+	query, args, err := q.counter.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("building count query for %s: %w", InviteTable, err)
 	}
 
-	q.selector = q.selector.Limit(uint64(limit))
-
-	if asc {
-		q.selector = q.selector.Where(sq.Expr("(created_at, id) > (?, ?)", createdAt, id))
-	} else {
-		q.selector = q.selector.Where(sq.Expr("(created_at, id) < (?, ?)", createdAt, id))
+	var n uint
+	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
+		return 0, fmt.Errorf("scanning count for %s: %w", InviteTable, err)
 	}
+	return n, nil
+}
 
+func (q InvitesQ) Page(limit uint, offset uint) InvitesQ {
+	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }

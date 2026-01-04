@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/rest"
 	"github.com/netbill/organizations-svc/internal/rest/request"
@@ -43,7 +45,14 @@ func (c Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update role")
-		ape.RenderErr(w, problems.InternalError())
+		switch {
+		case errors.Is(err, errx.ErrorRoleNotFound):
+			ape.RenderErr(w, problems.NotFound("role not found"))
+		case errors.Is(err, errx.ErrorNotEnoughRights):
+			ape.RenderErr(w, problems.Forbidden("not enough rights to update role"))
+		default:
+			ape.RenderErr(w, problems.InternalError())
+		}
 		return
 	}
 

@@ -47,11 +47,8 @@ type JWTConfig struct {
 		AccessToken struct {
 			SecretKey     string        `mapstructure:"secret_key"`
 			TokenLifetime time.Duration `mapstructure:"token_lifetime"`
-		} `mapstructure:"user"`
-	}
-	Invites struct {
-		SecretKey string `mapstructure:"secret_key"`
-	} `mapstructure:"admin-invite"`
+		} `mapstructure:"access_token"`
+	} `mapstructure:"user"`
 }
 
 type SwaggerConfig struct {

@@ -8,7 +8,7 @@ import (
 	"github.com/netbill/organizations-svc/resources"
 )
 
-func CreateRole(r *http.Request) (req resources.Role, err error) {
+func CreateRole(r *http.Request) (req resources.CreateRole, err error) {
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return req, err
 	}

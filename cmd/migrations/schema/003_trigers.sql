@@ -1,8 +1,6 @@
 -- +migrate Up
 
-
 -- 1) if role.head=true -> add all permissions to role_permissions
-
 -- +migrate StatementBegin
 CREATE OR REPLACE FUNCTION ensure_head_role_permissions()
 RETURNS trigger AS $$
@@ -52,7 +50,6 @@ EXECUTE FUNCTION grant_new_permission_to_head_roles();
 -- +migrate StatementEnd
 
 -- 3) ban delete permissions from head-roles
-
 -- +migrate StatementBegin
 CREATE OR REPLACE FUNCTION prevent_delete_head_role_permissions()
 RETURNS trigger AS $$
@@ -79,7 +76,6 @@ EXECUTE FUNCTION prevent_delete_head_role_permissions();
 -- +migrate StatementEnd
 
 -- 4) ban change of organization_id for roles
-
 -- +migrate StatementBegin
 CREATE OR REPLACE FUNCTION prevent_role_organization_change()
 RETURNS trigger AS $$
@@ -101,7 +97,6 @@ EXECUTE FUNCTION prevent_role_organization_change();
 -- +migrate StatementEnd
 
 -- 5) ban delete head-roles (roles)
-
 -- +migrate StatementBegin
 CREATE OR REPLACE FUNCTION prevent_delete_head_role()
 RETURNS trigger AS $$
@@ -123,7 +118,6 @@ EXECUTE FUNCTION prevent_delete_head_role();
 -- +migrate StatementEnd
 
 -- 6) ban remove head-roles from members
-
 -- +migrate StatementBegin
 CREATE OR REPLACE FUNCTION prevent_remove_head_role_from_member() RETURNS trigger
     LANGUAGE plpgsql

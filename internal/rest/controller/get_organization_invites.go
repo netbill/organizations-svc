@@ -31,7 +31,7 @@ func (c Controller) GetOrganizationInvites(w http.ResponseWriter, r *http.Reques
 	}
 
 	limit, offset := pagi.GetPagination(r)
-	if limit == 0 || limit > 100 {
+	if limit > 100 {
 		c.log.WithError(fmt.Errorf("invalid pagination limit %d", limit)).Errorf("invalid pagination limit")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("pagination limit must be between 1 and 100"))...)
 		return

@@ -3,6 +3,7 @@ package pgdb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -122,7 +123,12 @@ func (q MembersQ) Get(ctx context.Context) (Member, error) {
 	var m Member
 	err = m.scan(q.db.QueryRowContext(ctx, query, args...))
 	if err != nil {
-		return Member{}, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return Member{}, nil
+		default:
+			return Member{}, err
+		}
 	}
 
 	return m, nil

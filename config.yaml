@@ -26,9 +26,6 @@ jwt:
   user:
     access_token:
       secret_key: "supersecretkey"
-      token_lifetime: 900
-  admin-invites:
-    secret_key: "invitesuperkey"
 
 kafka:
   brokers:

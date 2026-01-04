@@ -16,38 +16,38 @@ import (
 	"fmt"
 )
 
-// checks if the SentInviteData type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &SentInviteData{}
+// checks if the CreateInviteData type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &CreateInviteData{}
 
-// SentInviteData struct for SentInviteData
-type SentInviteData struct {
+// CreateInviteData struct for CreateInviteData
+type CreateInviteData struct {
 	Type string `json:"type"`
-	Attributes SentInviteDataAttributes `json:"attributes"`
+	Attributes CreateInviteDataAttributes `json:"attributes"`
 }
 
-type _SentInviteData SentInviteData
+type _CreateInviteData CreateInviteData
 
-// NewSentInviteData instantiates a new SentInviteData object
+// NewCreateInviteData instantiates a new CreateInviteData object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSentInviteData(type_ string, attributes SentInviteDataAttributes) *SentInviteData {
-	this := SentInviteData{}
+func NewCreateInviteData(type_ string, attributes CreateInviteDataAttributes) *CreateInviteData {
+	this := CreateInviteData{}
 	this.Type = type_
 	this.Attributes = attributes
 	return &this
 }
 
-// NewSentInviteDataWithDefaults instantiates a new SentInviteData object
+// NewCreateInviteDataWithDefaults instantiates a new CreateInviteData object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewSentInviteDataWithDefaults() *SentInviteData {
-	this := SentInviteData{}
+func NewCreateInviteDataWithDefaults() *CreateInviteData {
+	this := CreateInviteData{}
 	return &this
 }
 
 // GetType returns the Type field value
-func (o *SentInviteData) GetType() string {
+func (o *CreateInviteData) GetType() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -58,7 +58,7 @@ func (o *SentInviteData) GetType() string {
 
 // GetTypeOk returns a tuple with the Type field value
 // and a boolean to check if the value has been set.
-func (o *SentInviteData) GetTypeOk() (*string, bool) {
+func (o *CreateInviteData) GetTypeOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -66,14 +66,14 @@ func (o *SentInviteData) GetTypeOk() (*string, bool) {
 }
 
 // SetType sets field value
-func (o *SentInviteData) SetType(v string) {
+func (o *CreateInviteData) SetType(v string) {
 	o.Type = v
 }
 
 // GetAttributes returns the Attributes field value
-func (o *SentInviteData) GetAttributes() SentInviteDataAttributes {
+func (o *CreateInviteData) GetAttributes() CreateInviteDataAttributes {
 	if o == nil {
-		var ret SentInviteDataAttributes
+		var ret CreateInviteDataAttributes
 		return ret
 	}
 
@@ -82,7 +82,7 @@ func (o *SentInviteData) GetAttributes() SentInviteDataAttributes {
 
 // GetAttributesOk returns a tuple with the Attributes field value
 // and a boolean to check if the value has been set.
-func (o *SentInviteData) GetAttributesOk() (*SentInviteDataAttributes, bool) {
+func (o *CreateInviteData) GetAttributesOk() (*CreateInviteDataAttributes, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -90,11 +90,11 @@ func (o *SentInviteData) GetAttributesOk() (*SentInviteDataAttributes, bool) {
 }
 
 // SetAttributes sets field value
-func (o *SentInviteData) SetAttributes(v SentInviteDataAttributes) {
+func (o *CreateInviteData) SetAttributes(v CreateInviteDataAttributes) {
 	o.Attributes = v
 }
 
-func (o SentInviteData) MarshalJSON() ([]byte, error) {
+func (o CreateInviteData) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -102,14 +102,14 @@ func (o SentInviteData) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o SentInviteData) ToMap() (map[string]interface{}, error) {
+func (o CreateInviteData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["type"] = o.Type
 	toSerialize["attributes"] = o.Attributes
 	return toSerialize, nil
 }
 
-func (o *SentInviteData) UnmarshalJSON(data []byte) (err error) {
+func (o *CreateInviteData) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -132,53 +132,53 @@ func (o *SentInviteData) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varSentInviteData := _SentInviteData{}
+	varCreateInviteData := _CreateInviteData{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varSentInviteData)
+	err = decoder.Decode(&varCreateInviteData)
 
 	if err != nil {
 		return err
 	}
 
-	*o = SentInviteData(varSentInviteData)
+	*o = CreateInviteData(varCreateInviteData)
 
 	return err
 }
 
-type NullableSentInviteData struct {
-	value *SentInviteData
+type NullableCreateInviteData struct {
+	value *CreateInviteData
 	isSet bool
 }
 
-func (v NullableSentInviteData) Get() *SentInviteData {
+func (v NullableCreateInviteData) Get() *CreateInviteData {
 	return v.value
 }
 
-func (v *NullableSentInviteData) Set(val *SentInviteData) {
+func (v *NullableCreateInviteData) Set(val *CreateInviteData) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableSentInviteData) IsSet() bool {
+func (v NullableCreateInviteData) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableSentInviteData) Unset() {
+func (v *NullableCreateInviteData) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableSentInviteData(val *SentInviteData) *NullableSentInviteData {
-	return &NullableSentInviteData{value: val, isSet: true}
+func NewNullableCreateInviteData(val *CreateInviteData) *NullableCreateInviteData {
+	return &NullableCreateInviteData{value: val, isSet: true}
 }
 
-func (v NullableSentInviteData) MarshalJSON() ([]byte, error) {
+func (v NullableCreateInviteData) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableSentInviteData) UnmarshalJSON(src []byte) error {
+func (v *NullableCreateInviteData) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

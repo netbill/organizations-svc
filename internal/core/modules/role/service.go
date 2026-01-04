@@ -29,8 +29,7 @@ type repo interface {
 	GetRoles(
 		ctx context.Context,
 		filter FilterParams,
-		offset uint,
-		limit uint,
+		limit, offset uint,
 	) (pagi.Page[[]models.Role], error)
 
 	UpdateRole(ctx context.Context, roleID uuid.UUID, params UpdateParams) (models.Role, error)
@@ -126,8 +125,13 @@ func (s Service) checkPermissionsToManageRole(
 				memberID, err),
 		)
 	}
+	if maxRole.IsNil() {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("member %s has no roles assigned", memberID),
+		)
+	}
 
-	if maxRole.Rank >= rank {
+	if maxRole.Rank < rank {
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
 				memberID, maxRole.Rank, rank),

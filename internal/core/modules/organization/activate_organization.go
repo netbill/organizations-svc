@@ -13,12 +13,12 @@ func (s Service) ActivateOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Organization, error) {
-	agglo, err := s.GetOrganization(ctx, organizationID)
+	org, err := s.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	if agglo.Status == models.OrganizationStatusSuspended {
+	if org.Status == models.OrganizationStatusSuspended {
 		return models.Organization{}, errx.ErrorOrganizationIsSuspended.Raise(
 			fmt.Errorf("organization is suspended"),
 		)
@@ -35,13 +35,13 @@ func (s Service) ActivateOrganization(
 	}
 
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.UpdateOrganizationStatus(ctx, organizationID, models.OrganizationStatusActive)
+		org, err = s.repo.UpdateOrganizationStatus(ctx, organizationID, models.OrganizationStatusActive)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to activate organization: %w", err))
 		}
 
-		err = s.messenger.WriteOrganizationActivated(ctx, agglo)
+		err = s.messenger.WriteOrganizationActivated(ctx, org)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to publish organization activated event: %w", err))
@@ -53,5 +53,5 @@ func (s Service) ActivateOrganization(
 		return models.Organization{}, err
 	}
 
-	return agglo, err
+	return org, err
 }

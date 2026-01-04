@@ -60,6 +60,7 @@ type repo interface {
 	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 
 	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
+	MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error)
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
@@ -102,25 +103,25 @@ func (s Service) checkPermissionForManageInvite(
 }
 
 func (s Service) checkOrganizationIsActiveAndExists(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
-	agglo, err := s.repo.GetOrganizationByID(ctx, organizationID)
+	org, err := s.repo.GetOrganizationByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to get organization by id: %w", err),
 		)
 	}
-	if agglo.IsNil() {
+	if org.IsNil() {
 		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
 			fmt.Errorf("organization with id %s not found", organizationID),
 		)
 	}
 
-	if agglo.Status != models.OrganizationStatusActive {
+	if org.Status != models.OrganizationStatusActive {
 		return models.Organization{}, errx.ErrorOrganizationIsNotActive.Raise(
 			fmt.Errorf("organization with id %s is not active", organizationID),
 		)
 	}
 
-	return agglo, nil
+	return org, nil
 }
 
 func (s Service) getInitiator(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error) {

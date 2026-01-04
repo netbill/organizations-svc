@@ -52,11 +52,17 @@ func Roles(r *http.Request, mods pagi.Page[[]models.Role]) resources.RolesCollec
 		data[i] = Role(mod, nil).Data
 	}
 
-	links := BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
+	links := pagi.BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
 
 	return resources.RolesCollection{
-		Data:  data,
-		Links: links,
+		Data: data,
+		Links: resources.PaginationData{
+			First: links.First,
+			Last:  links.Last,
+			Prev:  links.Prev,
+			Next:  links.Next,
+			Self:  links.Self,
+		},
 	}
 }
 
@@ -65,7 +71,7 @@ func RolePermissions(mods []models.Permission) resources.RolePermissions {
 	for i, mod := range mods {
 		result[i] = resources.RolePermissionsDataInner{
 			Id:          mod.ID,
-			Code:        string(mod.Code),
+			Code:        mod.Code,
 			Description: mod.Description,
 		}
 	}

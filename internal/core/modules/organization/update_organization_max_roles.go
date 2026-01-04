@@ -14,12 +14,12 @@ func (s Service) UpdateOrganizationMaxRoles(
 	organizationID uuid.UUID,
 	maxRoles uint,
 ) (models.Organization, error) {
-	agglo, err := s.repo.UpdateOrganizationMaxRoles(ctx, organizationID, maxRoles)
+	org, err := s.repo.UpdateOrganizationMaxRoles(ctx, organizationID, maxRoles)
 	if err != nil {
 		return models.Organization{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to update organization max roles: %w", err),
 		)
 	}
 
-	return agglo, nil
+	return org, nil
 }

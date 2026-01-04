@@ -14,7 +14,7 @@ func (s Service) DeclineInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.getInvite(ctx, accountID)
+	invite, err = s.getInvite(ctx, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}

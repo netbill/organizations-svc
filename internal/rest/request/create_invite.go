@@ -8,14 +8,14 @@ import (
 	"github.com/netbill/organizations-svc/resources"
 )
 
-func SentInvite(r *http.Request) (params resources.SentInvite, err error) {
+func SentInvite(r *http.Request) (params resources.CreateInvite, err error) {
 	if err = json.NewDecoder(r.Body).Decode(&params); err != nil {
 		err = newDecodeError("body", err)
 		return
 	}
 
 	errs := validation.Errors{
-		"data/type":       validation.Validate(params.Data.Type, validation.Required, validation.In("sent_invite")),
+		"data/type":       validation.Validate(params.Data.Type, validation.Required, validation.In("create_invite")),
 		"data/attributes": validation.Validate(params.Data.Attributes, validation.Required),
 	}
 

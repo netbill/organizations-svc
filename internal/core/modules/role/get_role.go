@@ -32,12 +32,8 @@ func (s Service) GetRoleWithPermissions(ctx context.Context, accountID, roleID u
 		return models.Role{}, nil, err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, role.OrganizationID)
+	_, err = s.getInitiator(ctx, accountID, role.OrganizationID)
 	if err != nil {
-		return models.Role{}, nil, err
-	}
-
-	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
 		return models.Role{}, nil, err
 	}
 
@@ -62,10 +58,9 @@ type FilterParams struct {
 func (s Service) GetRoles(
 	ctx context.Context,
 	params FilterParams,
-	offset uint,
-	limit uint,
+	limit, offset uint,
 ) (pagi.Page[[]models.Role], error) {
-	res, err := s.repo.GetRoles(ctx, params, offset, limit)
+	res, err := s.repo.GetRoles(ctx, params, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Role]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to filter roles: %w", err),

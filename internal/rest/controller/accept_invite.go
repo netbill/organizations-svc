@@ -10,6 +10,7 @@ import (
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
 func (c Controller) AcceptInvite(w http.ResponseWriter, r *http.Request) {
@@ -33,13 +34,15 @@ func (c Controller) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, errx.ErrorInviteNotFound):
 			ape.RenderErr(w, problems.NotFound("invite not found"))
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			ape.RenderErr(w, problems.Forbidden("not enough rights to accept invite"))
+		case errors.Is(err, errx.ErrorInviteAlreadyAnswered):
+			ape.RenderErr(w, problems.Conflict("invite already accepted"))
+		case errors.Is(err, errx.ErrorInviteExpired):
+			ape.RenderErr(w, problems.Forbidden("invite has expired"))
 		default:
 			ape.RenderErr(w, problems.InternalError())
 		}
 		return
 	}
 
-	ape.Render(w, http.StatusOK, res)
+	ape.Render(w, http.StatusOK, responses.Invite(res))
 }

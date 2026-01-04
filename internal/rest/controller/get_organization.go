@@ -14,14 +14,14 @@ import (
 )
 
 func (c Controller) GetOrganization(w http.ResponseWriter, r *http.Request) {
-	organizationID, err := uuid.Parse(chi.URLParam(r, "organizationID"))
+	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid organization ID")
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid organization ID"))...)
 		return
 	}
 
-	agglo, err := c.core.GetOrganization(r.Context(), organizationID)
+	org, err := c.core.GetOrganization(r.Context(), organizationID)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get organization")
 		switch {
@@ -33,5 +33,5 @@ func (c Controller) GetOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Organization(agglo))
+	ape.Render(w, http.StatusOK, responses.Organization(org))
 }

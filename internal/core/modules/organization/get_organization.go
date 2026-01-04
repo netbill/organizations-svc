@@ -34,9 +34,9 @@ type FilterParams struct {
 func (s Service) GetOrganizations(
 	ctx context.Context,
 	params FilterParams,
-	offset, limit uint,
+	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	res, err := s.repo.GetOrganizations(ctx, params, offset, limit)
+	res, err := s.repo.GetOrganizations(ctx, params, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("filter organizations: %w", err),
@@ -49,9 +49,9 @@ func (s Service) GetOrganizations(
 func (s Service) GetOrganizationForUser(
 	ctx context.Context,
 	accountID uuid.UUID,
-	offset, limit uint,
+	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	res, err := s.repo.GetOrganizationsForUser(ctx, accountID, offset, limit)
+	res, err := s.repo.GetOrganizationsForUser(ctx, accountID, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("get organization for user: %w", err),

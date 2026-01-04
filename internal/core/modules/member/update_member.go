@@ -24,15 +24,50 @@ func (s Service) UpdateMember(
 		return models.Member{}, err
 	}
 
-	initiator, err := s.GetInitiatorMember(ctx, accountID, memberID)
+	initiator, err := s.GetInitiatorMember(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
 
-	if err = s.CheckAccessToManageOtherMember(ctx, initiator.ID, member.ID); err != nil {
+	hasPermission, err := s.repo.CheckMemberHavePermission(
+		ctx,
+		initiator.ID,
+		models.RolePermissionManageMembers,
+	)
+	if err != nil {
+		return models.Member{}, err
+	}
+	if !hasPermission {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member %s has no permission to manage members: %w", initiator.ID, err),
+			fmt.Errorf("initiator member %s has no manage members permission", initiator.ID),
 		)
+	}
+
+	firstMaxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
+	if err != nil {
+		return models.Member{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get max role for member %s: %w", initiator.ID, err),
+		)
+	}
+	if firstMaxRole.Head == false {
+		secMaxRole, err := s.repo.GetMemberMaxRole(ctx, member.ID)
+		if err != nil {
+			return models.Member{}, errx.ErrorInternal.Raise(
+				fmt.Errorf("failed to get max role for member %s: %w", member.ID, err),
+			)
+		}
+
+		if firstMaxRole.Rank < secMaxRole.Rank {
+			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+				fmt.Errorf(
+					"member %s with rank %d cannot manage member %s with rank %d",
+					initiator.ID,
+					firstMaxRole.Rank,
+					member.ID,
+					secMaxRole.Rank,
+				),
+			)
+		}
 	}
 
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {

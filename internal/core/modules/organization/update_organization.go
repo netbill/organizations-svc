@@ -19,18 +19,18 @@ func (s Service) UpdateOrganization(
 	accountID, organizationID uuid.UUID,
 	params UpdateParams,
 ) (models.Organization, error) {
-	agglo, err := s.GetOrganization(ctx, organizationID)
+	org, err := s.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	if agglo.Status == models.OrganizationStatusSuspended {
+	if org.Status == models.OrganizationStatusSuspended {
 		return models.Organization{}, errx.ErrorOrganizationIsSuspended.Raise(
 			fmt.Errorf("organization is suspended"),
 		)
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, agglo.ID)
+	initiator, err := s.getInitiator(ctx, accountID, org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -43,14 +43,14 @@ func (s Service) UpdateOrganization(
 	}
 
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.UpdateOrganization(ctx, organizationID, params)
+		org, err = s.repo.UpdateOrganization(ctx, organizationID, params)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to update organization: %w", err),
 			)
 		}
 
-		err = s.messenger.WriteOrganizationUpdated(ctx, agglo)
+		err = s.messenger.WriteOrganizationUpdated(ctx, org)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to publish organization updated event: %w", err),
@@ -62,5 +62,5 @@ func (s Service) UpdateOrganization(
 		return models.Organization{}, err
 	}
 
-	return agglo, nil
+	return org, nil
 }

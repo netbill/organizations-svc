@@ -10,7 +10,7 @@ properties:
     properties:
       type:
         type: string
-        enum: [ sent_invite ]
+        enum: [ create_invite ]
       attributes:
         type: object
         required:

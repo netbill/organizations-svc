@@ -23,6 +23,12 @@ func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) er
 		return err
 	}
 
+	if role.Head {
+		return errx.ErrorCannotDeleteHeadRole.Raise(
+			fmt.Errorf("cannot delete head role"),
+		)
+	}
+
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		if err = s.repo.DeleteRole(ctx, roleID); err != nil {
 			return errx.ErrorInternal.Raise(

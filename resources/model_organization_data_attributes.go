@@ -27,7 +27,7 @@ type OrganizationDataAttributes struct {
 	// The name of the organization
 	Name string `json:"name"`
 	// The icon representing the organization
-	Icon string `json:"icon"`
+	Icon *string `json:"icon,omitempty"`
 	// The date and time when the organization was created
 	CreatedAt time.Time `json:"created_at"`
 	// The date and time when the organization was last updated
@@ -40,11 +40,10 @@ type _OrganizationDataAttributes OrganizationDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOrganizationDataAttributes(status string, name string, icon string, createdAt time.Time, updatedAt time.Time) *OrganizationDataAttributes {
+func NewOrganizationDataAttributes(status string, name string, createdAt time.Time, updatedAt time.Time) *OrganizationDataAttributes {
 	this := OrganizationDataAttributes{}
 	this.Status = status
 	this.Name = name
-	this.Icon = icon
 	this.CreatedAt = createdAt
 	this.UpdatedAt = updatedAt
 	return &this
@@ -106,28 +105,36 @@ func (o *OrganizationDataAttributes) SetName(v string) {
 	o.Name = v
 }
 
-// GetIcon returns the Icon field value
+// GetIcon returns the Icon field value if set, zero value otherwise.
 func (o *OrganizationDataAttributes) GetIcon() string {
-	if o == nil {
+	if o == nil || IsNil(o.Icon) {
 		var ret string
 		return ret
 	}
-
-	return o.Icon
+	return *o.Icon
 }
 
-// GetIconOk returns a tuple with the Icon field value
+// GetIconOk returns a tuple with the Icon field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *OrganizationDataAttributes) GetIconOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Icon) {
 		return nil, false
 	}
-	return &o.Icon, true
+	return o.Icon, true
 }
 
-// SetIcon sets field value
+// HasIcon returns a boolean if a field has been set.
+func (o *OrganizationDataAttributes) HasIcon() bool {
+	if o != nil && !IsNil(o.Icon) {
+		return true
+	}
+
+	return false
+}
+
+// SetIcon gets a reference to the given string and assigns it to the Icon field.
 func (o *OrganizationDataAttributes) SetIcon(v string) {
-	o.Icon = v
+	o.Icon = &v
 }
 
 // GetCreatedAt returns the CreatedAt field value
@@ -190,7 +197,9 @@ func (o OrganizationDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["status"] = o.Status
 	toSerialize["name"] = o.Name
-	toSerialize["icon"] = o.Icon
+	if !IsNil(o.Icon) {
+		toSerialize["icon"] = o.Icon
+	}
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["updated_at"] = o.UpdatedAt
 	return toSerialize, nil
@@ -203,7 +212,6 @@ func (o *OrganizationDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"status",
 		"name",
-		"icon",
 		"created_at",
 		"updated_at",
 	}

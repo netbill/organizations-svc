@@ -80,6 +80,16 @@ func (s Service) UpdateRolesRanks(
 		rolesIDs[roleID] = struct{}{}
 	}
 
+	rankToRole := make(map[uint]uuid.UUID, len(order))
+	for roleID, newRank := range order {
+		if prevRoleID, ok := rankToRole[newRank]; ok && prevRoleID != roleID {
+			return errx.ErrorInvalidInput.Raise(
+				fmt.Errorf("duplicate rank %d for roles %s and %s", newRank, prevRoleID, roleID),
+			)
+		}
+		rankToRole[newRank] = roleID
+	}
+
 	hasPermission, err := s.repo.CheckMemberHavePermission(
 		ctx,
 		initiator.ID,
@@ -94,10 +104,9 @@ func (s Service) UpdateRolesRanks(
 		)
 	}
 
-	//TODO optimize number of queries
 	rolesBefore, err := s.repo.GetRoles(ctx, FilterParams{
 		OrganizationID: &organizationID,
-	}, 0, 1000)
+	}, 1000, 0)
 	if err != nil {
 		return errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to filter roles: %w", err),
@@ -109,7 +118,13 @@ func (s Service) UpdateRolesRanks(
 			continue
 		}
 
-		if role.Rank < maxRole.Rank {
+		if role.Head {
+			return errx.ErrorCannotUpdateHeadRoleRank.Raise(
+				fmt.Errorf("cannot update rank of head role %s", role.ID),
+			)
+		}
+
+		if role.Rank >= maxRole.Rank {
 			return errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
 					accountID, maxRole.Rank, role.Rank),
@@ -118,7 +133,7 @@ func (s Service) UpdateRolesRanks(
 	}
 
 	for _, newRank := range order {
-		if newRank < maxRole.Rank {
+		if newRank >= maxRole.Rank {
 			return errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
 					accountID, maxRole.Rank, newRank),

@@ -78,10 +78,9 @@ type FilterParams struct {
 func (s Service) GetMembers(
 	ctx context.Context,
 	filter FilterParams,
-	offset uint,
-	limit uint,
+	limit, offset uint,
 ) (pagi.Page[[]models.Member], error) {
-	res, err := s.repo.GetMembers(ctx, filter, offset, limit)
+	res, err := s.repo.GetMembers(ctx, filter, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Member]{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to filter members: %w", err),

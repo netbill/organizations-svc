@@ -12,7 +12,6 @@ package resources
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"bytes"
 	"fmt"
 )
@@ -22,8 +21,6 @@ var _ MappedNullable = &CreateOrganizationDataAttributes{}
 
 // CreateOrganizationDataAttributes struct for CreateOrganizationDataAttributes
 type CreateOrganizationDataAttributes struct {
-	// Account ID of the head of the organization
-	Head uuid.UUID `json:"head"`
 	// The name of the organization
 	Name string `json:"name"`
 	// The icon representing the organization
@@ -36,9 +33,8 @@ type _CreateOrganizationDataAttributes CreateOrganizationDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCreateOrganizationDataAttributes(head uuid.UUID, name string) *CreateOrganizationDataAttributes {
+func NewCreateOrganizationDataAttributes(name string) *CreateOrganizationDataAttributes {
 	this := CreateOrganizationDataAttributes{}
-	this.Head = head
 	this.Name = name
 	return &this
 }
@@ -49,30 +45,6 @@ func NewCreateOrganizationDataAttributes(head uuid.UUID, name string) *CreateOrg
 func NewCreateOrganizationDataAttributesWithDefaults() *CreateOrganizationDataAttributes {
 	this := CreateOrganizationDataAttributes{}
 	return &this
-}
-
-// GetHead returns the Head field value
-func (o *CreateOrganizationDataAttributes) GetHead() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.Head
-}
-
-// GetHeadOk returns a tuple with the Head field value
-// and a boolean to check if the value has been set.
-func (o *CreateOrganizationDataAttributes) GetHeadOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Head, true
-}
-
-// SetHead sets field value
-func (o *CreateOrganizationDataAttributes) SetHead(v uuid.UUID) {
-	o.Head = v
 }
 
 // GetName returns the Name field value
@@ -141,7 +113,6 @@ func (o CreateOrganizationDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o CreateOrganizationDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["head"] = o.Head
 	toSerialize["name"] = o.Name
 	if !IsNil(o.Icon) {
 		toSerialize["icon"] = o.Icon
@@ -154,7 +125,6 @@ func (o *CreateOrganizationDataAttributes) UnmarshalJSON(data []byte) (err error
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"head",
 		"name",
 	}
 

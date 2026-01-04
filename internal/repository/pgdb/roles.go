@@ -2,10 +2,13 @@ package pgdb
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/netbill/pgx"
 
 	sq "github.com/Masterminds/squirrel"
@@ -123,7 +126,12 @@ func (q RolesQ) Get(ctx context.Context) (Role, error) {
 
 	var r Role
 	if err = r.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		return Role{}, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return Role{}, nil
+		default:
+			return Role{}, err
+		}
 	}
 
 	return r, nil
@@ -499,7 +507,12 @@ func (q RolesQ) UpdateRolesRanks(
 		RETURNING r.id, r.organization_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at
 	`
 
-	rows, err := q.db.QueryContext(ctx, sqlUpdate, changed, newRanks, organizationID)
+	ids := make([]string, len(changed))
+	for i, id := range changed {
+		ids[i] = id.String()
+	}
+
+	rows, err := q.db.QueryContext(ctx, sqlUpdate, pq.Array(ids), pq.Array(newRanks), organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("updating roles ranks: %w", err)
 	}

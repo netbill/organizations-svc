@@ -76,9 +76,14 @@ func (p Producer) WriteRolePermissionsUpdated(
 	RoleID uuid.UUID,
 	permissions map[models.Permission]bool,
 ) error {
+	per := make(map[uuid.UUID]bool)
+	for k, v := range permissions {
+		per[k.ID] = v
+	}
+	
 	payload, err := json.Marshal(contracts.RolePermissionsUpdatedPayload{
 		RoleID:      RoleID,
-		Permissions: permissions,
+		Permissions: per,
 	})
 	if err != nil {
 		return err

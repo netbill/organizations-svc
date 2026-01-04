@@ -9,13 +9,14 @@ CREATE TYPE outbox_event_status AS ENUM (
 );
 
 CREATE TABLE outbox_events (
-    id       UUID  PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    topic    TEXT  NOT NULL,
-    key      TEXT  NOT NULL,
-    type     TEXT  NOT NULL,
-    version  INT   NOT NULL,
-    producer TEXT  NOT NULL,
-    payload  JSONB NOT NULL,
+    id       UUID   PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    seq      BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL,
+    topic    TEXT   NOT NULL,
+    key      TEXT   NOT NULL,
+    type     TEXT   NOT NULL,
+    version  INT    NOT NULL,
+    producer TEXT   NOT NULL,
+    payload  JSONB  NOT NULL,
 
     status        outbox_event_status NOT NULL DEFAULT 'pending', -- pending | sent | failed
     attempts      INT         NOT NULL DEFAULT 0,
@@ -33,13 +34,14 @@ CREATE TYPE inbox_event_status AS ENUM (
 );
 
 CREATE TABLE inbox_events (
-    id       UUID  PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    topic    TEXT  NOT NULL,
-    key      TEXT  NOT NULL,
-    type     TEXT  NOT NULL,
-    version  INT   NOT NULL,
-    producer TEXT  NOT NULL,
-    payload  JSONB NOT NULL,
+    id       UUID   PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    seq      BIGINT GENERATED ALWAYS AS IDENTITY NOT NULL,
+    topic    TEXT   NOT NULL,
+    key      TEXT   NOT NULL,
+    type     TEXT   NOT NULL,
+    version  INT    NOT NULL,
+    producer TEXT   NOT NULL,
+    payload  JSONB  NOT NULL,
 
     status        inbox_event_status NOT NULL DEFAULT 'pending', -- pending | processed | failed
     attempts      INT         NOT NULL DEFAULT 0,
@@ -49,7 +51,16 @@ CREATE TABLE inbox_events (
     processed_at  TIMESTAMPTZ
 );
 
+CREATE INDEX idx_outbox_events_pending
+    ON outbox_events (status, next_retry_at, seq);
+
+CREATE INDEX idx_outbox_events_seq
+    ON outbox_events (seq);
+
 -- +migrate Down
+DROP INDEX IF EXISTS idx_outbox_events_seq;
+DROP INDEX IF EXISTS idx_outbox_events_pending;
+
 DROP TABLE IF EXISTS outbox_events CASCADE;
 DROP TABLE IF EXISTS inbox_events CASCADE;
 

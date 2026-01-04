@@ -14,13 +14,13 @@ func (s Service) AcceptInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.getInvite(ctx, accountID)
+	invite, err = s.getInvite(ctx, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
 	if invite.AccountID != accountID {
-		return models.Invite{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
 	}
@@ -54,7 +54,7 @@ func (s Service) AcceptInvite(
 			)
 		}
 
-		mem, err := s.repo.CreateMember(ctx, accountID, invite.ID)
+		mem, err := s.repo.CreateMember(ctx, accountID, invite.OrganizationID)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to create member from invite: %w", err),

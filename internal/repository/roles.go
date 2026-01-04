@@ -11,7 +11,7 @@ import (
 )
 
 func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error) {
-	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
+	row, err := s.rolesQ(ctx).Insert(ctx, pgdb.InsertRoleParams{
 		OrganizationID: params.OrganizationID,
 		Rank:           params.Rank,
 		Name:           params.Name,
@@ -26,7 +26,7 @@ func (s Service) CreateRole(ctx context.Context, params role.CreateParams) (mode
 }
 
 func (s Service) CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (models.Role, error) {
-	row, err := s.rolesQ().Insert(ctx, pgdb.InsertRoleParams{
+	row, err := s.rolesQ(ctx).Insert(ctx, pgdb.InsertRoleParams{
 		OrganizationID: organizationID,
 		Head:           true,
 		Rank:           1,
@@ -42,7 +42,7 @@ func (s Service) CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (
 }
 
 func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
-	row, err := s.rolesQ().FilterByID(roleID).Get(ctx)
+	row, err := s.rolesQ(ctx).FilterByID(roleID).Get(ctx)
 	if err != nil {
 		return models.Role{}, err
 	}
@@ -53,10 +53,9 @@ func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, er
 func (s Service) GetRoles(
 	ctx context.Context,
 	filter role.FilterParams,
-	offset uint,
-	limit uint,
+	limit, offset uint,
 ) (pagi.Page[[]models.Role], error) {
-	q := s.rolesQ()
+	q := s.rolesQ(ctx)
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
 	}
@@ -73,7 +72,11 @@ func (s Service) GetRoles(
 		q = q.FilterLikeName(*filter.Name)
 	}
 
-	rows, err := q.Page(limit, offset).Select(ctx)
+	if limit == 0 {
+		limit = 10
+	}
+
+	rows, err := q.OrderByRoleRank(false).Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Role]{}, err
 	}
@@ -90,14 +93,14 @@ func (s Service) GetRoles(
 
 	return pagi.Page[[]models.Role]{
 		Data:  collection,
-		Total: uint(total),
+		Total: total,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(collection)),
 	}, nil
 }
 
 func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (models.Role, error) {
-	q := s.rolesQ().FilterByID(roleID)
+	q := s.rolesQ(ctx).FilterByID(roleID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
 	}
@@ -117,7 +120,7 @@ func (s Service) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.U
 }
 
 func (s Service) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (models.Role, error) {
-	row, err := s.rolesQ().UpdateRoleRank(ctx, roleID, newRank)
+	row, err := s.rolesQ(ctx).UpdateRoleRank(ctx, roleID, newRank)
 	if err != nil {
 		return models.Role{}, err
 	}
@@ -130,7 +133,7 @@ func (s Service) UpdateRolesRanks(
 	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
-	_, err := s.rolesQ().UpdateRolesRanks(ctx, organizationID, order)
+	_, err := s.rolesQ(ctx).UpdateRolesRanks(ctx, organizationID, order)
 	if err != nil {
 		return err
 	}
@@ -139,16 +142,16 @@ func (s Service) UpdateRolesRanks(
 }
 
 func (s Service) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
-	return s.rolesQ().DeleteAndShiftRanks(ctx, roleID)
+	return s.rolesQ(ctx).DeleteAndShiftRanks(ctx, roleID)
 }
 
 func (s Service) GetMemberMaxRole(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Role, error) {
-	res, err := s.rolesQ().
-		FilterByAccountID(memberID).
-		OrderByRoleRank(true).
+	res, err := s.rolesQ(ctx).
+		FilterByMemberID(memberID).
+		OrderByRoleRank(false). // DESC => max
 		Get(ctx)
 	if err != nil {
 		return models.Role{}, err

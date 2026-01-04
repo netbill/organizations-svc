@@ -10,6 +10,7 @@ import (
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
 func (c Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
@@ -41,5 +42,5 @@ func (c Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ape.Render(w, http.StatusOK, res)
+	ape.Render(w, http.StatusOK, responses.Invite(res))
 }

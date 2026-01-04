@@ -33,6 +33,8 @@ func (c Controller) GetInvite(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get invite")
 		switch {
+		case errors.Is(err, errx.ErrorNotEnoughRights):
+			ape.RenderErr(w, problems.Forbidden("not enough rights to get invite"))
 		case errors.Is(err, errx.ErrorInviteNotFound) || errors.Is(err, errx.ErrorNotAccessToResource):
 			ape.RenderErr(w, problems.NotFound("invite not found"))
 		default:

@@ -32,13 +32,8 @@ components:
             attributes:
               type: object
               required:
-                - head
                 - name
               properties:
-                head:
-                  type: string
-                  format: uuid
-                  description: Account ID of the head of the organization
                 name:
                   type: string
                   description: The name of the organization
@@ -103,7 +98,7 @@ components:
                 label:
                   type: string
                   description: A label or title associated with the member
-    SentInvite:
+    CreateInvite:
       type: object
       required:
         - data
@@ -117,7 +112,7 @@ components:
             type:
               type: string
               enum:
-                - sent_invite
+                - create_invite
             attributes:
               type: object
               required:
@@ -268,7 +263,7 @@ components:
             attributes:
               type: object
               properties:
-                roles:
+                permissions:
                   type: array
                   description: An ordered list of role IDs representing the new roles hierarchy
                   items:
@@ -333,7 +328,6 @@ components:
               required:
                 - status
                 - name
-                - icon
                 - created_at
                 - updated_at
               properties:

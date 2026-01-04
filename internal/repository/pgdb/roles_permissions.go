@@ -2,6 +2,8 @@ package pgdb
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -70,7 +72,12 @@ func (q RolePermissionsQ) Get(ctx context.Context) (RolePermission, error) {
 
 	var rp RolePermission
 	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&rp.RoleID, &rp.PermissionID); err != nil {
-		return RolePermission{}, fmt.Errorf("executing select query for %s: %w", RolePermissionsTable, err)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return RolePermission{}, nil
+		default:
+			return RolePermission{}, fmt.Errorf("scanning row for %s: %w", RolePermissionsTable, err)
+		}
 	}
 
 	return rp, nil

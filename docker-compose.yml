@@ -10,8 +10,8 @@ services:
       - chains-net
 
   organizations-svc-postgres:
-    image: postgres:15
-    container_name:  organizations-svc-postgres
+    image: postgis/postgis:16-3.4
+    container_name: organizations-svc-postgres
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

@@ -9,15 +9,15 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) SuspendOrganization(ctx context.Context, ID uuid.UUID) (agglo models.Organization, err error) {
+func (s Service) SuspendOrganization(ctx context.Context, ID uuid.UUID) (org models.Organization, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.UpdateOrganizationStatus(ctx, ID, models.OrganizationStatusSuspended)
+		org, err = s.repo.UpdateOrganizationStatus(ctx, ID, models.OrganizationStatusSuspended)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to suspend organization: %w", err))
 		}
 
-		err = s.messenger.WriteOrganizationSuspended(ctx, agglo)
+		err = s.messenger.WriteOrganizationSuspended(ctx, org)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to publish organization suspend event: %w", err),
@@ -29,5 +29,5 @@ func (s Service) SuspendOrganization(ctx context.Context, ID uuid.UUID) (agglo m
 		return models.Organization{}, err
 	}
 
-	return agglo, nil
+	return org, nil
 }

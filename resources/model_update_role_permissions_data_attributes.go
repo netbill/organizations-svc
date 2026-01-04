@@ -20,7 +20,7 @@ var _ MappedNullable = &UpdateRolePermissionsDataAttributes{}
 // UpdateRolePermissionsDataAttributes struct for UpdateRolePermissionsDataAttributes
 type UpdateRolePermissionsDataAttributes struct {
 	// An ordered list of role IDs representing the new roles hierarchy
-	Roles []UpdateRolePermissionsDataAttributesRolesInner `json:"roles,omitempty"`
+	Permissions []UpdateRolePermissionsDataAttributesPermissionsInner `json:"permissions,omitempty"`
 }
 
 // NewUpdateRolePermissionsDataAttributes instantiates a new UpdateRolePermissionsDataAttributes object
@@ -40,36 +40,36 @@ func NewUpdateRolePermissionsDataAttributesWithDefaults() *UpdateRolePermissions
 	return &this
 }
 
-// GetRoles returns the Roles field value if set, zero value otherwise.
-func (o *UpdateRolePermissionsDataAttributes) GetRoles() []UpdateRolePermissionsDataAttributesRolesInner {
-	if o == nil || IsNil(o.Roles) {
-		var ret []UpdateRolePermissionsDataAttributesRolesInner
+// GetPermissions returns the Permissions field value if set, zero value otherwise.
+func (o *UpdateRolePermissionsDataAttributes) GetPermissions() []UpdateRolePermissionsDataAttributesPermissionsInner {
+	if o == nil || IsNil(o.Permissions) {
+		var ret []UpdateRolePermissionsDataAttributesPermissionsInner
 		return ret
 	}
-	return o.Roles
+	return o.Permissions
 }
 
-// GetRolesOk returns a tuple with the Roles field value if set, nil otherwise
+// GetPermissionsOk returns a tuple with the Permissions field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *UpdateRolePermissionsDataAttributes) GetRolesOk() ([]UpdateRolePermissionsDataAttributesRolesInner, bool) {
-	if o == nil || IsNil(o.Roles) {
+func (o *UpdateRolePermissionsDataAttributes) GetPermissionsOk() ([]UpdateRolePermissionsDataAttributesPermissionsInner, bool) {
+	if o == nil || IsNil(o.Permissions) {
 		return nil, false
 	}
-	return o.Roles, true
+	return o.Permissions, true
 }
 
-// HasRoles returns a boolean if a field has been set.
-func (o *UpdateRolePermissionsDataAttributes) HasRoles() bool {
-	if o != nil && !IsNil(o.Roles) {
+// HasPermissions returns a boolean if a field has been set.
+func (o *UpdateRolePermissionsDataAttributes) HasPermissions() bool {
+	if o != nil && !IsNil(o.Permissions) {
 		return true
 	}
 
 	return false
 }
 
-// SetRoles gets a reference to the given []UpdateRolePermissionsDataAttributesRolesInner and assigns it to the Roles field.
-func (o *UpdateRolePermissionsDataAttributes) SetRoles(v []UpdateRolePermissionsDataAttributesRolesInner) {
-	o.Roles = v
+// SetPermissions gets a reference to the given []UpdateRolePermissionsDataAttributesPermissionsInner and assigns it to the Permissions field.
+func (o *UpdateRolePermissionsDataAttributes) SetPermissions(v []UpdateRolePermissionsDataAttributesPermissionsInner) {
+	o.Permissions = v
 }
 
 func (o UpdateRolePermissionsDataAttributes) MarshalJSON() ([]byte, error) {
@@ -82,8 +82,8 @@ func (o UpdateRolePermissionsDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o UpdateRolePermissionsDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.Roles) {
-		toSerialize["roles"] = o.Roles
+	if !IsNil(o.Permissions) {
+		toSerialize["permissions"] = o.Permissions
 	}
 	return toSerialize, nil
 }

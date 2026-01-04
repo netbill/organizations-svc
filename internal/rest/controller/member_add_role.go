@@ -45,6 +45,8 @@ func (c Controller) MemberAddRole(w http.ResponseWriter, r *http.Request) {
 			ape.RenderErr(w, problems.NotFound("role not found"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
 			ape.RenderErr(w, problems.Forbidden("not enough rights to add role to member"))
+		case errors.Is(err, errx.ErrorCannotAddHeadRoleToMember):
+			ape.RenderErr(w, problems.Forbidden("cannot add head role to member"))
 		default:
 			ape.RenderErr(w, problems.InternalError())
 		}

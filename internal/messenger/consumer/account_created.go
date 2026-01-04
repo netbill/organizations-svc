@@ -2,8 +2,6 @@ package consumer
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -12,10 +10,6 @@ func (c Consumer) AccountCreated(ctx context.Context, event kafka.Message) error
 	return c.inbox.Transaction(ctx, func(ctx context.Context) error {
 		eventInBox, err := c.inbox.CreateInboxEvent(ctx, event)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil
-			}
-
 			c.log.Errorf("failed to upsert inbox event for account %s: %v", string(event.Key), err)
 			return err
 		}

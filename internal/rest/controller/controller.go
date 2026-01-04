@@ -13,7 +13,7 @@ import (
 	"github.com/netbill/pagi"
 )
 
-type aggloSvc interface {
+type orgSvc interface {
 	CreateOrganization(
 		ctx context.Context,
 		accountID uuid.UUID,
@@ -23,12 +23,12 @@ type aggloSvc interface {
 	GetOrganizations(
 		ctx context.Context,
 		params organization.FilterParams,
-		offset, limit uint,
+		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
 	GetOrganizationForUser(
 		ctx context.Context,
 		accountID uuid.UUID,
-		offset, limit uint,
+		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
 	GetOrganization(
 		ctx context.Context,
@@ -103,8 +103,7 @@ type memberSvc interface {
 	GetMembers(
 		ctx context.Context,
 		filter member.FilterParams,
-		offset uint,
-		limit uint,
+		limit, offset uint,
 	) (pagi.Page[[]models.Member], error)
 
 	UpdateMember(
@@ -131,8 +130,7 @@ type roleSvc interface {
 	GetRoles(
 		ctx context.Context,
 		params role.FilterParams,
-		offset uint,
-		limit uint,
+		limit, offset uint,
 	) (pagi.Page[[]models.Role], error)
 
 	UpdateRole(
@@ -171,7 +169,7 @@ type roleSvc interface {
 }
 
 type core struct {
-	aggloSvc
+	orgSvc
 	inviteSvc
 	memberSvc
 	roleSvc
@@ -183,7 +181,7 @@ type Controller struct {
 }
 
 func New(
-	aggloSvc aggloSvc,
+	orgSvc orgSvc,
 	memberSvc memberSvc,
 	roleSvc roleSvc,
 	inviteSvc inviteSvc,
@@ -191,7 +189,7 @@ func New(
 ) Controller {
 	return Controller{
 		core: core{
-			aggloSvc:  aggloSvc,
+			orgSvc:    orgSvc,
 			inviteSvc: inviteSvc,
 			memberSvc: memberSvc,
 			roleSvc:   roleSvc,

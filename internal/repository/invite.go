@@ -14,7 +14,7 @@ func (s Service) CreateInvite(
 	ctx context.Context,
 	params invite.CreateParams,
 ) (models.Invite, error) {
-	row, err := s.invitesQ().Insert(ctx, pgdb.InsertInviteParams{
+	row, err := s.invitesQ(ctx).Insert(ctx, pgdb.InsertInviteParams{
 		OrganizationID: params.OrganizationID,
 		AccountID:      params.AccountID,
 		ExpiresAt:      params.ExpiresAt,
@@ -30,7 +30,7 @@ func (s Service) GetInvite(
 	ctx context.Context,
 	id uuid.UUID,
 ) (models.Invite, error) {
-	row, err := s.invitesQ().FilterByID(id).Get(ctx)
+	row, err := s.invitesQ(ctx).FilterByID(id).Get(ctx)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -43,7 +43,7 @@ func (s Service) UpdateInviteStatus(
 	id uuid.UUID,
 	status string,
 ) (models.Invite, error) {
-	row, err := s.invitesQ().FilterByID(id).UpdateStatus(status).UpdateOne(ctx)
+	row, err := s.invitesQ(ctx).FilterByID(id).UpdateStatus(status).UpdateOne(ctx)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -55,7 +55,7 @@ func (s Service) DeleteInvite(
 	ctx context.Context,
 	id uuid.UUID,
 ) error {
-	return s.invitesQ().FilterByID(id).Delete(ctx)
+	return s.invitesQ(ctx).FilterByID(id).Delete(ctx)
 }
 
 func (s Service) GetOrganizationInvites(
@@ -63,14 +63,19 @@ func (s Service) GetOrganizationInvites(
 	organizationID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	rows, err := s.invitesQ().
+	if limit == 0 {
+		limit = 10
+	}
+
+	rows, err := s.invitesQ(ctx).
 		FilterByOrganizationID(organizationID).
+		Page(limit, offset).
 		Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}
 
-	total, err := s.invitesQ().
+	total, err := s.invitesQ(ctx).
 		FilterByOrganizationID(organizationID).
 		Count(ctx)
 	if err != nil {
@@ -86,7 +91,7 @@ func (s Service) GetOrganizationInvites(
 		Data:  res,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(res)),
-		Total: uint(total),
+		Total: total,
 	}, nil
 }
 
@@ -95,14 +100,19 @@ func (s Service) GetAccountInvites(
 	accountID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	rows, err := s.invitesQ().
+	if limit == 0 {
+		limit = 10
+	}
+
+	rows, err := s.invitesQ(ctx).
 		FilterByAccountID(accountID).
+		Page(limit, offset).
 		Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}
 
-	total, err := s.invitesQ().
+	total, err := s.invitesQ(ctx).
 		FilterByAccountID(accountID).
 		Count(ctx)
 	if err != nil {
@@ -118,7 +128,7 @@ func (s Service) GetAccountInvites(
 		Data:  res,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(res)),
-		Total: uint(total),
+		Total: total,
 	}, nil
 }
 

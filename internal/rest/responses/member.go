@@ -33,10 +33,16 @@ func Members(r *http.Request, mods pagi.Page[[]models.Member]) resources.MemberC
 		data[i] = Member(mod).Data
 	}
 
-	links := BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
+	links := pagi.BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
 
 	return resources.MemberCollection{
-		Data:  data,
-		Links: links,
+		Data: data,
+		Links: resources.PaginationData{
+			First: links.First,
+			Last:  links.Last,
+			Prev:  links.Prev,
+			Next:  links.Next,
+			Self:  links.Self,
+		},
 	}
 }

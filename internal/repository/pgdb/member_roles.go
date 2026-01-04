@@ -2,6 +2,8 @@ package pgdb
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
@@ -67,7 +69,12 @@ func (q MemberRolesQ) Get(ctx context.Context) (MemberRole, error) {
 
 	var out MemberRole
 	if err = out.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		return MemberRole{}, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return MemberRole{}, nil
+		default:
+			return MemberRole{}, err
+		}
 	}
 	return out, nil
 }

@@ -26,10 +26,19 @@ func (s Service) CreateInvite(
 		return invite, err
 	}
 
-	if err = s.checkPermissionForManageInvite(
-		ctx,
-		initiator.ID,
-	); err != nil {
+	exist, err := s.repo.MemberExists(ctx, params.AccountID, params.OrganizationID)
+	if err != nil {
+		return models.Invite{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to check member existence: %w", err),
+		)
+	}
+	if exist == true {
+		return models.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
+			fmt.Errorf("account '%s' is already a member of organization '%s'", params.AccountID, params.OrganizationID),
+		)
+	}
+
+	if err = s.checkPermissionForManageInvite(ctx, initiator.ID); err != nil {
 		return models.Invite{}, err
 	}
 

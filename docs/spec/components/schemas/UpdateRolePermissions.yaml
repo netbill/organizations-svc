@@ -19,7 +19,7 @@ properties:
       attributes:
         type: object
         properties:
-          roles:
+          permissions:
             type: array
             description: "An ordered list of role IDs representing the new roles hierarchy"
             items:

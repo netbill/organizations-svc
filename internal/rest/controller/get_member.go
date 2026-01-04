@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
 func (c Controller) GetMember(w http.ResponseWriter, r *http.Request) {
-	memberId, err := uuid.Parse(r.URL.Query().Get("member_id"))
+	memberId, err := uuid.Parse(chi.URLParam(r, "member_id"))
 	if err != nil {
 		c.log.Errorf("failed to parse member id, cause %s", err)
 		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid member id"))...)
@@ -31,5 +33,5 @@ func (c Controller) GetMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ape.Render(w, http.StatusOK, res)
+	ape.Render(w, http.StatusOK, responses.Member(res))
 }

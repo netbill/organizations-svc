@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID) error {
@@ -19,10 +20,48 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 		return err
 	}
 
-	err = s.CheckAccessToManageOtherMember(ctx, initiator.ID, member.ID)
+	hasPermission, err := s.repo.CheckMemberHavePermission(
+		ctx,
+		initiator.ID,
+		models.RolePermissionManageMembers,
+	)
 	if err != nil {
+		return err
+	}
+	if !hasPermission {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member %s has no permission to manage members: %w", initiator.ID, err),
+			fmt.Errorf("initiator member %s has no manage members permission", initiator.ID),
+		)
+	}
+
+	firstMaxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
+	if err != nil {
+		return errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get max role for member %s: %w", initiator.ID, err),
+		)
+	}
+
+	secMaxRole, err := s.repo.GetMemberMaxRole(ctx, member.ID)
+	if err != nil {
+		return errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get max role for member %s: %w", member.ID, err),
+		)
+	}
+	if secMaxRole.Head {
+		return errx.ErrorCannotDeleteOrganizationHeadMember.Raise(
+			fmt.Errorf("cannot delete organization head member %s", member.ID),
+		)
+	}
+
+	if firstMaxRole.Rank < secMaxRole.Rank {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf(
+				"member %s with rank %d cannot manage member %s with rank %d",
+				initiator.ID,
+				firstMaxRole.Rank,
+				member.ID,
+				secMaxRole.Rank,
+			),
 		)
 	}
 

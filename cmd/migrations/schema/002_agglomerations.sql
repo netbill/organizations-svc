@@ -1,5 +1,6 @@
 -- +migrate Up
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TYPE administration_status AS ENUM (
     'active',
@@ -32,7 +33,7 @@ CREATE TABLE profiles (
 CREATE TABLE members (
     id               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     account_id       UUID NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
-    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id  UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     position         TEXT,
     label            TEXT,
 
@@ -44,7 +45,7 @@ CREATE TABLE members (
 
 CREATE TABLE roles (
     id               UUID    PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    organization_id UUID    NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    organization_id  UUID    NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     head             BOOLEAN NOT NULL DEFAULT false,
     rank             INT     NOT NULL DEFAULT 0 CHECK ( rank >= 0 ),
     name             TEXT    NOT NULL,
@@ -54,21 +55,12 @@ CREATE TABLE roles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    UNIQUE(organization_id, name),
+    UNIQUE(organization_id, name)
 );
 
 CREATE UNIQUE INDEX roles_one_head_per_organization
     ON roles (organization_id)
     WHERE head = true;
-
-CREATE UNIQUE INDEX roles_one_rank0_per_organization
-    ON roles (organization_id)
-    WHERE rank = 0;
-
--- ALTER TABLE roles
---     ADD CONSTRAINT roles_organization_id_rank_key
---     UNIQUE (organization_id, rank)
---     DEFERRABLE INITIALLY DEFERRED;
 
 CREATE TABLE member_roles (
     member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -82,6 +74,13 @@ CREATE TABLE permissions (
     code        VARCHAR(255)  UNIQUE NOT NULL,
     description VARCHAR(1024) NOT NULL
 );
+
+INSERT INTO permissions (id, code, description) VALUES
+    (uuid_generate_v4(), 'organization.manage', 'manage organization settings'),
+    (uuid_generate_v4(), 'invites.manage', 'manage organization invites'),
+    (uuid_generate_v4(), 'members.manage', 'manage organization members'),
+    (uuid_generate_v4(), 'roles.manage', 'manage organization roles');
+
 
 CREATE TABLE role_permissions (
     role_id       UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
@@ -98,7 +97,8 @@ CREATE TYPE invite_status AS ENUM (
 
 CREATE TABLE invites (
     id               UUID          PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    organization_id UUID          NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    account_id       UUID          NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
+    organization_id  UUID          NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     status           invite_status NOT NULL DEFAULT 'sent',
 
     expires_at       TIMESTAMPTZ NOT NULL,

@@ -9,7 +9,7 @@ import (
 )
 
 func (s Service) UpsertProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
-	row, err := s.profilesQ().Upsert(ctx, pgdb.ProfileUpsertInput{
+	row, err := s.profilesQ(ctx).Upsert(ctx, pgdb.ProfileUpsertInput{
 		AccountID: profile.AccountID,
 		Username:  profile.Username,
 		Official:  profile.Official,
@@ -23,7 +23,7 @@ func (s Service) UpsertProfile(ctx context.Context, profile models.Profile) (mod
 }
 
 func (s Service) UpdateUsername(ctx context.Context, accountID uuid.UUID, username string) (models.Profile, error) {
-	row, err := s.profilesQ().
+	row, err := s.profilesQ(ctx).
 		FilterByAccountID(accountID).
 		UpdateUsername(username).
 		Get(ctx)
@@ -35,7 +35,7 @@ func (s Service) UpdateUsername(ctx context.Context, accountID uuid.UUID, userna
 }
 
 func (s Service) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (models.Profile, error) {
-	row, err := s.profilesQ().FilterByAccountID(accountID).Get(ctx)
+	row, err := s.profilesQ(ctx).FilterByAccountID(accountID).Get(ctx)
 	if err != nil {
 		return models.Profile{}, err
 	}
@@ -44,7 +44,7 @@ func (s Service) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID)
 }
 
 func (s Service) GetProfileByUsername(ctx context.Context, username string) (models.Profile, error) {
-	row, err := s.profilesQ().FilterByUsername(username).Get(ctx)
+	row, err := s.profilesQ(ctx).FilterByUsername(username).Get(ctx)
 	if err != nil {
 		return models.Profile{}, err
 	}
@@ -53,7 +53,7 @@ func (s Service) GetProfileByUsername(ctx context.Context, username string) (mod
 }
 
 func (s Service) DeleteProfileByAccountID(ctx context.Context, accountID uuid.UUID) error {
-	return s.profilesQ().FilterByAccountID(accountID).Delete(ctx)
+	return s.profilesQ(ctx).FilterByAccountID(accountID).Delete(ctx)
 }
 
 func Profile(row pgdb.Profile) models.Profile {

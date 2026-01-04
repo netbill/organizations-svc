@@ -23,8 +23,8 @@ components:
       $ref: './spec/components/schemas/UpdateOrganization.yaml'
     UpdateMember:
       $ref: './spec/components/schemas/UpdateMember.yaml'
-    SentInvite:
-      $ref: './spec/components/schemas/SentInvite.yaml'
+    CreateInvite:
+      $ref: './spec/components/schemas/CreateInvite.yaml'
     CreateRole:
       $ref: './spec/components/schemas/CreateRole.yaml'
     UpdateRole:

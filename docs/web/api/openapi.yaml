@@ -34,10 +34,10 @@ components:
           $ref: "#/components/schemas/UpdateMember_data"
       required:
       - data
-    SentInvite:
+    CreateInvite:
       properties:
         data:
-          $ref: "#/components/schemas/SentInvite_data"
+          $ref: "#/components/schemas/CreateInvite_data"
       required:
       - data
     CreateRole:
@@ -184,10 +184,6 @@ components:
       - type
     CreateOrganization_data_attributes:
       properties:
-        head:
-          description: Account ID of the head of the organization
-          format: uuid
-          type: string
         name:
           description: The name of the organization
           type: string
@@ -195,7 +191,6 @@ components:
           description: The icon representing the organization
           type: string
       required:
-      - head
       - name
     CreateOrganization_data:
       properties:
@@ -256,7 +251,7 @@ components:
       - attributes
       - id
       - type
-    SentInvite_data_attributes:
+    CreateInvite_data_attributes:
       properties:
         organization_id:
           description: The ID of the organization to which the invite belongs
@@ -269,14 +264,14 @@ components:
       required:
       - account_id
       - organization_id
-    SentInvite_data:
+    CreateInvite_data:
       properties:
         type:
           enum:
-          - sent_invite
+          - create_invite
           type: string
         attributes:
-          $ref: "#/components/schemas/SentInvite_data_attributes"
+          $ref: "#/components/schemas/CreateInvite_data_attributes"
       required:
       - attributes
       - type
@@ -300,10 +295,10 @@ components:
           description: The color associated with the role in HEX format
           type: string
       required:
-      - organization_id
       - color
       - description
       - name
+      - organization_id
       - rank
     CreateRole_data:
       properties:
@@ -379,7 +374,7 @@ components:
       - attributes
       - id
       - type
-    UpdateRolePermissions_data_attributes_roles_inner:
+    UpdateRolePermissions_data_attributes_permissions_inner:
       properties:
         code:
           description: permission code
@@ -392,10 +387,10 @@ components:
       - status
     UpdateRolePermissions_data_attributes:
       properties:
-        roles:
+        permissions:
           description: An ordered list of role IDs representing the new roles hierarchy
           items:
-            $ref: "#/components/schemas/UpdateRolePermissions_data_attributes_roles_inner"
+            $ref: "#/components/schemas/UpdateRolePermissions_data_attributes_permissions_inner"
           type: array
     UpdateRolePermissions_data:
       properties:
@@ -434,7 +429,6 @@ components:
           type: string
       required:
       - created_at
-      - icon
       - name
       - status
       - updated_at
@@ -487,9 +481,9 @@ components:
           type: string
       required:
       - account_id
-      - organization_id
       - created_at
       - official
+      - organization_id
       - updated_at
       - username
     Member_data:
@@ -535,9 +529,9 @@ components:
           type: string
       required:
       - account_id
-      - organization_id
       - created_at
       - expires_at
+      - organization_id
       - status
     Invite_data:
       properties:
@@ -586,12 +580,12 @@ components:
           format: date-time
           type: string
       required:
-      - organization_id
       - color
       - created_at
       - description
       - head
       - name
+      - organization_id
       - rank
       - updated_at
     Role_data_relationships_permissions_inner:

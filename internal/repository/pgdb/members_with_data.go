@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"errors"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 )
@@ -144,9 +146,9 @@ func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
 			SELECT 1
 			FROM member_roles mr
 			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			JOIN permissions p ON p.id = rp.permission_id
+			JOIN permissions perm ON perm.id = rp.permission_id
 			WHERE mr.member_id = m.id
-			  AND p.code = ?
+			  AND perm.code = ?
 		)
 	`, code)
 
@@ -159,6 +161,10 @@ func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
 }
 
 func (q MembersQ) GetWithUserData(ctx context.Context) (MemberWithUserData, error) {
+	q.selector = q.selector.
+		Columns("p.username", "p.official", "p.pseudonym").
+		Join("profiles p ON p.account_id = m.account_id")
+
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
 		return MemberWithUserData{}, fmt.Errorf("building select query for %s: %w", MembersTable, err)
@@ -166,13 +172,22 @@ func (q MembersQ) GetWithUserData(ctx context.Context) (MemberWithUserData, erro
 
 	var out MemberWithUserData
 	if err = out.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		return MemberWithUserData{}, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return MemberWithUserData{}, nil
+		default:
+			return MemberWithUserData{}, err
+		}
 	}
 
 	return out, nil
 }
 
 func (q MembersQ) SelectWithUserData(ctx context.Context) ([]MemberWithUserData, error) {
+	q.selector = q.selector.
+		Columns("p.username", "p.official", "p.pseudonym").
+		Join("profiles p ON p.account_id = m.account_id")
+
 	query, args, err := q.selector.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("building select query for %s: %w", MembersTable, err)

@@ -39,9 +39,11 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	database := repository.New(pg)
 	kafkaBox := box.New(pg)
 
+	log.Infof("starting kafka brokers %s", cfg.Kafka.Brokers)
+
 	kafkaProducer := producer.New(log, cfg.Kafka.Brokers, kafkaBox)
 
-	aggloSvc := organization.New(database, kafkaProducer)
+	orgSvc := organization.New(database, kafkaProducer)
 	memberSvc := member.New(database, kafkaProducer)
 	roleSvc := role.New(database, kafkaProducer)
 	inviteSvc := invite.New(database, kafkaProducer)
@@ -49,7 +51,8 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 
 	kafkaConsumer := consumer.New(log, cfg.Kafka.Brokers, box.New(pg), callbacker.New(log, profileSvc))
 
-	ctrl := controller.New(aggloSvc, memberSvc, roleSvc, inviteSvc, log)
+	ctrl := controller.New(orgSvc, memberSvc, roleSvc, inviteSvc, log)
+
 	mdll := mdlv.New(cfg.JWT.User.AccessToken.SecretKey, rest.AccountDataCtxKey)
 	router := rest.New(log, mdll, ctrl)
 

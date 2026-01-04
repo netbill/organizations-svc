@@ -28,6 +28,12 @@ func (s Service) SetRolePermissions(
 		return models.Role{}, nil, err
 	}
 
+	if role.Head {
+		return models.Role{}, nil, errx.ErrorCannotUpdatePermissionsHeadRole.Raise(
+			fmt.Errorf("cannot update permissions of head role"),
+		)
+	}
+
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		err = s.repo.SetRolePermissions(ctx, roleID, permissions)
 		if err != nil {

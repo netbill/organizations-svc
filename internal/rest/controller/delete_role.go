@@ -33,6 +33,8 @@ func (c Controller) DeleteRole(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, errx.ErrorRoleNotFound):
 			ape.RenderErr(w, problems.NotFound("role not found"))
+		case errors.Is(err, errx.ErrorCannotDeleteHeadRole):
+			ape.RenderErr(w, problems.Forbidden("cannot delete head role"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
 			ape.RenderErr(w, problems.Forbidden("not enough rights to delete role"))
 		default:

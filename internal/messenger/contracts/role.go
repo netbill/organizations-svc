@@ -33,6 +33,6 @@ type RolesRanksUpdatedPayload struct {
 const RolePermissionsUpdatedEvent = "role.permissions.updated"
 
 type RolePermissionsUpdatedPayload struct {
-	RoleID      uuid.UUID                  `json:"role_id"`
-	Permissions map[models.Permission]bool `json:"permissions"`
+	RoleID      uuid.UUID          `json:"role_id"`
+	Permissions map[uuid.UUID]bool `json:"permissions"`
 }

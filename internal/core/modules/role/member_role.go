@@ -56,11 +56,17 @@ func (s Service) MemberAddRole(
 		)
 	}
 
+	if role.Head {
+		return errx.ErrorCannotAddHeadRoleToMember.Raise(
+			fmt.Errorf("cannot add head role %s to member %s", role.ID, member.ID),
+		)
+	}
+
 	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
 		return err
 	}
 
-	return s.repo.Transaction(ctx, func(txCtx context.Context) error {
+	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		if err = s.repo.AddMemberRole(ctx, memberID, roleID); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("role Service MemberAddRoleByUser: repo AddMemberRole: %w", err),
@@ -96,6 +102,12 @@ func (s Service) RemoveMemberRole(
 		return err
 	}
 
+	if role.Head {
+		return errx.ErrorCannotRemoveHeadRoleFromMember.Raise(
+			fmt.Errorf("cannot remove head role %s from member %s", role.ID, member.ID),
+		)
+	}
+
 	if role.OrganizationID != member.OrganizationID {
 		return errx.ErrorRoleNotFound.Raise(
 			fmt.Errorf("role with id %s is not available in organization %s", role.ID, role.OrganizationID),
@@ -106,7 +118,7 @@ func (s Service) RemoveMemberRole(
 		return err
 	}
 
-	return s.repo.Transaction(ctx, func(txCtx context.Context) error {
+	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		if err = s.repo.RemoveMemberRole(ctx, memberID, roleID); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("role Service MemberRemoveRoleByUser: repo RemoveMemberRole: %w", err),

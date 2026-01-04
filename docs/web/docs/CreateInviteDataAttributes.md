@@ -4,15 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**UserId** | [**uuid.UUID**](uuid.UUID.md) | user id | 
-**Role** | **string** | role of the user in this city | 
-**Label** | **string** | label for the user in this city | 
+**OrganizationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the organization to which the invite belongs | 
+**AccountId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the account that was invited | 
 
 ## Methods
 
 ### NewCreateInviteDataAttributes
 
-`func NewCreateInviteDataAttributes(userId uuid.UUID, role string, label string, ) *CreateInviteDataAttributes`
+`func NewCreateInviteDataAttributes(organizationId uuid.UUID, accountId uuid.UUID, ) *CreateInviteDataAttributes`
 
 NewCreateInviteDataAttributes instantiates a new CreateInviteDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -27,64 +26,44 @@ NewCreateInviteDataAttributesWithDefaults instantiates a new CreateInviteDataAtt
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetUserId
+### GetOrganizationId
 
-`func (o *CreateInviteDataAttributes) GetUserId() uuid.UUID`
+`func (o *CreateInviteDataAttributes) GetOrganizationId() uuid.UUID`
 
-GetUserId returns the UserId field if non-nil, zero value otherwise.
+GetOrganizationId returns the OrganizationId field if non-nil, zero value otherwise.
 
-### GetUserIdOk
+### GetOrganizationIdOk
 
-`func (o *CreateInviteDataAttributes) GetUserIdOk() (*uuid.UUID, bool)`
+`func (o *CreateInviteDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool)`
 
-GetUserIdOk returns a tuple with the UserId field if it's non-nil, zero value otherwise
+GetOrganizationIdOk returns a tuple with the OrganizationId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetUserId
+### SetOrganizationId
 
-`func (o *CreateInviteDataAttributes) SetUserId(v uuid.UUID)`
+`func (o *CreateInviteDataAttributes) SetOrganizationId(v uuid.UUID)`
 
-SetUserId sets UserId field to given value.
+SetOrganizationId sets OrganizationId field to given value.
 
 
-### GetRole
+### GetAccountId
 
-`func (o *CreateInviteDataAttributes) GetRole() string`
+`func (o *CreateInviteDataAttributes) GetAccountId() uuid.UUID`
 
-GetRole returns the Role field if non-nil, zero value otherwise.
+GetAccountId returns the AccountId field if non-nil, zero value otherwise.
 
-### GetRoleOk
+### GetAccountIdOk
 
-`func (o *CreateInviteDataAttributes) GetRoleOk() (*string, bool)`
+`func (o *CreateInviteDataAttributes) GetAccountIdOk() (*uuid.UUID, bool)`
 
-GetRoleOk returns a tuple with the Role field if it's non-nil, zero value otherwise
+GetAccountIdOk returns a tuple with the AccountId field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetRole
+### SetAccountId
 
-`func (o *CreateInviteDataAttributes) SetRole(v string)`
+`func (o *CreateInviteDataAttributes) SetAccountId(v uuid.UUID)`
 
-SetRole sets Role field to given value.
-
-
-### GetLabel
-
-`func (o *CreateInviteDataAttributes) GetLabel() string`
-
-GetLabel returns the Label field if non-nil, zero value otherwise.
-
-### GetLabelOk
-
-`func (o *CreateInviteDataAttributes) GetLabelOk() (*string, bool)`
-
-GetLabelOk returns a tuple with the Label field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetLabel
-
-`func (o *CreateInviteDataAttributes) SetLabel(v string)`
-
-SetLabel sets Label field to given value.
+SetAccountId sets AccountId field to given value.
 
 
 

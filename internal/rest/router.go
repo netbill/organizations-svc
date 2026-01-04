@@ -90,10 +90,10 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 
 	r.Route("/organizations-svc", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
-			r.Get("/{city_slug}", nil)
 
 			r.With(auth).Route("/organizations", func(r chi.Router) {
 				r.Get("/", s.handlers.GetOrganizations)
+				r.Post("/", s.handlers.CreateOrganization)
 
 				r.Route("/{organization_id}", func(r chi.Router) {
 					r.Get("/", s.handlers.GetOrganization)
@@ -152,7 +152,6 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 
 			r.With(auth, sysadmin).Route("/admin", func(r chi.Router) {
 				r.With(auth, sysadmin).Route("/organizations", func(r chi.Router) {
-					r.Post("/", s.handlers.CreateOrganization)
 					r.Patch("/", s.handlers.SuspendOrganization)
 				})
 			})

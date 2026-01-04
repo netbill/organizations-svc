@@ -39,6 +39,8 @@ func (c Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to create invite")
 		switch {
+		case errors.Is(err, errx.ErrorAccountAlreadyMember):
+			ape.RenderErr(w, problems.Conflict("account is already a member of the organization"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
 			ape.RenderErr(w, problems.Forbidden("not enough rights to create invite"))
 		default:

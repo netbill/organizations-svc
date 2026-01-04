@@ -18,29 +18,28 @@ func (s Service) CreateOrganization(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params CreateParams,
-) (agglo models.Organization, err error) {
+) (org models.Organization, err error) {
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		agglo, err = s.repo.CreateOrganization(ctx, params)
+		org, err = s.repo.CreateOrganization(ctx, params)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to create organization: %w", err),
 			)
 		}
 
-		err = s.messenger.WriteOrganizationCreated(ctx, agglo)
+		err = s.messenger.WriteOrganizationCreated(ctx, org)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to publish organization create event: %w", err),
 			)
 		}
 
-		role, err := s.createRoleHead(ctx, agglo.ID)
+		role, err := s.createRoleHead(ctx, org.ID)
 		if err != nil {
 			return err
 		}
 
-		_, err = s.createMemberHead(ctx, accountID, agglo.ID, role.ID)
-		if err != nil {
+		if _, err = s.createMemberHead(ctx, accountID, org.ID, role.ID); err != nil {
 			return err
 		}
 
@@ -49,7 +48,7 @@ func (s Service) CreateOrganization(
 		return models.Organization{}, err
 	}
 
-	return agglo, err
+	return org, err
 }
 
 func (s Service) createRoleHead(ctx context.Context, organizationID uuid.UUID) (role models.Role, err error) {
@@ -64,6 +63,23 @@ func (s Service) createRoleHead(ctx context.Context, organizationID uuid.UUID) (
 	if err != nil {
 		return models.Role{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to publish role create event: %w", err),
+		)
+	}
+
+	per, err := s.repo.GetRolePermissions(ctx, role.ID)
+	if err != nil {
+		return models.Role{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to get role permissions: %w", err),
+		)
+	}
+
+	if err = s.messenger.WriteRolePermissionsUpdated(
+		ctx,
+		role.ID,
+		per,
+	); err != nil {
+		return models.Role{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to publish role permissions updated event: %w", err),
 		)
 	}
 
@@ -87,6 +103,13 @@ func (s Service) createMemberHead(
 	if err != nil {
 		return models.Member{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to assign head role to member: %w", err),
+		)
+	}
+
+	err = s.messenger.WriteMemberCreated(ctx, member)
+	if err != nil {
+		return models.Member{}, errx.ErrorInternal.Raise(
+			fmt.Errorf("failed to publish member create event: %w", err),
 		)
 	}
 

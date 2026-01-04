@@ -28,7 +28,7 @@ func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request
 	}
 
 	dict := make(map[string]bool)
-	for _, item := range req.Data.Attributes.Roles {
+	for _, item := range req.Data.Attributes.Permissions {
 		dict[item.Code] = item.Status
 	}
 
@@ -38,6 +38,8 @@ func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request
 		switch {
 		case errors.Is(err, errx.ErrorRoleNotFound):
 			ape.RenderErr(w, problems.NotFound("role not found"))
+		case errors.Is(err, errx.ErrorCannotUpdatePermissionsHeadRole):
+			ape.RenderErr(w, problems.Forbidden("cannot update permissions of head role"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
 			ape.RenderErr(w, problems.Forbidden("not enough rights to update role permissions"))
 		default:

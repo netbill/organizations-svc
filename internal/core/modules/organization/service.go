@@ -29,7 +29,7 @@ type repo interface {
 	GetOrganizations(
 		ctx context.Context,
 		filter FilterParams,
-		offset, limit uint,
+		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
 	GetOrganizationsForUser(
 		ctx context.Context,
@@ -63,6 +63,8 @@ type repo interface {
 	CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (models.Role, error)
 	AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
 
+	GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error)
+
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
@@ -76,7 +78,17 @@ type messanger interface {
 	WriteOrganizationUpdated(ctx context.Context, organization models.Organization) error
 
 	WriteOrganizationDeleted(ctx context.Context, organization models.Organization) error
+
 	WriteRoleCreated(ctx context.Context, role models.Role) error
+	WriteRolePermissionsUpdated(
+		ctx context.Context,
+		RoleID uuid.UUID,
+		permissions map[models.Permission]bool,
+	) error
+	WriteMemberCreated(
+		ctx context.Context,
+		member models.Member,
+	) error
 }
 
 func (s Service) chekPermissionForManageOrganization(

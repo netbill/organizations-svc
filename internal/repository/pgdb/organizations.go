@@ -2,6 +2,8 @@ package pgdb
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,13 +14,13 @@ import (
 )
 
 const OrganizationTable = "organizations"
-const OrganizationColumns = "id, status, name, icon, created_at, updated_at"
+const OrganizationColumns = "id, status, name, icon, max_roles, created_at, updated_at"
 
 type Organization struct {
 	ID       uuid.UUID `json:"id"`
 	Status   string    `json:"status"`
 	Name     string    `json:"name"`
-	Icon     string    `json:"icon"`
+	Icon     *string   `json:"icon"`
 	MaxRoles uint      `json:"max_roles"`
 
 	CreatedAt time.Time `json:"created_at"`
@@ -79,7 +81,12 @@ func (q OrganizationsQ) Insert(ctx context.Context, data OrganizationsQInsertInp
 	var inserted Organization
 	err = inserted.scan(q.db.QueryRowContext(ctx, query, args...))
 	if err != nil {
-		return Organization{}, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return Organization{}, nil
+		default:
+			return Organization{}, err
+		}
 	}
 
 	return inserted, nil

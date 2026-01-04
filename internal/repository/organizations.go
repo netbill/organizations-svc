@@ -16,7 +16,7 @@ func (s Service) CreateOrganization(
 	ctx context.Context,
 	params organization.CreateParams,
 ) (models.Organization, error) {
-	row, err := s.organizationsQ().Insert(ctx, pgdb.OrganizationsQInsertInput{
+	row, err := s.organizationsQ(ctx).Insert(ctx, pgdb.OrganizationsQInsertInput{
 		Name: params.Name,
 		Icon: params.Icon,
 	})
@@ -32,7 +32,7 @@ func (s Service) UpdateOrganization(
 	ID uuid.UUID,
 	params organization.UpdateParams,
 ) (models.Organization, error) {
-	q := s.organizationsQ().FilterByID(ID)
+	q := s.organizationsQ(ctx).FilterByID(ID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
 	}
@@ -53,7 +53,7 @@ func (s Service) UpdateOrganizationStatus(
 	ID uuid.UUID,
 	status string,
 ) (models.Organization, error) {
-	row, err := s.organizationsQ().FilterByID(ID).UpdateStatus(status).UpdateOne(ctx)
+	row, err := s.organizationsQ(ctx).FilterByID(ID).UpdateStatus(status).UpdateOne(ctx)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -66,7 +66,7 @@ func (s Service) UpdateOrganizationMaxRoles(
 	ID uuid.UUID,
 	maxRoles uint,
 ) (models.Organization, error) {
-	row, err := s.organizationsQ().FilterByID(ID).UpdateMaxRoles(maxRoles).UpdateOne(ctx)
+	row, err := s.organizationsQ(ctx).FilterByID(ID).UpdateMaxRoles(maxRoles).UpdateOne(ctx)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -75,7 +75,7 @@ func (s Service) UpdateOrganizationMaxRoles(
 }
 
 func (s Service) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error) {
-	row, err := s.organizationsQ().FilterByID(ID).Get(ctx)
+	row, err := s.organizationsQ(ctx).FilterByID(ID).Get(ctx)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return models.Organization{}, nil
@@ -87,20 +87,24 @@ func (s Service) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.
 }
 
 func (s Service) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
-	return s.organizationsQ().FilterByID(ID).Delete(ctx)
+	return s.organizationsQ(ctx).FilterByID(ID).Delete(ctx)
 }
 
 func (s Service) GetOrganizations(
 	ctx context.Context,
 	filter organization.FilterParams,
-	offset, limit uint,
+	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	q := s.organizationsQ()
+	q := s.organizationsQ(ctx)
 	if filter.Name != nil {
 		q = q.FilterNameLike(*filter.Name)
 	}
 	if filter.Status != nil {
 		q = q.FilterByStatus(*filter.Status)
+	}
+
+	if limit == 0 {
+		limit = 10
 	}
 
 	rows, err := q.Page(limit, offset).Select(ctx)
@@ -132,12 +136,16 @@ func (s Service) GetOrganizationsForUser(
 	accountID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	row, err := s.organizationsQ().FilterByID(accountID).Page(limit, offset).Select(ctx)
+	if limit == 0 {
+		limit = 10
+	}
+
+	row, err := s.organizationsQ(ctx).FilterByAccountID(accountID).Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, err
 	}
 
-	total, err := s.organizationsQ().FilterByID(accountID).Count(ctx)
+	total, err := s.organizationsQ(ctx).FilterByAccountID(accountID).Count(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, err
 	}

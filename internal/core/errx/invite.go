@@ -7,4 +7,6 @@ var (
 
 	ErrorInviteAlreadyAnswered = ape.DeclareError("INVITE_ALREADY_ANSWERED")
 	ErrorInviteExpired         = ape.DeclareError("INVITE_EXPIRED")
+
+	ErrorAccountAlreadyMember = ape.DeclareError("ACCOUNT_ALREADY_MEMBER")
 )

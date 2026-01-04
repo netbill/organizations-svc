@@ -16,7 +16,6 @@ properties:
     required:
       - status
       - name
-      - icon
       - created_at
       - updated_at
     properties:

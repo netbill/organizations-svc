@@ -9,7 +9,7 @@ import (
 )
 
 func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
-	memberRoles, err := s.rolesQ().
+	memberRoles, err := s.rolesQ(ctx).
 		FilterByMemberID(memberID).
 		OrderByRoleRank(true).
 		Select(ctx)
@@ -26,14 +26,14 @@ func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]mode
 }
 
 func (s Service) RemoveMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
-	return s.memberRolesQ().
+	return s.memberRolesQ(ctx).
 		FilterByMemberID(memberID).
 		FilterByRoleID(roleID).
 		Delete(ctx)
 }
 
 func (s Service) AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
-	_, err := s.memberRolesQ().
+	_, err := s.memberRolesQ(ctx).
 		Insert(ctx, pgdb.MemberRole{
 			MemberID: memberID,
 			RoleID:   roleID,
