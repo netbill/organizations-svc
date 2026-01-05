@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/places-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 )
 
 //TODO: if user is head of some organizations, we should handle it properly (transfer ownership or delete organizations)

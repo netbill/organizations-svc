@@ -1,4 +1,4 @@
-module github.com/netbill/places-svc
+module github.com/netbill/organizations-svc
 
 go 1.25.4
 

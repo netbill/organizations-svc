@@ -1,5 +1,5 @@
 server:
-  name: "places-svc"
+  name: "organizations-svc"
 
 profile:
   url: "http://localhost:8002/profiles-svc/v1/profiles"

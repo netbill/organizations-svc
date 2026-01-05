@@ -6,10 +6,10 @@ import (
 
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
-	"github.com/netbill/places-svc/internal/core/errx"
-	"github.com/netbill/places-svc/internal/rest"
-	"github.com/netbill/places-svc/internal/rest/request"
-	"github.com/netbill/places-svc/internal/rest/responses"
+	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
 func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {

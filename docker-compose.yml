@@ -1,7 +1,7 @@
 services:
-  places-svc:
+  organizations-svc:
     build: .
-    container_name: places-svc
+    container_name: organizations-svc
     environment:
       - KV_VIPER_FILE=./config_docker.yaml
     ports:
@@ -9,9 +9,9 @@ services:
     networks:
       - chains-net
 
-  places-svc-postgres:
+  organizations-svc-postgres:
     image: postgis/postgis:16-3.4
-    container_name: places-svc-postgres
+    container_name: organizations-svc-postgres
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

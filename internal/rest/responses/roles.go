@@ -3,9 +3,9 @@ package responses
 import (
 	"net/http"
 
+	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/resources"
 	"github.com/netbill/pagi"
-	"github.com/netbill/places-svc/internal/core/models"
-	"github.com/netbill/places-svc/resources"
 )
 
 func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {

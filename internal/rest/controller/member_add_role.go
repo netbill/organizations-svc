@@ -9,8 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
-	"github.com/netbill/places-svc/internal/core/errx"
-	"github.com/netbill/places-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/rest"
 )
 
 func (c Controller) MemberAddRole(w http.ResponseWriter, r *http.Request) {

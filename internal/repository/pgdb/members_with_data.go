@@ -108,8 +108,8 @@ func (q MembersQ) FilterByRoleRankUp(rankUp uint) MembersQ {
 	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
-			FROM member_roles mr
-			JOIN roles r ON r.id = mr.role_id
+			FROM organization_member_roles mr
+			JOIN organization_roles r ON r.id = mr.role_id
 			WHERE mr.member_id = m.id
 				AND r.rank >= ?
 		)
@@ -126,8 +126,8 @@ func (q MembersQ) FilterByRoleRankDown(rankDown uint) MembersQ {
 	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
-			FROM member_roles mr
-			JOIN roles r ON r.id = mr.role_id
+			FROM organization_member_roles mr
+			JOIN organization_roles r ON r.id = mr.role_id
 			WHERE mr.member_id = m.id
 				AND r.rank <= ?
 		)
@@ -144,9 +144,9 @@ func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
 	expr := sq.Expr(`
 		EXISTS (
 			SELECT 1
-			FROM member_roles mr
-			JOIN role_permission_links rp ON rp.role_id = mr.role_id
-			JOIN role_permissions perm ON perm.id = rp.permission_id
+			FROM organization_member_roles mr
+			JOIN organization_role_permission_links rp ON rp.role_id = mr.role_id
+			JOIN organization_role_permissions perm ON perm.id = rp.permission_id
 			WHERE mr.member_id = m.id
 			  AND perm.code = ?
 		)
@@ -230,8 +230,8 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 	q.selector = q.selector.
 		Columns("p.username", "p.official", "p.pseudonym").
 		Join("profiles p ON p.account_id = m.account_id").
-		LeftJoin("member_roles mr ON mr.member_id = m.id").
-		LeftJoin("roles r ON r.id = mr.role_id").
+		LeftJoin("organization_member_roles mr ON mr.member_id = m.id").
+		LeftJoin("organization_roles r ON r.id = mr.role_id").
 		Columns("r.id", "r.head", "r.rank", "r.name").
 		OrderBy("m.id ASC", "r.rank ASC", "r.id ASC")
 
@@ -311,17 +311,17 @@ func (q MembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID
 		SELECT
 			(m1.organization_id = m2.organization_id)
 			AND (COALESCE(r1.min_rank, 2147483647) < COALESCE(r2.min_rank, 2147483647)) AS can
-		FROM members m1
-		JOIN members m2 ON m2.id = $2
+		FROM organization_members m1
+		JOIN organization_members m2 ON m2.id = $2
 		LEFT JOIN LATERAL (
 			SELECT MIN(r.rank) AS min_rank
-			FROM member_roles mr
+			FROM organization_member_roles mr
 			JOIN roles r ON r.id = mr.role_id
 			WHERE mr.member_id = m1.id
 		) r1 ON true
 		LEFT JOIN LATERAL (
 			SELECT MIN(r.rank) AS min_rank
-			FROM member_roles mr
+			FROM organization_member_roles mr
 			JOIN roles r ON r.id = mr.role_id
 			WHERE mr.member_id = m2.id
 		) r2 ON true

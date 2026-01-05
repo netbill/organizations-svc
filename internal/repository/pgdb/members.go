@@ -13,7 +13,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-const MembersTable = "members"
+const MembersTable = "organization_members"
 
 const MemberColumns = "id, account_id, organization_id, position, label, created_at, updated_at"
 const MemberColumnsM = "m.id, m.account_id, m.organization_id, m.position, m.label, m.created_at, m.updated_at"

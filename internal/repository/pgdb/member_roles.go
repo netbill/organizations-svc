@@ -11,7 +11,7 @@ import (
 	"github.com/netbill/pgx"
 )
 
-const MemberRoleTable = "member_roles"
+const MemberRoleTable = "organization_member_roles"
 const MemberRoleColumns = "member_id, role_id"
 
 type MemberRole struct {

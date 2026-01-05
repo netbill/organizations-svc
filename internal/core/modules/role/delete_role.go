@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/places-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 )
 
 func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error {

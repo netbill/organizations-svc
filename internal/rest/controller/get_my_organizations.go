@@ -6,9 +6,9 @@ import (
 
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
+	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/pagi"
-	"github.com/netbill/places-svc/internal/rest"
-	"github.com/netbill/places-svc/internal/rest/responses"
 )
 
 func (c Controller) GetMyOrganizations(w http.ResponseWriter, r *http.Request) {

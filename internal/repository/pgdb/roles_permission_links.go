@@ -11,7 +11,7 @@ import (
 	"github.com/netbill/pgx"
 )
 
-const RolePermissionsTable = "role_permission_links"
+const RolePermissionsTable = "organization_role_permission_links"
 const RolePermissionsColumns = "role_id, permission_id"
 
 type RolePermissionLinksQ struct {
@@ -164,8 +164,8 @@ func (q RolePermissionLinksQ) FilterByPermissionCode(code ...string) RolePermiss
 func (q RolePermissionLinksQ) FilterByAccountID(accountID uuid.UUID) RolePermissionLinksQ {
 	sub := sq.
 		Select("DISTINCT mr.role_id").
-		From("members m").
-		Join("member_roles mr ON mr.member_id = m.id").
+		From("organization_members m").
+		Join("organization_member_roles mr ON mr.member_id = m.id").
 		Where(sq.Eq{"m.account_id": accountID})
 
 	subSQL, subArgs, err := sub.ToSql()
@@ -209,7 +209,7 @@ func (q RolePermissionLinksQ) FilterByOrganizationID(organizationID uuid.UUID) R
 func (q RolePermissionLinksQ) FilterByMemberID(memberID uuid.UUID) RolePermissionLinksQ {
 	sub := sq.
 		Select("mr.role_id").
-		From("member_roles mr").
+		From("organization_member_roles mr").
 		Where(sq.Eq{"mr.member_id": memberID})
 
 	subSQL, subArgs, err := sub.ToSql()

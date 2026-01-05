@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/netbill/places-svc/internal/core/errx"
-	"github.com/netbill/places-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (s Service) UpsertProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {

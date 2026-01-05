@@ -12,7 +12,7 @@ import (
 	"github.com/netbill/pgx"
 )
 
-const InviteTable = "invites"
+const InviteTable = "organization_invites"
 const InviteColumns = "id, organization_id, account_id, status, expires_at, created_at"
 
 type Invite struct {

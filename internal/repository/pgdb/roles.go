@@ -14,7 +14,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-const RoleTable = "roles"
+const RoleTable = "organization_roles"
 
 const RoleColumns = "id, organization_id, head, rank, name, description, color, created_at, updated_at"
 const RoleColumnsR = "r.id, r.organization_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at"
@@ -84,7 +84,7 @@ type InsertRoleParams struct {
 func (q RolesQ) Insert(ctx context.Context, data InsertRoleParams) (Role, error) {
 	const sqlInsertAtRank = `
 		WITH bumped AS (
-			UPDATE roles
+			UPDATE organization_roles
 			SET
 				rank = rank + 1,
 				updated_at = now()
@@ -93,7 +93,7 @@ func (q RolesQ) Insert(ctx context.Context, data InsertRoleParams) (Role, error)
 			RETURNING 1
 		),
 		ins AS (
-			INSERT INTO roles (organization_id, head, rank, name, description, color)
+			INSERT INTO organization_roles (organization_id, head, rank, name, description, color)
 			VALUES ($1, $3, $2, $4, $5, $6)
 			RETURNING id, organization_id, head, rank, name, description, color, created_at, updated_at
 		)
@@ -263,8 +263,8 @@ func (q RolesQ) FilterByOrganizationID(id uuid.UUID) RolesQ {
 func (q RolesQ) FilterByAccountID(accountID uuid.UUID) RolesQ {
 	sub := sq.
 		Select("DISTINCT mr.role_id").
-		From("members m").
-		Join("member_roles mr ON mr.member_id = m.id").
+		From("organization_members m").
+		Join("organization_member_roles mr ON mr.member_id = m.id").
 		Where(sq.Eq{"m.account_id": accountID})
 
 	subSQL, subArgs, err := sub.ToSql()
@@ -289,7 +289,7 @@ func (q RolesQ) FilterByAccountID(accountID uuid.UUID) RolesQ {
 func (q RolesQ) FilterByMemberID(memberID uuid.UUID) RolesQ {
 	sub := sq.
 		Select("mr.role_id").
-		From("member_roles mr").
+		From("organization_member_roles mr").
 		Where(sq.Eq{"mr.member_id": memberID})
 
 	subSQL, subArgs, err := sub.ToSql()
@@ -354,11 +354,11 @@ func (q RolesQ) Page(limit, offset uint) RolesQ {
 func (q RolesQ) DeleteAndShiftRanks(ctx context.Context, roleID uuid.UUID) error {
 	const sqlq = `
 		WITH del AS (
-			DELETE FROM roles
+			DELETE FROM organization_roles
 			WHERE id = $1
 			RETURNING organization_id, rank
 		)
-		UPDATE roles r
+		UPDATE organization_roles r
 		SET rank = r.rank - 1,
 		    updated_at = now()
 		FROM del
@@ -390,7 +390,7 @@ func (q RolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank ui
 
 	const sqlMove = `
 		WITH upd AS (
-			UPDATE roles
+			UPDATE organization_roles
 			SET
 				rank = CASE
 					WHEN id = $1 THEN $2
@@ -495,7 +495,7 @@ func (q RolesQ) UpdateRolesRanks(
 	}
 
 	const sqlUpdate = `
-		UPDATE roles r
+		UPDATE organization_roles r
 		SET
 			rank = v.rank,
 			updated_at = now()

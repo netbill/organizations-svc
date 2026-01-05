@@ -11,7 +11,7 @@ import (
 	"github.com/netbill/pgx"
 )
 
-const PermissionTable = "role_permission"
+const PermissionTable = "organization_role_permission"
 const PermissionColumns = "id, code, description"
 
 type RolePermission struct {
@@ -170,12 +170,12 @@ func (q RolePermissionsQ) FilterByCode(code ...string) RolePermissionsQ {
 
 func (q RolePermissionsQ) FilterByRoleID(roleID uuid.UUID) RolePermissionsQ {
 	q.selector = q.selector.
-		Join("role_permission_links rp ON rp.permission_id = role_permissions.id").
+		Join("organization_role_permission_links rp ON rp.permission_id = role_permissions.id").
 		Where(sq.Eq{"rp.role_id": roleID}).
 		Distinct()
 
 	q.counter = q.counter.
-		Join("role_permission_links rp ON rp.permission_id = role_permissions.id").
+		Join("organization_role_permission_links rp ON rp.permission_id = role_permissions.id").
 		Where(sq.Eq{"rp.role_id": roleID})
 
 	return q
@@ -198,8 +198,8 @@ func (q RolePermissionsQ) GetForRole(
 			p.code,
 			p.description,
 			(rp.permission_id IS NOT NULL) AS enabled
-		FROM role_permissions p
-		LEFT JOIN role_permission_links rp
+		FROM organization_role_permissions p
+		LEFT JOIN organization_role_permission_links rp
 			ON rp.permission_id = p.id
 			AND rp.role_id = $1
 		ORDER BY p.code
@@ -207,7 +207,7 @@ func (q RolePermissionsQ) GetForRole(
 
 	rows, err := q.db.QueryContext(ctx, sqlq, roleID)
 	if err != nil {
-		return nil, fmt.Errorf("query role_permissions for role: %w", err)
+		return nil, fmt.Errorf("query organization_role_permissions for role: %w", err)
 	}
 	defer rows.Close()
 

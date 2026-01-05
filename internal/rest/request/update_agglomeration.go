@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/netbill/places-svc/resources"
+	"github.com/netbill/organizations-svc/resources"
 )
 
 func UpdateOrganization(r *http.Request) (req resources.UpdateOrganization, err error) {
