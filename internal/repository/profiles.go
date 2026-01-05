@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
+	"github.com/netbill/places-svc/internal/core/models"
+	"github.com/netbill/places-svc/internal/repository/pgdb"
 )
 
 func (s Service) UpsertProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {

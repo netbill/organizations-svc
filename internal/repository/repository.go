@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 	"github.com/netbill/pgx"
+	"github.com/netbill/places-svc/internal/repository/pgdb"
 )
 
 type Service struct {

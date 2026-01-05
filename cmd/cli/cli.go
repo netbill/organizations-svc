@@ -8,9 +8,9 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kingpin"
-	"github.com/netbill/organizations-svc/cmd"
-	"github.com/netbill/organizations-svc/cmd/migrations"
-	"github.com/netbill/organizations-svc/internal"
+	"github.com/netbill/places-svc/cmd"
+	"github.com/netbill/places-svc/cmd/migrations"
+	"github.com/netbill/places-svc/internal"
 
 	"github.com/netbill/logium"
 )

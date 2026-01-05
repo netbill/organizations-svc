@@ -8,7 +8,7 @@ import (
 	"github.com/netbill/kafkakit/box"
 	"github.com/netbill/kafkakit/subscriber"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal/messenger/contracts"
+	"github.com/netbill/places-svc/internal/messenger/contracts"
 	"github.com/segmentio/kafka-go"
 	"golang.org/x/sync/errgroup"
 )
@@ -95,7 +95,7 @@ func (c Consumer) Run(ctx context.Context) {
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		accountSub := subscriber.New(c.addr, contracts.AccountsTopicV1, contracts.OrganizationsSvcGroup)
+		accountSub := subscriber.New(c.addr, contracts.AccountsTopicV1, contracts.PlacesSvcGroup)
 		err := accountSub.Consume(ctx, func(m kafka.Message) (subscriber.HandlerFunc, bool) {
 			et, ok := subscriber.Header(m, "event_type")
 			if !ok {
@@ -119,7 +119,7 @@ func (c Consumer) Run(ctx context.Context) {
 	})
 
 	g.Go(func() error {
-		profileSub := subscriber.New(c.addr, contracts.ProfilesTopicV1, contracts.OrganizationsSvcGroup)
+		profileSub := subscriber.New(c.addr, contracts.ProfilesTopicV1, contracts.PlacesSvcGroup)
 		err := profileSub.Consume(ctx, func(m kafka.Message) (subscriber.HandlerFunc, bool) {
 			et, ok := subscriber.Header(m, "event_type")
 			if !ok {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal"
+	"github.com/netbill/places-svc/internal"
 	"github.com/netbill/restkit/roles"
 )
 
@@ -88,7 +88,7 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 
 	r := chi.NewRouter()
 
-	r.Route("/organizations-svc", func(r chi.Router) {
+	r.Route("/places-svc", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
 
 			r.With(auth).Route("/organizations", func(r chi.Router) {

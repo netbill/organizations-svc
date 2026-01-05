@@ -3,7 +3,7 @@ vendor
 node_modules
 
 main
-cmd/organizations-svc/m ain
+cmd/places-svc/m ain
 
 config_local.yaml
 config_docker.yaml

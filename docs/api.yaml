@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: organizations-svc API
-  description: API documentation for organizations-svc
+  title: places-svc API
+  description: API documentation for places-svc
   version: 0.1.0
 
 paths:

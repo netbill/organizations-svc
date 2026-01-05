@@ -5,12 +5,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/core/modules/invite"
-	"github.com/netbill/organizations-svc/internal/core/modules/member"
-	"github.com/netbill/organizations-svc/internal/core/modules/organization"
-	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/pagi"
+	"github.com/netbill/places-svc/internal/core/models"
+	"github.com/netbill/places-svc/internal/core/modules/invite"
+	"github.com/netbill/places-svc/internal/core/modules/member"
+	"github.com/netbill/places-svc/internal/core/modules/organization"
+	"github.com/netbill/places-svc/internal/core/modules/role"
 )
 
 type orgSvc interface {

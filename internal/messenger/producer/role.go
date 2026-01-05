@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/kafkakit/header"
-	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/messenger/contracts"
+	"github.com/netbill/places-svc/internal/core/models"
+	"github.com/netbill/places-svc/internal/messenger/contracts"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -32,7 +32,7 @@ func (p Producer) WriteRoleCreated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RoleCreatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.PlacesSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -62,7 +62,7 @@ func (p Producer) WriteRoleUpdated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RoleUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.PlacesSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -80,7 +80,7 @@ func (p Producer) WriteRolePermissionsUpdated(
 	for k, v := range permissions {
 		per[k.ID] = v
 	}
-	
+
 	payload, err := json.Marshal(contracts.RolePermissionsUpdatedPayload{
 		RoleID:      RoleID,
 		Permissions: per,
@@ -99,7 +99,7 @@ func (p Producer) WriteRolePermissionsUpdated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RolePermissionsUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.PlacesSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -131,7 +131,7 @@ func (p Producer) WriteRolesRanksUpdated(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RolesRanksUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.PlacesSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -161,7 +161,7 @@ func (p Producer) WriteRoleDeleted(
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
 				{Key: header.EventType, Value: []byte(contracts.RoleDeletedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
+				{Key: header.Producer, Value: []byte(contracts.PlacesSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
 			},
 		},

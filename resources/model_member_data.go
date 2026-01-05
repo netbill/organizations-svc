@@ -1,7 +1,7 @@
 /*
-organizations-svc API
+places-svc API
 
-API documentation for organizations-svc
+API documentation for places-svc
 
 API version: 0.1.0
 */

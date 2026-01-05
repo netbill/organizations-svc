@@ -1,7 +1,7 @@
 package contracts
 
 import (
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/places-svc/internal/core/models"
 )
 
 const ProfileUpdatedEvent = "profile.updated"

@@ -1,6 +1,6 @@
 package contracts
 
-import "github.com/netbill/organizations-svc/internal/core/models"
+import "github.com/netbill/places-svc/internal/core/models"
 
 const InviteCreatedEvent = "invite.created"
 

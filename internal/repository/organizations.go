@@ -5,10 +5,10 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/core/modules/organization"
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 	"github.com/netbill/pagi"
+	"github.com/netbill/places-svc/internal/core/models"
+	"github.com/netbill/places-svc/internal/core/modules/organization"
+	"github.com/netbill/places-svc/internal/repository/pgdb"
 	"github.com/pkg/errors"
 )
 

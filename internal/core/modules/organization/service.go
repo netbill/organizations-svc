@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/pagi"
+	"github.com/netbill/places-svc/internal/core/errx"
+	"github.com/netbill/places-svc/internal/core/models"
 )
 
 type Service struct {

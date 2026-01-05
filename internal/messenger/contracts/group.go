@@ -1,3 +1,3 @@
 package contracts
 
-const OrganizationsSvcGroup = "organizations-svc"
+const PlacesSvcGroup = "places-svc"
