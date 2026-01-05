@@ -10,7 +10,7 @@ import (
 )
 
 func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error) {
-	rows, err := s.permissionsQ(ctx).GetForRole(ctx, roleID)
+	rows, err := s.rolePermissionsQ(ctx).GetForRole(ctx, roleID)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[
 }
 
 func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
-	permissions, err := s.permissionsQ(ctx).Select(ctx)
+	permissions, err := s.rolePermissionsQ(ctx).Select(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s Service) SetRolePermissions(
 	}
 
 	if len(deletePermissions) > 0 {
-		if err := s.rolePermissionsQ(ctx).
+		if err := s.rolePermissionLinksQ(ctx).
 			FilterByRoleID(roleID).
 			FilterByPermissionCode(deletePermissions...).
 			Delete(ctx); err != nil {
@@ -72,19 +72,19 @@ func (s Service) SetRolePermissions(
 	}
 
 	if len(addPermissions) > 0 {
-		p, err := s.permissionsQ(ctx).FilterByCode(addPermissions...).Select(ctx)
+		p, err := s.rolePermissionsQ(ctx).FilterByCode(addPermissions...).Select(ctx)
 		if err != nil {
 			return err
 		}
 
-		existingPermissionsMap := make([]pgdb.RolePermission, len(p))
+		existingPermissionsMap := make([]pgdb.RolePermissionLink, len(p))
 		for i, perm := range p {
-			existingPermissionsMap[i] = pgdb.RolePermission{
+			existingPermissionsMap[i] = pgdb.RolePermissionLink{
 				RoleID:       roleID,
 				PermissionID: perm.ID,
 			}
 		}
-		if err = s.rolePermissionsQ(ctx).Insert(ctx, existingPermissionsMap...); err != nil {
+		if err = s.rolePermissionLinksQ(ctx).Insert(ctx, existingPermissionsMap...); err != nil {
 			return err
 		}
 	}

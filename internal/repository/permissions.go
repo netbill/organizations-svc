@@ -9,7 +9,7 @@ import (
 )
 
 func (s Service) GetPermission(ctx context.Context, ID uuid.UUID) (models.Permission, error) {
-	res, err := s.permissionsQ(ctx).FilterByID(ID).Get(ctx)
+	res, err := s.rolePermissionsQ(ctx).FilterByID(ID).Get(ctx)
 	if err != nil {
 		return models.Permission{}, err
 	}
@@ -22,7 +22,7 @@ type FilterPermissionsParams struct {
 	Code        *string
 }
 
-func Permission(p pgdb.Permission) models.Permission {
+func Permission(p pgdb.RolePermission) models.Permission {
 	return models.Permission{
 		ID:          p.ID,
 		Code:        p.Code,

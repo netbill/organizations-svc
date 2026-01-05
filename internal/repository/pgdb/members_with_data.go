@@ -145,8 +145,8 @@ func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
 		EXISTS (
 			SELECT 1
 			FROM member_roles mr
-			JOIN role_permissions rp ON rp.role_id = mr.role_id
-			JOIN permissions perm ON perm.id = rp.permission_id
+			JOIN role_permission_links rp ON rp.role_id = mr.role_id
+			JOIN role_permissions perm ON perm.id = rp.permission_id
 			WHERE mr.member_id = m.id
 			  AND perm.code = ?
 		)

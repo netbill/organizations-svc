@@ -32,10 +32,11 @@ func (s Service) rolesQ(ctx context.Context) pgdb.RolesQ {
 	return pgdb.NewRolesQ(pgx.Exec(s.db, ctx))
 }
 
-func (s Service) rolePermissionsQ(ctx context.Context) pgdb.RolePermissionsQ {
+func (s Service) rolePermissionLinksQ(ctx context.Context) pgdb.RolePermissionLinksQ {
 	return pgdb.NewRolePermissionsQ(pgx.Exec(s.db, ctx))
 }
-func (s Service) permissionsQ(ctx context.Context) pgdb.PermissionsQ {
+
+func (s Service) rolePermissionsQ(ctx context.Context) pgdb.RolePermissionsQ {
 	return pgdb.NewPermissionsQ(pgx.Exec(s.db, ctx))
 }
 
