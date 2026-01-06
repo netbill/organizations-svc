@@ -30,7 +30,7 @@ type Handlers interface {
 	GetOrganizationMembers(w http.ResponseWriter, r *http.Request)
 	GetOrganizationRoles(w http.ResponseWriter, r *http.Request)
 
-	//Member handlers
+	//OrganizationMember handlers
 	GetMember(w http.ResponseWriter, r *http.Request)
 	UpdateMember(w http.ResponseWriter, r *http.Request)
 	DeleteMember(w http.ResponseWriter, r *http.Request)

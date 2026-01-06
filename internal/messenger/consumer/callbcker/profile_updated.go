@@ -1,4 +1,4 @@
-package consumer
+package callabcker
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (c Consumer) AccountCreated(ctx context.Context, event kafka.Message) error {
+func (c Callbacker) ProfileUpdated(ctx context.Context, event kafka.Message) error {
 	return c.inbox.Transaction(ctx, func(ctx context.Context) error {
 		eventInBox, err := c.inbox.CreateInboxEvent(ctx, event)
 		if err != nil {
@@ -14,11 +14,10 @@ func (c Consumer) AccountCreated(ctx context.Context, event kafka.Message) error
 			return err
 		}
 
-		if _, err = c.inbox.UpdateInboxEventStatus(ctx, eventInBox.ID, c.callbacks.AccountCreated(ctx, eventInBox)); err != nil {
+		if _, err = c.inbox.UpdateInboxEventStatus(ctx, eventInBox.ID, c.processor.ProfileUpdated(ctx, eventInBox)); err != nil {
 			c.log.Errorf(
 				"failed to update inbox event status for key %s, id: %s, error: %v", eventInBox.Key, eventInBox.ID, err,
 			)
-			return err
 		}
 
 		return nil

@@ -23,8 +23,8 @@ type Profile struct {
 	Official  bool      `json:"official"`
 	Pseudonym *string   `json:"pseudonym,omitempty"`
 
-	UpdatedAt time.Time `json:"updated_at"`
 	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (p *Profile) scan(row sq.RowScanner) error {
@@ -33,8 +33,8 @@ func (p *Profile) scan(row sq.RowScanner) error {
 		&p.Username,
 		&p.Official,
 		&p.Pseudonym,
-		&p.UpdatedAt,
 		&p.CreatedAt,
+		&p.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("scanning profile: %w", err)

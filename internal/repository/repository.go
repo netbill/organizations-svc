@@ -20,28 +20,28 @@ func (s Service) organizationsQ(ctx context.Context) pgdb.OrganizationsQ {
 	return pgdb.NewOrganizationsQ(pgx.Exec(s.db, ctx))
 }
 
-func (s Service) membersQ(ctx context.Context) pgdb.MembersQ {
-	return pgdb.NewMembersQ(pgx.Exec(s.db, ctx))
+func (s Service) membersQ(ctx context.Context) pgdb.OrganizationMembersQ {
+	return pgdb.NewOrganizationMembersQ(pgx.Exec(s.db, ctx))
 }
 
-func (s Service) memberRolesQ(ctx context.Context) pgdb.MemberRolesQ {
-	return pgdb.NewMemberRolesQ(pgx.Exec(s.db, ctx))
+func (s Service) memberRolesQ(ctx context.Context) pgdb.OrganizationMemberRolesQ {
+	return pgdb.NewOrganizationMemberRolesQ(pgx.Exec(s.db, ctx))
 }
 
-func (s Service) rolesQ(ctx context.Context) pgdb.RolesQ {
+func (s Service) rolesQ(ctx context.Context) pgdb.OrganizationRolesQ {
 	return pgdb.NewRolesQ(pgx.Exec(s.db, ctx))
 }
 
-func (s Service) rolePermissionLinksQ(ctx context.Context) pgdb.RolePermissionLinksQ {
+func (s Service) rolePermissionLinksQ(ctx context.Context) pgdb.OrganizationRolePermissionLinksQ {
 	return pgdb.NewRolePermissionsQ(pgx.Exec(s.db, ctx))
 }
 
-func (s Service) rolePermissionsQ(ctx context.Context) pgdb.RolePermissionsQ {
-	return pgdb.NewPermissionsQ(pgx.Exec(s.db, ctx))
+func (s Service) rolePermissionsQ(ctx context.Context) pgdb.OrganizationRolePermissionsQ {
+	return pgdb.NewOrganizationPermissionsQ(pgx.Exec(s.db, ctx))
 }
 
-func (s Service) invitesQ(ctx context.Context) pgdb.InvitesQ {
-	return pgdb.NewInvitesQ(pgx.Exec(s.db, ctx))
+func (s Service) invitesQ(ctx context.Context) pgdb.OrganizationInvitesQ {
+	return pgdb.NewOrganizationInvitesQ(pgx.Exec(s.db, ctx))
 }
 
 func (s Service) profilesQ(ctx context.Context) pgdb.ProfilesQ {

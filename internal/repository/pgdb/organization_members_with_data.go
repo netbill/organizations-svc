@@ -11,14 +11,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type MemberWithUserData struct {
-	Member
+type OrganizationMemberWithUserData struct {
+	OrganizationMember
 	Username  string  `json:"username"`
 	Official  bool    `json:"official"`
 	Pseudonym *string `json:"pseudonym"`
 }
 
-func (mwd *MemberWithUserData) scan(row sq.RowScanner) error {
+func (mwd *OrganizationMemberWithUserData) scan(row sq.RowScanner) error {
 	err := row.Scan(
 		&mwd.ID,
 		&mwd.AccountID,
@@ -37,25 +37,25 @@ func (mwd *MemberWithUserData) scan(row sq.RowScanner) error {
 	return nil
 }
 
-func (q MembersQ) FilterByUsername(username string) MembersQ {
+func (q OrganizationMembersQ) FilterByUsername(username string) OrganizationMembersQ {
 	q.selector = q.selector.Where(sq.Eq{"p.username": username})
 	q.counter = q.counter.Where(sq.Eq{"p.username": username})
 	return q
 }
 
-func (q MembersQ) FilterLikeUsername(username string) MembersQ {
+func (q OrganizationMembersQ) FilterLikeUsername(username string) OrganizationMembersQ {
 	q.selector = q.selector.Where(sq.ILike{"p.username": "%" + username + "%"})
 	q.counter = q.counter.Where(sq.ILike{"p.username": "%" + username + "%"})
 	return q
 }
 
-func (q MembersQ) FilterLikePseudonym(pseudonym string) MembersQ {
+func (q OrganizationMembersQ) FilterLikePseudonym(pseudonym string) OrganizationMembersQ {
 	q.selector = q.selector.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
 	q.counter = q.counter.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
 	return q
 }
 
-func (q MembersQ) FilterBestMatch(term string) MembersQ {
+func (q OrganizationMembersQ) FilterBestMatch(term string) OrganizationMembersQ {
 	like := "%" + term + "%"
 	prefix := term + "%"
 
@@ -87,7 +87,7 @@ func (q MembersQ) FilterBestMatch(term string) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterRoleID(roleID uuid.UUID) MembersQ {
+func (q OrganizationMembersQ) FilterRoleID(roleID uuid.UUID) OrganizationMembersQ {
 	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
@@ -104,7 +104,7 @@ func (q MembersQ) FilterRoleID(roleID uuid.UUID) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterByRoleRankUp(rankUp uint) MembersQ {
+func (q OrganizationMembersQ) FilterByRoleRankUp(rankUp uint) OrganizationMembersQ {
 	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
@@ -122,7 +122,7 @@ func (q MembersQ) FilterByRoleRankUp(rankUp uint) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterByRoleRankDown(rankDown uint) MembersQ {
+func (q OrganizationMembersQ) FilterByRoleRankDown(rankDown uint) OrganizationMembersQ {
 	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
@@ -140,7 +140,7 @@ func (q MembersQ) FilterByRoleRankDown(rankDown uint) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
+func (q OrganizationMembersQ) FilterByPermissionCode(code string) OrganizationMembersQ {
 	expr := sq.Expr(`
 		EXISTS (
 			SELECT 1
@@ -160,48 +160,48 @@ func (q MembersQ) FilterByPermissionCode(code string) MembersQ {
 	return q
 }
 
-func (q MembersQ) GetWithUserData(ctx context.Context) (MemberWithUserData, error) {
+func (q OrganizationMembersQ) GetWithUserData(ctx context.Context) (OrganizationMemberWithUserData, error) {
 	q.selector = q.selector.
 		Columns("p.username", "p.official", "p.pseudonym").
 		Join("profiles p ON p.account_id = m.account_id")
 
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return MemberWithUserData{}, fmt.Errorf("building select query for %s: %w", MembersTable, err)
+		return OrganizationMemberWithUserData{}, fmt.Errorf("building select query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	var out MemberWithUserData
+	var out OrganizationMemberWithUserData
 	if err = out.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return MemberWithUserData{}, nil
+			return OrganizationMemberWithUserData{}, nil
 		default:
-			return MemberWithUserData{}, err
+			return OrganizationMemberWithUserData{}, err
 		}
 	}
 
 	return out, nil
 }
 
-func (q MembersQ) SelectWithUserData(ctx context.Context) ([]MemberWithUserData, error) {
+func (q OrganizationMembersQ) SelectWithUserData(ctx context.Context) ([]OrganizationMemberWithUserData, error) {
 	q.selector = q.selector.
 		Columns("p.username", "p.official", "p.pseudonym").
 		Join("profiles p ON p.account_id = m.account_id")
 
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("building select query for %s: %w", MembersTable, err)
+		return nil, fmt.Errorf("building select query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing select query for %s: %w", MembersTable, err)
+		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationMembersTable, err)
 	}
 	defer rows.Close()
 
-	var out []MemberWithUserData
+	var out []OrganizationMemberWithUserData
 	for rows.Next() {
-		var mwd MemberWithUserData
+		var mwd OrganizationMemberWithUserData
 		if err = mwd.scan(rows); err != nil {
 			return nil, err
 		}
@@ -222,11 +222,11 @@ type MemberRoleData struct {
 }
 
 type MemberWithRoleDataRow struct {
-	MemberWithUserData
+	OrganizationMemberWithUserData
 	roles []MemberRoleData
 }
 
-func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]MemberWithRoleDataRow, error) {
+func (q OrganizationMembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]MemberWithRoleDataRow, error) {
 	q.selector = q.selector.
 		Columns("p.username", "p.official", "p.pseudonym").
 		Join("profiles p ON p.account_id = m.account_id").
@@ -237,12 +237,12 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("building select query for %s: %w", MembersTable, err)
+		return nil, fmt.Errorf("building select query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing select query for %s: %w", MembersTable, err)
+		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationMembersTable, err)
 	}
 	defer rows.Close()
 
@@ -250,7 +250,7 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 	idx := make(map[uuid.UUID]int)
 
 	for rows.Next() {
-		var mwd MemberWithUserData
+		var mwd OrganizationMemberWithUserData
 
 		var roleID uuid.NullUUID
 		var head sql.NullBool
@@ -278,7 +278,7 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 
 		i, ok := idx[mwd.ID]
 		if !ok {
-			out = append(out, MemberWithRoleDataRow{MemberWithUserData: mwd})
+			out = append(out, MemberWithRoleDataRow{OrganizationMemberWithUserData: mwd})
 			i = len(out) - 1
 			idx[mwd.ID] = i
 		}
@@ -306,7 +306,7 @@ func (q MembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]Me
 	return out, nil
 }
 
-func (q MembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
+func (q OrganizationMembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
 	const sqlq = `
 		SELECT
 			(m1.organization_id = m2.organization_id)

@@ -13,12 +13,12 @@ import (
 	sq "github.com/Masterminds/squirrel"
 )
 
-const MembersTable = "organization_members"
+const OrganizationMembersTable = "organization_members"
 
-const MemberColumns = "id, account_id, organization_id, position, label, created_at, updated_at"
-const MemberColumnsM = "m.id, m.account_id, m.organization_id, m.position, m.label, m.created_at, m.updated_at"
+const OrganizationMemberColumns = "id, account_id, organization_id, position, label, created_at, updated_at"
+const OrganizationMemberColumnsM = "m.id, m.account_id, m.organization_id, m.position, m.label, m.created_at, m.updated_at"
 
-type Member struct {
+type OrganizationMember struct {
 	ID             uuid.UUID `json:"id"`
 	AccountID      uuid.UUID `json:"account_id"`
 	OrganizationID uuid.UUID `json:"organization_id"`
@@ -28,7 +28,7 @@ type Member struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
-func (m *Member) scan(row sq.RowScanner) error {
+func (m *OrganizationMember) scan(row sq.RowScanner) error {
 	err := row.Scan(
 		&m.ID,
 		&m.AccountID,
@@ -44,7 +44,7 @@ func (m *Member) scan(row sq.RowScanner) error {
 	return nil
 }
 
-type MembersQ struct {
+type OrganizationMembersQ struct {
 	db       pgx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
@@ -53,15 +53,15 @@ type MembersQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewMembersQ(db pgx.DBTX) MembersQ {
+func NewOrganizationMembersQ(db pgx.DBTX) OrganizationMembersQ {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	return MembersQ{
+	return OrganizationMembersQ{
 		db:       db,
-		selector: builder.Select(MemberColumnsM).From(MembersTable + " m"),
-		inserter: builder.Insert(MembersTable),
-		updater:  builder.Update(MembersTable + " m"),
-		deleter:  builder.Delete(MembersTable + " m"),
-		counter:  builder.Select("COUNT(*)").From(MembersTable + " m"),
+		selector: builder.Select(OrganizationMemberColumnsM).From(OrganizationMembersTable + " m"),
+		inserter: builder.Insert(OrganizationMembersTable),
+		updater:  builder.Update(OrganizationMembersTable + " m"),
+		deleter:  builder.Delete(OrganizationMembersTable + " m"),
+		counter:  builder.Select("COUNT(*)").From(OrganizationMembersTable + " m"),
 	}
 }
 
@@ -72,27 +72,27 @@ type InsertMemberParams struct {
 	Label          *string
 }
 
-func (q MembersQ) Insert(ctx context.Context, data InsertMemberParams) (Member, error) {
+func (q OrganizationMembersQ) Insert(ctx context.Context, data InsertMemberParams) (OrganizationMember, error) {
 	query, args, err := q.inserter.SetMap(map[string]interface{}{
 		"account_id":      data.AccountID,
 		"organization_id": data.OrganizationID,
 		"position":        data.Position,
 		"label":           data.Label,
-	}).Suffix("RETURNING " + MemberColumns).ToSql()
+	}).Suffix("RETURNING " + OrganizationMemberColumns).ToSql()
 	if err != nil {
-		return Member{}, fmt.Errorf("building insert query for %s: %w", MembersTable, err)
+		return OrganizationMember{}, fmt.Errorf("building insert query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	var inserted Member
+	var inserted OrganizationMember
 	err = inserted.scan(q.db.QueryRowContext(ctx, query, args...))
 	if err != nil {
-		return Member{}, err
+		return OrganizationMember{}, err
 	}
 
 	return inserted, nil
 }
 
-func (q MembersQ) Exists(ctx context.Context) (bool, error) {
+func (q OrganizationMembersQ) Exists(ctx context.Context) (bool, error) {
 	existsQ := q.selector.
 		Columns("1").
 		RemoveLimit().
@@ -103,52 +103,52 @@ func (q MembersQ) Exists(ctx context.Context) (bool, error) {
 
 	query, args, err := existsQ.ToSql()
 	if err != nil {
-		return false, fmt.Errorf("building exists query for %s: %w", MembersTable, err)
+		return false, fmt.Errorf("building exists query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	var ok bool
 	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning exists for %s: %w", MembersTable, err)
+		return false, fmt.Errorf("scanning exists for %s: %w", OrganizationMembersTable, err)
 	}
 
 	return ok, nil
 }
 
-func (q MembersQ) Get(ctx context.Context) (Member, error) {
+func (q OrganizationMembersQ) Get(ctx context.Context) (OrganizationMember, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return Member{}, fmt.Errorf("building select query for %s: %w", MembersTable, err)
+		return OrganizationMember{}, fmt.Errorf("building select query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	var m Member
+	var m OrganizationMember
 	err = m.scan(q.db.QueryRowContext(ctx, query, args...))
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return Member{}, nil
+			return OrganizationMember{}, nil
 		default:
-			return Member{}, err
+			return OrganizationMember{}, err
 		}
 	}
 
 	return m, nil
 }
 
-func (q MembersQ) Select(ctx context.Context) ([]Member, error) {
+func (q OrganizationMembersQ) Select(ctx context.Context) ([]OrganizationMember, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("building select query for %s: %w", MembersTable, err)
+		return nil, fmt.Errorf("building select query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing select query for %s: %w", MembersTable, err)
+		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationMembersTable, err)
 	}
 	defer rows.Close()
 
-	var out []Member
+	var out []OrganizationMember
 	for rows.Next() {
-		var m Member
+		var m OrganizationMember
 		if err = m.scan(rows); err != nil {
 			return nil, err
 		}
@@ -161,7 +161,7 @@ func (q MembersQ) Select(ctx context.Context) ([]Member, error) {
 	return out, nil
 }
 
-func (q MembersQ) FilterByID(id uuid.UUID) MembersQ {
+func (q OrganizationMembersQ) FilterByID(id uuid.UUID) OrganizationMembersQ {
 	q.selector = q.selector.Where(sq.Eq{"m.id": id})
 	q.counter = q.counter.Where(sq.Eq{"m.id": id})
 	q.updater = q.updater.Where(sq.Eq{"m.id": id})
@@ -169,7 +169,7 @@ func (q MembersQ) FilterByID(id uuid.UUID) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterByAccountID(accountID uuid.UUID) MembersQ {
+func (q OrganizationMembersQ) FilterByAccountID(accountID uuid.UUID) OrganizationMembersQ {
 	q.selector = q.selector.Where(sq.Eq{"m.account_id": accountID})
 	q.counter = q.counter.Where(sq.Eq{"m.account_id": accountID})
 	q.updater = q.updater.Where(sq.Eq{"m.account_id": accountID})
@@ -177,7 +177,7 @@ func (q MembersQ) FilterByAccountID(accountID uuid.UUID) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterByOrganizationID(organizationID uuid.UUID) MembersQ {
+func (q OrganizationMembersQ) FilterByOrganizationID(organizationID uuid.UUID) OrganizationMembersQ {
 	q.selector = q.selector.Where(sq.Eq{"m.organization_id": organizationID})
 	q.counter = q.counter.Where(sq.Eq{"m.organization_id": organizationID})
 	q.updater = q.updater.Where(sq.Eq{"m.organization_id": organizationID})
@@ -185,7 +185,7 @@ func (q MembersQ) FilterByOrganizationID(organizationID uuid.UUID) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterLikePosition(position string) MembersQ {
+func (q OrganizationMembersQ) FilterLikePosition(position string) OrganizationMembersQ {
 	q.selector = q.selector.Where(sq.ILike{"m.position": "%" + position + "%"})
 	q.counter = q.counter.Where(sq.ILike{"m.position": "%" + position + "%"})
 	q.updater = q.updater.Where(sq.ILike{"m.position": "%" + position + "%"})
@@ -193,7 +193,7 @@ func (q MembersQ) FilterLikePosition(position string) MembersQ {
 	return q
 }
 
-func (q MembersQ) FilterLikeLabel(label string) MembersQ {
+func (q OrganizationMembersQ) FilterLikeLabel(label string) OrganizationMembersQ {
 	q.selector = q.selector.Where(sq.ILike{"m.label": "%" + label + "%"})
 	q.counter = q.counter.Where(sq.ILike{"m.label": "%" + label + "%"})
 	q.updater = q.updater.Where(sq.ILike{"m.label": "%" + label + "%"})
@@ -201,84 +201,84 @@ func (q MembersQ) FilterLikeLabel(label string) MembersQ {
 	return q
 }
 
-func (q MembersQ) UpdateOne(ctx context.Context) (Member, error) {
+func (q OrganizationMembersQ) UpdateOne(ctx context.Context) (OrganizationMember, error) {
 	q.updater = q.updater.Set("updated_at", time.Now().UTC())
 
-	query, args, err := q.updater.Suffix("RETURNING " + MemberColumns).ToSql()
+	query, args, err := q.updater.Suffix("RETURNING " + OrganizationMemberColumns).ToSql()
 	if err != nil {
-		return Member{}, fmt.Errorf("building update query for %s: %w", MembersTable, err)
+		return OrganizationMember{}, fmt.Errorf("building update query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	var updated Member
+	var updated OrganizationMember
 	err = updated.scan(q.db.QueryRowContext(ctx, query, args...))
 	if err != nil {
-		return Member{}, err
+		return OrganizationMember{}, err
 	}
 
 	return updated, nil
 }
 
-func (q MembersQ) UpdateMany(ctx context.Context) (int64, error) {
+func (q OrganizationMembersQ) UpdateMany(ctx context.Context) (int64, error) {
 	q.updater = q.updater.Set("updated_at", time.Now().UTC())
 
 	query, args, err := q.updater.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("building update query for %s: %w", MembersTable, err)
+		return 0, fmt.Errorf("building update query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	res, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("executing update query for %s: %w", MembersTable, err)
+		return 0, fmt.Errorf("executing update query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("rows affected for %s: %w", MembersTable, err)
+		return 0, fmt.Errorf("rows affected for %s: %w", OrganizationMembersTable, err)
 	}
 
 	return affected, nil
 }
 
-func (q MembersQ) UpdatePosition(position sql.NullString) MembersQ {
+func (q OrganizationMembersQ) UpdatePosition(position sql.NullString) OrganizationMembersQ {
 	q.updater = q.updater.Set("position", position)
 	return q
 }
 
-func (q MembersQ) UpdateLabel(label sql.NullString) MembersQ {
+func (q OrganizationMembersQ) UpdateLabel(label sql.NullString) OrganizationMembersQ {
 	q.updater = q.updater.Set("label", label)
 	return q
 }
 
-func (q MembersQ) Delete(ctx context.Context) error {
+func (q OrganizationMembersQ) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
-		return fmt.Errorf("building delete query for %s: %w", MembersTable, err)
+		return fmt.Errorf("building delete query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	_, err = q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("executing delete query for %s: %w", MembersTable, err)
+		return fmt.Errorf("executing delete query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	return nil
 }
 
-func (q MembersQ) Count(ctx context.Context) (uint, error) {
+func (q OrganizationMembersQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("building count query for %s: %w", MembersTable, err)
+		return 0, fmt.Errorf("building count query for %s: %w", OrganizationMembersTable, err)
 	}
 
 	var count uint
 	err = q.db.QueryRowContext(ctx, query, args...).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("scanning count for %s: %w", MembersTable, err)
+		return 0, fmt.Errorf("scanning count for %s: %w", OrganizationMembersTable, err)
 	}
 
 	return count, nil
 }
 
-func (q MembersQ) Page(limit uint, offset uint) MembersQ {
+func (q OrganizationMembersQ) Page(limit uint, offset uint) OrganizationMembersQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }

@@ -77,9 +77,9 @@ func (s Service) SetRolePermissions(
 			return err
 		}
 
-		existingPermissionsMap := make([]pgdb.RolePermissionLink, len(p))
+		existingPermissionsMap := make([]pgdb.OrganizationRolePermissionLink, len(p))
 		for i, perm := range p {
-			existingPermissionsMap[i] = pgdb.RolePermissionLink{
+			existingPermissionsMap[i] = pgdb.OrganizationRolePermissionLink{
 				RoleID:       roleID,
 				PermissionID: perm.ID,
 			}

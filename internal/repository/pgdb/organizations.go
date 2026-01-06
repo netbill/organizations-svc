@@ -111,7 +111,7 @@ func (q OrganizationsQ) FilterByStatus(status string) OrganizationsQ {
 func (q OrganizationsQ) FilterByAccountID(accountID uuid.UUID) OrganizationsQ {
 	sub := sq.
 		Select("organization_id").
-		From(MembersTable).
+		From(OrganizationMembersTable).
 		Where(sq.Eq{"account_id": accountID})
 
 	subSQL, subArgs, err := sub.ToSql()

@@ -22,7 +22,7 @@ type FilterPermissionsParams struct {
 	Code        *string
 }
 
-func Permission(p pgdb.RolePermission) models.Permission {
+func Permission(p pgdb.OrganizationRolePermission) models.Permission {
 	return models.Permission{
 		ID:          p.ID,
 		Code:        p.Code,

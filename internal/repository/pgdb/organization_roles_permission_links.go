@@ -11,10 +11,10 @@ import (
 	"github.com/netbill/pgx"
 )
 
-const RolePermissionsTable = "organization_role_permission_links"
-const RolePermissionsColumns = "role_id, permission_id"
+const OrganizationRolePermissionsTable = "organization_role_permission_links"
+const OrganizationRolePermissionsColumns = "role_id, permission_id"
 
-type RolePermissionLinksQ struct {
+type OrganizationRolePermissionLinksQ struct {
 	db       pgx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
@@ -22,23 +22,23 @@ type RolePermissionLinksQ struct {
 	counter  sq.SelectBuilder
 }
 
-type RolePermissionLink struct {
+type OrganizationRolePermissionLink struct {
 	RoleID       uuid.UUID `json:"role_id"`
 	PermissionID uuid.UUID `json:"permission_id"`
 }
 
-func NewRolePermissionsQ(db pgx.DBTX) RolePermissionLinksQ {
+func NewRolePermissionsQ(db pgx.DBTX) OrganizationRolePermissionLinksQ {
 	b := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	return RolePermissionLinksQ{
+	return OrganizationRolePermissionLinksQ{
 		db:       db,
-		selector: b.Select(RolePermissionsColumns).From(RolePermissionsTable),
-		inserter: b.Insert(RolePermissionsTable),
-		deleter:  b.Delete(RolePermissionsTable),
-		counter:  b.Select("COUNT(*)").From(RolePermissionsTable),
+		selector: b.Select(OrganizationRolePermissionsColumns).From(OrganizationRolePermissionsTable),
+		inserter: b.Insert(OrganizationRolePermissionsTable),
+		deleter:  b.Delete(OrganizationRolePermissionsTable),
+		counter:  b.Select("COUNT(*)").From(OrganizationRolePermissionsTable),
 	}
 }
 
-func (q RolePermissionLinksQ) Insert(ctx context.Context, data ...RolePermissionLink) error {
+func (q OrganizationRolePermissionLinksQ) Insert(ctx context.Context, data ...OrganizationRolePermissionLink) error {
 	if len(data) == 0 {
 		return nil
 	}
@@ -49,100 +49,97 @@ func (q RolePermissionLinksQ) Insert(ctx context.Context, data ...RolePermission
 		ins = ins.Values(rp.RoleID, rp.PermissionID)
 	}
 
-	// если не хочешь падать на дублях — раскомментируй
-	// ins = ins.Suffix("ON CONFLICT DO NOTHING")
-
 	query, args, err := ins.ToSql()
 	if err != nil {
-		return fmt.Errorf("building insert query for %s: %w", RolePermissionsTable, err)
+		return fmt.Errorf("building insert query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
 	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("executing insert query for %s: %w", RolePermissionsTable, err)
+		return fmt.Errorf("executing insert query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
 	return nil
 }
 
-func (q RolePermissionLinksQ) Get(ctx context.Context) (RolePermissionLink, error) {
+func (q OrganizationRolePermissionLinksQ) Get(ctx context.Context) (OrganizationRolePermissionLink, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return RolePermissionLink{}, fmt.Errorf("building select query for %s: %w", RolePermissionsTable, err)
+		return OrganizationRolePermissionLink{}, fmt.Errorf("building select query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
-	var rp RolePermissionLink
+	var rp OrganizationRolePermissionLink
 	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&rp.RoleID, &rp.PermissionID); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			return RolePermissionLink{}, nil
+			return OrganizationRolePermissionLink{}, nil
 		default:
-			return RolePermissionLink{}, fmt.Errorf("scanning row for %s: %w", RolePermissionsTable, err)
+			return OrganizationRolePermissionLink{}, fmt.Errorf("scanning row for %s: %w", OrganizationRolePermissionsTable, err)
 		}
 	}
 
 	return rp, nil
 }
 
-func (q RolePermissionLinksQ) Select(ctx context.Context) ([]RolePermissionLink, error) {
+func (q OrganizationRolePermissionLinksQ) Select(ctx context.Context) ([]OrganizationRolePermissionLink, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("building select query for %s: %w", RolePermissionsTable, err)
+		return nil, fmt.Errorf("building select query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
 	rows, err := q.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("executing select query for %s: %w", RolePermissionsTable, err)
+		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 	defer rows.Close()
 
-	var rps []RolePermissionLink
+	var rps []OrganizationRolePermissionLink
 	for rows.Next() {
-		var rp RolePermissionLink
+		var rp OrganizationRolePermissionLink
 		if err := rows.Scan(&rp.RoleID, &rp.PermissionID); err != nil {
-			return nil, fmt.Errorf("scanning row for %s: %w", RolePermissionsTable, err)
+			return nil, fmt.Errorf("scanning row for %s: %w", OrganizationRolePermissionsTable, err)
 		}
 		rps = append(rps, rp)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterating rows for %s: %w", RolePermissionsTable, err)
+		return nil, fmt.Errorf("iterating rows for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
 	return rps, nil
 }
 
-func (q RolePermissionLinksQ) Delete(ctx context.Context) error {
+func (q OrganizationRolePermissionLinksQ) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
-		return fmt.Errorf("building delete query for %s: %w", RolePermissionsTable, err)
+		return fmt.Errorf("building delete query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
 	_, err = q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("executing delete query for %s: %w", RolePermissionsTable, err)
+		return fmt.Errorf("executing delete query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
 	return nil
 }
 
-func (q RolePermissionLinksQ) FilterByRoleID(roleID uuid.UUID) RolePermissionLinksQ {
+func (q OrganizationRolePermissionLinksQ) FilterByRoleID(roleID uuid.UUID) OrganizationRolePermissionLinksQ {
 	q.selector = q.selector.Where(sq.Eq{"role_id": roleID})
 	q.deleter = q.deleter.Where(sq.Eq{"role_id": roleID})
 	q.counter = q.counter.Where(sq.Eq{"role_id": roleID})
 	return q
 }
 
-func (q RolePermissionLinksQ) FilterByPermissionID(permissionID uuid.UUID) RolePermissionLinksQ {
+func (q OrganizationRolePermissionLinksQ) FilterByPermissionID(permissionID uuid.UUID) OrganizationRolePermissionLinksQ {
 	q.selector = q.selector.Where(sq.Eq{"permission_id": permissionID})
 	q.deleter = q.deleter.Where(sq.Eq{"permission_id": permissionID})
 	q.counter = q.counter.Where(sq.Eq{"permission_id": permissionID})
 	return q
 }
 
-func (q RolePermissionLinksQ) FilterByPermissionCode(code ...string) RolePermissionLinksQ {
+func (q OrganizationRolePermissionLinksQ) FilterByPermissionCode(code ...string) OrganizationRolePermissionLinksQ {
 	sub := sq.
 		Select("id").
-		From(PermissionTable).
+		From(OrganizationPermissionTable).
 		Where(sq.Eq{"code": code})
 
 	subSQL, subArgs, err := sub.ToSql()
@@ -161,7 +158,7 @@ func (q RolePermissionLinksQ) FilterByPermissionCode(code ...string) RolePermiss
 	return q
 }
 
-func (q RolePermissionLinksQ) FilterByAccountID(accountID uuid.UUID) RolePermissionLinksQ {
+func (q OrganizationRolePermissionLinksQ) FilterByAccountID(accountID uuid.UUID) OrganizationRolePermissionLinksQ {
 	sub := sq.
 		Select("DISTINCT mr.role_id").
 		From("organization_members m").
@@ -184,7 +181,7 @@ func (q RolePermissionLinksQ) FilterByAccountID(accountID uuid.UUID) RolePermiss
 	return q
 }
 
-func (q RolePermissionLinksQ) FilterByOrganizationID(organizationID uuid.UUID) RolePermissionLinksQ {
+func (q OrganizationRolePermissionLinksQ) FilterByOrganizationID(organizationID uuid.UUID) OrganizationRolePermissionLinksQ {
 	sub := sq.
 		Select("id").
 		From("roles").
@@ -206,7 +203,7 @@ func (q RolePermissionLinksQ) FilterByOrganizationID(organizationID uuid.UUID) R
 	return q
 }
 
-func (q RolePermissionLinksQ) FilterByMemberID(memberID uuid.UUID) RolePermissionLinksQ {
+func (q OrganizationRolePermissionLinksQ) FilterByMemberID(memberID uuid.UUID) OrganizationRolePermissionLinksQ {
 	sub := sq.
 		Select("mr.role_id").
 		From("organization_member_roles mr").
@@ -228,35 +225,35 @@ func (q RolePermissionLinksQ) FilterByMemberID(memberID uuid.UUID) RolePermissio
 	return q
 }
 
-func (q RolePermissionLinksQ) Count(ctx context.Context) (uint, error) {
+func (q OrganizationRolePermissionLinksQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("building count query for %s: %w", RolePermissionsTable, err)
+		return 0, fmt.Errorf("building count query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
 	var n uint
 	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
-		return 0, fmt.Errorf("scanning count for %s: %w", RolePermissionsTable, err)
+		return 0, fmt.Errorf("scanning count for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 	return n, nil
 }
 
-func (q RolePermissionLinksQ) Page(limit, offset uint) RolePermissionLinksQ {
+func (q OrganizationRolePermissionLinksQ) Page(limit, offset uint) OrganizationRolePermissionLinksQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }
 
-func (q RolePermissionLinksQ) Exists(ctx context.Context) (bool, error) {
+func (q OrganizationRolePermissionLinksQ) Exists(ctx context.Context) (bool, error) {
 	subSQL, subArgs, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return false, fmt.Errorf("building exists query for %s: %w", RolePermissionsTable, err)
+		return false, fmt.Errorf("building exists query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
 	sqlq := "SELECT EXISTS (" + subSQL + ")"
 
 	var ok bool
 	if err := q.db.QueryRowContext(ctx, sqlq, subArgs...).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning exists for %s: %w", RolePermissionsTable, err)
+		return false, fmt.Errorf("scanning exists for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 	return ok, nil
 }

@@ -34,7 +34,7 @@ func (s Service) RemoveMemberRole(ctx context.Context, memberID, roleID uuid.UUI
 
 func (s Service) AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
 	_, err := s.memberRolesQ(ctx).
-		Insert(ctx, pgdb.MemberRole{
+		Insert(ctx, pgdb.OrganizationMemberRole{
 			MemberID: memberID,
 			RoleID:   roleID,
 		})

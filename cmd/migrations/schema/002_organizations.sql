@@ -8,8 +8,8 @@ CREATE TABLE profiles (
     official    BOOLEAN NOT NULL DEFAULT FALSE,
     pseudonym   VARCHAR(128),
 
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
+    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
 );
 
 CREATE TYPE organization_status AS ENUM (
@@ -34,8 +34,8 @@ CREATE TABLE organization_members (
     id               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     account_id       UUID NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
     organization_id  UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    position         TEXT,
-    label            TEXT,
+    position         VARCHAR(255),
+    label            VARCHAR(128),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),

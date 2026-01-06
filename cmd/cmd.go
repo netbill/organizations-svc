@@ -14,7 +14,8 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/messenger/consumer"
-	"github.com/netbill/organizations-svc/internal/messenger/consumer/callbacker"
+	callbacker "github.com/netbill/organizations-svc/internal/messenger/consumer/callbcker"
+	"github.com/netbill/organizations-svc/internal/messenger/consumer/processor"
 	"github.com/netbill/organizations-svc/internal/messenger/producer"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/organizations-svc/internal/rest"
@@ -49,7 +50,10 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	inviteSvc := invite.New(database, kafkaProducer)
 	profileSvc := profile.New(database)
 
-	kafkaConsumer := consumer.New(log, cfg.Kafka.Brokers, box.New(pg), callbacker.New(log, profileSvc))
+	kafkaConsumer := consumer.New(
+		log, cfg.Kafka.Brokers, kafkaBox,
+		callbacker.New(log, kafkaBox, processor.New(log, profileSvc)),
+	)
 
 	ctrl := controller.New(orgSvc, memberSvc, roleSvc, inviteSvc, log)
 

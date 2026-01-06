@@ -1,4 +1,4 @@
-package callbacker
+package processor
 
 import (
 	"context"
@@ -8,13 +8,13 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type Callbacker struct {
+type Processor struct {
 	log    logium.Logger
 	domain domain
 }
 
-func New(log logium.Logger, domain domain) Callbacker {
-	return Callbacker{
+func New(log logium.Logger, domain domain) Processor {
+	return Processor{
 		log:    log,
 		domain: domain,
 	}

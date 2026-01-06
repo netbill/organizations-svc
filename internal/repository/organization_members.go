@@ -175,7 +175,7 @@ func (s Service) CanInteract(ctx context.Context, firstMemberID, secondMemberID 
 	return res, nil
 }
 
-func MemberWithUserData(db pgdb.MemberWithUserData) models.Member {
+func MemberWithUserData(db pgdb.OrganizationMemberWithUserData) models.Member {
 	return models.Member{
 		ID:             db.ID,
 		AccountID:      db.AccountID,

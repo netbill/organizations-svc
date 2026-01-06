@@ -1,4 +1,4 @@
-package callbacker
+package processor
 
 import (
 	"context"
@@ -11,31 +11,31 @@ import (
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 )
 
-func (c Callbacker) ProfileUpdate(
+func (p Processor) ProfileUpdated(
 	ctx context.Context,
 	event box.InboxEvent,
 ) string {
-	var p contracts.ProfileUpdatedPayload
-	if err := json.Unmarshal(event.Payload, &p); err != nil {
-		c.log.Errorf("bad payload for %s, key: %s, id: %s, error: %v", event.Type, event.Key, event.ID, err)
+	var payload contracts.ProfileUpdatedPayload
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		p.log.Errorf("bad payload for %s, key: %s, id: %s, error: %v", event.Type, event.Key, event.ID, err)
 		return box.InboxStatusFailed
 	}
 
-	if _, err := c.domain.UpsertProfile(ctx, models.Profile{
-		AccountID: p.Profile.AccountID,
-		Username:  p.Profile.Username,
-		Official:  p.Profile.Official,
-		Pseudonym: p.Profile.Pseudonym,
+	if _, err := p.domain.UpsertProfile(ctx, models.Profile{
+		AccountID: payload.Profile.AccountID,
+		Username:  payload.Profile.Username,
+		Official:  payload.Profile.Official,
+		Pseudonym: payload.Profile.Pseudonym,
 	}); err != nil {
 		switch {
 		case errors.Is(err, errx.ErrorInternal):
-			c.log.Errorf(
+			p.log.Errorf(
 				"failed to upsert profile due to internal error, key: %s, id: %s, error: %v",
 				event.Key, event.ID, err,
 			)
 			return box.InboxStatusPending
 		default:
-			c.log.Errorf("failed to upsert profile, key: %s, id: %s, error: %v", event.Key, event.ID, err)
+			p.log.Errorf("failed to upsert profile, key: %s, id: %s, error: %v", event.Key, event.ID, err)
 			return box.InboxStatusFailed
 		}
 	}

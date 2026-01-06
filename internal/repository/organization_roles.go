@@ -159,7 +159,7 @@ func (s Service) GetMemberMaxRole(
 	return Role(res), nil
 }
 
-func Role(r pgdb.Role) models.Role {
+func Role(r pgdb.OrganizationRole) models.Role {
 	return models.Role{
 		ID:             r.ID,
 		OrganizationID: r.OrganizationID,

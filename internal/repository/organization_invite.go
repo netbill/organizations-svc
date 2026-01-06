@@ -132,7 +132,7 @@ func (s Service) GetAccountInvites(
 	}, nil
 }
 
-func Invite(row pgdb.Invite) models.Invite {
+func Invite(row pgdb.OrganizationInvite) models.Invite {
 	return models.Invite{
 		ID:             row.ID,
 		OrganizationID: row.OrganizationID,
