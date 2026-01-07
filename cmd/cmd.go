@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/netbill/kafkakit/box"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
@@ -13,9 +12,6 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/messenger/consumer"
-	callbacker "github.com/netbill/organizations-svc/internal/messenger/consumer/callbcker"
-	"github.com/netbill/organizations-svc/internal/messenger/consumer/processor"
 	"github.com/netbill/organizations-svc/internal/messenger/producer"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/organizations-svc/internal/rest"
@@ -27,8 +23,8 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	run := func(f func()) {
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			f()
-			wg.Done()
 		}()
 	}
 
@@ -50,7 +46,7 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	inviteSvc := invite.New(database, kafkaProducer)
 	profileSvc := profile.New(database)
 
-	kafkaConsumer := consumer.New(
+	kafkaConsumers := consumer.New(
 		log, cfg.Kafka.Brokers, kafkaBox,
 		callbacker.New(log, kafkaBox, processor.New(log, profileSvc)),
 	)
@@ -62,7 +58,7 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 
 	run(func() { router.Run(ctx, cfg) })
 
-	run(func() { kafkaConsumer.Run(ctx) })
+	run(func() { kafkaConsumers.Run(ctx) })
 
 	run(func() { kafkaProducer.Run(ctx) })
 }

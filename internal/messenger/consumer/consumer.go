@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/kafkakit/box"
-	"github.com/netbill/kafkakit/subscriber"
 	"github.com/netbill/logium"
+	"github.com/netbill/msgx/subscriber"
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 	"github.com/segmentio/kafka-go"
 	"golang.org/x/sync/errgroup"

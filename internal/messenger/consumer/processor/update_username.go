@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/netbill/kafkakit/box"
+	"github.com/netbill/evebox/inbox"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 )
 
 func (p Processor) AccountUsernameChanged(
 	ctx context.Context,
-	event box.InboxEvent,
+	event inbox.InboxEvent,
 ) string {
 	var payload contracts.AccountUsernameChangePayload
 	if err := json.Unmarshal(event.Payload, &payload); err != nil {

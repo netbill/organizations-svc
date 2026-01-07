@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/kafkakit/box"
+
 	"github.com/netbill/logium"
 	"github.com/segmentio/kafka-go"
 )
