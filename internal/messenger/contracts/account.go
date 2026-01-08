@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 const AccountCreatedEvent = "account.created"
@@ -19,12 +20,11 @@ type AccountCreatedPayload struct {
 		UpdatedAt         time.Time `json:"updated_at"`
 		UsernameUpdatedAt time.Time `json:"username_name_updated_at"`
 	} `json:"account"`
-	Email string `json:"email,omitempty"`
 }
 
-const AccountUsernameChangeEvent = "account.username.change"
+const AccountUsernameChangedEvent = "account.username.changed"
 
-type AccountUsernameChangePayload struct {
+type AccountUsernameChangedPayload struct {
 	Account struct {
 		ID       uuid.UUID `json:"id"`
 		Username string    `json:"username"`
@@ -35,7 +35,6 @@ type AccountUsernameChangePayload struct {
 		UpdatedAt         time.Time `json:"updated_at"`
 		UsernameUpdatedAt time.Time `json:"username_name_updated_at"`
 	} `json:"account"`
-	Email string `json:"email,omitempty"`
 }
 
 const AccountDeletedEvent = "account.deleted"
@@ -52,5 +51,10 @@ type AccountDeletedPayload struct {
 		UpdatedAt         time.Time `json:"updated_at"`
 		UsernameUpdatedAt time.Time `json:"username_name_updated_at"`
 	} `json:"account"`
-	Email string `json:"email,omitempty"`
+}
+
+const AccountProfileUpdatedEvent = "account.profile.updated"
+
+type AccountProfileUpdatedPayload struct {
+	Profile models.Profile `json:"profile"`
 }

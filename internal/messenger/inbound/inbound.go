@@ -1,4 +1,4 @@
-package processor
+package inbound
 
 import (
 	"context"
@@ -8,13 +8,13 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type Processor struct {
+type Inbound struct {
 	log    logium.Logger
 	domain domain
 }
 
-func New(log logium.Logger, domain domain) Processor {
-	return Processor{
+func New(log logium.Logger, domain domain) Inbound {
+	return Inbound{
 		log:    log,
 		domain: domain,
 	}

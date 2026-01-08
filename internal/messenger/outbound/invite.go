@@ -1,4 +1,4 @@
-package producer
+package outbound
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (p Producer) WriteRoleCreated(
+func (p Producer) WriteInviteCreated(
 	ctx context.Context,
-	role models.Role,
+	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.RoleCreatedPayload{
-		Role: role,
+	payload, err := json.Marshal(contracts.InviteCreatedPayload{
+		Invite: invite,
 	})
 	if err != nil {
 		return err
@@ -25,12 +25,12 @@ func (p Producer) WriteRoleCreated(
 	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
-			Topic: contracts.RolesTopicV1,
-			Key:   []byte(role.ID.String()),
+			Topic: contracts.OrganizationsTopicV1,
+			Key:   []byte(invite.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.RoleCreatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.InviteCreatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -41,12 +41,12 @@ func (p Producer) WriteRoleCreated(
 	return err
 }
 
-func (p Producer) WriteRoleUpdated(
+func (p Producer) WriteInviteAccepted(
 	ctx context.Context,
-	rol models.Role,
+	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.RoleUpdatedPayload{
-		Role: rol,
+	payload, err := json.Marshal(contracts.InviteAcceptedPayload{
+		Invite: invite,
 	})
 	if err != nil {
 		return err
@@ -55,12 +55,12 @@ func (p Producer) WriteRoleUpdated(
 	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
-			Topic: contracts.RolesTopicV1,
-			Key:   []byte(rol.ID.String()),
+			Topic: contracts.OrganizationsTopicV1,
+			Key:   []byte(invite.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.RoleUpdatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.InviteAcceptedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -71,19 +71,12 @@ func (p Producer) WriteRoleUpdated(
 	return err
 }
 
-func (p Producer) WriteRolePermissionsUpdated(
+func (p Producer) WriteInviteDeclined(
 	ctx context.Context,
-	RoleID uuid.UUID,
-	permissions map[models.Permission]bool,
+	invite models.Invite,
 ) error {
-	per := make(map[uuid.UUID]bool)
-	for k, v := range permissions {
-		per[k.ID] = v
-	}
-
-	payload, err := json.Marshal(contracts.RolePermissionsUpdatedPayload{
-		RoleID:      RoleID,
-		Permissions: per,
+	payload, err := json.Marshal(contracts.InviteAcceptedPayload{
+		Invite: invite,
 	})
 	if err != nil {
 		return err
@@ -92,12 +85,12 @@ func (p Producer) WriteRolePermissionsUpdated(
 	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
-			Topic: contracts.RolesTopicV1,
-			Key:   []byte(RoleID.String()),
+			Topic: contracts.OrganizationsTopicV1,
+			Key:   []byte(invite.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.RolePermissionsUpdatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.InviteDeclinedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -108,14 +101,12 @@ func (p Producer) WriteRolePermissionsUpdated(
 	return err
 }
 
-func (p Producer) WriteRolesRanksUpdated(
+func (p Producer) WriteInviteDeleted(
 	ctx context.Context,
-	organizationID uuid.UUID,
-	ranks map[uuid.UUID]uint,
+	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.RolesRanksUpdatedPayload{
-		OrganizationID: organizationID,
-		Ranks:          ranks,
+	payload, err := json.Marshal(contracts.InviteDeletedPayload{
+		Invite: invite,
 	})
 	if err != nil {
 		return err
@@ -124,42 +115,12 @@ func (p Producer) WriteRolesRanksUpdated(
 	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
-			Topic: contracts.RolesTopicV1,
-			Key:   []byte(organizationID.String()),
+			Topic: contracts.OrganizationsTopicV1,
+			Key:   []byte(invite.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.RolesRanksUpdatedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
-			},
-		},
-	)
-
-	return err
-}
-
-func (p Producer) WriteRoleDeleted(
-	ctx context.Context,
-	role models.Role,
-) error {
-	payload, err := json.Marshal(contracts.RoleDeletedPayload{
-		Role: role,
-	})
-	if err != nil {
-		return err
-	}
-
-	_, err = p.outbox.CreateOutboxEvent(
-		ctx,
-		kafka.Message{
-			Topic: contracts.RolesTopicV1,
-			Key:   []byte(role.ID.String()),
-			Value: payload,
-			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.RoleDeletedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.InviteDeletedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"sync"
 
+	"github.com/netbill/evebox/box/inbox"
+	"github.com/netbill/evebox/box/outbox"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
@@ -12,7 +14,9 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/messenger/producer"
+	"github.com/netbill/organizations-svc/internal/messenger"
+	"github.com/netbill/organizations-svc/internal/messenger/inbound"
+	"github.com/netbill/organizations-svc/internal/messenger/outbound"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/organizations-svc/internal/rest"
 	"github.com/netbill/organizations-svc/internal/rest/controller"
@@ -34,31 +38,33 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	}
 
 	database := repository.New(pg)
-	kafkaBox := box.New(pg)
 
-	log.Infof("starting kafka brokers %s", cfg.Kafka.Brokers)
+	outBox := outbox.New(pg)
+	inBox := inbox.New(pg)
 
-	kafkaProducer := producer.New(log, cfg.Kafka.Brokers, kafkaBox)
+	kafkaOutbound := outbound.New(log, outBox)
 
-	orgSvc := organization.New(database, kafkaProducer)
-	memberSvc := member.New(database, kafkaProducer)
-	roleSvc := role.New(database, kafkaProducer)
-	inviteSvc := invite.New(database, kafkaProducer)
+	orgSvc := organization.New(database, kafkaOutbound)
+	memberSvc := member.New(database, kafkaOutbound)
+	roleSvc := role.New(database, kafkaOutbound)
+	inviteSvc := invite.New(database, kafkaOutbound)
 	profileSvc := profile.New(database)
 
-	kafkaConsumers := consumer.New(
-		log, cfg.Kafka.Brokers, kafkaBox,
-		callbacker.New(log, kafkaBox, processor.New(log, profileSvc)),
-	)
+	kafkaInbound := inbound.New(log, profileSvc)
 
 	ctrl := controller.New(orgSvc, memberSvc, roleSvc, inviteSvc, log)
-
 	mdll := mdlv.New(cfg.JWT.User.AccessToken.SecretKey, rest.AccountDataCtxKey)
 	router := rest.New(log, mdll, ctrl)
 
+	kafkaConsumer := messenger.NewConsumer(log, inBox, kafkaInbound, cfg.Kafka.Brokers...)
+
+	kafkaProducer := messenger.NewProducer(log, outBox, cfg.Kafka.Brokers...)
+	
+	log.Infof("starting kafka brokers %s", cfg.Kafka.Brokers)
+
 	run(func() { router.Run(ctx, cfg) })
 
-	run(func() { kafkaConsumers.Run(ctx) })
+	run(func() { kafkaConsumer.Run(ctx) })
 
 	run(func() { kafkaProducer.Run(ctx) })
 }

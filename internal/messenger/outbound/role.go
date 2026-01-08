@@ -1,4 +1,4 @@
-package producer
+package outbound
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (p Producer) WriteOrganizationCreated(
+func (p Producer) WriteRoleCreated(
 	ctx context.Context,
-	organization models.Organization,
+	role models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationCreatedPayload{
-		Organization: organization,
+	payload, err := json.Marshal(contracts.RoleCreatedPayload{
+		Role: role,
 	})
 	if err != nil {
 		return err
@@ -26,11 +26,11 @@ func (p Producer) WriteOrganizationCreated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(role.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationCreatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.RoleCreatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -41,12 +41,12 @@ func (p Producer) WriteOrganizationCreated(
 	return err
 }
 
-func (p Producer) WriteOrganizationUpdated(
+func (p Producer) WriteRoleUpdated(
 	ctx context.Context,
-	organization models.Organization,
+	rol models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationUpdatedPayload{
-		Organization: organization,
+	payload, err := json.Marshal(contracts.RoleUpdatedPayload{
+		Role: rol,
 	})
 	if err != nil {
 		return err
@@ -56,11 +56,11 @@ func (p Producer) WriteOrganizationUpdated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(rol.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationUpdatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.RoleUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -71,12 +71,19 @@ func (p Producer) WriteOrganizationUpdated(
 	return err
 }
 
-func (p Producer) WriteOrganizationDeleted(
+func (p Producer) WriteRolePermissionsUpdated(
 	ctx context.Context,
-	organization models.Organization,
+	RoleID uuid.UUID,
+	permissions map[models.Permission]bool,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationDeletedPayload{
-		Organization: organization,
+	per := make(map[uuid.UUID]bool)
+	for k, v := range permissions {
+		per[k.ID] = v
+	}
+
+	payload, err := json.Marshal(contracts.RolePermissionsUpdatedPayload{
+		RoleID:      RoleID,
+		Permissions: per,
 	})
 	if err != nil {
 		return err
@@ -86,11 +93,11 @@ func (p Producer) WriteOrganizationDeleted(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(RoleID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationDeletedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.RolePermissionsUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -101,12 +108,14 @@ func (p Producer) WriteOrganizationDeleted(
 	return err
 }
 
-func (p Producer) WriteOrganizationActivated(
+func (p Producer) WriteRolesRanksUpdated(
 	ctx context.Context,
-	organization models.Organization,
+	organizationID uuid.UUID,
+	ranks map[uuid.UUID]uint,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationActivatedPayload{
-		Organization: organization,
+	payload, err := json.Marshal(contracts.RolesRanksUpdatedPayload{
+		OrganizationID: organizationID,
+		Ranks:          ranks,
 	})
 	if err != nil {
 		return err
@@ -116,11 +125,11 @@ func (p Producer) WriteOrganizationActivated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(organizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationActivatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.RolesRanksUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -131,12 +140,12 @@ func (p Producer) WriteOrganizationActivated(
 	return err
 }
 
-func (p Producer) WriteOrganizationDeactivated(
+func (p Producer) WriteRoleDeleted(
 	ctx context.Context,
-	organization models.Organization,
+	role models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationDeactivatedPayload{
-		Organization: organization,
+	payload, err := json.Marshal(contracts.RoleDeletedPayload{
+		Role: role,
 	})
 	if err != nil {
 		return err
@@ -146,11 +155,11 @@ func (p Producer) WriteOrganizationDeactivated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(role.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationDeactivatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.RoleDeletedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -161,12 +170,14 @@ func (p Producer) WriteOrganizationDeactivated(
 	return err
 }
 
-func (p Producer) WriteOrganizationSuspended(
+func (p Producer) WriteMemberRoleAdd(
 	ctx context.Context,
-	organization models.Organization,
+	memberID uuid.UUID,
+	roleID uuid.UUID,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationSuspendedPayload{
-		Organization: organization,
+	payload, err := json.Marshal(contracts.MemberRoleAddedPayload{
+		MemberID: memberID,
+		RoleID:   roleID,
 	})
 	if err != nil {
 		return err
@@ -176,11 +187,43 @@ func (p Producer) WriteOrganizationSuspended(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(memberID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationSuspendedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.MemberRoleAddedEvent)},
+				{Key: header.EventVersion, Value: []byte("1")},
+				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
+				{Key: header.ContentType, Value: []byte("application/json")},
+			},
+		},
+	)
+
+	return err
+}
+
+func (p Producer) WriteMemberRoleRemove(
+	ctx context.Context,
+	memberID uuid.UUID,
+	roleID uuid.UUID,
+) error {
+	payload, err := json.Marshal(contracts.MemberRoleRemovedPayload{
+		MemberID: memberID,
+		RoleID:   roleID,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = p.outbox.CreateOutboxEvent(
+		ctx,
+		kafka.Message{
+			Topic: contracts.OrganizationsTopicV1,
+			Key:   []byte(memberID.String()),
+			Value: payload,
+			Headers: []kafka.Header{
+				{Key: header.EventID, Value: []byte(uuid.New().String())},
+				{Key: header.EventType, Value: []byte(contracts.MemberRoleRemovedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},

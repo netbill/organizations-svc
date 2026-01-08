@@ -1,4 +1,4 @@
-package producer
+package outbound
 
 import (
 	"context"
@@ -25,7 +25,7 @@ func (p Producer) WriteMemberCreated(
 	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
-			Topic: contracts.MembersTopicV1,
+			Topic: contracts.OrganizationsTopicV1,
 			Key:   []byte(member.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
@@ -55,7 +55,7 @@ func (p Producer) WriteMemberUpdated(
 	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
-			Topic: contracts.MembersTopicV1,
+			Topic: contracts.OrganizationsTopicV1,
 			Key:   []byte(member.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
@@ -85,7 +85,7 @@ func (p Producer) WriteMemberDeleted(
 	_, err = p.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
-			Topic: contracts.MembersTopicV1,
+			Topic: contracts.OrganizationsTopicV1,
 			Key:   []byte(member.ID.String()),
 			Value: payload,
 			Headers: []kafka.Header{

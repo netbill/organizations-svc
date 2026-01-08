@@ -26,7 +26,7 @@ func (s Service) UpdateUsername(ctx context.Context, accountID uuid.UUID, userna
 	row, err := s.profilesQ(ctx).
 		FilterByAccountID(accountID).
 		UpdateUsername(username).
-		Get(ctx)
+		UpdateOne(ctx)
 	if err != nil {
 		return models.Profile{}, err
 	}

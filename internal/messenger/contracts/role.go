@@ -36,3 +36,17 @@ type RolePermissionsUpdatedPayload struct {
 	RoleID      uuid.UUID          `json:"role_id"`
 	Permissions map[uuid.UUID]bool `json:"permissions"`
 }
+
+const MemberRoleAddedEvent = "member_role.added"
+
+type MemberRoleAddedPayload struct {
+	MemberID uuid.UUID `json:"member_id"`
+	RoleID   uuid.UUID `json:"role_id"`
+}
+
+const MemberRoleRemovedEvent = "member_role.remove"
+
+type MemberRoleRemovedPayload struct {
+	MemberID uuid.UUID `json:"member_id"`
+	RoleID   uuid.UUID `json:"role_id"`
+}
