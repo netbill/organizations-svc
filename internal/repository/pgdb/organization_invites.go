@@ -38,7 +38,7 @@ func (i *OrganizationInvite) scan(row sq.RowScanner) error {
 	return nil
 }
 
-type OrganizationInvitesQ struct {
+type OrgInvitesQ struct {
 	db       pgx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
@@ -47,9 +47,9 @@ type OrganizationInvitesQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewOrganizationInvitesQ(db pgx.DBTX) OrganizationInvitesQ {
+func NewOrgInvitesQ(db pgx.DBTX) OrgInvitesQ {
 	b := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	return OrganizationInvitesQ{
+	return OrgInvitesQ{
 		db:       db,
 		selector: b.Select(OrganizationInviteColumns).From(OrganizationInviteTable),
 		inserter: b.Insert(OrganizationInviteTable),
@@ -65,7 +65,7 @@ type InsertInviteParams struct {
 	ExpiresAt      time.Time
 }
 
-func (q OrganizationInvitesQ) Insert(ctx context.Context, data InsertInviteParams) (OrganizationInvite, error) {
+func (q OrgInvitesQ) Insert(ctx context.Context, data InsertInviteParams) (OrganizationInvite, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"organization_id": data.OrganizationID,
 		"account_id":      data.AccountID,
@@ -82,7 +82,7 @@ func (q OrganizationInvitesQ) Insert(ctx context.Context, data InsertInviteParam
 	return out, nil
 }
 
-func (q OrganizationInvitesQ) Get(ctx context.Context) (OrganizationInvite, error) {
+func (q OrgInvitesQ) Get(ctx context.Context) (OrganizationInvite, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
 		return OrganizationInvite{}, fmt.Errorf("building select query for %s: %w", OrganizationInviteTable, err)
@@ -100,7 +100,7 @@ func (q OrganizationInvitesQ) Get(ctx context.Context) (OrganizationInvite, erro
 	return out, nil
 }
 
-func (q OrganizationInvitesQ) Select(ctx context.Context) ([]OrganizationInvite, error) {
+func (q OrgInvitesQ) Select(ctx context.Context) ([]OrganizationInvite, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationInviteTable, err)
@@ -127,7 +127,7 @@ func (q OrganizationInvitesQ) Select(ctx context.Context) ([]OrganizationInvite,
 	return out, nil
 }
 
-func (q OrganizationInvitesQ) Delete(ctx context.Context) error {
+func (q OrgInvitesQ) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationInviteTable, err)
@@ -139,7 +139,7 @@ func (q OrganizationInvitesQ) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (q OrganizationInvitesQ) UpdateOne(ctx context.Context) (OrganizationInvite, error) {
+func (q OrgInvitesQ) UpdateOne(ctx context.Context) (OrganizationInvite, error) {
 	query, args, err := q.updater.Suffix("RETURNING " + OrganizationInviteColumns).ToSql()
 	if err != nil {
 		return OrganizationInvite{}, fmt.Errorf("building update query for %s: %w", OrganizationInviteTable, err)
@@ -152,7 +152,7 @@ func (q OrganizationInvitesQ) UpdateOne(ctx context.Context) (OrganizationInvite
 	return out, nil
 }
 
-func (q OrganizationInvitesQ) UpdateMany(ctx context.Context) (int64, error) {
+func (q OrgInvitesQ) UpdateMany(ctx context.Context) (int64, error) {
 	query, args, err := q.updater.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building update query for %s: %w", OrganizationInviteTable, err)
@@ -171,7 +171,7 @@ func (q OrganizationInvitesQ) UpdateMany(ctx context.Context) (int64, error) {
 	return aff, nil
 }
 
-func (q OrganizationInvitesQ) FilterByID(id uuid.UUID) OrganizationInvitesQ {
+func (q OrgInvitesQ) FilterByID(id uuid.UUID) OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"id": id})
 	q.counter = q.counter.Where(sq.Eq{"id": id})
 	q.updater = q.updater.Where(sq.Eq{"id": id})
@@ -179,7 +179,7 @@ func (q OrganizationInvitesQ) FilterByID(id uuid.UUID) OrganizationInvitesQ {
 	return q
 }
 
-func (q OrganizationInvitesQ) FilterByOrganizationID(id uuid.UUID) OrganizationInvitesQ {
+func (q OrgInvitesQ) FilterByOrganizationID(id uuid.UUID) OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"organization_id": id})
 	q.counter = q.counter.Where(sq.Eq{"organization_id": id})
 	q.updater = q.updater.Where(sq.Eq{"organization_id": id})
@@ -187,7 +187,7 @@ func (q OrganizationInvitesQ) FilterByOrganizationID(id uuid.UUID) OrganizationI
 	return q
 }
 
-func (q OrganizationInvitesQ) FilterByAccountID(id uuid.UUID) OrganizationInvitesQ {
+func (q OrgInvitesQ) FilterByAccountID(id uuid.UUID) OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"account_id": id})
 	q.counter = q.counter.Where(sq.Eq{"account_id": id})
 	q.updater = q.updater.Where(sq.Eq{"account_id": id})
@@ -195,7 +195,7 @@ func (q OrganizationInvitesQ) FilterByAccountID(id uuid.UUID) OrganizationInvite
 	return q
 }
 
-func (q OrganizationInvitesQ) FilterByStatus(status string) OrganizationInvitesQ {
+func (q OrgInvitesQ) FilterByStatus(status string) OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"status": status})
 	q.counter = q.counter.Where(sq.Eq{"status": status})
 	q.updater = q.updater.Where(sq.Eq{"status": status})
@@ -203,7 +203,7 @@ func (q OrganizationInvitesQ) FilterByStatus(status string) OrganizationInvitesQ
 	return q
 }
 
-func (q OrganizationInvitesQ) FilterExpiresBefore(t time.Time) OrganizationInvitesQ {
+func (q OrgInvitesQ) FilterExpiresBefore(t time.Time) OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Lt{"expires_at": t})
 	q.counter = q.counter.Where(sq.Lt{"expires_at": t})
 	q.updater = q.updater.Where(sq.Lt{"expires_at": t})
@@ -211,7 +211,7 @@ func (q OrganizationInvitesQ) FilterExpiresBefore(t time.Time) OrganizationInvit
 	return q
 }
 
-func (q OrganizationInvitesQ) FilterExpiresAfter(t time.Time) OrganizationInvitesQ {
+func (q OrgInvitesQ) FilterExpiresAfter(t time.Time) OrgInvitesQ {
 	q.selector = q.selector.Where(sq.GtOrEq{"expires_at": t})
 	q.counter = q.counter.Where(sq.GtOrEq{"expires_at": t})
 	q.updater = q.updater.Where(sq.GtOrEq{"expires_at": t})
@@ -219,17 +219,17 @@ func (q OrganizationInvitesQ) FilterExpiresAfter(t time.Time) OrganizationInvite
 	return q
 }
 
-func (q OrganizationInvitesQ) UpdateStatus(status string) OrganizationInvitesQ {
+func (q OrgInvitesQ) UpdateStatus(status string) OrgInvitesQ {
 	q.updater = q.updater.Set("status", status)
 	return q
 }
 
-func (q OrganizationInvitesQ) UpdateExpiresAt(t time.Time) OrganizationInvitesQ {
+func (q OrgInvitesQ) UpdateExpiresAt(t time.Time) OrgInvitesQ {
 	q.updater = q.updater.Set("expires_at", t)
 	return q
 }
 
-func (q OrganizationInvitesQ) Count(ctx context.Context) (uint, error) {
+func (q OrgInvitesQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building count query for %s: %w", OrganizationInviteTable, err)
@@ -242,7 +242,7 @@ func (q OrganizationInvitesQ) Count(ctx context.Context) (uint, error) {
 	return n, nil
 }
 
-func (q OrganizationInvitesQ) Page(limit uint, offset uint) OrganizationInvitesQ {
+func (q OrgInvitesQ) Page(limit uint, offset uint) OrgInvitesQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }

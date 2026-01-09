@@ -26,7 +26,7 @@ func (mr *OrganizationMemberRole) scan(row sq.RowScanner) error {
 	return nil
 }
 
-type OrganizationMemberRolesQ struct {
+type OrgMemberRolesQ struct {
 	db       pgx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
@@ -34,9 +34,9 @@ type OrganizationMemberRolesQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewOrganizationMemberRolesQ(db pgx.DBTX) OrganizationMemberRolesQ {
+func NewOrgMemberRolesQ(db pgx.DBTX) OrgMemberRolesQ {
 	b := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	return OrganizationMemberRolesQ{
+	return OrgMemberRolesQ{
 		db:       db,
 		selector: b.Select(OrganizationMemberRoleColumns).From(OrganizationMemberRoleTable),
 		inserter: b.Insert(OrganizationMemberRoleTable),
@@ -45,7 +45,7 @@ func NewOrganizationMemberRolesQ(db pgx.DBTX) OrganizationMemberRolesQ {
 	}
 }
 
-func (q OrganizationMemberRolesQ) Insert(ctx context.Context, data OrganizationMemberRole) (OrganizationMemberRole, error) {
+func (q OrgMemberRolesQ) Insert(ctx context.Context, data OrganizationMemberRole) (OrganizationMemberRole, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"member_id": data.MemberID,
 		"role_id":   data.RoleID,
@@ -61,7 +61,7 @@ func (q OrganizationMemberRolesQ) Insert(ctx context.Context, data OrganizationM
 	return out, nil
 }
 
-func (q OrganizationMemberRolesQ) Get(ctx context.Context) (OrganizationMemberRole, error) {
+func (q OrgMemberRolesQ) Get(ctx context.Context) (OrganizationMemberRole, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
 		return OrganizationMemberRole{}, fmt.Errorf("building select query for %s: %w", OrganizationMemberRoleTable, err)
@@ -79,7 +79,7 @@ func (q OrganizationMemberRolesQ) Get(ctx context.Context) (OrganizationMemberRo
 	return out, nil
 }
 
-func (q OrganizationMemberRolesQ) Select(ctx context.Context) ([]OrganizationMemberRole, error) {
+func (q OrgMemberRolesQ) Select(ctx context.Context) ([]OrganizationMemberRole, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationMemberRoleTable, err)
@@ -106,7 +106,7 @@ func (q OrganizationMemberRolesQ) Select(ctx context.Context) ([]OrganizationMem
 	return out, nil
 }
 
-func (q OrganizationMemberRolesQ) Delete(ctx context.Context) error {
+func (q OrgMemberRolesQ) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationMemberRoleTable, err)
@@ -117,7 +117,7 @@ func (q OrganizationMemberRolesQ) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (q OrganizationMemberRolesQ) Count(ctx context.Context) (uint, error) {
+func (q OrgMemberRolesQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building count query for %s: %w", OrganizationMemberRoleTable, err)
@@ -130,14 +130,14 @@ func (q OrganizationMemberRolesQ) Count(ctx context.Context) (uint, error) {
 	return n, nil
 }
 
-func (q OrganizationMemberRolesQ) FilterByMemberID(memberID uuid.UUID) OrganizationMemberRolesQ {
+func (q OrgMemberRolesQ) FilterByMemberID(memberID uuid.UUID) OrgMemberRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"member_id": memberID})
 	q.counter = q.counter.Where(sq.Eq{"member_id": memberID})
 	q.deleter = q.deleter.Where(sq.Eq{"member_id": memberID})
 	return q
 }
 
-func (q OrganizationMemberRolesQ) FilterByRoleID(roleID uuid.UUID) OrganizationMemberRolesQ {
+func (q OrgMemberRolesQ) FilterByRoleID(roleID uuid.UUID) OrgMemberRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"role_id": roleID})
 	q.counter = q.counter.Where(sq.Eq{"role_id": roleID})
 	q.deleter = q.deleter.Where(sq.Eq{"role_id": roleID})

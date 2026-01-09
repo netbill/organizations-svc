@@ -590,10 +590,6 @@ components:
       - updated_at
     Role_data_relationships_permissions_inner:
       properties:
-        id:
-          description: Unique identifier for the permission
-          format: uuid
-          type: string
         code:
           description: A short code representing the permission
           example: agglmeration.manage
@@ -609,7 +605,6 @@ components:
       - code
       - description
       - enabled
-      - id
     Role_data_relationships:
       properties:
         permissions:
@@ -636,10 +631,6 @@ components:
       - type
     RolePermissions_data_inner:
       properties:
-        id:
-          description: Unique identifier for the permission
-          format: uuid
-          type: string
         code:
           description: A short code representing the permission
           example: agglmeration.manage

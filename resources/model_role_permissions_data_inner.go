@@ -12,7 +12,6 @@ package resources
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"bytes"
 	"fmt"
 )
@@ -22,8 +21,6 @@ var _ MappedNullable = &RolePermissionsDataInner{}
 
 // RolePermissionsDataInner struct for RolePermissionsDataInner
 type RolePermissionsDataInner struct {
-	// Unique identifier for the permission
-	Id uuid.UUID `json:"id"`
 	// A short code representing the permission
 	Code string `json:"code"`
 	// A detailed description of what the permission allows
@@ -36,9 +33,8 @@ type _RolePermissionsDataInner RolePermissionsDataInner
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRolePermissionsDataInner(id uuid.UUID, code string, description string) *RolePermissionsDataInner {
+func NewRolePermissionsDataInner(code string, description string) *RolePermissionsDataInner {
 	this := RolePermissionsDataInner{}
-	this.Id = id
 	this.Code = code
 	this.Description = description
 	return &this
@@ -50,30 +46,6 @@ func NewRolePermissionsDataInner(id uuid.UUID, code string, description string) 
 func NewRolePermissionsDataInnerWithDefaults() *RolePermissionsDataInner {
 	this := RolePermissionsDataInner{}
 	return &this
-}
-
-// GetId returns the Id field value
-func (o *RolePermissionsDataInner) GetId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.Id
-}
-
-// GetIdOk returns a tuple with the Id field value
-// and a boolean to check if the value has been set.
-func (o *RolePermissionsDataInner) GetIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Id, true
-}
-
-// SetId sets field value
-func (o *RolePermissionsDataInner) SetId(v uuid.UUID) {
-	o.Id = v
 }
 
 // GetCode returns the Code field value
@@ -134,7 +106,6 @@ func (o RolePermissionsDataInner) MarshalJSON() ([]byte, error) {
 
 func (o RolePermissionsDataInner) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["id"] = o.Id
 	toSerialize["code"] = o.Code
 	toSerialize["description"] = o.Description
 	return toSerialize, nil
@@ -145,7 +116,6 @@ func (o *RolePermissionsDataInner) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"id",
 		"code",
 		"description",
 	}

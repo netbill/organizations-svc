@@ -11,10 +11,6 @@ properties:
         - code
         - description
       properties:
-        id:
-          type: string
-          format: uuid
-          description: "Unique identifier for the permission"
         code:
           type: string
           example: "agglmeration.manage"

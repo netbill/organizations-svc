@@ -37,25 +37,25 @@ func (mwd *OrganizationMemberWithUserData) scan(row sq.RowScanner) error {
 	return nil
 }
 
-func (q OrganizationMembersQ) FilterByUsername(username string) OrganizationMembersQ {
+func (q OrgMembersQ) FilterByUsername(username string) OrgMembersQ {
 	q.selector = q.selector.Where(sq.Eq{"p.username": username})
 	q.counter = q.counter.Where(sq.Eq{"p.username": username})
 	return q
 }
 
-func (q OrganizationMembersQ) FilterLikeUsername(username string) OrganizationMembersQ {
+func (q OrgMembersQ) FilterLikeUsername(username string) OrgMembersQ {
 	q.selector = q.selector.Where(sq.ILike{"p.username": "%" + username + "%"})
 	q.counter = q.counter.Where(sq.ILike{"p.username": "%" + username + "%"})
 	return q
 }
 
-func (q OrganizationMembersQ) FilterLikePseudonym(pseudonym string) OrganizationMembersQ {
+func (q OrgMembersQ) FilterLikePseudonym(pseudonym string) OrgMembersQ {
 	q.selector = q.selector.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
 	q.counter = q.counter.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
 	return q
 }
 
-func (q OrganizationMembersQ) FilterBestMatch(term string) OrganizationMembersQ {
+func (q OrgMembersQ) FilterBestMatch(term string) OrgMembersQ {
 	like := "%" + term + "%"
 	prefix := term + "%"
 
@@ -87,7 +87,7 @@ func (q OrganizationMembersQ) FilterBestMatch(term string) OrganizationMembersQ 
 	return q
 }
 
-func (q OrganizationMembersQ) FilterRoleID(roleID uuid.UUID) OrganizationMembersQ {
+func (q OrgMembersQ) FilterRoleID(roleID uuid.UUID) OrgMembersQ {
 	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
@@ -104,7 +104,7 @@ func (q OrganizationMembersQ) FilterRoleID(roleID uuid.UUID) OrganizationMembers
 	return q
 }
 
-func (q OrganizationMembersQ) FilterByRoleRankUp(rankUp uint) OrganizationMembersQ {
+func (q OrgMembersQ) FilterByRoleRankUp(rankUp uint) OrgMembersQ {
 	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
@@ -122,7 +122,7 @@ func (q OrganizationMembersQ) FilterByRoleRankUp(rankUp uint) OrganizationMember
 	return q
 }
 
-func (q OrganizationMembersQ) FilterByRoleRankDown(rankDown uint) OrganizationMembersQ {
+func (q OrgMembersQ) FilterByRoleRankDown(rankDown uint) OrgMembersQ {
 	query := sq.Expr(`
 		EXISTS (
 			SELECT 1
@@ -140,7 +140,7 @@ func (q OrganizationMembersQ) FilterByRoleRankDown(rankDown uint) OrganizationMe
 	return q
 }
 
-func (q OrganizationMembersQ) FilterByPermissionCode(code string) OrganizationMembersQ {
+func (q OrgMembersQ) FilterByPermissionCode(code string) OrgMembersQ {
 	expr := sq.Expr(`
 		EXISTS (
 			SELECT 1
@@ -160,7 +160,7 @@ func (q OrganizationMembersQ) FilterByPermissionCode(code string) OrganizationMe
 	return q
 }
 
-func (q OrganizationMembersQ) GetWithUserData(ctx context.Context) (OrganizationMemberWithUserData, error) {
+func (q OrgMembersQ) GetWithUserData(ctx context.Context) (OrganizationMemberWithUserData, error) {
 	q.selector = q.selector.
 		Columns("p.username", "p.official", "p.pseudonym").
 		Join("profiles p ON p.account_id = m.account_id")
@@ -183,7 +183,7 @@ func (q OrganizationMembersQ) GetWithUserData(ctx context.Context) (Organization
 	return out, nil
 }
 
-func (q OrganizationMembersQ) SelectWithUserData(ctx context.Context) ([]OrganizationMemberWithUserData, error) {
+func (q OrgMembersQ) SelectWithUserData(ctx context.Context) ([]OrganizationMemberWithUserData, error) {
 	q.selector = q.selector.
 		Columns("p.username", "p.official", "p.pseudonym").
 		Join("profiles p ON p.account_id = m.account_id")
@@ -226,7 +226,7 @@ type MemberWithRoleDataRow struct {
 	roles []MemberRoleData
 }
 
-func (q OrganizationMembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]MemberWithRoleDataRow, error) {
+func (q OrgMembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([]MemberWithRoleDataRow, error) {
 	q.selector = q.selector.
 		Columns("p.username", "p.official", "p.pseudonym").
 		Join("profiles p ON p.account_id = m.account_id").
@@ -306,7 +306,7 @@ func (q OrganizationMembersQ) SelectWithRolesData(ctx context.Context, roleLimit
 	return out, nil
 }
 
-func (q OrganizationMembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
+func (q OrgMembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
 	const sqlq = `
 		SELECT
 			(m1.organization_id = m2.organization_id)

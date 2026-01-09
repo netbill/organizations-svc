@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/netbill/evebox/box/outbox"
-	"github.com/netbill/evebox/producer"
 	"github.com/netbill/logium"
 	"github.com/segmentio/kafka-go"
 )
@@ -36,7 +35,7 @@ func (p Producer) Run(ctx context.Context) {
 		}()
 	}
 
-	worker1 := producer.NewOutboxWorker(p.log, p.outbox, p.addr, producer.OutboxWorkerConfig{
+	worker1 := outbox.NewWorker(p.log, p.outbox, p.addr, outbox.WorkerConfig{
 		Name:            "outbox-worker-1",
 		BatchLimit:      10,
 		LockTTL:         30 * time.Second,
@@ -49,7 +48,7 @@ func (p Producer) Run(ctx context.Context) {
 		Balancer:        &kafka.LeastBytes{},
 	})
 
-	worker2 := producer.NewOutboxWorker(p.log, p.outbox, p.addr, producer.OutboxWorkerConfig{
+	worker2 := outbox.NewWorker(p.log, p.outbox, p.addr, outbox.WorkerConfig{
 		Name:            "outbox-worker-2",
 		BatchLimit:      10,
 		LockTTL:         30 * time.Second,

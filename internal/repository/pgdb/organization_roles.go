@@ -51,7 +51,7 @@ func (r *OrganizationRole) scan(row sq.RowScanner) error {
 	return nil
 }
 
-type OrganizationRolesQ struct {
+type OrgRolesQ struct {
 	db       pgx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
@@ -60,9 +60,9 @@ type OrganizationRolesQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewRolesQ(db pgx.DBTX) OrganizationRolesQ {
+func NewOrgRolesQ(db pgx.DBTX) OrgRolesQ {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	return OrganizationRolesQ{
+	return OrgRolesQ{
 		db:       db,
 		selector: builder.Select(OrganizationRoleColumnsR).From(OrganizationRoleTable + " r"),
 		inserter: builder.Insert(OrganizationRoleTable),
@@ -81,7 +81,7 @@ type InsertRoleParams struct {
 	Color          string    `json:"color"`
 }
 
-func (q OrganizationRolesQ) Insert(ctx context.Context, data InsertRoleParams) (OrganizationRole, error) {
+func (q OrgRolesQ) Insert(ctx context.Context, data InsertRoleParams) (OrganizationRole, error) {
 	const sqlInsertAtRank = `
 		WITH bumped AS (
 			UPDATE organization_roles
@@ -118,7 +118,7 @@ func (q OrganizationRolesQ) Insert(ctx context.Context, data InsertRoleParams) (
 	return inserted, nil
 }
 
-func (q OrganizationRolesQ) Get(ctx context.Context) (OrganizationRole, error) {
+func (q OrgRolesQ) Get(ctx context.Context) (OrganizationRole, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
 		return OrganizationRole{}, fmt.Errorf("building select query for %s: %w", OrganizationRoleTable, err)
@@ -137,7 +137,7 @@ func (q OrganizationRolesQ) Get(ctx context.Context) (OrganizationRole, error) {
 	return r, nil
 }
 
-func (q OrganizationRolesQ) Select(ctx context.Context) ([]OrganizationRole, error) {
+func (q OrgRolesQ) Select(ctx context.Context) ([]OrganizationRole, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationRoleTable, err)
@@ -164,7 +164,7 @@ func (q OrganizationRolesQ) Select(ctx context.Context) ([]OrganizationRole, err
 	return out, nil
 }
 
-func (q OrganizationRolesQ) Delete(ctx context.Context) error {
+func (q OrgRolesQ) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationRoleTable, err)
@@ -178,7 +178,7 @@ func (q OrganizationRolesQ) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (q OrganizationRolesQ) Count(ctx context.Context) (uint, error) {
+func (q OrgRolesQ) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building count query for %s: %w", OrganizationRoleTable, err)
@@ -192,7 +192,7 @@ func (q OrganizationRolesQ) Count(ctx context.Context) (uint, error) {
 	return count, nil
 }
 
-func (q OrganizationRolesQ) UpdateOne(ctx context.Context) (OrganizationRole, error) {
+func (q OrgRolesQ) UpdateOne(ctx context.Context) (OrganizationRole, error) {
 	q.updater = q.updater.Set("updated_at", time.Now().UTC())
 
 	query, args, err := q.updater.Suffix("RETURNING " + OrganizationRoleColumns).ToSql()
@@ -208,7 +208,7 @@ func (q OrganizationRolesQ) UpdateOne(ctx context.Context) (OrganizationRole, er
 	return updated, nil
 }
 
-func (q OrganizationRolesQ) UpdateMany(ctx context.Context) (int64, error) {
+func (q OrgRolesQ) UpdateMany(ctx context.Context) (int64, error) {
 	q.updater = q.updater.Set("updated_at", time.Now().UTC())
 
 	query, args, err := q.updater.ToSql()
@@ -229,22 +229,22 @@ func (q OrganizationRolesQ) UpdateMany(ctx context.Context) (int64, error) {
 	return aff, nil
 }
 
-func (q OrganizationRolesQ) UpdateName(name string) OrganizationRolesQ {
+func (q OrgRolesQ) UpdateName(name string) OrgRolesQ {
 	q.updater = q.updater.Set("name", name)
 	return q
 }
 
-func (q OrganizationRolesQ) UpdateDescription(description string) OrganizationRolesQ {
+func (q OrgRolesQ) UpdateDescription(description string) OrgRolesQ {
 	q.updater = q.updater.Set("description", description)
 	return q
 }
 
-func (q OrganizationRolesQ) UpdateColor(color string) OrganizationRolesQ {
+func (q OrgRolesQ) UpdateColor(color string) OrgRolesQ {
 	q.updater = q.updater.Set("color", color)
 	return q
 }
 
-func (q OrganizationRolesQ) FilterByID(id ...uuid.UUID) OrganizationRolesQ {
+func (q OrgRolesQ) FilterByID(id ...uuid.UUID) OrgRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"r.id": id})
 	q.counter = q.counter.Where(sq.Eq{"r.id": id})
 	q.updater = q.updater.Where(sq.Eq{"r.id": id})
@@ -252,7 +252,7 @@ func (q OrganizationRolesQ) FilterByID(id ...uuid.UUID) OrganizationRolesQ {
 	return q
 }
 
-func (q OrganizationRolesQ) FilterByOrganizationID(id uuid.UUID) OrganizationRolesQ {
+func (q OrgRolesQ) FilterByOrganizationID(id uuid.UUID) OrgRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"r.organization_id": id})
 	q.counter = q.counter.Where(sq.Eq{"r.organization_id": id})
 	q.updater = q.updater.Where(sq.Eq{"r.organization_id": id})
@@ -260,7 +260,7 @@ func (q OrganizationRolesQ) FilterByOrganizationID(id uuid.UUID) OrganizationRol
 	return q
 }
 
-func (q OrganizationRolesQ) FilterByAccountID(accountID uuid.UUID) OrganizationRolesQ {
+func (q OrgRolesQ) FilterByAccountID(accountID uuid.UUID) OrgRolesQ {
 	sub := sq.
 		Select("DISTINCT mr.role_id").
 		From("organization_members m").
@@ -286,7 +286,7 @@ func (q OrganizationRolesQ) FilterByAccountID(accountID uuid.UUID) OrganizationR
 	return q
 }
 
-func (q OrganizationRolesQ) FilterByMemberID(memberID uuid.UUID) OrganizationRolesQ {
+func (q OrgRolesQ) FilterByMemberID(memberID uuid.UUID) OrgRolesQ {
 	sub := sq.
 		Select("mr.role_id").
 		From("organization_member_roles mr").
@@ -311,7 +311,7 @@ func (q OrganizationRolesQ) FilterByMemberID(memberID uuid.UUID) OrganizationRol
 	return q
 }
 
-func (q OrganizationRolesQ) FilterHead(head bool) OrganizationRolesQ {
+func (q OrgRolesQ) FilterHead(head bool) OrgRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"r.head": head})
 	q.counter = q.counter.Where(sq.Eq{"r.head": head})
 	q.updater = q.updater.Where(sq.Eq{"r.head": head})
@@ -319,7 +319,7 @@ func (q OrganizationRolesQ) FilterHead(head bool) OrganizationRolesQ {
 	return q
 }
 
-func (q OrganizationRolesQ) FilterByRank(rank int) OrganizationRolesQ {
+func (q OrgRolesQ) FilterByRank(rank int) OrgRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"r.rank": rank})
 	q.counter = q.counter.Where(sq.Eq{"r.rank": rank})
 	q.updater = q.updater.Where(sq.Eq{"r.rank": rank})
@@ -327,7 +327,7 @@ func (q OrganizationRolesQ) FilterByRank(rank int) OrganizationRolesQ {
 	return q
 }
 
-func (q OrganizationRolesQ) FilterLikeName(name string) OrganizationRolesQ {
+func (q OrgRolesQ) FilterLikeName(name string) OrgRolesQ {
 	q.selector = q.selector.Where(sq.ILike{"r.name": "%" + name + "%"})
 	q.counter = q.counter.Where(sq.ILike{"r.name": "%" + name + "%"})
 	q.updater = q.updater.Where(sq.ILike{"r.name": "%" + name + "%"})
@@ -335,7 +335,7 @@ func (q OrganizationRolesQ) FilterLikeName(name string) OrganizationRolesQ {
 	return q
 }
 
-func (q OrganizationRolesQ) OrderByRoleRank(asc bool) OrganizationRolesQ {
+func (q OrgRolesQ) OrderByRoleRank(asc bool) OrgRolesQ {
 	if asc {
 		q.selector = q.selector.OrderBy("r.rank ASC", "r.id ASC")
 	} else {
@@ -344,14 +344,14 @@ func (q OrganizationRolesQ) OrderByRoleRank(asc bool) OrganizationRolesQ {
 	return q
 }
 
-func (q OrganizationRolesQ) Page(limit, offset uint) OrganizationRolesQ {
+func (q OrgRolesQ) Page(limit, offset uint) OrgRolesQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }
 
 //Special methods to interact with role ranks in organization
 
-func (q OrganizationRolesQ) DeleteAndShiftRanks(ctx context.Context, roleID uuid.UUID) error {
+func (q OrgRolesQ) DeleteAndShiftRanks(ctx context.Context, roleID uuid.UUID) error {
 	const sqlq = `
 		WITH del AS (
 			DELETE FROM organization_roles
@@ -373,7 +373,7 @@ func (q OrganizationRolesQ) DeleteAndShiftRanks(ctx context.Context, roleID uuid
 	return nil
 }
 
-func (q OrganizationRolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (OrganizationRole, error) {
+func (q OrgRolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (OrganizationRole, error) {
 	var aggID uuid.UUID
 	var oldRank int
 
@@ -385,7 +385,7 @@ func (q OrganizationRolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID
 	}
 
 	if oldRank == int(newRank) {
-		return NewRolesQ(q.db).FilterByID(roleID).Get(ctx)
+		return NewOrgRolesQ(q.db).FilterByID(roleID).Get(ctx)
 	}
 
 	const sqlMove = `
@@ -417,12 +417,12 @@ func (q OrganizationRolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID
 	return out, nil
 }
 
-func (q OrganizationRolesQ) UpdateRolesRanks(
+func (q OrgRolesQ) UpdateRolesRanks(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) ([]OrganizationRole, error) {
-	roles, err := NewRolesQ(q.db).
+	roles, err := NewOrgRolesQ(q.db).
 		FilterByOrganizationID(organizationID).
 		OrderByRoleRank(true).
 		Select(ctx)

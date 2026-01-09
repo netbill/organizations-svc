@@ -562,15 +562,10 @@ components:
                   items:
                     type: object
                     required:
-                      - id
                       - code
                       - description
                       - enabled
                     properties:
-                      id:
-                        type: string
-                        format: uuid
-                        description: Unique identifier for the permission
                       code:
                         type: string
                         example: agglmeration.manage
@@ -608,10 +603,6 @@ components:
               - code
               - description
             properties:
-              id:
-                type: string
-                format: uuid
-                description: Unique identifier for the permission
               code:
                 type: string
                 example: agglmeration.manage

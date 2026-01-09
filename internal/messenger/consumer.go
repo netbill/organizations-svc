@@ -68,7 +68,7 @@ func (c Consumer) Run(ctx context.Context) {
 	accountConsumer.Handle(contracts.AccountUsernameChangedEvent, c.handlers.AccountUsernameChanged)
 	accountConsumer.Handle(contracts.AccountProfileUpdatedEvent, c.handlers.AccountUsernameChanged)
 
-	inboxer1 := consumer.NewInboxWorker(c.log, c.inbox, consumer.InboxConfigWorker{
+	inboxer1 := inbox.NewWorker(c.log, c.inbox, inbox.ConfigWorker{
 		Name:       "profiles-svc-inbox-worker-1",
 		BatchSize:  10,
 		RetryDelay: 1 * time.Minute,
@@ -80,7 +80,7 @@ func (c Consumer) Run(ctx context.Context) {
 	inboxer1.Handle(contracts.AccountUsernameChangedEvent, c.handlers.AccountUsernameChanged)
 	inboxer1.Handle(contracts.AccountProfileUpdatedEvent, c.handlers.AccountProfileUpdated)
 
-	inboxer2 := consumer.NewInboxWorker(c.log, c.inbox, consumer.InboxConfigWorker{
+	inboxer2 := inbox.NewWorker(c.log, c.inbox, inbox.ConfigWorker{
 		Name:       "profiles-svc-inbox-worker-2",
 		BatchSize:  10,
 		RetryDelay: 1 * time.Minute,

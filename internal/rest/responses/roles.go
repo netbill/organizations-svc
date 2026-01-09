@@ -31,7 +31,6 @@ func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {
 
 		for perm, has := range perms {
 			ps = append(ps, resources.RoleDataRelationshipsPermissionsInner{
-				Id:          perm.ID,
 				Code:        perm.Code,
 				Description: perm.Description,
 				Enabled:     has,
@@ -70,7 +69,6 @@ func RolePermissions(mods []models.Permission) resources.RolePermissions {
 	result := make([]resources.RolePermissionsDataInner, len(mods))
 	for i, mod := range mods {
 		result[i] = resources.RolePermissionsDataInner{
-			Id:          mod.ID,
 			Code:        mod.Code,
 			Description: mod.Description,
 		}

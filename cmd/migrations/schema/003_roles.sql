@@ -27,24 +27,24 @@ CREATE TABLE organization_member_roles (
 
 -- permissions dictionary
 CREATE TABLE organization_role_permissions (
-    id          UUID          PRIMARY KEY,
-    code        VARCHAR(255)  UNIQUE NOT NULL,
+    code        VARCHAR(255)  PRIMARY KEY UNIQUE NOT NULL,
     description VARCHAR(1024) NOT NULL
 );
 
-INSERT INTO organization_role_permissions (id, code, description) VALUES
-    (uuid_generate_v4(), 'organization.manage', 'manage organization settings'),
-    (uuid_generate_v4(), 'invites.manage', 'manage organization invites'),
-    (uuid_generate_v4(), 'members.manage', 'manage organization members'),
-    (uuid_generate_v4(), 'roles.manage', 'manage organization roles');
+INSERT INTO organization_role_permissions (code, description) VALUES
+    ('organization.manage', 'manage organization settings'),
+    ('invites.manage', 'manage organization invites'),
+    ('members.manage', 'manage organization members'),
+    ('roles.manage', 'manage organization roles');
 
 -- role ↔ permission links
 CREATE TABLE organization_role_permission_links (
-    role_id       UUID NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
-    permission_id UUID NOT NULL REFERENCES organization_role_permissions (id) ON DELETE CASCADE,
+    role_id        UUID NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
+    permission_code VARCHAR(255) NOT NULL REFERENCES organization_role_permissions (code) ON DELETE CASCADE,
 
-    PRIMARY KEY (role_id, permission_id)
+    PRIMARY KEY (role_id, permission_code)
 );
+
 
 -- 1) if role.head=true -> add all permissions to role
 -- +migrate StatementBegin
@@ -52,8 +52,8 @@ CREATE OR REPLACE FUNCTION ensure_head_role_permissions()
 RETURNS trigger AS $$
 BEGIN
     IF NEW.head = true THEN
-        INSERT INTO organization_role_permission_links (role_id, permission_id)
-        SELECT NEW.id, p.id
+        INSERT INTO organization_role_permission_links (role_id, permission_code)
+        SELECT NEW.id, p.code
         FROM organization_role_permissions p
         ON CONFLICT DO NOTHING;
     END IF;
@@ -77,8 +77,8 @@ EXECUTE FUNCTION ensure_head_role_permissions();
 CREATE OR REPLACE FUNCTION grant_new_permission_to_head_roles()
 RETURNS trigger AS $$
 BEGIN
-    INSERT INTO organization_role_permission_links (role_id, permission_id)
-    SELECT r.id, NEW.id
+    INSERT INTO organization_role_permission_links (role_id, permission_code)
+    SELECT r.id, NEW.code
     FROM organization_roles r
     WHERE r.head = true
     ON CONFLICT DO NOTHING;

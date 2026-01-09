@@ -14,3 +14,19 @@ type Profile struct {
 func (p Profile) IsNil() bool {
 	return p.AccountID == uuid.Nil
 }
+
+func (p Profile) GetAccountID() uuid.UUID {
+	return p.AccountID
+}
+
+func (p Profile) GetUsername() string {
+	return p.Username
+}
+
+func (p Profile) GetOfficial() bool {
+	return p.Official
+}
+
+func (p Profile) GetPseudonym() *string {
+	return p.Pseudonym
+}

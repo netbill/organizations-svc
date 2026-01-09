@@ -18,7 +18,6 @@ func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[
 	result := make(map[models.Permission]bool, len(rows))
 	for el, row := range rows {
 		perm := models.Permission{
-			ID:          el.ID,
 			Code:        el.Code,
 			Description: el.Description,
 		}
@@ -37,7 +36,6 @@ func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, er
 	result := make([]models.Permission, len(permissions))
 	for i, perm := range permissions {
 		result[i] = models.Permission{
-			ID:          perm.ID,
 			Code:        perm.Code,
 			Description: perm.Description,
 		}
@@ -80,8 +78,8 @@ func (s Service) SetRolePermissions(
 		existingPermissionsMap := make([]pgdb.OrganizationRolePermissionLink, len(p))
 		for i, perm := range p {
 			existingPermissionsMap[i] = pgdb.OrganizationRolePermissionLink{
-				RoleID:       roleID,
-				PermissionID: perm.ID,
+				RoleID:         roleID,
+				PermissionCode: perm.Code,
 			}
 		}
 		if err = s.rolePermissionLinksQ(ctx).Insert(ctx, existingPermissionsMap...); err != nil {

@@ -12,7 +12,6 @@ package resources
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"bytes"
 	"fmt"
 )
@@ -22,8 +21,6 @@ var _ MappedNullable = &RoleDataRelationshipsPermissionsInner{}
 
 // RoleDataRelationshipsPermissionsInner struct for RoleDataRelationshipsPermissionsInner
 type RoleDataRelationshipsPermissionsInner struct {
-	// Unique identifier for the permission
-	Id uuid.UUID `json:"id"`
 	// A short code representing the permission
 	Code string `json:"code"`
 	// A detailed description of what the permission allows
@@ -38,9 +35,8 @@ type _RoleDataRelationshipsPermissionsInner RoleDataRelationshipsPermissionsInne
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRoleDataRelationshipsPermissionsInner(id uuid.UUID, code string, description string, enabled bool) *RoleDataRelationshipsPermissionsInner {
+func NewRoleDataRelationshipsPermissionsInner(code string, description string, enabled bool) *RoleDataRelationshipsPermissionsInner {
 	this := RoleDataRelationshipsPermissionsInner{}
-	this.Id = id
 	this.Code = code
 	this.Description = description
 	this.Enabled = enabled
@@ -53,30 +49,6 @@ func NewRoleDataRelationshipsPermissionsInner(id uuid.UUID, code string, descrip
 func NewRoleDataRelationshipsPermissionsInnerWithDefaults() *RoleDataRelationshipsPermissionsInner {
 	this := RoleDataRelationshipsPermissionsInner{}
 	return &this
-}
-
-// GetId returns the Id field value
-func (o *RoleDataRelationshipsPermissionsInner) GetId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.Id
-}
-
-// GetIdOk returns a tuple with the Id field value
-// and a boolean to check if the value has been set.
-func (o *RoleDataRelationshipsPermissionsInner) GetIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Id, true
-}
-
-// SetId sets field value
-func (o *RoleDataRelationshipsPermissionsInner) SetId(v uuid.UUID) {
-	o.Id = v
 }
 
 // GetCode returns the Code field value
@@ -161,7 +133,6 @@ func (o RoleDataRelationshipsPermissionsInner) MarshalJSON() ([]byte, error) {
 
 func (o RoleDataRelationshipsPermissionsInner) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["id"] = o.Id
 	toSerialize["code"] = o.Code
 	toSerialize["description"] = o.Description
 	toSerialize["enabled"] = o.Enabled
@@ -173,7 +144,6 @@ func (o *RoleDataRelationshipsPermissionsInner) UnmarshalJSON(data []byte) (err 
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"id",
 		"code",
 		"description",
 		"enabled",
