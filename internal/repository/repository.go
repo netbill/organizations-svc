@@ -6,6 +6,7 @@ import (
 
 	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 	"github.com/netbill/pgx"
+	replicaspg "github.com/netbill/replicas/pgdb"
 )
 
 type Service struct {
@@ -44,8 +45,8 @@ func (s Service) invitesQ(ctx context.Context) pgdb.OrganizationInvitesQ {
 	return pgdb.NewOrganizationInvitesQ(pgx.Exec(s.db, ctx))
 }
 
-func (s Service) profilesQ(ctx context.Context) pgdb.ProfilesQ {
-	return pgdb.NewProfilesQ(pgx.Exec(s.db, ctx))
+func (s Service) profilesQ(ctx context.Context) replicaspg.ProfilesQ {
+	return replicaspg.NewProfilesQ(pgx.Exec(s.db, ctx))
 }
 
 func (s Service) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {

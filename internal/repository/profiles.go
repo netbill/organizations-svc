@@ -5,11 +5,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
+	replicaspg "github.com/netbill/replicas/pgdb"
 )
 
 func (s Service) UpsertProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
-	row, err := s.profilesQ(ctx).Upsert(ctx, pgdb.ProfileUpsertInput{
+	row, err := s.profilesQ(ctx).Upsert(ctx, replicaspg.ProfileUpsertInput{
 		AccountID: profile.AccountID,
 		Username:  profile.Username,
 		Official:  profile.Official,
@@ -56,7 +56,7 @@ func (s Service) DeleteProfileByAccountID(ctx context.Context, accountID uuid.UU
 	return s.profilesQ(ctx).FilterByAccountID(accountID).Delete(ctx)
 }
 
-func Profile(row pgdb.Profile) models.Profile {
+func Profile(row replicaspg.Profile) models.Profile {
 	return models.Profile{
 		AccountID: row.AccountID,
 		Username:  row.Username,
