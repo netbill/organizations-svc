@@ -377,11 +377,14 @@ func (q OrgRolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank
 	var aggID uuid.UUID
 	var oldRank int
 
-	{
-		const sqlGet = `SELECT organization_id, rank FROM roles WHERE id = $1 LIMIT 1`
-		if err := q.db.QueryRowContext(ctx, sqlGet, roleID).Scan(&aggID, &oldRank); err != nil {
-			return OrganizationRole{}, fmt.Errorf("scanning role rank: %w", err)
-		}
+	const sqlGet = `
+			SELECT organization_id, rank
+			FROM organization_roles
+			WHERE id = $1
+			LIMIT 1
+		`
+	if err := q.db.QueryRowContext(ctx, sqlGet, roleID).Scan(&aggID, &oldRank); err != nil {
+		return OrganizationRole{}, fmt.Errorf("scanning role rank: %w", err)
 	}
 
 	if oldRank == int(newRank) {

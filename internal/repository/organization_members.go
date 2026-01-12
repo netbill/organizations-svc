@@ -17,7 +17,7 @@ func (s Service) CreateMember(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := s.membersQ(ctx).Insert(ctx, pgdb.InsertMemberParams{
+	row, err := s.orgMembersQ(ctx).Insert(ctx, pgdb.InsertMemberParams{
 		AccountID:      accountID,
 		OrganizationID: organizationID,
 	})
@@ -30,7 +30,7 @@ func (s Service) CreateMember(
 
 func (s Service) UpdateMember(
 	ctx context.Context, ID uuid.UUID, params member.UpdateParams) (models.Member, error) {
-	q := s.membersQ(ctx).FilterByID(ID)
+	q := s.orgMembersQ(ctx).FilterByID(ID)
 	if params.Position != nil {
 		if *params.Position == "" {
 			q.UpdatePosition(sql.NullString{Valid: false})
@@ -55,7 +55,7 @@ func (s Service) UpdateMember(
 }
 
 func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
-	row, err := s.membersQ(ctx).FilterByID(memberID).GetWithUserData(ctx)
+	row, err := s.orgMembersQ(ctx).FilterByID(memberID).GetWithUserData(ctx)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		return models.Member{}, nil
@@ -70,7 +70,7 @@ func (s Service) GetMemberByAccountAndOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := s.membersQ(ctx).
+	row, err := s.orgMembersQ(ctx).
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		GetWithUserData(ctx)
@@ -82,7 +82,7 @@ func (s Service) GetMemberByAccountAndOrganization(
 }
 
 func (s Service) MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error) {
-	exists, err := s.membersQ(ctx).
+	exists, err := s.orgMembersQ(ctx).
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		Exists(ctx)
@@ -99,7 +99,7 @@ func (s Service) GetMembers(
 	limit uint,
 	offset uint,
 ) (pagi.Page[[]models.Member], error) {
-	q := s.membersQ(ctx)
+	q := s.orgMembersQ(ctx)
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
 	}
@@ -159,15 +159,15 @@ func (s Service) GetMembers(
 }
 
 func (s Service) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
-	return s.membersQ(ctx).FilterByID(memberID).Delete(ctx)
+	return s.orgMembersQ(ctx).FilterByID(memberID).Delete(ctx)
 }
 
 func (s Service) DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error {
-	return s.membersQ(ctx).FilterByAccountID(accountID).Delete(ctx)
+	return s.orgMembersQ(ctx).FilterByAccountID(accountID).Delete(ctx)
 }
 
 func (s Service) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
-	res, err := s.membersQ(ctx).CanInteract(ctx, firstMemberID, secondMemberID)
+	res, err := s.orgMembersQ(ctx).CanInteract(ctx, firstMemberID, secondMemberID)
 	if err != nil {
 		return false, fmt.Errorf("checking first member can interact: %w", err)
 	}

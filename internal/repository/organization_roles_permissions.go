@@ -10,7 +10,7 @@ import (
 )
 
 func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error) {
-	rows, err := s.rolePermissionsQ(ctx).GetForRole(ctx, roleID)
+	rows, err := s.orgRolePermissionsQ(ctx).GetForRole(ctx, roleID)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[
 }
 
 func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
-	permissions, err := s.rolePermissionsQ(ctx).Select(ctx)
+	permissions, err := s.orgRolePermissionsQ(ctx).Select(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (s Service) SetRolePermissions(
 	}
 
 	if len(deletePermissions) > 0 {
-		if err := s.rolePermissionLinksQ(ctx).
+		if err := s.orgRolePermissionLinksQ(ctx).
 			FilterByRoleID(roleID).
 			FilterByPermissionCode(deletePermissions...).
 			Delete(ctx); err != nil {
@@ -70,7 +70,7 @@ func (s Service) SetRolePermissions(
 	}
 
 	if len(addPermissions) > 0 {
-		p, err := s.rolePermissionsQ(ctx).FilterByCode(addPermissions...).Select(ctx)
+		p, err := s.orgRolePermissionsQ(ctx).FilterByCode(addPermissions...).Select(ctx)
 		if err != nil {
 			return err
 		}
@@ -82,7 +82,7 @@ func (s Service) SetRolePermissions(
 				PermissionCode: perm.Code,
 			}
 		}
-		if err = s.rolePermissionLinksQ(ctx).Insert(ctx, existingPermissionsMap...); err != nil {
+		if err = s.orgRolePermissionLinksQ(ctx).Insert(ctx, existingPermissionsMap...); err != nil {
 			return err
 		}
 	}
@@ -95,7 +95,7 @@ func (s Service) CheckMemberHavePermission(
 	memberID uuid.UUID,
 	permissionCode string,
 ) (bool, error) {
-	have, err := s.membersQ(ctx).
+	have, err := s.orgMembersQ(ctx).
 		FilterByID(memberID).
 		FilterByPermissionCode(permissionCode).
 		Exists(ctx)
