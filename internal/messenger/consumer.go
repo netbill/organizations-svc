@@ -7,51 +7,25 @@ import (
 
 	"github.com/netbill/evebox/box/inbox"
 	"github.com/netbill/evebox/consumer"
-	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 )
 
-type Outbound interface {
-	AccountCreated(
+type handlers interface {
+	ProfileCreated(
 		ctx context.Context,
 		event inbox.Event,
 	) inbox.EventStatus
-	AccountDeleted(
+	ProfileDeleted(
 		ctx context.Context,
 		event inbox.Event,
 	) inbox.EventStatus
-	AccountUsernameChanged(
-		ctx context.Context,
-		event inbox.Event,
-	) inbox.EventStatus
-	AccountProfileUpdated(
+	ProfileUpdated(
 		ctx context.Context,
 		event inbox.Event,
 	) inbox.EventStatus
 }
 
-type Consumer struct {
-	addr     []string
-	log      logium.Logger
-	inbox    inbox.Box
-	handlers Outbound
-}
-
-func NewConsumer(
-	log logium.Logger,
-	inbox inbox.Box,
-	handlers Outbound,
-	addr ...string,
-) Consumer {
-	return Consumer{
-		addr:     addr,
-		log:      log,
-		inbox:    inbox,
-		handlers: handlers,
-	}
-}
-
-func (c Consumer) Run(ctx context.Context) {
+func (m Messenger) RunConsumer(ctx context.Context, handlers handlers) {
 	wg := &sync.WaitGroup{}
 	run := func(f func()) {
 		wg.Add(1)
@@ -61,39 +35,36 @@ func (c Consumer) Run(ctx context.Context) {
 		}()
 	}
 
-	accountConsumer := consumer.New(c.log, "profiles-svc-account-consumer", c.inbox)
+	profileConsumer := consumer.New(m.log, m.db, "profiles-svc-profile-consumer", consumer.OnUnknownDoNothing, m.addr...)
 
-	accountConsumer.Handle(contracts.AccountCreatedEvent, c.handlers.AccountCreated)
-	accountConsumer.Handle(contracts.AccountDeletedEvent, c.handlers.AccountDeleted)
-	accountConsumer.Handle(contracts.AccountUsernameChangedEvent, c.handlers.AccountUsernameChanged)
-	accountConsumer.Handle(contracts.AccountProfileUpdatedEvent, c.handlers.AccountUsernameChanged)
+	profileConsumer.Handle(contracts.ProfileCreatedEvent, handlers.ProfileCreated)
+	profileConsumer.Handle(contracts.ProfileDeletedEvent, handlers.ProfileDeleted)
+	profileConsumer.Handle(contracts.ProfileUpdatedEvent, handlers.ProfileUpdated)
 
-	inboxer1 := inbox.NewWorker(c.log, c.inbox, inbox.ConfigWorker{
+	inboxer1 := consumer.NewInboxer(m.log, m.db, consumer.ConfigInboxer{
 		Name:       "profiles-svc-inbox-worker-1",
 		BatchSize:  10,
 		RetryDelay: 1 * time.Minute,
 		MinSleep:   100 * time.Millisecond,
 		MaxSleep:   1 * time.Second,
 	})
-	inboxer1.Handle(contracts.AccountCreatedEvent, c.handlers.AccountCreated)
-	inboxer1.Handle(contracts.AccountDeletedEvent, c.handlers.AccountDeleted)
-	inboxer1.Handle(contracts.AccountUsernameChangedEvent, c.handlers.AccountUsernameChanged)
-	inboxer1.Handle(contracts.AccountProfileUpdatedEvent, c.handlers.AccountProfileUpdated)
+	inboxer1.Handle(contracts.ProfileCreatedEvent, handlers.ProfileCreated)
+	inboxer1.Handle(contracts.ProfileDeletedEvent, handlers.ProfileDeleted)
+	inboxer1.Handle(contracts.ProfileUpdatedEvent, handlers.ProfileUpdated)
 
-	inboxer2 := inbox.NewWorker(c.log, c.inbox, inbox.ConfigWorker{
+	inboxer2 := consumer.NewInboxer(m.log, m.db, consumer.ConfigInboxer{
 		Name:       "profiles-svc-inbox-worker-2",
 		BatchSize:  10,
 		RetryDelay: 1 * time.Minute,
 		MinSleep:   100 * time.Millisecond,
 		MaxSleep:   1 * time.Second,
 	})
-	inboxer2.Handle(contracts.AccountCreatedEvent, c.handlers.AccountCreated)
-	inboxer2.Handle(contracts.AccountDeletedEvent, c.handlers.AccountDeleted)
-	inboxer2.Handle(contracts.AccountUsernameChangedEvent, c.handlers.AccountUsernameChanged)
-	inboxer2.Handle(contracts.AccountProfileUpdatedEvent, c.handlers.AccountProfileUpdated)
+	inboxer2.Handle(contracts.ProfileCreatedEvent, handlers.ProfileCreated)
+	inboxer2.Handle(contracts.ProfileDeletedEvent, handlers.ProfileDeleted)
+	inboxer2.Handle(contracts.ProfileUpdatedEvent, handlers.ProfileUpdated)
 
 	run(func() {
-		accountConsumer.Run(ctx, contracts.OrganizationsSvcGroup, contracts.AccountsTopicV1, c.addr...)
+		profileConsumer.Run(ctx, contracts.OrganizationsSvcGroup, contracts.ProfilesTopicV1, m.addr...)
 	})
 
 	run(func() {

@@ -47,7 +47,7 @@ func (s Service) AcceptInvite(
 			)
 		}
 
-		err = s.messenger.WriteInviteAccepted(ctx, invite)
+		err = s.messenger.WriteOrgInviteAccepted(ctx, invite)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to write accepted invite event: %w", err),
@@ -61,7 +61,7 @@ func (s Service) AcceptInvite(
 			)
 		}
 
-		err = s.messenger.WriteMemberCreated(ctx, mem)
+		err = s.messenger.WriteOrgMemberCreated(ctx, mem)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to write created member event: %w", err),

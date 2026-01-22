@@ -6,7 +6,6 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Status** | **string** | The status of the organization | 
 **Name** | **string** | The name of the organization | 
-**Icon** | Pointer to **string** | The icon representing the organization | [optional] 
 **CreatedAt** | **time.Time** | The date and time when the organization was created | 
 **UpdatedAt** | **time.Time** | The date and time when the organization was last updated | 
 
@@ -68,31 +67,6 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
-
-### GetIcon
-
-`func (o *OrganizationDataAttributes) GetIcon() string`
-
-GetIcon returns the Icon field if non-nil, zero value otherwise.
-
-### GetIconOk
-
-`func (o *OrganizationDataAttributes) GetIconOk() (*string, bool)`
-
-GetIconOk returns a tuple with the Icon field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetIcon
-
-`func (o *OrganizationDataAttributes) SetIcon(v string)`
-
-SetIcon sets Icon field to given value.
-
-### HasIcon
-
-`func (o *OrganizationDataAttributes) HasIcon() bool`
-
-HasIcon returns a boolean if a field has been set.
 
 ### GetCreatedAt
 

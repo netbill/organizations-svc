@@ -5,26 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/netbill/evebox/box/outbox"
-	"github.com/netbill/logium"
+	"github.com/netbill/evebox/producer"
 	"github.com/segmentio/kafka-go"
 )
 
-type Producer struct {
-	log    logium.Logger
-	addr   []string
-	outbox outbox.Box
-}
-
-func NewProducer(log logium.Logger, ob outbox.Box, addr ...string) *Producer {
-	return &Producer{
-		log:    log,
-		addr:   addr,
-		outbox: ob,
-	}
-}
-
-func (p Producer) Run(ctx context.Context) {
+func (m Messenger) RunProducer(ctx context.Context) {
 	wg := &sync.WaitGroup{}
 
 	run := func(f func()) {
@@ -35,7 +20,7 @@ func (p Producer) Run(ctx context.Context) {
 		}()
 	}
 
-	worker1 := outbox.NewWorker(p.log, p.outbox, p.addr, outbox.WorkerConfig{
+	worker1 := producer.New(m.log, m.db, producer.Config{
 		Name:            "outbox-worker-1",
 		BatchLimit:      10,
 		LockTTL:         30 * time.Second,
@@ -48,7 +33,7 @@ func (p Producer) Run(ctx context.Context) {
 		Balancer:        &kafka.LeastBytes{},
 	})
 
-	worker2 := outbox.NewWorker(p.log, p.outbox, p.addr, outbox.WorkerConfig{
+	worker2 := producer.New(m.log, m.db, producer.Config{
 		Name:            "outbox-worker-2",
 		BatchLimit:      10,
 		LockTTL:         30 * time.Second,

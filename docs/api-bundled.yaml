@@ -37,9 +37,6 @@ components:
                 name:
                   type: string
                   description: The name of the organization
-                icon:
-                  type: string
-                  description: The icon representing the organization
     UpdateOrganization:
       type: object
       required:
@@ -66,9 +63,6 @@ components:
                 name:
                   type: string
                   description: The name of the organization
-                icon:
-                  type: string
-                  description: The icon representing the organization
     UpdateMember:
       type: object
       required:
@@ -337,9 +331,6 @@ components:
                 name:
                   type: string
                   description: The name of the organization
-                icon:
-                  type: string
-                  description: The icon representing the organization
                 created_at:
                   type: string
                   format: date-time
@@ -554,7 +545,7 @@ components:
                   type: string
                   format: date-time
                   description: Timestamp when the role was last updated
-            relationships:
+            included:
               type: object
               properties:
                 permissions:

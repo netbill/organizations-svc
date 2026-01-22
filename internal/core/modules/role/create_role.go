@@ -39,7 +39,7 @@ func (s Service) CreateRole(
 			)
 		}
 
-		err = s.messenger.WriteRoleCreated(ctx, role)
+		err = s.messenger.WriteOrgRoleCreated(ctx, role)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to write role to member %w", err),

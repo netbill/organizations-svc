@@ -25,9 +25,6 @@ properties:
       name:
         type: string
         description: "The name of the organization"
-      icon:
-        type: string
-        description: "The icon representing the organization"
       created_at:
         type: string
         format: date-time

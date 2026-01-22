@@ -18,12 +18,6 @@ func (s Service) ActivateOrganization(
 		return models.Organization{}, err
 	}
 
-	if org.Status == models.OrganizationStatusSuspended {
-		return models.Organization{}, errx.ErrorOrganizationIsSuspended.Raise(
-			fmt.Errorf("organization is suspended"),
-		)
-	}
-
 	initiator, err := s.getInitiator(ctx, accountID, organizationID)
 	if err != nil {
 		return models.Organization{}, err

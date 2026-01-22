@@ -26,7 +26,7 @@ type RoleData struct {
 	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
 	Attributes RoleDataAttributes `json:"attributes"`
-	Relationships *RoleDataRelationships `json:"relationships,omitempty"`
+	Included *RoleDataIncluded `json:"included,omitempty"`
 }
 
 type _RoleData RoleData
@@ -123,36 +123,36 @@ func (o *RoleData) SetAttributes(v RoleDataAttributes) {
 	o.Attributes = v
 }
 
-// GetRelationships returns the Relationships field value if set, zero value otherwise.
-func (o *RoleData) GetRelationships() RoleDataRelationships {
-	if o == nil || IsNil(o.Relationships) {
-		var ret RoleDataRelationships
+// GetIncluded returns the Included field value if set, zero value otherwise.
+func (o *RoleData) GetIncluded() RoleDataIncluded {
+	if o == nil || IsNil(o.Included) {
+		var ret RoleDataIncluded
 		return ret
 	}
-	return *o.Relationships
+	return *o.Included
 }
 
-// GetRelationshipsOk returns a tuple with the Relationships field value if set, nil otherwise
+// GetIncludedOk returns a tuple with the Included field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *RoleData) GetRelationshipsOk() (*RoleDataRelationships, bool) {
-	if o == nil || IsNil(o.Relationships) {
+func (o *RoleData) GetIncludedOk() (*RoleDataIncluded, bool) {
+	if o == nil || IsNil(o.Included) {
 		return nil, false
 	}
-	return o.Relationships, true
+	return o.Included, true
 }
 
-// HasRelationships returns a boolean if a field has been set.
-func (o *RoleData) HasRelationships() bool {
-	if o != nil && !IsNil(o.Relationships) {
+// HasIncluded returns a boolean if a field has been set.
+func (o *RoleData) HasIncluded() bool {
+	if o != nil && !IsNil(o.Included) {
 		return true
 	}
 
 	return false
 }
 
-// SetRelationships gets a reference to the given RoleDataRelationships and assigns it to the Relationships field.
-func (o *RoleData) SetRelationships(v RoleDataRelationships) {
-	o.Relationships = &v
+// SetIncluded gets a reference to the given RoleDataIncluded and assigns it to the Included field.
+func (o *RoleData) SetIncluded(v RoleDataIncluded) {
+	o.Included = &v
 }
 
 func (o RoleData) MarshalJSON() ([]byte, error) {
@@ -168,8 +168,8 @@ func (o RoleData) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["type"] = o.Type
 	toSerialize["attributes"] = o.Attributes
-	if !IsNil(o.Relationships) {
-		toSerialize["relationships"] = o.Relationships
+	if !IsNil(o.Included) {
+		toSerialize["included"] = o.Included
 	}
 	return toSerialize, nil
 }

@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 **Id** | [**uuid.UUID**](uuid.UUID.md) | member ID | 
 **Type** | **string** |  | 
 **Attributes** | [**RoleDataAttributes**](RoleDataAttributes.md) |  | 
-**Relationships** | Pointer to [**RoleDataRelationships**](RoleDataRelationships.md) |  | [optional] 
+**Included** | Pointer to [**RoleDataIncluded**](RoleDataIncluded.md) |  | [optional] 
 
 ## Methods
 
@@ -88,30 +88,30 @@ and a boolean to check if the value has been set.
 SetAttributes sets Attributes field to given value.
 
 
-### GetRelationships
+### GetIncluded
 
-`func (o *RoleData) GetRelationships() RoleDataRelationships`
+`func (o *RoleData) GetIncluded() RoleDataIncluded`
 
-GetRelationships returns the Relationships field if non-nil, zero value otherwise.
+GetIncluded returns the Included field if non-nil, zero value otherwise.
 
-### GetRelationshipsOk
+### GetIncludedOk
 
-`func (o *RoleData) GetRelationshipsOk() (*RoleDataRelationships, bool)`
+`func (o *RoleData) GetIncludedOk() (*RoleDataIncluded, bool)`
 
-GetRelationshipsOk returns a tuple with the Relationships field if it's non-nil, zero value otherwise
+GetIncludedOk returns a tuple with the Included field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetRelationships
+### SetIncluded
 
-`func (o *RoleData) SetRelationships(v RoleDataRelationships)`
+`func (o *RoleData) SetIncluded(v RoleDataIncluded)`
 
-SetRelationships sets Relationships field to given value.
+SetIncluded sets Included field to given value.
 
-### HasRelationships
+### HasIncluded
 
-`func (o *RoleData) HasRelationships() bool`
+`func (o *RoleData) HasIncluded() bool`
 
-HasRelationships returns a boolean if a field has been set.
+HasIncluded returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

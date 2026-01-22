@@ -43,7 +43,7 @@ func (s Service) DeclineInvite(
 			)
 		}
 
-		err = s.messenger.WriteInviteDeclined(ctx, invite)
+		err = s.messenger.WriteOrgInviteDeclined(ctx, invite)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to write declined invite event: %w", err),

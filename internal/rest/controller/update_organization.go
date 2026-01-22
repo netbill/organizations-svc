@@ -34,14 +34,11 @@ func (c Controller) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
 		req.Data.Id,
 		organization.UpdateParams{
 			Name: req.Data.Attributes.Name,
-			Icon: req.Data.Attributes.Icon,
 		},
 	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update organization")
 		switch {
-		case errors.Is(err, errx.ErrorOrganizationIsSuspended):
-			ape.RenderErr(w, problems.Forbidden("organization is suspended"))
 		case errors.Is(err, errx.ErrorOrganizationNotFound):
 			ape.RenderErr(w, problems.NotFound("organization not found"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):

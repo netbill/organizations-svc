@@ -14,13 +14,12 @@ import (
 )
 
 const OrganizationTable = "organizations"
-const OrganizationColumns = "id, status, name, icon, max_roles, created_at, updated_at"
+const OrganizationColumns = "id, status, name, max_roles, created_at, updated_at"
 
 type Organization struct {
 	ID       uuid.UUID `json:"id"`
 	Status   string    `json:"status"`
 	Name     string    `json:"name"`
-	Icon     *string   `json:"icon"`
 	MaxRoles uint      `json:"max_roles"`
 
 	CreatedAt time.Time `json:"created_at"`
@@ -32,7 +31,6 @@ func (a *Organization) scan(row sq.RowScanner) error {
 		&a.ID,
 		&a.Status,
 		&a.Name,
-		&a.Icon,
 		&a.MaxRoles,
 		&a.CreatedAt,
 		&a.UpdatedAt,
@@ -66,13 +64,11 @@ func NewOrganizationsQ(db pgx.DBTX) OrganizationsQ {
 
 type OrganizationsQInsertInput struct {
 	Name string
-	Icon *string
 }
 
 func (q OrganizationsQ) Insert(ctx context.Context, data OrganizationsQInsertInput) (Organization, error) {
 	query, args, err := q.inserter.SetMap(map[string]interface{}{
 		"name": data.Name,
-		"icon": data.Icon,
 	}).Suffix("RETURNING " + OrganizationColumns).ToSql()
 	if err != nil {
 		return Organization{}, fmt.Errorf("building insert query for %s: %w", OrganizationTable, err)
@@ -234,11 +230,6 @@ func (q OrganizationsQ) UpdateMany(ctx context.Context) (int64, error) {
 
 func (q OrganizationsQ) UpdateName(name string) OrganizationsQ {
 	q.updater = q.updater.Set("name", name)
-	return q
-}
-
-func (q OrganizationsQ) UpdateIcon(icon string) OrganizationsQ {
-	q.updater = q.updater.Set("icon", icon)
 	return q
 }
 

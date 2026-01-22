@@ -1,41 +1,50 @@
 package contracts
 
 import (
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"time"
+
+	"github.com/google/uuid"
 )
+
+const OrganizationsTopicV1 = "organizations.v1"
 
 const OrganizationCreatedEvent = "organization.created"
 
 type OrganizationCreatedPayload struct {
-	Organization models.Organization `json:"organization"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Status         string    `json:"status"`
+	Name           string    `json:"name"`
+	MaxRoles       uint      `json:"max_roles"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 const OrganizationUpdatedEvent = "organization.updated"
 
 type OrganizationUpdatedPayload struct {
-	Organization models.Organization `json:"organization"`
-}
-
-const OrganizationActivatedEvent = "organization.activated"
-
-type OrganizationActivatedPayload struct {
-	Organization models.Organization `json:"organization"`
-}
-
-const OrganizationDeactivatedEvent = "organization.deactivated"
-
-type OrganizationDeactivatedPayload struct {
-	Organization models.Organization `json:"organization"`
-}
-
-const OrganizationSuspendedEvent = "organization.suspended"
-
-type OrganizationSuspendedPayload struct {
-	Organization models.Organization `json:"organization"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Status         string    `json:"status"`
+	Name           string    `json:"name"`
+	MaxRoles       uint      `json:"max_roles"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 const OrganizationDeletedEvent = "organization.deleted"
 
 type OrganizationDeletedPayload struct {
-	Organization models.Organization `json:"organization"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	DeletedAt      time.Time `json:"deleted_at"`
+}
+
+const OrganizationActivatedEvent = "organization.statys.activated"
+
+type OrganizationActivatedPayload struct {
+	OrganizationID uuid.UUID `json:"organization_id"`
+	ActivatedAt    time.Time `json:"activated_at"`
+}
+
+const OrganizationDeactivatedEvent = "organization.deactivated"
+
+type OrganizationDeactivatedPayload struct {
+	OrganizationID uuid.UUID `json:"organization_id"`
+	DeactivatedAt  time.Time `json:"deactivated_at"`
 }

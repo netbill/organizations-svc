@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -9,6 +11,8 @@ type Profile struct {
 	Username  string    `json:"username"`
 	Official  bool      `json:"official"`
 	Pseudonym *string   `json:"pseudonym"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (p Profile) IsNil() bool {

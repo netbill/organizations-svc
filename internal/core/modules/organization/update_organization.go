@@ -11,7 +11,6 @@ import (
 
 type UpdateParams struct {
 	Name *string `json:"name,omitempty"`
-	Icon *string `json:"icon,omitempty"`
 }
 
 func (s Service) UpdateOrganization(
@@ -24,21 +23,12 @@ func (s Service) UpdateOrganization(
 		return models.Organization{}, err
 	}
 
-	if org.Status == models.OrganizationStatusSuspended {
-		return models.Organization{}, errx.ErrorOrganizationIsSuspended.Raise(
-			fmt.Errorf("organization is suspended"),
-		)
-	}
-
 	initiator, err := s.getInitiator(ctx, accountID, org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	if err = s.chekPermissionForManageOrganization(
-		ctx,
-		initiator.ID,
-	); err != nil {
+	if err = s.chekPermissionForManageOrganization(ctx, initiator.ID); err != nil {
 		return models.Organization{}, err
 	}
 

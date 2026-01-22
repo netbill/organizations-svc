@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/netbill/evebox/box/inbox"
-	"github.com/netbill/evebox/box/outbox"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
@@ -39,10 +37,7 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 
 	database := repository.New(pg)
 
-	outBox := outbox.New(pg)
-	inBox := inbox.New(pg)
-
-	kafkaOutbound := outbound.New(log, outBox)
+	kafkaOutbound := outbound.New(log, pg)
 
 	orgSvc := organization.New(database, kafkaOutbound)
 	memberSvc := member.New(database, kafkaOutbound)
@@ -50,21 +45,17 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	inviteSvc := invite.New(database, kafkaOutbound)
 	profileSvc := profile.New(database)
 
-	kafkaInbound := inbound.New(log, profileSvc)
-
 	ctrl := controller.New(orgSvc, memberSvc, roleSvc, inviteSvc, log)
 	mdll := mdlv.New(cfg.JWT.User.AccessToken.SecretKey, rest.AccountDataCtxKey)
 	router := rest.New(log, mdll, ctrl)
 
-	kafkaConsumer := messenger.NewConsumer(log, inBox, kafkaInbound, cfg.Kafka.Brokers...)
+	msgx := messenger.New(log, pg, cfg.Kafka.Brokers...)
 
-	kafkaProducer := messenger.NewProducer(log, outBox, cfg.Kafka.Brokers...)
-	
 	log.Infof("starting kafka brokers %s", cfg.Kafka.Brokers)
 
 	run(func() { router.Run(ctx, cfg) })
 
-	run(func() { kafkaConsumer.Run(ctx) })
+	run(func() { msgx.RunConsumer(ctx, inbound.New(log, profileSvc)) })
 
-	run(func() { kafkaProducer.Run(ctx) })
+	run(func() { msgx.RunProducer(ctx) })
 }

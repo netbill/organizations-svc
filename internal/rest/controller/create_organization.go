@@ -31,7 +31,6 @@ func (c Controller) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 		initiator.ID,
 		organization.CreateParams{
 			Name: req.Data.Attributes.Name,
-			Icon: req.Data.Attributes.Icon,
 		},
 	)
 	if err != nil {

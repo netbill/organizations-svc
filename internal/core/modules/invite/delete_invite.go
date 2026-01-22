@@ -55,7 +55,7 @@ func (s Service) DeleteInvite(
 			)
 		}
 
-		err = s.messenger.WriteInviteDeleted(ctx, invite)
+		err = s.messenger.WriteOrgInviteDeleted(ctx, invite)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to write deleted invite event: %w", err),

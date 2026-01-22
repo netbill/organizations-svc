@@ -73,19 +73,18 @@ type messanger interface {
 
 	WriteOrganizationActivated(ctx context.Context, organization models.Organization) error
 	WriteOrganizationDeactivated(ctx context.Context, organization models.Organization) error
-	WriteOrganizationSuspended(ctx context.Context, organization models.Organization) error
 
 	WriteOrganizationUpdated(ctx context.Context, organization models.Organization) error
 
 	WriteOrganizationDeleted(ctx context.Context, organization models.Organization) error
 
-	WriteRoleCreated(ctx context.Context, role models.Role) error
-	WriteRolePermissionsUpdated(
+	WriteOrgRoleCreated(ctx context.Context, role models.Role) error
+	WriteOrgRolePermissionsUpdated(
 		ctx context.Context,
-		RoleID uuid.UUID,
+		role models.Role,
 		permissions map[models.Permission]bool,
 	) error
-	WriteMemberCreated(
+	WriteOrgMemberCreated(
 		ctx context.Context,
 		member models.Member,
 	) error

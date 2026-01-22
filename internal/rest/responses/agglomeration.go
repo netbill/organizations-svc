@@ -16,7 +16,6 @@ func Organization(organization models.Organization) resources.Organization {
 			Attributes: resources.OrganizationDataAttributes{
 				Status:    organization.Status,
 				Name:      organization.Name,
-				Icon:      organization.Icon,
 				CreatedAt: organization.CreatedAt,
 				UpdatedAt: organization.UpdatedAt,
 			},

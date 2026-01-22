@@ -8,22 +8,21 @@ CREATE TABLE profiles (
     official    BOOLEAN NOT NULL DEFAULT FALSE,
     pseudonym   VARCHAR(128),
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
+    source_created_at  TIMESTAMPTZ NOT NULL,
+    source_updated_at  TIMESTAMPTZ NOT NULL,
+    replica_created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
+    replica_updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
 );
 
 CREATE TYPE organization_status AS ENUM (
     'active',
     'inactive',
-    'suspended'
 );
 
 CREATE TABLE organizations (
     id         UUID                  PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     status     organization_status   NOT NULL DEFAULT 'active',
-    verified   BOOLEAN               NOT NULL DEFAULT FALSE,
     name       VARCHAR(255)          NOT NULL,
-    icon       TEXT,
     max_roles  INT                   NOT NULL DEFAULT 100 CHECK ( max_roles > 0 ),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

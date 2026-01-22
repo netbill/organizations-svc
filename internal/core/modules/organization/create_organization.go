@@ -11,7 +11,6 @@ import (
 
 type CreateParams struct {
 	Name string
-	Icon *string
 }
 
 func (s Service) CreateOrganization(
@@ -59,7 +58,7 @@ func (s Service) createRoleHead(ctx context.Context, organizationID uuid.UUID) (
 		)
 	}
 
-	err = s.messenger.WriteRoleCreated(ctx, role)
+	err = s.messenger.WriteOrgRoleCreated(ctx, role)
 	if err != nil {
 		return models.Role{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to publish role create event: %w", err),
@@ -73,11 +72,7 @@ func (s Service) createRoleHead(ctx context.Context, organizationID uuid.UUID) (
 		)
 	}
 
-	if err = s.messenger.WriteRolePermissionsUpdated(
-		ctx,
-		role.ID,
-		per,
-	); err != nil {
+	if err = s.messenger.WriteOrgRolePermissionsUpdated(ctx, role, per); err != nil {
 		return models.Role{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to publish role permissions updated event: %w", err),
 		)
@@ -106,7 +101,7 @@ func (s Service) createMemberHead(
 		)
 	}
 
-	err = s.messenger.WriteMemberCreated(ctx, member)
+	err = s.messenger.WriteOrgMemberCreated(ctx, member)
 	if err != nil {
 		return models.Member{}, errx.ErrorInternal.Raise(
 			fmt.Errorf("failed to publish member create event: %w", err),

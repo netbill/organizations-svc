@@ -176,8 +176,8 @@ components:
           type: string
         attributes:
           $ref: "#/components/schemas/Role_data_attributes"
-        relationships:
-          $ref: "#/components/schemas/Role_data_relationships"
+        included:
+          $ref: "#/components/schemas/Role_data_included"
       required:
       - attributes
       - id
@@ -186,9 +186,6 @@ components:
       properties:
         name:
           description: The name of the organization
-          type: string
-        icon:
-          description: The icon representing the organization
           type: string
       required:
       - name
@@ -207,9 +204,6 @@ components:
       properties:
         name:
           description: The name of the organization
-          type: string
-        icon:
-          description: The icon representing the organization
           type: string
     UpdateOrganization_data:
       properties:
@@ -416,9 +410,6 @@ components:
         name:
           description: The name of the organization
           type: string
-        icon:
-          description: The icon representing the organization
-          type: string
         created_at:
           description: The date and time when the organization was created
           format: date-time
@@ -588,7 +579,7 @@ components:
       - organization_id
       - rank
       - updated_at
-    Role_data_relationships_permissions_inner:
+    Role_data_included_permissions_inner:
       properties:
         code:
           description: A short code representing the permission
@@ -605,11 +596,11 @@ components:
       - code
       - description
       - enabled
-    Role_data_relationships:
+    Role_data_included:
       properties:
         permissions:
           items:
-            $ref: "#/components/schemas/Role_data_relationships_permissions_inner"
+            $ref: "#/components/schemas/Role_data_included_permissions_inner"
           type: array
     Role_data:
       properties:
@@ -623,8 +614,8 @@ components:
           type: string
         attributes:
           $ref: "#/components/schemas/Role_data_attributes"
-        relationships:
-          $ref: "#/components/schemas/Role_data_relationships"
+        included:
+          $ref: "#/components/schemas/Role_data_included"
       required:
       - attributes
       - id

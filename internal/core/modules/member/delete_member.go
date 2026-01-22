@@ -73,7 +73,7 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 			)
 		}
 
-		if err = s.messenger.WriteMemberDeleted(ctx, member); err != nil {
+		if err = s.messenger.WriteOrgMemberDeleted(ctx, member.ID); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send member deleted message for member %s: %w", memberID, err),
 			)

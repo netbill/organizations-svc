@@ -43,7 +43,7 @@ func (s Service) UpdateRole(
 			)
 		}
 
-		if err = s.messenger.WriteRoleUpdated(ctx, role); err != nil {
+		if err = s.messenger.WriteOrgRoleUpdated(ctx, role); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send role updated message: %w", err),
 			)
@@ -148,7 +148,7 @@ func (s Service) UpdateRolesRanks(
 			)
 		}
 
-		if err = s.messenger.WriteRolesRanksUpdated(ctx, organizationID, order); err != nil {
+		if err = s.messenger.WriteOrgRolesRanksUpdated(ctx, organizationID, order); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send role ranks updated message: %w", err),
 			)

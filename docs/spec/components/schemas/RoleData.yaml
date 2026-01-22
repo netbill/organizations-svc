@@ -51,7 +51,7 @@ properties:
         type: string
         format: date-time
         description: "Timestamp when the role was last updated"
-  relationships:
+  included:
     type: object
     properties:
       permissions:

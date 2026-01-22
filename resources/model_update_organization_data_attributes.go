@@ -21,8 +21,6 @@ var _ MappedNullable = &UpdateOrganizationDataAttributes{}
 type UpdateOrganizationDataAttributes struct {
 	// The name of the organization
 	Name *string `json:"name,omitempty"`
-	// The icon representing the organization
-	Icon *string `json:"icon,omitempty"`
 }
 
 // NewUpdateOrganizationDataAttributes instantiates a new UpdateOrganizationDataAttributes object
@@ -74,38 +72,6 @@ func (o *UpdateOrganizationDataAttributes) SetName(v string) {
 	o.Name = &v
 }
 
-// GetIcon returns the Icon field value if set, zero value otherwise.
-func (o *UpdateOrganizationDataAttributes) GetIcon() string {
-	if o == nil || IsNil(o.Icon) {
-		var ret string
-		return ret
-	}
-	return *o.Icon
-}
-
-// GetIconOk returns a tuple with the Icon field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *UpdateOrganizationDataAttributes) GetIconOk() (*string, bool) {
-	if o == nil || IsNil(o.Icon) {
-		return nil, false
-	}
-	return o.Icon, true
-}
-
-// HasIcon returns a boolean if a field has been set.
-func (o *UpdateOrganizationDataAttributes) HasIcon() bool {
-	if o != nil && !IsNil(o.Icon) {
-		return true
-	}
-
-	return false
-}
-
-// SetIcon gets a reference to the given string and assigns it to the Icon field.
-func (o *UpdateOrganizationDataAttributes) SetIcon(v string) {
-	o.Icon = &v
-}
-
 func (o UpdateOrganizationDataAttributes) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -118,9 +84,6 @@ func (o UpdateOrganizationDataAttributes) ToMap() (map[string]interface{}, error
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Name) {
 		toSerialize["name"] = o.Name
-	}
-	if !IsNil(o.Icon) {
-		toSerialize["icon"] = o.Icon
 	}
 	return toSerialize, nil
 }

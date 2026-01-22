@@ -49,7 +49,7 @@ func (s Service) SetRolePermissions(
 			)
 		}
 
-		err = s.messenger.WriteRolePermissionsUpdated(ctx, roleID, perm)
+		err = s.messenger.WriteOrgRolePermissionsUpdated(ctx, role, perm)
 		if err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send role permissions updated message: %w", err),

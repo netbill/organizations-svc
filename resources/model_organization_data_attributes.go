@@ -26,8 +26,6 @@ type OrganizationDataAttributes struct {
 	Status string `json:"status"`
 	// The name of the organization
 	Name string `json:"name"`
-	// The icon representing the organization
-	Icon *string `json:"icon,omitempty"`
 	// The date and time when the organization was created
 	CreatedAt time.Time `json:"created_at"`
 	// The date and time when the organization was last updated
@@ -105,38 +103,6 @@ func (o *OrganizationDataAttributes) SetName(v string) {
 	o.Name = v
 }
 
-// GetIcon returns the Icon field value if set, zero value otherwise.
-func (o *OrganizationDataAttributes) GetIcon() string {
-	if o == nil || IsNil(o.Icon) {
-		var ret string
-		return ret
-	}
-	return *o.Icon
-}
-
-// GetIconOk returns a tuple with the Icon field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *OrganizationDataAttributes) GetIconOk() (*string, bool) {
-	if o == nil || IsNil(o.Icon) {
-		return nil, false
-	}
-	return o.Icon, true
-}
-
-// HasIcon returns a boolean if a field has been set.
-func (o *OrganizationDataAttributes) HasIcon() bool {
-	if o != nil && !IsNil(o.Icon) {
-		return true
-	}
-
-	return false
-}
-
-// SetIcon gets a reference to the given string and assigns it to the Icon field.
-func (o *OrganizationDataAttributes) SetIcon(v string) {
-	o.Icon = &v
-}
-
 // GetCreatedAt returns the CreatedAt field value
 func (o *OrganizationDataAttributes) GetCreatedAt() time.Time {
 	if o == nil {
@@ -197,9 +163,6 @@ func (o OrganizationDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["status"] = o.Status
 	toSerialize["name"] = o.Name
-	if !IsNil(o.Icon) {
-		toSerialize["icon"] = o.Icon
-	}
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["updated_at"] = o.UpdatedAt
 	return toSerialize, nil

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -17,7 +18,7 @@ func (c Controller) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	inviteID, err := uuid.Parse(chi.URLParam(r, "invite_id"))
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid invite id")
-		http.Error(w, "invalid invite id", http.StatusBadRequest)
+		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid invite id"))...)
 		return
 	}
 

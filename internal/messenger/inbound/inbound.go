@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 )
 
 type Inbound struct {
@@ -21,10 +22,8 @@ func New(log logium.Logger, domain domain) Inbound {
 }
 
 type domain interface {
-	UpsertProfile(ctx context.Context, profile models.Profile) (models.Profile, error)
-	UpdateUsername(ctx context.Context, accountID uuid.UUID, username string) (models.Profile, error)
-	DeleteProfile(
-		ctx context.Context,
-		accountID uuid.UUID,
-	) error
+	CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error)
+	UpdateProfile(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error)
+
+	DeleteProfile(ctx context.Context, accountID uuid.UUID) error
 }

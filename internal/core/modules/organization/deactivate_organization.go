@@ -19,12 +19,6 @@ func (s Service) DeactivateOrganization(
 		return models.Organization{}, err
 	}
 
-	if org.Status == models.OrganizationStatusSuspended {
-		return models.Organization{}, errx.ErrorOrganizationIsSuspended.Raise(
-			fmt.Errorf("organization is not suspended"),
-		)
-	}
-
 	initiator, err := s.getInitiator(ctx, accountID, organizationID)
 	if err != nil {
 		return models.Organization{}, err
@@ -42,6 +36,8 @@ func (s Service) DeactivateOrganization(
 				fmt.Errorf("failed to deactivate organization: %w", err),
 			)
 		}
+
+		//TODO clean organization
 
 		err = s.messenger.WriteOrganizationDeactivated(ctx, org)
 		if err != nil {

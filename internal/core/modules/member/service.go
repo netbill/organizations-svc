@@ -22,9 +22,7 @@ func New(repo repo, messenger messenger) Service {
 
 type repo interface {
 	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-
 	UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (models.Member, error)
-
 	GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error)
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
@@ -36,7 +34,6 @@ type repo interface {
 		limit uint,
 		offset uint,
 	) (pagi.Page[[]models.Member], error)
-
 	DeleteMember(ctx context.Context, memberID uuid.UUID) error
 
 	CheckMemberHavePermission(
@@ -50,7 +47,7 @@ type repo interface {
 }
 
 type messenger interface {
-	WriteMemberCreated(ctx context.Context, member models.Member) error
-	WriteMemberUpdated(ctx context.Context, member models.Member) error
-	WriteMemberDeleted(ctx context.Context, member models.Member) error
+	WriteOrgMemberCreated(ctx context.Context, member models.Member) error
+	WriteOrgMemberUpdated(ctx context.Context, member models.Member) error
+	WriteOrgMemberDeleted(ctx context.Context, memberID uuid.UUID) error
 }

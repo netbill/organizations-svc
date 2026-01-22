@@ -18,7 +18,6 @@ func (s Service) CreateOrganization(
 ) (models.Organization, error) {
 	row, err := s.organizationsQ(ctx).Insert(ctx, pgdb.OrganizationsQInsertInput{
 		Name: params.Name,
-		Icon: params.Icon,
 	})
 	if err != nil {
 		return models.Organization{}, err
@@ -35,9 +34,6 @@ func (s Service) UpdateOrganization(
 	q := s.organizationsQ(ctx).FilterByID(ID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
-	}
-	if params.Icon != nil {
-		q = q.UpdateIcon(*params.Icon)
 	}
 
 	row, err := q.UpdateOne(ctx)
@@ -168,7 +164,6 @@ func Organization(db pgdb.Organization) models.Organization {
 		ID:        db.ID,
 		Status:    db.Status,
 		Name:      db.Name,
-		Icon:      db.Icon,
 		MaxRoles:  db.MaxRoles,
 		CreatedAt: db.CreatedAt,
 		UpdatedAt: db.UpdatedAt,

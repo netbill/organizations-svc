@@ -12,16 +12,19 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (p Outbound) WriteOrganizationCreated(
+func (p Outbound) WriteOrgRoleCreated(
 	ctx context.Context,
-	organization models.Organization,
+	role models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationCreatedPayload{
-		OrganizationID: organization.ID,
-		Status:         organization.Status,
-		Name:           organization.Name,
-		MaxRoles:       organization.MaxRoles,
-		CreatedAt:      organization.CreatedAt,
+	payload, err := json.Marshal(contracts.OrgRoleCreatedPayload{
+		RoleID:         role.ID,
+		OrganizationID: role.OrganizationID,
+		Head:           role.Head,
+		Rank:           role.Rank,
+		Name:           role.Name,
+		Description:    role.Description,
+		Color:          role.Color,
+		CreatedAt:      role.CreatedAt,
 	})
 	if err != nil {
 		return err
@@ -31,11 +34,11 @@ func (p Outbound) WriteOrganizationCreated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(role.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationCreatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgRoleCreatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -46,16 +49,16 @@ func (p Outbound) WriteOrganizationCreated(
 	return err
 }
 
-func (p Outbound) WriteOrganizationUpdated(
+func (p Outbound) WriteOrgRoleUpdated(
 	ctx context.Context,
-	organization models.Organization,
+	role models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationUpdatedPayload{
-		OrganizationID: organization.ID,
-		Status:         organization.Status,
-		Name:           organization.Name,
-		MaxRoles:       organization.MaxRoles,
-		UpdatedAt:      organization.UpdatedAt,
+	payload, err := json.Marshal(contracts.OrgRoleUpdatedPayload{
+		RoleID:      role.ID,
+		Name:        role.Name,
+		Description: role.Description,
+		Color:       role.Color,
+		UpdatedAt:   role.UpdatedAt,
 	})
 	if err != nil {
 		return err
@@ -65,11 +68,11 @@ func (p Outbound) WriteOrganizationUpdated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(role.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationUpdatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgRoleUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -80,13 +83,13 @@ func (p Outbound) WriteOrganizationUpdated(
 	return err
 }
 
-func (p Outbound) WriteOrganizationDeleted(
+func (p Outbound) WriteOrgRoleDeleted(
 	ctx context.Context,
-	organization models.Organization,
+	role models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationDeletedPayload{
-		OrganizationID: organization.ID,
-		DeletedAt:      time.Now().UTC(),
+	payload, err := json.Marshal(contracts.OrgRoleDeletedPayload{
+		RoleID:    role.ID,
+		DeletedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return err
@@ -96,11 +99,11 @@ func (p Outbound) WriteOrganizationDeleted(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(role.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationDeletedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgRoleDeletedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -111,13 +114,19 @@ func (p Outbound) WriteOrganizationDeleted(
 	return err
 }
 
-func (p Outbound) WriteOrganizationActivated(
+func (p Outbound) WriteOrgRolePermissionsUpdated(
 	ctx context.Context,
-	organization models.Organization,
+	role models.Role,
+	permissions map[models.Permission]bool,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationActivatedPayload{
-		OrganizationID: organization.ID,
-		ActivatedAt:    organization.UpdatedAt,
+	per := make(map[string]bool)
+	for k, v := range permissions {
+		per[k.Code] = v
+	}
+
+	payload, err := json.Marshal(contracts.OrgRolePermissionsUpdatedPayload{
+		RoleID:      role.ID,
+		Permissions: per,
 	})
 	if err != nil {
 		return err
@@ -127,11 +136,11 @@ func (p Outbound) WriteOrganizationActivated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(role.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationActivatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgRolePermissionsUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -142,13 +151,14 @@ func (p Outbound) WriteOrganizationActivated(
 	return err
 }
 
-func (p Outbound) WriteOrganizationDeactivated(
+func (p Outbound) WriteOrgRolesRanksUpdated(
 	ctx context.Context,
-	organization models.Organization,
+	organizationID uuid.UUID,
+	ranks map[uuid.UUID]uint,
 ) error {
-	payload, err := json.Marshal(contracts.OrganizationDeactivatedPayload{
-		OrganizationID: organization.ID,
-		DeactivatedAt:  organization.UpdatedAt,
+	payload, err := json.Marshal(contracts.RolesRanksUpdatedPayload{
+		OrganizationID: organizationID,
+		Ranks:          ranks,
 	})
 	if err != nil {
 		return err
@@ -158,11 +168,11 @@ func (p Outbound) WriteOrganizationDeactivated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(organization.ID.String()),
+			Key:   []byte(organizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrganizationDeactivatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgRolesRanksUpdatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},

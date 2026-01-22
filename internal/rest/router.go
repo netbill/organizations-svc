@@ -22,7 +22,6 @@ type Handlers interface {
 
 	UpdateOrganization(w http.ResponseWriter, r *http.Request)
 
-	SuspendOrganization(w http.ResponseWriter, r *http.Request)
 	ActivateOrganization(w http.ResponseWriter, r *http.Request)
 	DeactivateOrganization(w http.ResponseWriter, r *http.Request)
 
@@ -101,7 +100,6 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 
 					r.Patch("/activate", s.handlers.ActivateOrganization)
 					r.Patch("/deactivate", s.handlers.DeactivateOrganization)
-
 					r.Get("/members", s.handlers.GetOrganizationMembers)
 					r.Get("/invites", s.handlers.GetOrganizationInvites)
 					r.Route("/roles", func(r chi.Router) {
@@ -110,7 +108,6 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 					})
 				})
 
-				//TODO
 				r.Get("/me", s.handlers.GetMyOrganizations)
 			})
 
@@ -151,8 +148,7 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 			})
 
 			r.With(auth, sysadmin).Route("/admin", func(r chi.Router) {
-				r.With(auth, sysadmin).Route("/organizations", func(r chi.Router) {
-					r.Patch("/", s.handlers.SuspendOrganization)
+				r.Route("/organizations", func(r chi.Router) {
 				})
 			})
 		})

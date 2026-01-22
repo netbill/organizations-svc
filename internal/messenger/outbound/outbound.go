@@ -1,21 +1,20 @@
 package outbound
 
 import (
+	"database/sql"
+
 	"github.com/netbill/evebox/box/outbox"
 	"github.com/netbill/logium"
 )
 
-type Producer struct {
+type Outbound struct {
 	log    logium.Logger
-	addr   []string
 	outbox outbox.Box
-	owner  string
 }
 
-func New(log logium.Logger, ob outbox.Box, addr ...string) *Producer {
-	return &Producer{
+func New(log logium.Logger, db *sql.DB) *Outbound {
+	return &Outbound{
 		log:    log,
-		addr:   addr,
-		outbox: ob,
+		outbox: outbox.New(db),
 	}
 }

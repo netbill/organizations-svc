@@ -3,6 +3,7 @@ package outbound
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/netbill/evebox/header"
@@ -11,12 +12,17 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (p Producer) WriteInviteCreated(
+func (p Outbound) WriteOrgInviteCreated(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.InviteCreatedPayload{
-		Invite: invite,
+	payload, err := json.Marshal(contracts.OrgInviteCreatedPayload{
+		InviteID:       invite.ID,
+		OrganizationID: invite.OrganizationID,
+		AccountID:      invite.AccountID,
+		Status:         invite.Status,
+		CreatedAt:      invite.CreatedAt,
+		ExpiresAt:      invite.ExpiresAt,
 	})
 	if err != nil {
 		return err
@@ -26,11 +32,11 @@ func (p Producer) WriteInviteCreated(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(invite.ID.String()),
+			Key:   []byte(invite.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.InviteCreatedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgInviteCreatedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -41,12 +47,13 @@ func (p Producer) WriteInviteCreated(
 	return err
 }
 
-func (p Producer) WriteInviteAccepted(
+func (p Outbound) WriteOrgInviteAccepted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.InviteAcceptedPayload{
-		Invite: invite,
+	payload, err := json.Marshal(contracts.OrgInviteAcceptedPayload{
+		InviteID:   invite.ID,
+		AcceptedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return err
@@ -56,11 +63,11 @@ func (p Producer) WriteInviteAccepted(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(invite.ID.String()),
+			Key:   []byte(invite.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.InviteAcceptedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgInviteAcceptedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -71,12 +78,13 @@ func (p Producer) WriteInviteAccepted(
 	return err
 }
 
-func (p Producer) WriteInviteDeclined(
+func (p Outbound) WriteOrgInviteDeclined(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.InviteAcceptedPayload{
-		Invite: invite,
+	payload, err := json.Marshal(contracts.OrgInviteDeclinedPayload{
+		InviteID:   invite.ID,
+		DeclinedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return err
@@ -86,11 +94,11 @@ func (p Producer) WriteInviteDeclined(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(invite.ID.String()),
+			Key:   []byte(invite.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.InviteDeclinedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgInviteDeclinedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},
@@ -101,12 +109,13 @@ func (p Producer) WriteInviteDeclined(
 	return err
 }
 
-func (p Producer) WriteInviteDeleted(
+func (p Outbound) WriteOrgInviteDeleted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.InviteDeletedPayload{
-		Invite: invite,
+	payload, err := json.Marshal(contracts.OrgInviteDeletedPayload{
+		InvitedID: invite.ID,
+		DeletedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return err
@@ -116,11 +125,11 @@ func (p Producer) WriteInviteDeleted(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
-			Key:   []byte(invite.ID.String()),
+			Key:   []byte(invite.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.InviteDeletedEvent)},
+				{Key: header.EventType, Value: []byte(contracts.OrgInviteDeletedEvent)},
 				{Key: header.EventVersion, Value: []byte("1")},
 				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
 				{Key: header.ContentType, Value: []byte("application/json")},

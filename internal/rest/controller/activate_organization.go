@@ -37,8 +37,6 @@ func (c Controller) ActivateOrganization(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to activate organization")
 		switch {
-		case errors.Is(err, errx.ErrorOrganizationIsSuspended):
-			ape.RenderErr(w, problems.Forbidden("organization is suspended"))
 		case errors.Is(err, errx.ErrorOrganizationNotFound):
 			ape.RenderErr(w, problems.NotFound("organization not found"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):

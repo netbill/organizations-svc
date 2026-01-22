@@ -78,7 +78,7 @@ func (s Service) UpdateMember(
 			)
 		}
 
-		if err = s.messenger.WriteMemberUpdated(ctx, member); err != nil {
+		if err = s.messenger.WriteOrgMemberUpdated(ctx, member); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send member updated message for member %s: %w", memberID, err),
 			)

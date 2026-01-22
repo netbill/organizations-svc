@@ -6,19 +6,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (s Service) DeleteOrganization(ctx context.Context, accountID, ID uuid.UUID) error {
 	organization, err := s.GetOrganization(ctx, ID)
 	if err != nil {
 		return err
-	}
-
-	if organization.Status == models.OrganizationStatusSuspended {
-		return errx.ErrorOrganizationIsSuspended.Raise(
-			fmt.Errorf("organization is suspended"),
-		)
 	}
 
 	initiator, err := s.getInitiator(ctx, accountID, organization.ID)

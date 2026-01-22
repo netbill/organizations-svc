@@ -73,7 +73,7 @@ func (s Service) MemberAddRole(
 			)
 		}
 
-		if err = s.messenger.WriteMemberRoleAdd(ctx, memberID, roleID); err != nil {
+		if err = s.messenger.WriteOrgMemberRoleAdd(ctx, memberID, roleID); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to write member role add event: %w", err),
 			)
@@ -125,7 +125,7 @@ func (s Service) RemoveMemberRole(
 			)
 		}
 
-		if err = s.messenger.WriteMemberRoleRemove(ctx, memberID, roleID); err != nil {
+		if err = s.messenger.WriteOrgMemberRoleRemove(ctx, memberID, roleID); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to write member role remove event: %w", err),
 			)

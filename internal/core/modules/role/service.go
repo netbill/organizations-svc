@@ -72,27 +72,27 @@ type repo interface {
 }
 
 type messenger interface {
-	WriteRoleCreated(ctx context.Context, role models.Role) error
-	WriteRoleUpdated(ctx context.Context, role models.Role) error
-	WriteRoleDeleted(ctx context.Context, role models.Role) error
+	WriteOrgRoleCreated(ctx context.Context, role models.Role) error
+	WriteOrgRoleUpdated(ctx context.Context, role models.Role) error
+	WriteOrgRoleDeleted(ctx context.Context, role models.Role) error
 
-	WriteRolesRanksUpdated(
+	WriteOrgRolesRanksUpdated(
 		ctx context.Context,
 		organizationID uuid.UUID,
 		order map[uuid.UUID]uint,
 	) error
-	WriteRolePermissionsUpdated(
+	WriteOrgRolePermissionsUpdated(
 		ctx context.Context,
-		roleID uuid.UUID,
+		role models.Role,
 		permissions map[models.Permission]bool,
 	) error
 
-	WriteMemberRoleAdd(
+	WriteOrgMemberRoleAdd(
 		ctx context.Context,
 		memberID uuid.UUID,
 		roleID uuid.UUID,
 	) error
-	WriteMemberRoleRemove(
+	WriteOrgMemberRoleRemove(
 		ctx context.Context,
 		memberID uuid.UUID,
 		roleID uuid.UUID,

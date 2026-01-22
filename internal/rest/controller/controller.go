@@ -49,7 +49,6 @@ type orgSvc interface {
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
 	) (models.Organization, error)
-	SuspendOrganization(ctx context.Context, ID uuid.UUID) (models.Organization, error)
 
 	DeleteOrganization(
 		ctx context.Context,

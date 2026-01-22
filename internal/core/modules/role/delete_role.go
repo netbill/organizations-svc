@@ -36,7 +36,7 @@ func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) er
 			)
 		}
 
-		if err = s.messenger.WriteRoleDeleted(ctx, role); err != nil {
+		if err = s.messenger.WriteOrgRoleDeleted(ctx, role); err != nil {
 			return errx.ErrorInternal.Raise(
 				fmt.Errorf("failed to send role deleted message: %w", err),
 			)

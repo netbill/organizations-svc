@@ -27,17 +27,17 @@ func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {
 	}
 
 	if perms != nil {
-		ps := make([]resources.RoleDataRelationshipsPermissionsInner, 0, len(perms))
+		ps := make([]resources.RoleDataIncludedPermissionsInner, 0, len(perms))
 
 		for perm, has := range perms {
-			ps = append(ps, resources.RoleDataRelationshipsPermissionsInner{
+			ps = append(ps, resources.RoleDataIncludedPermissionsInner{
 				Code:        perm.Code,
 				Description: perm.Description,
 				Enabled:     has,
 			})
 		}
 
-		res.Data.Relationships = &resources.RoleDataRelationships{
+		res.Data.Included = &resources.RoleDataIncluded{
 			Permissions: ps,
 		}
 	}
