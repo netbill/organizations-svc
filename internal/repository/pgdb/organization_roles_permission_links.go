@@ -2,13 +2,11 @@ package pgdb
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/netbill/pgx"
+	"github.com/netbill/pgxtx"
 )
 
 const OrganizationRolePermissionsTable = "organization_role_permission_links"
@@ -20,14 +18,14 @@ type OrganizationRolePermissionLink struct {
 }
 
 type OrgRolePermissionLinksQ struct {
-	db       pgx.DBTX
+	db       pgxtx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
 	deleter  sq.DeleteBuilder
 	counter  sq.SelectBuilder
 }
 
-func NewOrgRolePermissionLinksQ(db pgx.DBTX) OrgRolePermissionLinksQ {
+func NewOrgRolePermissionLinksQ(db pgxtx.DBTX) OrgRolePermissionLinksQ {
 	b := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return OrgRolePermissionLinksQ{
 		db:       db,
@@ -53,7 +51,7 @@ func (q OrgRolePermissionLinksQ) Insert(ctx context.Context, data ...Organizatio
 		return fmt.Errorf("building insert query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
-	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
+	if _, err := q.db.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("executing insert query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
@@ -67,13 +65,10 @@ func (q OrgRolePermissionLinksQ) Get(ctx context.Context) (OrganizationRolePermi
 	}
 
 	var rp OrganizationRolePermissionLink
-	if err := q.db.QueryRowContext(ctx, query, args...).Scan(&rp.RoleID, &rp.PermissionCode); err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return OrganizationRolePermissionLink{}, nil
-		default:
-			return OrganizationRolePermissionLink{}, fmt.Errorf("scanning row for %s: %w", OrganizationRolePermissionsTable, err)
-		}
+	if err = q.db.QueryRow(ctx, query, args...).Scan(&rp.RoleID, &rp.PermissionCode); err != nil {
+		return OrganizationRolePermissionLink{}, fmt.Errorf(
+			"scanning row for %s: %w", OrganizationRolePermissionsTable, err,
+		)
 	}
 
 	return rp, nil
@@ -85,7 +80,7 @@ func (q OrgRolePermissionLinksQ) Select(ctx context.Context) ([]OrganizationRole
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
@@ -94,13 +89,13 @@ func (q OrgRolePermissionLinksQ) Select(ctx context.Context) ([]OrganizationRole
 	var out []OrganizationRolePermissionLink
 	for rows.Next() {
 		var rp OrganizationRolePermissionLink
-		if err := rows.Scan(&rp.RoleID, &rp.PermissionCode); err != nil {
+		if err = rows.Scan(&rp.RoleID, &rp.PermissionCode); err != nil {
 			return nil, fmt.Errorf("scanning row for %s: %w", OrganizationRolePermissionsTable, err)
 		}
 		out = append(out, rp)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterating rows for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
@@ -113,7 +108,7 @@ func (q OrgRolePermissionLinksQ) Delete(ctx context.Context) error {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
-	if _, err := q.db.ExecContext(ctx, query, args...); err != nil {
+	if _, err := q.db.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("executing delete query for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 
@@ -208,7 +203,7 @@ func (q OrgRolePermissionLinksQ) Count(ctx context.Context) (uint, error) {
 	}
 
 	var n uint
-	if err := q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
+	if err = q.db.QueryRow(ctx, query, args...).Scan(&n); err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", OrganizationRolePermissionsTable, err)
 	}
 	return n, nil
@@ -220,16 +215,19 @@ func (q OrgRolePermissionLinksQ) Page(limit, offset uint) OrgRolePermissionLinks
 }
 
 func (q OrgRolePermissionLinksQ) Exists(ctx context.Context) (bool, error) {
-	subSQL, subArgs, err := q.selector.Limit(1).ToSql()
+	query, args, err := q.selector.
+		Columns("1").
+		Limit(1).
+		ToSql()
 	if err != nil {
-		return false, fmt.Errorf("building exists query for %s: %w", OrganizationRolePermissionsTable, err)
+		return false, err
 	}
 
-	sqlq := "SELECT EXISTS (" + subSQL + ")"
-
-	var ok bool
-	if err := q.db.QueryRowContext(ctx, sqlq, subArgs...).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning exists for %s: %w", OrganizationRolePermissionsTable, err)
+	var one int
+	err = q.db.QueryRow(ctx, query, args...).Scan(&one)
+	if err != nil {
+		return false, err
 	}
-	return ok, nil
+
+	return true, nil
 }

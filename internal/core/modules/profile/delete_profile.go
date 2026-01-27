@@ -8,8 +8,6 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/errx"
 )
 
-//TODO: if user is head of some organizations, we should handle it properly (transfer ownership or delete organizations)
-
 func (s Service) DeleteProfile(
 	ctx context.Context,
 	accountID uuid.UUID,

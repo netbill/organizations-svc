@@ -5,17 +5,17 @@ import (
 	"database/sql"
 	"fmt"
 
-	"errors"
-
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type OrganizationMemberWithUserData struct {
 	OrganizationMember
-	Username  string  `json:"username"`
-	Official  bool    `json:"official"`
-	Pseudonym *string `json:"pseudonym"`
+	Username  string      `json:"username"`
+	Official  bool        `json:"official"`
+	Pseudonym pgtype.Text `json:"pseudonym,omitempty"`
+	Icon      pgtype.Text `json:"icon,omitempty"`
 }
 
 func (mwd *OrganizationMemberWithUserData) scan(row sq.RowScanner) error {
@@ -30,6 +30,7 @@ func (mwd *OrganizationMemberWithUserData) scan(row sq.RowScanner) error {
 		&mwd.Username,
 		&mwd.Official,
 		&mwd.Pseudonym,
+		&mwd.Icon,
 	)
 	if err != nil {
 		return fmt.Errorf("scanning member with user data: %w", err)
@@ -162,7 +163,7 @@ func (q OrgMembersQ) FilterByPermissionCode(code string) OrgMembersQ {
 
 func (q OrgMembersQ) GetWithUserData(ctx context.Context) (OrganizationMemberWithUserData, error) {
 	q.selector = q.selector.
-		Columns("p.username", "p.official", "p.pseudonym").
+		Columns("p.username", "p.official", "p.pseudonym", "p.icon").
 		Join("profiles p ON p.account_id = m.account_id")
 
 	query, args, err := q.selector.Limit(1).ToSql()
@@ -171,13 +172,8 @@ func (q OrgMembersQ) GetWithUserData(ctx context.Context) (OrganizationMemberWit
 	}
 
 	var out OrganizationMemberWithUserData
-	if err = out.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return OrganizationMemberWithUserData{}, nil
-		default:
-			return OrganizationMemberWithUserData{}, err
-		}
+	if err = out.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
+		return OrganizationMemberWithUserData{}, err
 	}
 
 	return out, nil
@@ -185,7 +181,7 @@ func (q OrgMembersQ) GetWithUserData(ctx context.Context) (OrganizationMemberWit
 
 func (q OrgMembersQ) SelectWithUserData(ctx context.Context) ([]OrganizationMemberWithUserData, error) {
 	q.selector = q.selector.
-		Columns("p.username", "p.official", "p.pseudonym").
+		Columns("p.username", "p.official", "p.pseudonym", "p.icon").
 		Join("profiles p ON p.account_id = m.account_id")
 
 	query, args, err := q.selector.ToSql()
@@ -193,7 +189,7 @@ func (q OrgMembersQ) SelectWithUserData(ctx context.Context) ([]OrganizationMemb
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationMembersTable, err)
 	}
@@ -240,7 +236,7 @@ func (q OrgMembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationMembersTable, err)
 	}
@@ -268,6 +264,7 @@ func (q OrgMembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([
 			&mwd.Username,
 			&mwd.Official,
 			&mwd.Pseudonym,
+			&mwd.Icon,
 			&roleID,
 			&head,
 			&rank,
@@ -306,32 +303,32 @@ func (q OrgMembersQ) SelectWithRolesData(ctx context.Context, roleLimit uint) ([
 	return out, nil
 }
 
-func (q OrgMembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
-	const sqlq = `
-		SELECT
-			(m1.organization_id = m2.organization_id)
-			AND (COALESCE(r1.min_rank, 2147483647) < COALESCE(r2.min_rank, 2147483647)) AS can
-		FROM organization_members m1
-		JOIN organization_members m2 ON m2.id = $2
-		LEFT JOIN LATERAL (
-			SELECT MIN(r.rank) AS min_rank
-			FROM organization_member_roles mr
-			JOIN roles r ON r.id = mr.role_id
-			WHERE mr.member_id = m1.id
-		) r1 ON true
-		LEFT JOIN LATERAL (
-			SELECT MIN(r.rank) AS min_rank
-			FROM organization_member_roles mr
-			JOIN roles r ON r.id = mr.role_id
-			WHERE mr.member_id = m2.id
-		) r2 ON true
-		WHERE m1.id = $1
-		LIMIT 1
-	`
-
-	var ok bool
-	if err := q.db.QueryRowContext(ctx, sqlq, firstMemberID, secondMemberID).Scan(&ok); err != nil {
-		return false, fmt.Errorf("scanning can_interact: %w", err)
-	}
-	return ok, nil
-}
+//func (q OrgMembersQ) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
+//	const query = `
+//		SELECT
+//			(m1.organization_id = m2.organization_id)
+//			AND (COALESCE(r1.min_rank, 2147483647) < COALESCE(r2.min_rank, 2147483647)) AS can
+//		FROM organization_members m1
+//		JOIN organization_members m2 ON m2.id = $2
+//		LEFT JOIN LATERAL (
+//			SELECT MIN(r.rank) AS min_rank
+//			FROM organization_member_roles mr
+//			JOIN roles r ON r.id = mr.role_id
+//			WHERE mr.member_id = m1.id
+//		) r1 ON true
+//		LEFT JOIN LATERAL (
+//			SELECT MIN(r.rank) AS min_rank
+//			FROM organization_member_roles mr
+//			JOIN roles r ON r.id = mr.role_id
+//			WHERE mr.member_id = m2.id
+//		) r2 ON true
+//		WHERE m1.id = $1
+//		LIMIT 1
+//	`
+//
+//	var ok bool
+//	if err := q.db.QueryRow(ctx, query, firstMemberID, secondMemberID).Scan(&ok); err != nil {
+//		return false, fmt.Errorf("scanning can_interact: %w", err)
+//	}
+//	return ok, nil
+//}

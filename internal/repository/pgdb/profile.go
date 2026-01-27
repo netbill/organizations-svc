@@ -2,26 +2,29 @@ package pgdb
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/netbill/pgx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/netbill/pgxtx"
 )
 
 const ProfileTable = "profiles"
 
-const ProfileColumns = "account_id, username, official, pseudonym, source_created_at, source_updated_at, replica_created_at, replica_updated_at"
-const ProfileColumnsP = "p.account_id, p.username, p.official, p.pseudonym, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
+const ProfileColumns = "account_id, username, official, pseudonym, avatar, source_created_at, source_updated_at, replica_created_at, replica_updated_at"
+const ProfileColumnsP = "p.account_id, p.username, p.official, p.pseudonym, p.avatar, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
 
 type Profile struct {
 	AccountID uuid.UUID `json:"account_id"`
 	Username  string    `json:"username"`
 	Official  bool      `json:"official"`
-	Pseudonym *string   `json:"pseudonym,omitempty"`
+
+	Pseudonym pgtype.Text `json:"pseudonym,omitempty"`
+	Avatar    pgtype.Text `json:"avatar,omitempty"`
 
 	SourceCreatedAt  time.Time `json:"source_created_at"`
 	SourceUpdatedAt  time.Time `json:"source_updated_at"`
@@ -30,24 +33,24 @@ type Profile struct {
 }
 
 func (p *Profile) scan(row sq.RowScanner) error {
-	err := row.Scan(
+	if err := row.Scan(
 		&p.AccountID,
 		&p.Username,
 		&p.Official,
 		&p.Pseudonym,
+		&p.Avatar,
 		&p.SourceCreatedAt,
 		&p.SourceUpdatedAt,
 		&p.ReplicaCreatedAt,
 		&p.ReplicaUpdatedAt,
-	)
-	if err != nil {
+	); err != nil {
 		return fmt.Errorf("scanning profile: %w", err)
 	}
 	return nil
 }
 
 type ProfilesQ struct {
-	db       pgx.DBTX
+	db       pgxtx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
 	updater  sq.UpdateBuilder
@@ -55,7 +58,7 @@ type ProfilesQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewProfilesQ(db pgx.DBTX) ProfilesQ {
+func NewProfilesQ(db pgxtx.DBTX) ProfilesQ {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return ProfilesQ{
 		db:       db,
@@ -71,20 +74,24 @@ type ProfileInsertInput struct {
 	AccountID uuid.UUID
 	Username  string
 	Official  bool
+
 	Pseudonym *string
+	Avatar    *string
 
 	SourceCreatedAt time.Time
 	SourceUpdatedAt time.Time
 }
 
 func (q ProfilesQ) Insert(ctx context.Context, data ProfileInsertInput) (Profile, error) {
-	query, args, err := q.inserter.SetMap(map[string]interface{}{
-		"account_id":         data.AccountID,
-		"username":           data.Username,
-		"official":           data.Official,
-		"pseudonym":          data.Pseudonym,
-		"source_created_at":  data.SourceCreatedAt.UTC(),
-		"source_updated_at":  data.SourceUpdatedAt.UTC(),
+	query, args, err := q.inserter.SetMap(map[string]any{
+		"account_id":        data.AccountID,
+		"username":          data.Username,
+		"official":          data.Official,
+		"pseudonym":         data.Pseudonym,
+		"avatar":            data.Avatar,
+		"source_created_at": data.SourceCreatedAt.UTC(),
+		"source_updated_at": data.SourceUpdatedAt.UTC(),
+		// replica_* defaults exist in schema, but keeping your previous behavior:
 		"replica_created_at": time.Now().UTC(),
 		"replica_updated_at": time.Now().UTC(),
 	}).Suffix("RETURNING " + ProfileColumns).ToSql()
@@ -93,7 +100,7 @@ func (q ProfilesQ) Insert(ctx context.Context, data ProfileInsertInput) (Profile
 	}
 
 	var inserted Profile
-	if err = inserted.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
+	if err = inserted.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
 		return Profile{}, err
 	}
 	return inserted, nil
@@ -106,9 +113,9 @@ func (q ProfilesQ) Get(ctx context.Context) (Profile, error) {
 	}
 
 	var p Profile
-	if err = p.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
+	if err = p.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, pgx.ErrNoRows):
 			return Profile{}, nil
 		default:
 			return Profile{}, err
@@ -123,7 +130,7 @@ func (q ProfilesQ) Select(ctx context.Context) ([]Profile, error) {
 		return nil, fmt.Errorf("building select query for %s: %w", ProfileTable, err)
 	}
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing select query for %s: %w", ProfileTable, err)
 	}
@@ -150,48 +157,11 @@ func (q ProfilesQ) Delete(ctx context.Context) error {
 		return fmt.Errorf("building delete query for %s: %w", ProfileTable, err)
 	}
 
-	_, err = q.db.ExecContext(ctx, query, args...)
-	if err != nil {
+	if _, err = q.db.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("executing delete query for %s: %w", ProfileTable, err)
 	}
 
 	return nil
-}
-
-func (q ProfilesQ) UpdateOne(ctx context.Context) (Profile, error) {
-	q.updater = q.updater.Set("replica_updated_at", time.Now().UTC())
-
-	query, args, err := q.updater.Suffix("RETURNING " + ProfileColumns).ToSql()
-	if err != nil {
-		return Profile{}, fmt.Errorf("building update query for %s: %w", ProfileTable, err)
-	}
-
-	var updated Profile
-	if err = updated.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		return Profile{}, err
-	}
-	return updated, nil
-}
-
-func (q ProfilesQ) UpdateMany(ctx context.Context) (int64, error) {
-	q.updater = q.updater.Set("replica_updated_at", time.Now().UTC())
-
-	query, args, err := q.updater.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("building update query for %s: %w", ProfileTable, err)
-	}
-
-	res, err := q.db.ExecContext(ctx, query, args...)
-	if err != nil {
-		return 0, fmt.Errorf("executing update query for %s: %w", ProfileTable, err)
-	}
-
-	aff, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("rows affected for %s: %w", ProfileTable, err)
-	}
-
-	return aff, nil
 }
 
 func (q ProfilesQ) FilterByAccountID(accountID uuid.UUID) ProfilesQ {
@@ -234,6 +204,37 @@ func (q ProfilesQ) FilterLikePseudonym(pseudonym string) ProfilesQ {
 	return q
 }
 
+func (q ProfilesQ) UpdateOne(ctx context.Context) (Profile, error) {
+	q.updater = q.updater.Set("replica_updated_at", time.Now().UTC())
+
+	query, args, err := q.updater.Suffix("RETURNING " + ProfileColumns).ToSql()
+	if err != nil {
+		return Profile{}, fmt.Errorf("building update query for %s: %w", ProfileTable, err)
+	}
+
+	var updated Profile
+	if err = updated.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
+		return Profile{}, err
+	}
+	return updated, nil
+}
+
+func (q ProfilesQ) UpdateMany(ctx context.Context) (int64, error) {
+	q.updater = q.updater.Set("replica_updated_at", time.Now().UTC())
+
+	query, args, err := q.updater.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("building update query for %s: %w", ProfileTable, err)
+	}
+
+	res, err := q.db.Exec(ctx, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("executing update query for %s: %w", ProfileTable, err)
+	}
+
+	return res.RowsAffected(), nil
+}
+
 func (q ProfilesQ) UpdateUsername(username string) ProfilesQ {
 	q.updater = q.updater.Set("username", username)
 	return q
@@ -246,6 +247,11 @@ func (q ProfilesQ) UpdateOfficial(official bool) ProfilesQ {
 
 func (q ProfilesQ) UpdatePseudonym(pseudonym *string) ProfilesQ {
 	q.updater = q.updater.Set("pseudonym", pseudonym)
+	return q
+}
+
+func (q ProfilesQ) UpdateAvatar(avatar *string) ProfilesQ {
+	q.updater = q.updater.Set("avatar", avatar)
 	return q
 }
 
@@ -266,7 +272,7 @@ func (q ProfilesQ) Count(ctx context.Context) (uint, error) {
 	}
 
 	var count uint
-	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&count); err != nil {
+	if err = q.db.QueryRow(ctx, query, args...).Scan(&count); err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", ProfileTable, err)
 	}
 

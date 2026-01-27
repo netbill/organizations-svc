@@ -2,13 +2,11 @@ package pgdb
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/netbill/pgx"
+	"github.com/netbill/pgxtx"
 )
 
 const OrganizationMemberRoleTable = "organization_member_roles"
@@ -27,14 +25,14 @@ func (mr *OrganizationMemberRole) scan(row sq.RowScanner) error {
 }
 
 type OrgMemberRolesQ struct {
-	db       pgx.DBTX
+	db       pgxtx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
 	deleter  sq.DeleteBuilder
 	counter  sq.SelectBuilder
 }
 
-func NewOrgMemberRolesQ(db pgx.DBTX) OrgMemberRolesQ {
+func NewOrgMemberRolesQ(db pgxtx.DBTX) OrgMemberRolesQ {
 	b := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return OrgMemberRolesQ{
 		db:       db,
@@ -55,7 +53,7 @@ func (q OrgMemberRolesQ) Insert(ctx context.Context, data OrganizationMemberRole
 	}
 
 	var out OrganizationMemberRole
-	if err = out.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
+	if err = out.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
 		return OrganizationMemberRole{}, err
 	}
 	return out, nil
@@ -68,13 +66,8 @@ func (q OrgMemberRolesQ) Get(ctx context.Context) (OrganizationMemberRole, error
 	}
 
 	var out OrganizationMemberRole
-	if err = out.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return OrganizationMemberRole{}, nil
-		default:
-			return OrganizationMemberRole{}, err
-		}
+	if err = out.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
+		return OrganizationMemberRole{}, err
 	}
 	return out, nil
 }
@@ -85,7 +78,7 @@ func (q OrgMemberRolesQ) Select(ctx context.Context) ([]OrganizationMemberRole, 
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationMemberRoleTable, err)
 	}
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationMemberRoleTable, err)
 	}
@@ -106,12 +99,26 @@ func (q OrgMemberRolesQ) Select(ctx context.Context) ([]OrganizationMemberRole, 
 	return out, nil
 }
 
+func (q OrgMemberRolesQ) FilterByMemberID(memberID uuid.UUID) OrgMemberRolesQ {
+	q.selector = q.selector.Where(sq.Eq{"member_id": memberID})
+	q.counter = q.counter.Where(sq.Eq{"member_id": memberID})
+	q.deleter = q.deleter.Where(sq.Eq{"member_id": memberID})
+	return q
+}
+
+func (q OrgMemberRolesQ) FilterByRoleID(roleID uuid.UUID) OrgMemberRolesQ {
+	q.selector = q.selector.Where(sq.Eq{"role_id": roleID})
+	q.counter = q.counter.Where(sq.Eq{"role_id": roleID})
+	q.deleter = q.deleter.Where(sq.Eq{"role_id": roleID})
+	return q
+}
+
 func (q OrgMemberRolesQ) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationMemberRoleTable, err)
 	}
-	if _, err = q.db.ExecContext(ctx, query, args...); err != nil {
+	if _, err = q.db.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("executing delete query for %s: %w", OrganizationMemberRoleTable, err)
 	}
 	return nil
@@ -124,22 +131,13 @@ func (q OrgMemberRolesQ) Count(ctx context.Context) (uint, error) {
 	}
 
 	var n uint
-	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&n); err != nil {
+	if err = q.db.QueryRow(ctx, query, args...).Scan(&n); err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", OrganizationMemberRoleTable, err)
 	}
 	return n, nil
 }
 
-func (q OrgMemberRolesQ) FilterByMemberID(memberID uuid.UUID) OrgMemberRolesQ {
-	q.selector = q.selector.Where(sq.Eq{"member_id": memberID})
-	q.counter = q.counter.Where(sq.Eq{"member_id": memberID})
-	q.deleter = q.deleter.Where(sq.Eq{"member_id": memberID})
-	return q
-}
-
-func (q OrgMemberRolesQ) FilterByRoleID(roleID uuid.UUID) OrgMemberRolesQ {
-	q.selector = q.selector.Where(sq.Eq{"role_id": roleID})
-	q.counter = q.counter.Where(sq.Eq{"role_id": roleID})
-	q.deleter = q.deleter.Where(sq.Eq{"role_id": roleID})
+func (q OrgMemberRolesQ) Page(limit uint, offset uint) OrgMemberRolesQ {
+	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }

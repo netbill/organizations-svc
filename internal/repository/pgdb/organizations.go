@@ -2,25 +2,30 @@ package pgdb
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/pgx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/netbill/pgxtx"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
 const OrganizationTable = "organizations"
-const OrganizationColumns = "id, status, name, max_roles, created_at, updated_at"
+const OrganizationColumns = "id, status, name, icon, banner, max_roles, created_at, updated_at"
 
 type Organization struct {
-	ID       uuid.UUID `json:"id"`
-	Status   string    `json:"status"`
-	Name     string    `json:"name"`
-	MaxRoles uint      `json:"max_roles"`
+	ID     uuid.UUID `json:"id"`
+	Status string    `json:"status"`
+	Name   string    `json:"name"`
+
+	Icon   pgtype.Text `json:"icon"`
+	Banner pgtype.Text `json:"banner"`
+
+	MaxRoles uint `json:"max_roles"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -31,6 +36,8 @@ func (a *Organization) scan(row sq.RowScanner) error {
 		&a.ID,
 		&a.Status,
 		&a.Name,
+		&a.Icon,
+		&a.Banner,
 		&a.MaxRoles,
 		&a.CreatedAt,
 		&a.UpdatedAt,
@@ -42,7 +49,7 @@ func (a *Organization) scan(row sq.RowScanner) error {
 }
 
 type OrganizationsQ struct {
-	db       pgx.DBTX
+	db       pgxtx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
 	updater  sq.UpdateBuilder
@@ -50,7 +57,7 @@ type OrganizationsQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewOrganizationsQ(db pgx.DBTX) OrganizationsQ {
+func NewOrganizationsQ(db pgxtx.DBTX) OrganizationsQ {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return OrganizationsQ{
 		db:       db,
@@ -58,7 +65,7 @@ func NewOrganizationsQ(db pgx.DBTX) OrganizationsQ {
 		inserter: builder.Insert(OrganizationTable),
 		updater:  builder.Update(OrganizationTable),
 		deleter:  builder.Delete(OrganizationTable),
-		counter:  builder.Select("COUNT(*) AS count").From(OrganizationTable),
+		counter:  builder.Select("COUNT(*)").From(OrganizationTable),
 	}
 }
 
@@ -67,7 +74,7 @@ type OrganizationsQInsertInput struct {
 }
 
 func (q OrganizationsQ) Insert(ctx context.Context, data OrganizationsQInsertInput) (Organization, error) {
-	query, args, err := q.inserter.SetMap(map[string]interface{}{
+	query, args, err := q.inserter.SetMap(map[string]any{
 		"name": data.Name,
 	}).Suffix("RETURNING " + OrganizationColumns).ToSql()
 	if err != nil {
@@ -75,14 +82,9 @@ func (q OrganizationsQ) Insert(ctx context.Context, data OrganizationsQInsertInp
 	}
 
 	var inserted Organization
-	err = inserted.scan(q.db.QueryRowContext(ctx, query, args...))
+	err = inserted.scan(q.db.QueryRow(ctx, query, args...))
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return Organization{}, nil
-		default:
-			return Organization{}, err
-		}
+		return Organization{}, fmt.Errorf("executing insert query for %s: %w", OrganizationTable, err)
 	}
 
 	return inserted, nil
@@ -130,17 +132,8 @@ func (q OrganizationsQ) FilterByAccountID(accountID uuid.UUID) OrganizationsQ {
 }
 
 func (q OrganizationsQ) FilterNameLike(name string) OrganizationsQ {
-	q.selector = q.selector.Where(sq.Like{"name": "%" + name + "%"})
-	q.counter = q.counter.Where(sq.Like{"name": "%" + name + "%"})
-	return q
-}
-
-func (q OrganizationsQ) OrderName(asc bool) OrganizationsQ {
-	if asc {
-		q.selector = q.selector.OrderBy("name ASC", "id ASC")
-	} else {
-		q.selector = q.selector.OrderBy("name DESC", "id DESC")
-	}
+	q.selector = q.selector.Where(sq.ILike{"name": "%" + name + "%"})
+	q.counter = q.counter.Where(sq.ILike{"name": "%" + name + "%"})
 	return q
 }
 
@@ -150,15 +143,17 @@ func (q OrganizationsQ) Get(ctx context.Context) (Organization, error) {
 		return Organization{}, fmt.Errorf("building select query for %s: %w", OrganizationTable, err)
 	}
 
-	row := q.db.QueryRowContext(ctx, query, args...)
-
 	var a Organization
-	if err = a.scan(row); err != nil {
-		return Organization{}, err
+	if err = a.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return Organization{}, pgx.ErrNoRows
+		default:
+			return Organization{}, err
+		}
 	}
 
 	return a, nil
-
 }
 
 func (q OrganizationsQ) Select(ctx context.Context) ([]Organization, error) {
@@ -167,7 +162,7 @@ func (q OrganizationsQ) Select(ctx context.Context) ([]Organization, error) {
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationTable, err)
 	}
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationTable, err)
 	}
@@ -176,8 +171,7 @@ func (q OrganizationsQ) Select(ctx context.Context) ([]Organization, error) {
 	var organizations []Organization
 	for rows.Next() {
 		var organization Organization
-		err = organization.scan(rows)
-		if err != nil {
+		if err = organization.scan(rows); err != nil {
 			return nil, err
 		}
 		organizations = append(organizations, organization)
@@ -200,7 +194,7 @@ func (q OrganizationsQ) UpdateOne(ctx context.Context) (Organization, error) {
 	}
 
 	var updated Organization
-	if err = updated.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
+	if err = updated.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
 		return Organization{}, err
 	}
 
@@ -215,17 +209,12 @@ func (q OrganizationsQ) UpdateMany(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("building update query for %s: %w", OrganizationTable, err)
 	}
 
-	res, err := q.db.ExecContext(ctx, query, args...)
+	res, err := q.db.Exec(ctx, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("executing update query for %s: %w", OrganizationTable, err)
 	}
 
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("rows affected for %s: %w", OrganizationTable, err)
-	}
-
-	return affected, nil
+	return res.RowsAffected(), nil
 }
 
 func (q OrganizationsQ) UpdateName(name string) OrganizationsQ {
@@ -235,6 +224,16 @@ func (q OrganizationsQ) UpdateName(name string) OrganizationsQ {
 
 func (q OrganizationsQ) UpdateStatus(status string) OrganizationsQ {
 	q.updater = q.updater.Set("status", status)
+	return q
+}
+
+func (q OrganizationsQ) UpdateIcon(icon pgtype.Text) OrganizationsQ {
+	q.updater = q.updater.Set("icon", icon)
+	return q
+}
+
+func (q OrganizationsQ) UpdateBanner(banner pgtype.Text) OrganizationsQ {
+	q.updater = q.updater.Set("banner", banner)
 	return q
 }
 
@@ -249,8 +248,7 @@ func (q OrganizationsQ) Delete(ctx context.Context) error {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationTable, err)
 	}
 
-	_, err = q.db.ExecContext(ctx, query, args...)
-	if err != nil {
+	if _, err = q.db.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("executing delete query for %s: %w", OrganizationTable, err)
 	}
 
@@ -268,11 +266,8 @@ func (q OrganizationsQ) Count(ctx context.Context) (uint, error) {
 		return 0, fmt.Errorf("building count query for %s: %w", OrganizationTable, err)
 	}
 
-	row := q.db.QueryRowContext(ctx, query, args...)
-
 	var count uint
-	err = row.Scan(&count)
-	if err != nil {
+	if err = q.db.QueryRow(ctx, query, args...).Scan(&count); err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", OrganizationTable, err)
 	}
 

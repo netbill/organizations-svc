@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"sync"
 
+	"github.com/netbill/awsx"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
@@ -36,6 +37,12 @@ func StartServices(ctx context.Context, cfg internal.Config, log logium.Logger, 
 	}
 
 	database := repository.New(pg)
+
+	awsxSvc := awsx.New(
+		cfg.S3.AWS.BucketName,
+		s3Client,
+		presignClient,
+	)
 
 	kafkaOutbound := outbound.New(log, pg)
 

@@ -12,8 +12,9 @@ import (
 
 type UpdateParams struct {
 	Username  string    `json:"username"`
-	Official  bool      `json:"official"`
 	Pseudonym *string   `json:"pseudonym"`
+	Icon      *string   `json:"icon"`
+	Official  bool      `json:"official"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 

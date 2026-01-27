@@ -2,35 +2,52 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 )
 
-func (s Service) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error) {
-	rows, err := s.orgRolePermissionsQ(ctx).GetForRole(ctx, roleID)
+func (r Repository) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error) {
+	rolePerm, err := r.orgRolePermissionsQ(ctx).FilterByRoleID(roleID).Select(ctx)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		// Role has no permissions
+	case err != nil:
+		return nil, fmt.Errorf("failed to fetch role permissions, cause: %w", err)
+	}
+
+	perm, err := r.orgRolePermissionsQ(ctx).Select(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch permissions, cause: %w", err)
 	}
 
-	result := make(map[models.Permission]bool, len(rows))
-	for el, row := range rows {
-		perm := models.Permission{
-			Code:        el.Code,
-			Description: el.Description,
+	rolePermMap := make(map[models.Permission]bool, len(perm))
+	for _, p := range perm {
+		exist := false
+		for _, rp := range rolePerm {
+			if p.Code == rp.Code {
+				exist = true
+				break
+			}
 		}
-		result[perm] = row
+
+		rolePermMap[models.Permission{
+			Code:        p.Code,
+			Description: p.Description,
+		}] = exist
 	}
 
-	return result, nil
+	return rolePermMap, nil
 }
 
-func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
-	permissions, err := s.orgRolePermissionsQ(ctx).Select(ctx)
+func (r Repository) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
+	permissions, err := r.orgRolePermissionsQ(ctx).Select(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch permissions, cause: %w", err)
 	}
 
 	result := make([]models.Permission, len(permissions))
@@ -44,7 +61,7 @@ func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, er
 	return result, nil
 }
 
-func (s Service) SetRolePermissions(
+func (r Repository) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
 	permissions map[string]bool,
@@ -61,18 +78,19 @@ func (s Service) SetRolePermissions(
 	}
 
 	if len(deletePermissions) > 0 {
-		if err := s.orgRolePermissionLinksQ(ctx).
+		err := r.orgRolePermissionLinksQ(ctx).
 			FilterByRoleID(roleID).
 			FilterByPermissionCode(deletePermissions...).
-			Delete(ctx); err != nil {
-			return err
+			Delete(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete role permissions, cause: %w", err)
 		}
 	}
 
 	if len(addPermissions) > 0 {
-		p, err := s.orgRolePermissionsQ(ctx).FilterByCode(addPermissions...).Select(ctx)
+		p, err := r.orgRolePermissionsQ(ctx).FilterByCode(addPermissions...).Select(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to select permissions to add, cause: %w", err)
 		}
 
 		existingPermissionsMap := make([]pgdb.OrganizationRolePermissionLink, len(p))
@@ -82,25 +100,25 @@ func (s Service) SetRolePermissions(
 				PermissionCode: perm.Code,
 			}
 		}
-		if err = s.orgRolePermissionLinksQ(ctx).Insert(ctx, existingPermissionsMap...); err != nil {
-			return err
+		if err = r.orgRolePermissionLinksQ(ctx).Insert(ctx, existingPermissionsMap...); err != nil {
+			return fmt.Errorf("failed to insert role permissions, cause: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func (s Service) CheckMemberHavePermission(
+func (r Repository) CheckMemberHavePermission(
 	ctx context.Context,
 	memberID uuid.UUID,
 	permissionCode string,
 ) (bool, error) {
-	have, err := s.orgMembersQ(ctx).
+	have, err := r.orgMembersQ(ctx).
 		FilterByID(memberID).
 		FilterByPermissionCode(permissionCode).
 		Exists(ctx)
 	if err != nil {
-		return false, fmt.Errorf("checking member have permission: %w", err)
+		return false, fmt.Errorf("failed to check member permission, cause: %w", err)
 	}
 
 	return have, nil

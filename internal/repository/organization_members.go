@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/repository/pgdb"
@@ -13,93 +15,109 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s Service) CreateMember(
+func (r Repository) CreateMember(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := s.orgMembersQ(ctx).Insert(ctx, pgdb.InsertMemberParams{
+	row, err := r.orgMembersQ(ctx).Insert(ctx, pgdb.InsertMemberParams{
 		AccountID:      accountID,
 		OrganizationID: organizationID,
 	})
 	if err != nil {
-		return models.Member{}, err
+		return models.Member{}, fmt.Errorf(
+			"failed to create member for organization ID %s and account ID %s cause: %w",
+			organizationID, accountID, err,
+		)
 	}
 
-	return s.GetMember(ctx, row.ID)
+	return r.GetMember(ctx, row.ID)
 }
 
-func (s Service) UpdateMember(
+func (r Repository) UpdateMember(
 	ctx context.Context, ID uuid.UUID, params member.UpdateParams) (models.Member, error) {
-	q := s.orgMembersQ(ctx).FilterByID(ID)
+	q := r.orgMembersQ(ctx).FilterByID(ID)
 	if params.Position != nil {
 		if *params.Position == "" {
-			q.UpdatePosition(sql.NullString{Valid: false})
+			q.UpdatePosition(pgtype.Text{Valid: false})
 		} else {
-			q = q.UpdatePosition(sql.NullString{String: *params.Position, Valid: true})
+			q = q.UpdatePosition(pgtype.Text{String: *params.Position, Valid: true})
 		}
 	}
 	if params.Label != nil {
 		if *params.Label == "" {
-			q.UpdateLabel(sql.NullString{Valid: false})
+			q.UpdateLabel(pgtype.Text{Valid: false})
 		} else {
-			q = q.UpdateLabel(sql.NullString{String: *params.Label, Valid: true})
+			q = q.UpdateLabel(pgtype.Text{String: *params.Label, Valid: true})
 		}
 	}
 
 	row, err := q.UpdateOne(ctx)
-	if err != nil {
-		return models.Member{}, err
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+			fmt.Errorf("member with ID %s not found, cause: %w", ID, err),
+		)
+	case err != nil:
+		return models.Member{}, fmt.Errorf("failed to updating member with ID %s, cause: %w", ID, err)
 	}
 
-	return s.GetMember(ctx, row.ID)
+	return r.GetMember(ctx, row.ID)
 }
 
-func (s Service) GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
-	row, err := s.orgMembersQ(ctx).FilterByID(memberID).GetWithUserData(ctx)
+func (r Repository) GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
+	row, err := r.orgMembersQ(ctx).FilterByID(memberID).GetWithUserData(ctx)
 	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return models.Member{}, nil
+	case errors.Is(err, pgx.ErrNoRows):
+		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+			fmt.Errorf("member with ID %s not found, cause: %w", memberID, err),
+		)
 	case err != nil:
-		return models.Member{}, fmt.Errorf("getting member by id: %w", err)
+		return models.Member{}, fmt.Errorf("failed to getting member by id: %w", err)
 	}
 
 	return MemberWithUserData(row), nil
 }
 
-func (s Service) GetMemberByAccountAndOrganization(
+func (r Repository) GetMemberByAccountAndOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := s.orgMembersQ(ctx).
+	row, err := r.orgMembersQ(ctx).
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		GetWithUserData(ctx)
-	if err != nil {
-		return models.Member{}, fmt.Errorf("getting member by account and organization: %w", err)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+			fmt.Errorf("member with account ID %s and organization ID %s not found, cause: %w",
+				accountID, organizationID, err),
+		)
+	case err != nil:
+		return models.Member{}, fmt.Errorf("failed to getting member by account ID and organization ID: %w", err)
 	}
 
 	return MemberWithUserData(row), nil
 }
 
-func (s Service) MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error) {
-	exists, err := s.orgMembersQ(ctx).
+func (r Repository) MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error) {
+	exists, err := r.orgMembersQ(ctx).
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		Exists(ctx)
 	if err != nil {
-		return false, fmt.Errorf("checking member exists: %w", err)
+		return false, fmt.Errorf("checking member existence by account ID and organization ID: %w", err)
 	}
 
 	return exists, nil
 }
 
-func (s Service) GetMembers(
+func (r Repository) GetMembers(
 	ctx context.Context,
 	filter member.FilterParams,
 	limit uint,
 	offset uint,
 ) (pagi.Page[[]models.Member], error) {
-	q := s.orgMembersQ(ctx)
+	q := r.orgMembersQ(ctx)
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
 	}
@@ -137,12 +155,16 @@ func (s Service) GetMembers(
 
 	rows, err := q.Page(limit, offset).SelectWithUserData(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Member]{}, fmt.Errorf("filtering members: %w", err)
+		return pagi.Page[[]models.Member]{}, fmt.Errorf(
+			"failed to get members with filter, cause: %w", err,
+		)
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Member]{}, fmt.Errorf("counting members: %w", err)
+		return pagi.Page[[]models.Member]{}, fmt.Errorf(
+			"failed to count members with filter, cause: %w", err,
+		)
 	}
 
 	collection := make([]models.Member, 0, len(rows))
@@ -158,34 +180,55 @@ func (s Service) GetMembers(
 	}, nil
 }
 
-func (s Service) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
-	return s.orgMembersQ(ctx).FilterByID(memberID).Delete(ctx)
-}
-
-func (s Service) DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error {
-	return s.orgMembersQ(ctx).FilterByAccountID(accountID).Delete(ctx)
-}
-
-func (s Service) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
-	res, err := s.orgMembersQ(ctx).CanInteract(ctx, firstMemberID, secondMemberID)
+func (r Repository) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
+	err := r.orgMembersQ(ctx).FilterByID(memberID).Delete(ctx)
 	if err != nil {
-		return false, fmt.Errorf("checking first member can interact: %w", err)
+		return fmt.Errorf("failed to delete member with ID %s cause: %w", memberID, err)
 	}
 
-	return res, nil
+	return nil
 }
 
+func (r Repository) DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error {
+	err := r.orgMembersQ(ctx).FilterByAccountID(accountID).Delete(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete members with account ID %s cause: %w", accountID, err)
+	}
+
+	return nil
+}
+
+//func (s Repository) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
+//	res, err := s.orgMembersQ(ctx).CanInteract(ctx, firstMemberID, secondMemberID)
+//	if err != nil {
+//		return false, fmt.Errorf("checking first member can interact: %w", err)
+//	}
+//
+//	return res, nil
+//}
+
 func MemberWithUserData(db pgdb.OrganizationMemberWithUserData) models.Member {
-	return models.Member{
+	mem := models.Member{
 		ID:             db.ID,
 		AccountID:      db.AccountID,
 		OrganizationID: db.OrganizationID,
-		Position:       db.Position,
-		Label:          db.Label,
 		Username:       db.Username,
-		Pseudonym:      db.Pseudonym,
 		Official:       db.Official,
 		CreatedAt:      db.CreatedAt,
 		UpdatedAt:      db.UpdatedAt,
 	}
+	if db.Pseudonym.Valid {
+		mem.Pseudonym = &db.Pseudonym.String
+	}
+	if db.Icon.Valid {
+		mem.Icon = &db.Icon.String
+	}
+	if db.Position.Valid {
+		mem.Position = &db.Position.String
+	}
+	if db.Label.Valid {
+		mem.Label = &db.Label.String
+	}
+
+	return mem
 }

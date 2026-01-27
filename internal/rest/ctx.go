@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/netbill/restkit/token"
+	"github.com/netbill/restkit/tokens"
 )
 
 type ctxKey int

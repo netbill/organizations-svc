@@ -2,14 +2,12 @@ package pgdb
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/netbill/pgx"
+	"github.com/netbill/pgxtx"
 
 	sq "github.com/Masterminds/squirrel"
 )
@@ -52,7 +50,7 @@ func (r *OrganizationRole) scan(row sq.RowScanner) error {
 }
 
 type OrgRolesQ struct {
-	db       pgx.DBTX
+	db       pgxtx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
 	updater  sq.UpdateBuilder
@@ -60,7 +58,7 @@ type OrgRolesQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewOrgRolesQ(db pgx.DBTX) OrgRolesQ {
+func NewOrgRolesQ(db pgxtx.DBTX) OrgRolesQ {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return OrgRolesQ{
 		db:       db,
@@ -111,7 +109,7 @@ func (q OrgRolesQ) Insert(ctx context.Context, data InsertRoleParams) (Organizat
 	}
 
 	var inserted OrganizationRole
-	if err := inserted.scan(q.db.QueryRowContext(ctx, sqlInsertAtRank, args...)); err != nil {
+	if err := inserted.scan(q.db.QueryRow(ctx, sqlInsertAtRank, args...)); err != nil {
 		return OrganizationRole{}, fmt.Errorf("insert role at rank: %w", err)
 	}
 
@@ -125,13 +123,8 @@ func (q OrgRolesQ) Get(ctx context.Context) (OrganizationRole, error) {
 	}
 
 	var r OrganizationRole
-	if err = r.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return OrganizationRole{}, nil
-		default:
-			return OrganizationRole{}, err
-		}
+	if err = r.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
+		return OrganizationRole{}, err
 	}
 
 	return r, nil
@@ -143,7 +136,7 @@ func (q OrgRolesQ) Select(ctx context.Context) ([]OrganizationRole, error) {
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationRoleTable, err)
 	}
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationRoleTable, err)
 	}
@@ -170,7 +163,7 @@ func (q OrgRolesQ) Delete(ctx context.Context) error {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationRoleTable, err)
 	}
 
-	_, err = q.db.ExecContext(ctx, query, args...)
+	_, err = q.db.Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("executing delete query for %s: %w", OrganizationRoleTable, err)
 	}
@@ -185,7 +178,7 @@ func (q OrgRolesQ) Count(ctx context.Context) (uint, error) {
 	}
 
 	var count uint
-	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&count); err != nil {
+	if err = q.db.QueryRow(ctx, query, args...).Scan(&count); err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", OrganizationRoleTable, err)
 	}
 
@@ -201,7 +194,7 @@ func (q OrgRolesQ) UpdateOne(ctx context.Context) (OrganizationRole, error) {
 	}
 
 	var updated OrganizationRole
-	if err = updated.scan(q.db.QueryRowContext(ctx, query, args...)); err != nil {
+	if err = updated.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
 		return OrganizationRole{}, err
 	}
 
@@ -216,17 +209,12 @@ func (q OrgRolesQ) UpdateMany(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("building update query for %s: %w", OrganizationRoleTable, err)
 	}
 
-	res, err := q.db.ExecContext(ctx, query, args...)
+	res, err := q.db.Exec(ctx, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("executing update query for %s: %w", OrganizationRoleTable, err)
 	}
 
-	aff, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("rows affected for %s: %w", OrganizationRoleTable, err)
-	}
-
-	return aff, nil
+	return res.RowsAffected(), nil
 }
 
 func (q OrgRolesQ) UpdateName(name string) OrgRolesQ {
@@ -352,7 +340,7 @@ func (q OrgRolesQ) Page(limit, offset uint) OrgRolesQ {
 //Special methods to interact with role ranks in organization
 
 func (q OrgRolesQ) DeleteAndShiftRanks(ctx context.Context, roleID uuid.UUID) error {
-	const sqlq = `
+	const query = `
 		WITH del AS (
 			DELETE FROM organization_roles
 			WHERE id = $1
@@ -366,7 +354,7 @@ func (q OrgRolesQ) DeleteAndShiftRanks(ctx context.Context, roleID uuid.UUID) er
 		  AND r.rank > del.rank
 	`
 
-	if _, err := q.db.ExecContext(ctx, sqlq, roleID); err != nil {
+	if _, err := q.db.Exec(ctx, query, roleID); err != nil {
 		return fmt.Errorf("executing delete+shift for %s: %w", OrganizationRoleTable, err)
 	}
 
@@ -383,7 +371,7 @@ func (q OrgRolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank
 			WHERE id = $1
 			LIMIT 1
 		`
-	if err := q.db.QueryRowContext(ctx, sqlGet, roleID).Scan(&aggID, &oldRank); err != nil {
+	if err := q.db.QueryRow(ctx, sqlGet, roleID).Scan(&aggID, &oldRank); err != nil {
 		return OrganizationRole{}, fmt.Errorf("scanning role rank: %w", err)
 	}
 
@@ -413,7 +401,7 @@ func (q OrgRolesQ) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank
 	args := []any{roleID, int(newRank), oldRank, aggID}
 
 	var out OrganizationRole
-	if err := out.scan(q.db.QueryRowContext(ctx, sqlMove, args...)); err != nil {
+	if err := out.scan(q.db.QueryRow(ctx, sqlMove, args...)); err != nil {
 		return OrganizationRole{}, err
 	}
 
@@ -515,7 +503,7 @@ func (q OrgRolesQ) UpdateRolesRanks(
 		ids[i] = id.String()
 	}
 
-	rows, err := q.db.QueryContext(ctx, sqlUpdate, pq.Array(ids), pq.Array(newRanks), organizationID)
+	rows, err := q.db.Query(ctx, sqlUpdate, pq.Array(ids), pq.Array(newRanks), organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("updating roles ranks: %w", err)
 	}

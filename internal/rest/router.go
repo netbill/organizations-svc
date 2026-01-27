@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal"
-	"github.com/netbill/restkit/roles"
+	"github.com/netbill/restkit/tokens/roles"
 )
 
 type Handlers interface {

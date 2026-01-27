@@ -2,13 +2,12 @@ package pgdb
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/pgx"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/netbill/pgxtx"
 
 	sq "github.com/Masterminds/squirrel"
 )
@@ -19,13 +18,13 @@ const OrganizationMemberColumns = "id, account_id, organization_id, position, la
 const OrganizationMemberColumnsM = "m.id, m.account_id, m.organization_id, m.position, m.label, m.created_at, m.updated_at"
 
 type OrganizationMember struct {
-	ID             uuid.UUID `json:"id"`
-	AccountID      uuid.UUID `json:"account_id"`
-	OrganizationID uuid.UUID `json:"organization_id"`
-	Position       *string   `json:"position"`
-	Label          *string   `json:"label"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID             uuid.UUID   `json:"id"`
+	AccountID      uuid.UUID   `json:"account_id"`
+	OrganizationID uuid.UUID   `json:"organization_id"`
+	Position       pgtype.Text `json:"position"`
+	Label          pgtype.Text `json:"label"`
+	CreatedAt      time.Time   `json:"created_at"`
+	UpdatedAt      time.Time   `json:"updated_at"`
 }
 
 func (m *OrganizationMember) scan(row sq.RowScanner) error {
@@ -45,7 +44,7 @@ func (m *OrganizationMember) scan(row sq.RowScanner) error {
 }
 
 type OrgMembersQ struct {
-	db       pgx.DBTX
+	db       pgxtx.DBTX
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
 	updater  sq.UpdateBuilder
@@ -53,7 +52,7 @@ type OrgMembersQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewOrgMembersQ(db pgx.DBTX) OrgMembersQ {
+func NewOrgMembersQ(db pgxtx.DBTX) OrgMembersQ {
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return OrgMembersQ{
 		db:       db,
@@ -84,7 +83,7 @@ func (q OrgMembersQ) Insert(ctx context.Context, data InsertMemberParams) (Organ
 	}
 
 	var inserted OrganizationMember
-	err = inserted.scan(q.db.QueryRowContext(ctx, query, args...))
+	err = inserted.scan(q.db.QueryRow(ctx, query, args...))
 	if err != nil {
 		return OrganizationMember{}, err
 	}
@@ -107,7 +106,7 @@ func (q OrgMembersQ) Exists(ctx context.Context) (bool, error) {
 	}
 
 	var ok bool
-	if err = q.db.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil {
+	if err = q.db.QueryRow(ctx, query, args...).Scan(&ok); err != nil {
 		return false, fmt.Errorf("scanning exists for %s: %w", OrganizationMembersTable, err)
 	}
 
@@ -121,14 +120,9 @@ func (q OrgMembersQ) Get(ctx context.Context) (OrganizationMember, error) {
 	}
 
 	var m OrganizationMember
-	err = m.scan(q.db.QueryRowContext(ctx, query, args...))
+	err = m.scan(q.db.QueryRow(ctx, query, args...))
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
-			return OrganizationMember{}, nil
-		default:
-			return OrganizationMember{}, err
-		}
+		return OrganizationMember{}, err
 	}
 
 	return m, nil
@@ -140,7 +134,7 @@ func (q OrgMembersQ) Select(ctx context.Context) ([]OrganizationMember, error) {
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	rows, err := q.db.QueryContext(ctx, query, args...)
+	rows, err := q.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("executing select query for %s: %w", OrganizationMembersTable, err)
 	}
@@ -210,7 +204,7 @@ func (q OrgMembersQ) UpdateOne(ctx context.Context) (OrganizationMember, error) 
 	}
 
 	var updated OrganizationMember
-	err = updated.scan(q.db.QueryRowContext(ctx, query, args...))
+	err = updated.scan(q.db.QueryRow(ctx, query, args...))
 	if err != nil {
 		return OrganizationMember{}, err
 	}
@@ -226,25 +220,20 @@ func (q OrgMembersQ) UpdateMany(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("building update query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	res, err := q.db.ExecContext(ctx, query, args...)
+	res, err := q.db.Exec(ctx, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("executing update query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("rows affected for %s: %w", OrganizationMembersTable, err)
-	}
-
-	return affected, nil
+	return res.RowsAffected(), nil
 }
 
-func (q OrgMembersQ) UpdatePosition(position sql.NullString) OrgMembersQ {
+func (q OrgMembersQ) UpdatePosition(position pgtype.Text) OrgMembersQ {
 	q.updater = q.updater.Set("position", position)
 	return q
 }
 
-func (q OrgMembersQ) UpdateLabel(label sql.NullString) OrgMembersQ {
+func (q OrgMembersQ) UpdateLabel(label pgtype.Text) OrgMembersQ {
 	q.updater = q.updater.Set("label", label)
 	return q
 }
@@ -255,7 +244,7 @@ func (q OrgMembersQ) Delete(ctx context.Context) error {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationMembersTable, err)
 	}
 
-	_, err = q.db.ExecContext(ctx, query, args...)
+	_, err = q.db.Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("executing delete query for %s: %w", OrganizationMembersTable, err)
 	}
@@ -270,7 +259,7 @@ func (q OrgMembersQ) Count(ctx context.Context) (uint, error) {
 	}
 
 	var count uint
-	err = q.db.QueryRowContext(ctx, query, args...).Scan(&count)
+	err = q.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("scanning count for %s: %w", OrganizationMembersTable, err)
 	}

@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/repository/pgdb"
@@ -12,86 +14,122 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s Service) CreateOrganization(
+func (r Repository) CreateOrganization(
 	ctx context.Context,
 	params organization.CreateParams,
 ) (models.Organization, error) {
-	row, err := s.organizationsQ(ctx).Insert(ctx, pgdb.OrganizationsQInsertInput{
+	row, err := r.organizationsQ(ctx).Insert(ctx, pgdb.OrganizationsQInsertInput{
 		Name: params.Name,
 	})
 	if err != nil {
-		return models.Organization{}, err
+		return models.Organization{}, fmt.Errorf(
+			"failed to create organization, cause: %w", err,
+		)
 	}
 
 	return Organization(row), nil
 }
 
-func (s Service) UpdateOrganization(
+func (r Repository) UpdateOrganization(
 	ctx context.Context,
 	ID uuid.UUID,
 	params organization.UpdateParams,
 ) (models.Organization, error) {
-	q := s.organizationsQ(ctx).FilterByID(ID)
+	q := r.organizationsQ(ctx).FilterByID(ID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
 	}
 
 	row, err := q.UpdateOne(ctx)
-	if err != nil {
-		return models.Organization{}, err
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization with ID %s not found", ID),
+		)
+	case err != nil:
+		return models.Organization{}, fmt.Errorf(
+			"failed to update organization with ID %s, cause: %w", ID, err,
+		)
 	}
 
 	return Organization(row), nil
 }
 
-func (s Service) UpdateOrganizationStatus(
+func (r Repository) UpdateOrganizationStatus(
 	ctx context.Context,
 	ID uuid.UUID,
 	status string,
 ) (models.Organization, error) {
-	row, err := s.organizationsQ(ctx).FilterByID(ID).UpdateStatus(status).UpdateOne(ctx)
-	if err != nil {
-		return models.Organization{}, err
+	row, err := r.organizationsQ(ctx).FilterByID(ID).UpdateStatus(status).UpdateOne(ctx)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization with ID %s not found", ID),
+		)
+	case err != nil:
+		return models.Organization{}, fmt.Errorf(
+			"failed to update organization status with ID %s, cause: %w", ID, err,
+		)
 	}
 
 	return Organization(row), nil
 }
 
-func (s Service) UpdateOrganizationMaxRoles(
+func (r Repository) UpdateOrganizationMaxRoles(
 	ctx context.Context,
 	ID uuid.UUID,
 	maxRoles uint,
 ) (models.Organization, error) {
-	row, err := s.organizationsQ(ctx).FilterByID(ID).UpdateMaxRoles(maxRoles).UpdateOne(ctx)
-	if err != nil {
-		return models.Organization{}, err
-	}
-
-	return Organization(row), nil
-}
-
-func (s Service) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error) {
-	row, err := s.organizationsQ(ctx).FilterByID(ID).Get(ctx)
+	row, err := r.organizationsQ(ctx).FilterByID(ID).UpdateMaxRoles(maxRoles).UpdateOne(ctx)
 	switch {
-	case errors.Is(err, sql.ErrNoRows):
-		return models.Organization{}, nil
+	case errors.Is(err, pgx.ErrNoRows):
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization with ID %s not found", ID),
+		)
 	case err != nil:
-		return models.Organization{}, err
+		return models.Organization{}, fmt.Errorf(
+			"failed to update organization max roles with ID %s, cause: %w", ID, err,
+		)
 	}
 
 	return Organization(row), nil
 }
 
-func (s Service) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
-	return s.organizationsQ(ctx).FilterByID(ID).Delete(ctx)
+func (r Repository) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error) {
+	row, err := r.organizationsQ(ctx).FilterByID(ID).Get(ctx)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization with ID %s not found", ID),
+		)
+	case err != nil:
+		return models.Organization{}, fmt.Errorf(
+			"failed to get organization with ID %s, cause: %w", ID, err,
+		)
+	}
+
+	return Organization(row), nil
 }
 
-func (s Service) GetOrganizations(
+func (r Repository) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
+	err := r.organizationsQ(ctx).FilterByID(ID).Delete(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete organization with ID %s, cause: %w", ID, err)
+	}
+
+	return nil
+}
+
+func (r Repository) GetOrganizations(
 	ctx context.Context,
 	filter organization.FilterParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	q := s.organizationsQ(ctx)
+	if limit == 0 {
+		limit = 10
+	}
+
+	q := r.organizationsQ(ctx)
 	if filter.Name != nil {
 		q = q.FilterNameLike(*filter.Name)
 	}
@@ -99,18 +137,14 @@ func (s Service) GetOrganizations(
 		q = q.FilterByStatus(*filter.Status)
 	}
 
-	if limit == 0 {
-		limit = 10
-	}
-
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, err
+		return pagi.Page[[]models.Organization]{}, fmt.Errorf("failed to get organizations, cause: %w", err)
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, err
+		return pagi.Page[[]models.Organization]{}, fmt.Errorf("failed to count organizations, cause: %w", err)
 	}
 
 	organizations := make([]models.Organization, len(rows))
@@ -127,7 +161,7 @@ func (s Service) GetOrganizations(
 
 }
 
-func (s Service) GetOrganizationsForUser(
+func (r Repository) GetOrganizationsForUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,
@@ -136,14 +170,18 @@ func (s Service) GetOrganizationsForUser(
 		limit = 10
 	}
 
-	row, err := s.organizationsQ(ctx).FilterByAccountID(accountID).Page(limit, offset).Select(ctx)
+	row, err := r.organizationsQ(ctx).FilterByAccountID(accountID).Page(limit, offset).Select(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, err
+		return pagi.Page[[]models.Organization]{}, fmt.Errorf(
+			"failed to get organizations for accountID %s, cause: %w", accountID, err,
+		)
 	}
 
-	total, err := s.organizationsQ(ctx).FilterByAccountID(accountID).Count(ctx)
+	total, err := r.organizationsQ(ctx).FilterByAccountID(accountID).Count(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, err
+		return pagi.Page[[]models.Organization]{}, fmt.Errorf(
+			"failed to count organizations for accountID %s, cause: %w", accountID, err,
+		)
 	}
 
 	organizations := make([]models.Organization, len(row))
