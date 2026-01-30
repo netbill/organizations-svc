@@ -1,44 +1,43 @@
-package pgdb
+package pg
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/netbill/pgxtx"
+	"github.com/jackc/pgx/v5"
+	"github.com/netbill/organizations-svc/internal/repository"
+	"github.com/netbill/pgdbx"
 )
 
 const OrganizationInviteTable = "organization_invites"
 
 const OrganizationInviteColumns = "id, organization_id, account_id, status, expires_at, created_at"
 
-type OrganizationInvite struct {
-	ID             uuid.UUID `json:"id"`
-	OrganizationID uuid.UUID `json:"organization_id"`
-	AccountID      uuid.UUID `json:"account_id,omitempty"`
-	Status         string    `json:"status"`
-	ExpiresAt      time.Time `json:"expires_at"`
-	CreatedAt      time.Time `json:"created_at"`
-}
-
-func (i *OrganizationInvite) scan(row sq.RowScanner) error {
-	if err := row.Scan(
-		&i.ID,
-		&i.OrganizationID,
-		&i.AccountID,
-		&i.Status,
-		&i.ExpiresAt,
-		&i.CreatedAt,
+func scanOrganizationInvite(row sq.RowScanner) (r repository.OrgInviteRow, err error) {
+	if err = row.Scan(
+		&r.ID,
+		&r.OrganizationID,
+		&r.AccountID,
+		&r.Status,
+		&r.ExpiresAt,
+		&r.CreatedAt,
 	); err != nil {
-		return fmt.Errorf("scanning invite: %w", err)
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return repository.OrgInviteRow{}, nil
+		default:
+			return repository.OrgInviteRow{}, fmt.Errorf("scanning invite: %w", err)
+		}
 	}
-	return nil
+	return r, nil
 }
 
-type OrgInvitesQ struct {
-	db       pgxtx.DBTX
+type orgInvites struct {
+	db       *pgdbx.DB
 	selector sq.SelectBuilder
 	inserter sq.InsertBuilder
 	updater  sq.UpdateBuilder
@@ -46,9 +45,9 @@ type OrgInvitesQ struct {
 	counter  sq.SelectBuilder
 }
 
-func NewOrgInvitesQ(db pgxtx.DBTX) OrgInvitesQ {
+func NewOrgInvitesQ(db *pgdbx.DB) repository.OrgInvitesQ {
 	b := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	return OrgInvitesQ{
+	return orgInvites{
 		db:       db,
 		selector: b.Select(OrganizationInviteColumns).From(OrganizationInviteTable),
 		inserter: b.Insert(OrganizationInviteTable),
@@ -58,43 +57,33 @@ func NewOrgInvitesQ(db pgxtx.DBTX) OrgInvitesQ {
 	}
 }
 
-type InsertInviteParams struct {
-	OrganizationID uuid.UUID
-	AccountID      uuid.UUID
-	ExpiresAt      time.Time
+func (q orgInvites) New() repository.OrgInvitesQ {
+	return NewOrgInvitesQ(q.db)
 }
 
-func (q OrgInvitesQ) Insert(ctx context.Context, data InsertInviteParams) (OrganizationInvite, error) {
+func (q orgInvites) Insert(ctx context.Context, data repository.OrgInviteRow) (repository.OrgInviteRow, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"organization_id": data.OrganizationID,
 		"account_id":      data.AccountID,
 		"expires_at":      data.ExpiresAt,
 	}).Suffix("RETURNING " + OrganizationInviteColumns).ToSql()
 	if err != nil {
-		return OrganizationInvite{}, fmt.Errorf("building insert query for %s: %w", OrganizationInviteTable, err)
+		return repository.OrgInviteRow{}, fmt.Errorf("building insert query for %s: %w", OrganizationInviteTable, err)
 	}
 
-	var out OrganizationInvite
-	if err = out.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
-		return OrganizationInvite{}, err
-	}
-	return out, nil
+	return scanOrganizationInvite(q.db.QueryRow(ctx, query, args...))
 }
 
-func (q OrgInvitesQ) Get(ctx context.Context) (OrganizationInvite, error) {
+func (q orgInvites) Get(ctx context.Context) (repository.OrgInviteRow, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return OrganizationInvite{}, fmt.Errorf("building select query for %s: %w", OrganizationInviteTable, err)
+		return repository.OrgInviteRow{}, fmt.Errorf("building select query for %s: %w", OrganizationInviteTable, err)
 	}
 
-	var out OrganizationInvite
-	if err = out.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
-		return OrganizationInvite{}, err
-	}
-	return out, nil
+	return scanOrganizationInvite(q.db.QueryRow(ctx, query, args...))
 }
 
-func (q OrgInvitesQ) Select(ctx context.Context) ([]OrganizationInvite, error) {
+func (q orgInvites) Select(ctx context.Context) ([]repository.OrgInviteRow, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("building select query for %s: %w", OrganizationInviteTable, err)
@@ -106,13 +95,13 @@ func (q OrgInvitesQ) Select(ctx context.Context) ([]OrganizationInvite, error) {
 	}
 	defer rows.Close()
 
-	var out []OrganizationInvite
+	var out []repository.OrgInviteRow
 	for rows.Next() {
-		var i OrganizationInvite
-		if err = i.scan(rows); err != nil {
+		r, err := scanOrganizationInvite(rows)
+		if err != nil {
 			return nil, err
 		}
-		out = append(out, i)
+		out = append(out, r)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
@@ -121,7 +110,7 @@ func (q OrgInvitesQ) Select(ctx context.Context) ([]OrganizationInvite, error) {
 	return out, nil
 }
 
-func (q OrgInvitesQ) FilterByID(id uuid.UUID) OrgInvitesQ {
+func (q orgInvites) FilterByID(id uuid.UUID) repository.OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"id": id})
 	q.counter = q.counter.Where(sq.Eq{"id": id})
 	q.updater = q.updater.Where(sq.Eq{"id": id})
@@ -129,7 +118,7 @@ func (q OrgInvitesQ) FilterByID(id uuid.UUID) OrgInvitesQ {
 	return q
 }
 
-func (q OrgInvitesQ) FilterByOrganizationID(id uuid.UUID) OrgInvitesQ {
+func (q orgInvites) FilterByOrganizationID(id uuid.UUID) repository.OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"organization_id": id})
 	q.counter = q.counter.Where(sq.Eq{"organization_id": id})
 	q.updater = q.updater.Where(sq.Eq{"organization_id": id})
@@ -137,7 +126,7 @@ func (q OrgInvitesQ) FilterByOrganizationID(id uuid.UUID) OrgInvitesQ {
 	return q
 }
 
-func (q OrgInvitesQ) FilterByAccountID(id uuid.UUID) OrgInvitesQ {
+func (q orgInvites) FilterByAccountID(id uuid.UUID) repository.OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"account_id": id})
 	q.counter = q.counter.Where(sq.Eq{"account_id": id})
 	q.updater = q.updater.Where(sq.Eq{"account_id": id})
@@ -145,7 +134,7 @@ func (q OrgInvitesQ) FilterByAccountID(id uuid.UUID) OrgInvitesQ {
 	return q
 }
 
-func (q OrgInvitesQ) FilterByStatus(status string) OrgInvitesQ {
+func (q orgInvites) FilterByStatus(status string) repository.OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"status": status})
 	q.counter = q.counter.Where(sq.Eq{"status": status})
 	q.updater = q.updater.Where(sq.Eq{"status": status})
@@ -153,7 +142,7 @@ func (q OrgInvitesQ) FilterByStatus(status string) OrgInvitesQ {
 	return q
 }
 
-func (q OrgInvitesQ) FilterExpiresBefore(t time.Time) OrgInvitesQ {
+func (q orgInvites) FilterExpiresBefore(t time.Time) repository.OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Lt{"expires_at": t})
 	q.counter = q.counter.Where(sq.Lt{"expires_at": t})
 	q.updater = q.updater.Where(sq.Lt{"expires_at": t})
@@ -161,7 +150,7 @@ func (q OrgInvitesQ) FilterExpiresBefore(t time.Time) OrgInvitesQ {
 	return q
 }
 
-func (q OrgInvitesQ) FilterExpiresAfter(t time.Time) OrgInvitesQ {
+func (q orgInvites) FilterExpiresAfter(t time.Time) repository.OrgInvitesQ {
 	q.selector = q.selector.Where(sq.GtOrEq{"expires_at": t})
 	q.counter = q.counter.Where(sq.GtOrEq{"expires_at": t})
 	q.updater = q.updater.Where(sq.GtOrEq{"expires_at": t})
@@ -169,20 +158,16 @@ func (q OrgInvitesQ) FilterExpiresAfter(t time.Time) OrgInvitesQ {
 	return q
 }
 
-func (q OrgInvitesQ) UpdateOne(ctx context.Context) (OrganizationInvite, error) {
+func (q orgInvites) UpdateOne(ctx context.Context) (repository.OrgInviteRow, error) {
 	query, args, err := q.updater.Suffix("RETURNING " + OrganizationInviteColumns).ToSql()
 	if err != nil {
-		return OrganizationInvite{}, fmt.Errorf("building update query for %s: %w", OrganizationInviteTable, err)
+		return repository.OrgInviteRow{}, fmt.Errorf("building update query for %s: %w", OrganizationInviteTable, err)
 	}
 
-	var out OrganizationInvite
-	if err = out.scan(q.db.QueryRow(ctx, query, args...)); err != nil {
-		return OrganizationInvite{}, err
-	}
-	return out, nil
+	return scanOrganizationInvite(q.db.QueryRow(ctx, query, args...))
 }
 
-func (q OrgInvitesQ) UpdateMany(ctx context.Context) (int64, error) {
+func (q orgInvites) UpdateMany(ctx context.Context) (int64, error) {
 	query, args, err := q.updater.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building update query for %s: %w", OrganizationInviteTable, err)
@@ -196,17 +181,17 @@ func (q OrgInvitesQ) UpdateMany(ctx context.Context) (int64, error) {
 	return tag.RowsAffected(), nil
 }
 
-func (q OrgInvitesQ) UpdateStatus(status string) OrgInvitesQ {
+func (q orgInvites) UpdateStatus(status string) repository.OrgInvitesQ {
 	q.updater = q.updater.Set("status", status)
 	return q
 }
 
-func (q OrgInvitesQ) UpdateExpiresAt(t time.Time) OrgInvitesQ {
+func (q orgInvites) UpdateExpiresAt(t time.Time) repository.OrgInvitesQ {
 	q.updater = q.updater.Set("expires_at", t)
 	return q
 }
 
-func (q OrgInvitesQ) Count(ctx context.Context) (uint, error) {
+func (q orgInvites) Count(ctx context.Context) (uint, error) {
 	query, args, err := q.counter.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("building count query for %s: %w", OrganizationInviteTable, err)
@@ -219,12 +204,12 @@ func (q OrgInvitesQ) Count(ctx context.Context) (uint, error) {
 	return n, nil
 }
 
-func (q OrgInvitesQ) Page(limit uint, offset uint) OrgInvitesQ {
+func (q orgInvites) Page(limit uint, offset uint) repository.OrgInvitesQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }
 
-func (q OrgInvitesQ) Delete(ctx context.Context) error {
+func (q orgInvites) Delete(ctx context.Context) error {
 	query, args, err := q.deleter.ToSql()
 	if err != nil {
 		return fmt.Errorf("building delete query for %s: %w", OrganizationInviteTable, err)

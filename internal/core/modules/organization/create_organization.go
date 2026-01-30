@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
@@ -21,16 +20,12 @@ func (s Service) CreateOrganization(
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		org, err = s.repo.CreateOrganization(ctx, params)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to create organization: %w", err),
-			)
+			return fmt.Errorf("failed to create organization, cause: %w", err)
 		}
 
 		err = s.messenger.WriteOrganizationCreated(ctx, org)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to publish organization create event: %w", err),
-			)
+			return fmt.Errorf("failed to publish organization create event, cause: %w", err)
 		}
 
 		role, err := s.createRoleHead(ctx, org.ID)
@@ -50,32 +45,27 @@ func (s Service) CreateOrganization(
 	return org, err
 }
 
-func (s Service) createRoleHead(ctx context.Context, organizationID uuid.UUID) (role models.Role, err error) {
+func (s Service) createRoleHead(
+	ctx context.Context,
+	organizationID uuid.UUID,
+) (role models.Role, err error) {
 	role, err = s.repo.CreateHeadRole(ctx, organizationID)
 	if err != nil {
-		return models.Role{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to create role: %w", err),
-		)
+		return models.Role{}, fmt.Errorf("failed to create role, cause: %w", err)
 	}
 
 	err = s.messenger.WriteOrgRoleCreated(ctx, role)
 	if err != nil {
-		return models.Role{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to publish role create event: %w", err),
-		)
+		return models.Role{}, fmt.Errorf("failed to publish role create event, cause: %w", err)
 	}
 
 	per, err := s.repo.GetRolePermissions(ctx, role.ID)
 	if err != nil {
-		return models.Role{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get role permissions: %w", err),
-		)
+		return models.Role{}, fmt.Errorf("failed to get role permissions, cause: %w", err)
 	}
 
 	if err = s.messenger.WriteOrgRolePermissionsUpdated(ctx, role, per); err != nil {
-		return models.Role{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to publish role permissions updated event: %w", err),
-		)
+		return models.Role{}, fmt.Errorf("failed to publish role permissions updated event, cause: %w", err)
 	}
 
 	return role, nil
@@ -89,23 +79,17 @@ func (s Service) createMemberHead(
 ) (member models.Member, err error) {
 	member, err = s.repo.CreateMember(ctx, accountID, organizationID)
 	if err != nil {
-		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to create member: %w", err),
-		)
+		return models.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
 	}
 
 	err = s.repo.AddMemberRole(ctx, member.ID, roleID)
 	if err != nil {
-		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to assign head role to member: %w", err),
-		)
+		return models.Member{}, fmt.Errorf("failed to assign head role to member, cause: %w", err)
 	}
 
 	err = s.messenger.WriteOrgMemberCreated(ctx, member)
 	if err != nil {
-		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to publish member create event: %w", err),
-		)
+		return models.Member{}, fmt.Errorf("failed to publish member create event, cause: %w", err)
 	}
 
 	return member, nil

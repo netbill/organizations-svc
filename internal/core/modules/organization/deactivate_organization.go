@@ -18,13 +18,13 @@ func (s Service) DeactivateOrganization(
 	if err != nil {
 		return models.Organization{}, err
 	}
-
-	initiator, err := s.getInitiator(ctx, accountID, organizationID)
-	if err != nil {
-		return models.Organization{}, err
+	if org.IsNil() {
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization %s is not found", organizationID),
+		)
 	}
 
-	err = s.chekPermissionForManageOrganization(ctx, initiator.ID)
+	err = s.chekPermissionForManageOrganization(ctx, accountID, org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -32,17 +32,13 @@ func (s Service) DeactivateOrganization(
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		org, err = s.repo.UpdateOrganizationStatus(ctx, organizationID, models.OrganizationStatusInactive)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to deactivate organization: %w", err),
-			)
+			return fmt.Errorf("failed to deactivate organization, cause: %w", err)
 		}
 
 		//TODO clean organization
-
 		err = s.messenger.WriteOrganizationDeactivated(ctx, org)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to publish organization deactivate event: %w", err))
+			return fmt.Errorf("failed to publish organization deactivate event, cause: %w", err)
 		}
 
 		return nil

@@ -6,19 +6,19 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.1
+	github.com/aws/smithy-go v1.24.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/lib/pq v1.10.9
 	github.com/netbill/ape v0.1.1
-	github.com/netbill/awsx v0.1.6
-	github.com/netbill/evebox v0.4.0
+	github.com/netbill/awsx v0.1.7
+	github.com/netbill/evebox v0.5.0
 	github.com/netbill/logium v0.1.1
 	github.com/netbill/pagi v0.1.2
-	github.com/netbill/pgxtx v0.2.0
-	github.com/netbill/profiles-svc v0.0.0-20260126000604-4660aa6775a6
-	github.com/netbill/restkit v0.1.11
+	github.com/netbill/pgdbx v0.3.1
+	github.com/netbill/restkit v0.1.12
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v1.8.1
 	github.com/segmentio/kafka-go v0.4.49
@@ -38,7 +38,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.17 // indirect
-	github.com/aws/smithy-go v1.24.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect

@@ -35,16 +35,12 @@ func (s Service) DeleteOrganization(ctx context.Context, accountID, ID uuid.UUID
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		err = s.repo.DeleteOrganization(ctx, ID)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to delete organization: %w", err),
-			)
+			return fmt.Errorf("failed to delete organization: %w", err)
 		}
 
 		err = s.messenger.WriteOrganizationDeleted(ctx, organization)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to publish organization delete event: %w", err),
-			)
+			return fmt.Errorf("failed to publish organization delete event: %w", err)
 		}
 
 		return nil

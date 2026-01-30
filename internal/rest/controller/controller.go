@@ -176,7 +176,7 @@ type core struct {
 
 type Controller struct {
 	core core
-	log  logium.Logger
+	log  *logium.Logger
 }
 
 func New(
@@ -184,7 +184,7 @@ func New(
 	memberSvc memberSvc,
 	roleSvc roleSvc,
 	inviteSvc inviteSvc,
-	log logium.Logger,
+	log *logium.Logger,
 ) Controller {
 	return Controller{
 		core: core{

@@ -1,20 +1,19 @@
 package outbound
 
 import (
-	"database/sql"
-
 	"github.com/netbill/evebox/box/outbox"
 	"github.com/netbill/logium"
+	"github.com/netbill/pgdbx"
 )
 
 type Outbound struct {
-	log    logium.Logger
+	log    *logium.Logger
 	outbox outbox.Box
 }
 
-func New(log logium.Logger, db *sql.DB) *Outbound {
+func New(log *logium.Logger, pool *pgdbx.DB) *Outbound {
 	return &Outbound{
 		log:    log,
-		outbox: outbox.New(db),
+		outbox: outbox.New(pool),
 	}
 }

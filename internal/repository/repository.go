@@ -2,52 +2,75 @@ package repository
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
-	"github.com/netbill/pgxtx"
 )
 
 type Repository struct {
-	pool *pgxpool.Pool
+	Transactioner
+	OrganizationsSql          OrganizationsQ
+	OrgMembersSql             OrgMembersQ
+	OrgMemberRolesSql         OrgMemberRolesQ
+	OrgRolesSql               OrgRolesQ
+	OrgRolePermissionLinksSql OrgRolePermissionLinksQ
+	OrgRolePermissionsSql     OrgRolePermissionsQ
+	OrgInvitesSql             OrgInvitesQ
+	ProfilesSql               ProfilesQ
 }
 
-func New(pool *pgxpool.Pool) Repository {
-	return Repository{pool: pool}
+type Transactioner interface {
+	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
-func (r Repository) organizationsQ(ctx context.Context) pgdb.OrganizationsQ {
-	return pgdb.NewOrganizationsQ(pgxtx.Exec(r.pool, ctx))
+func New(
+	transactioner Transactioner,
+	OrganizationsSql OrganizationsQ,
+	OrgMembersSql OrgMembersQ,
+	OrgMemberRolesSql OrgMemberRolesQ,
+	OrgRolesSql OrgRolesQ,
+	OrgRolePermissionLinksSql OrgRolePermissionLinksQ,
+	OrgRolePermissionsSql OrgRolePermissionsQ,
+	OrgInvitesSql OrgInvitesQ,
+	ProfilesSql ProfilesQ,
+) Repository {
+	return Repository{
+		Transactioner:             transactioner,
+		OrganizationsSql:          OrganizationsSql,
+		OrgMembersSql:             OrgMembersSql,
+		OrgMemberRolesSql:         OrgMemberRolesSql,
+		OrgRolesSql:               OrgRolesSql,
+		OrgRolePermissionLinksSql: OrgRolePermissionLinksSql,
+		OrgRolePermissionsSql:     OrgRolePermissionsSql,
+		OrgInvitesSql:             OrgInvitesSql,
+		ProfilesSql:               ProfilesSql,
+	}
+}
+func (r Repository) organizationsQ() OrganizationsQ {
+	return r.OrganizationsSql.New()
 }
 
-func (r Repository) orgMembersQ(ctx context.Context) pgdb.OrgMembersQ {
-	return pgdb.NewOrgMembersQ(pgxtx.Exec(r.pool, ctx))
+func (r Repository) orgMembersQ() OrgMembersQ {
+	return r.OrgMembersSql.New()
 }
 
-func (r Repository) orgMemberRolesQ(ctx context.Context) pgdb.OrgMemberRolesQ {
-	return pgdb.NewOrgMemberRolesQ(pgxtx.Exec(r.pool, ctx))
+func (r Repository) orgMemberRolesQ() OrgMemberRolesQ {
+	return r.OrgMemberRolesSql.New()
 }
 
-func (r Repository) orgRolesQ(ctx context.Context) pgdb.OrgRolesQ {
-	return pgdb.NewOrgRolesQ(pgxtx.Exec(r.pool, ctx))
+func (r Repository) orgRolesQ() OrgRolesQ {
+	return r.OrgRolesSql.New()
 }
 
-func (r Repository) orgRolePermissionLinksQ(ctx context.Context) pgdb.OrgRolePermissionLinksQ {
-	return pgdb.NewOrgRolePermissionLinksQ(pgxtx.Exec(r.pool, ctx))
+func (r Repository) orgRolePermissionLinksQ() OrgRolePermissionLinksQ {
+	return r.OrgRolePermissionLinksSql.New()
 }
 
-func (r Repository) orgRolePermissionsQ(ctx context.Context) pgdb.OrgRolePermissionsQ {
-	return pgdb.NewOrgRolePermissionsQ(pgxtx.Exec(r.pool, ctx))
+func (r Repository) orgRolePermissionsQ() OrgRolePermissionsQ {
+	return r.OrgRolePermissionsSql.New()
 }
 
-func (r Repository) orgInvitesQ(ctx context.Context) pgdb.OrgInvitesQ {
-	return pgdb.NewOrgInvitesQ(pgxtx.Exec(r.pool, ctx))
+func (r Repository) orgInvitesQ() OrgInvitesQ {
+	return r.OrgInvitesSql.New()
 }
 
-func (r Repository) profilesQ(ctx context.Context) pgdb.ProfilesQ {
-	return pgdb.NewProfilesQ(pgxtx.Exec(r.pool, ctx))
-}
-
-func (r Repository) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return pgxtx.Transaction(r.pool, ctx, fn)
+func (r Repository) profilesQ() ProfilesQ {
+	return r.ProfilesSql.New()
 }

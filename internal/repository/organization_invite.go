@@ -2,23 +2,68 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 	"github.com/netbill/pagi"
 )
+
+type OrgInviteRow struct {
+	ID             uuid.UUID `db:"id"`
+	OrganizationID uuid.UUID `db:"organization_id"`
+	AccountID      uuid.UUID `db:"account_id,omitempty"`
+	Status         string    `db:"status"`
+	ExpiresAt      time.Time `db:"expires_at"`
+	CreatedAt      time.Time `db:"created_at"`
+}
+
+func (r OrgInviteRow) IsNil() bool {
+	return r.ID == uuid.Nil
+}
+
+func (r OrgInviteRow) ToModel() models.Invite {
+	return models.Invite{
+		ID:             r.ID,
+		OrganizationID: r.OrganizationID,
+		AccountID:      r.AccountID,
+		Status:         r.Status,
+		ExpiresAt:      r.ExpiresAt,
+		CreatedAt:      r.CreatedAt,
+	}
+}
+
+type OrgInvitesQ interface {
+	New() OrgInvitesQ
+	Insert(ctx context.Context, input OrgInviteRow) (OrgInviteRow, error)
+
+	Get(ctx context.Context) (OrgInviteRow, error)
+	Select(ctx context.Context) ([]OrgInviteRow, error)
+
+	UpdateMany(ctx context.Context) (int64, error)
+	UpdateOne(ctx context.Context) (OrgInviteRow, error)
+
+	UpdateStatus(status string) OrgInvitesQ
+
+	FilterByID(id uuid.UUID) OrgInvitesQ
+	FilterByOrganizationID(organizationID uuid.UUID) OrgInvitesQ
+	FilterByAccountID(accountID uuid.UUID) OrgInvitesQ
+
+	Page(limit, offset uint) OrgInvitesQ
+
+	Delete(ctx context.Context) error
+	Count(ctx context.Context) (uint, error)
+}
 
 func (r Repository) CreateInvite(
 	ctx context.Context,
 	params invite.CreateParams,
 ) (models.Invite, error) {
-	row, err := r.orgInvitesQ(ctx).Insert(ctx, pgdb.InsertInviteParams{
+	row, err := r.orgInvitesQ().Insert(ctx, OrgInviteRow{
 		OrganizationID: params.OrganizationID,
 		AccountID:      params.AccountID,
 		ExpiresAt:      params.ExpiresAt,
@@ -30,24 +75,24 @@ func (r Repository) CreateInvite(
 		)
 	}
 
-	return Invite(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) GetInvite(
 	ctx context.Context,
 	id uuid.UUID,
 ) (models.Invite, error) {
-	row, err := r.orgInvitesQ(ctx).FilterByID(id).Get(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	row, err := r.orgInvitesQ().FilterByID(id).Get(ctx)
+	if err != nil {
+		return models.Invite{}, fmt.Errorf("failed to get invite with ID %s, cause: %w", id, err)
+	}
+	if row.IsNil() {
 		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
-			fmt.Errorf("invite with ID %s not found, cause: %w", id, err),
+			fmt.Errorf("invite with ID %s not found", id),
 		)
-	case err != nil:
-		return models.Invite{}, fmt.Errorf("failed to get invite with ID %s cause: %w", id, err)
 	}
 
-	return Invite(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) UpdateInviteStatus(
@@ -55,26 +100,26 @@ func (r Repository) UpdateInviteStatus(
 	id uuid.UUID,
 	status string,
 ) (models.Invite, error) {
-	row, err := r.orgInvitesQ(ctx).FilterByID(id).UpdateStatus(status).UpdateOne(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	row, err := r.orgInvitesQ().FilterByID(id).UpdateStatus(status).UpdateOne(ctx)
+	if err != nil {
+		return models.Invite{}, fmt.Errorf("failed to update invite with ID %s, cause: %w", id, err)
+	}
+	if row.IsNil() {
 		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
-			fmt.Errorf("invite with ID %s not found: %w", id, err),
+			fmt.Errorf("invite with ID %s not found", id),
 		)
-	case err != nil:
-		return models.Invite{}, fmt.Errorf("failed to update invite with ID %s cause: %w", id, err)
 	}
 
-	return Invite(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) DeleteInvite(
 	ctx context.Context,
 	ID uuid.UUID,
 ) error {
-	err := r.orgInvitesQ(ctx).FilterByID(ID).Delete(ctx)
+	err := r.orgInvitesQ().FilterByID(ID).Delete(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to delete invite with ID %s cause: %w", ID, err)
+		return fmt.Errorf("failed to delete invite with ID %s, cause: %w", ID, err)
 	}
 
 	return nil
@@ -89,30 +134,28 @@ func (r Repository) GetOrganizationInvites(
 		limit = 10
 	}
 
-	rows, err := r.orgInvitesQ(ctx).
+	rows, err := r.orgInvitesQ().
 		FilterByOrganizationID(organizationID).
 		Page(limit, offset).
 		Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
-			"failed to get invites for organization ID %s, cause: %w",
-			organizationID, err,
+			"failed to get invites for organization ID %s, cause: %w", organizationID, err,
 		)
 	}
 
-	total, err := r.orgInvitesQ(ctx).
+	total, err := r.orgInvitesQ().
 		FilterByOrganizationID(organizationID).
 		Count(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
-			"failed to count invites for organization ID %s, cause: %w",
-			organizationID, err,
+			"failed to count invites for organization ID %s, cause: %w", organizationID, err,
 		)
 	}
 
 	res := make([]models.Invite, 0, len(rows))
 	for _, row := range rows {
-		res = append(res, Invite(row))
+		res = append(res, row.ToModel())
 	}
 
 	return pagi.Page[[]models.Invite]{
@@ -132,30 +175,28 @@ func (r Repository) GetAccountInvites(
 		limit = 10
 	}
 
-	rows, err := r.orgInvitesQ(ctx).
+	rows, err := r.orgInvitesQ().
 		FilterByAccountID(accountID).
 		Page(limit, offset).
 		Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
-			"failed to get invites for account ID %s, cause: %w",
-			accountID, err,
+			"failed to get invites for account ID %s, cause: %w", accountID, err,
 		)
 	}
 
-	total, err := r.orgInvitesQ(ctx).
+	total, err := r.orgInvitesQ().
 		FilterByAccountID(accountID).
 		Count(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
-			"failed to count invites for account ID %s, cause: %w",
-			accountID, err,
+			"failed to count invites for account ID %s, cause: %w", accountID, err,
 		)
 	}
 
 	res := make([]models.Invite, 0, len(rows))
 	for _, row := range rows {
-		res = append(res, Invite(row))
+		res = append(res, row.ToModel())
 	}
 
 	return pagi.Page[[]models.Invite]{
@@ -164,15 +205,4 @@ func (r Repository) GetAccountInvites(
 		Size:  uint(len(res)),
 		Total: total,
 	}, nil
-}
-
-func Invite(row pgdb.OrganizationInvite) models.Invite {
-	return models.Invite{
-		ID:             row.ID,
-		OrganizationID: row.OrganizationID,
-		AccountID:      row.AccountID,
-		Status:         row.Status,
-		ExpiresAt:      row.ExpiresAt,
-		CreatedAt:      row.CreatedAt,
-	}
 }

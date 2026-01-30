@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/netbill/ape"
 	"github.com/netbill/evebox/box/inbox"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 )
@@ -27,17 +27,17 @@ func (i Inbound) ProfileUpdated(
 		Pseudonym: payload.Pseudonym,
 		UpdatedAt: payload.UpdatedAt,
 	}); err != nil {
-		switch {
-		case errors.Is(err, errx.ErrorInternal):
+		var ae *ape.Error
+		if errors.As(err, &ae) {
 			i.log.Errorf(
 				"failed to upsert profile due to internal error, key: %s, id: %s, error: %v",
 				event.Key, event.ID, err,
 			)
 			return inbox.EventStatusPending
-		default:
-			i.log.Errorf("failed to upsert profile, key: %s, id: %s, error: %v", event.Key, event.ID, err)
-			return inbox.EventStatusFailed
 		}
+
+		i.log.Errorf("failed to upsert profile, key: %s, id: %s, error: %v", event.Key, event.ID, err)
+		return inbox.EventStatusFailed
 	}
 
 	return inbox.EventStatusProcessed

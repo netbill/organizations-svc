@@ -12,6 +12,8 @@ import (
 
 type Service struct {
 	repo      repo
+	bucket    bucket
+	token     token
 	messenger messanger
 }
 
@@ -20,6 +22,12 @@ func New(repo repo, messenger messanger) Service {
 		repo:      repo,
 		messenger: messenger,
 	}
+}
+
+type RepoUpdateOrganizationParams struct {
+	Name   *string
+	Icon   *string
+	Banner *string
 }
 
 type repo interface {
@@ -90,18 +98,105 @@ type messanger interface {
 	) error
 }
 
+type bucket interface {
+	GeneratePreloadLinkForUpdateOrganizationIcon(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (uploadLink, getLink string, err error)
+
+	GeneratePreloadLinkForUpdateOrganizationBanner(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (uploadLink, getLink string, err error)
+
+	GetContentLengthForOrganizationIcon(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (int64, error)
+
+	GetContentLengthForOrganizationBanner(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (int64, error)
+
+	ValidateOrganizationIconSize(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (bool, error)
+
+	ValidateOrganizationBannerSize(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (bool, error)
+
+	GetLoadedOrganizationIcon(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (data []byte, err error)
+
+	GetLoadedOrganizationBanner(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (data []byte, err error)
+
+	ValidateOrganizationIconFormat(
+		ctx context.Context,
+		imageData []byte,
+	) (bool, error)
+
+	ValidateOrganizationBannerFormat(
+		ctx context.Context,
+		imageData []byte,
+	) (bool, error)
+
+	ValidateOrganizationIconContentType(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (bool, error)
+
+	ValidateOrganizationBannerContentType(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (bool, error)
+
+	AcceptUpdateOrganizationMedia(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (icon *string, banner *string, err error)
+}
+
+type token interface {
+	NewUploadOrganizationMediaToken(
+		accountID uuid.UUID,
+		organizationID uuid.UUID,
+		uploadSessionID uuid.UUID,
+	) (string, error)
+}
+
 func (s Service) chekPermissionForManageOrganization(
 	ctx context.Context,
-	memberID uuid.UUID,
+	accountID, organizationID uuid.UUID,
 ) error {
+	member, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+	if err != nil {
+		return fmt.Errorf(
+			"failed to get member with account id %s and organization id %s: %w",
+			accountID, organizationID, err,
+		)
+	}
+	if member.IsNil() {
+		return fmt.Errorf(
+			"member with account id %s and organization id %s not found", accountID, organizationID,
+		)
+	}
+
 	access, err := s.repo.CheckMemberHavePermission(
 		ctx,
-		memberID,
+		member.ID,
 		models.RolePermissionManageOrganization,
 	)
 	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to check initiator permissions: %w", err))
+		return err
 	}
 	if !access {
 		return errx.ErrorNotEnoughRights.Raise(
@@ -110,21 +205,4 @@ func (s Service) chekPermissionForManageOrganization(
 	}
 
 	return nil
-}
-
-func (s Service) getInitiator(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error) {
-	row, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
-	if err != nil {
-		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get member with account id %s and organization id %s: %w",
-				accountID, organizationID, err),
-		)
-	}
-	if row.IsNil() {
-		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member with account id %s and organization id %s not found", accountID, organizationID),
-		)
-	}
-
-	return row, nil
 }

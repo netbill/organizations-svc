@@ -2,19 +2,69 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 )
 
+type ProfileRow struct {
+	AccountID uuid.UUID `db:"account_id"`
+	Username  string    `db:"username"`
+	Official  bool      `db:"official"`
+
+	Pseudonym *string `db:"pseudonym,omitempty"`
+	Avatar    *string `db:"avatar,omitempty"`
+
+	SourceCreatedAt  time.Time `db:"source_created_at"`
+	SourceUpdatedAt  time.Time `db:"source_updated_at"`
+	ReplicaCreatedAt time.Time `db:"replica_created_at"`
+	ReplicaUpdatedAt time.Time `db:"replica_updated_at"`
+}
+
+func (r ProfileRow) IsNil() bool {
+	return r.AccountID == uuid.Nil
+}
+
+func (r ProfileRow) ToModel() models.Profile {
+	return models.Profile{
+		AccountID: r.AccountID,
+		Username:  r.Username,
+		Official:  r.Official,
+		Pseudonym: r.Pseudonym,
+		Avatar:    r.Avatar,
+		CreatedAt: r.SourceCreatedAt,
+		UpdatedAt: r.SourceUpdatedAt,
+	}
+}
+
+type ProfilesQ interface {
+	New() ProfilesQ
+	Insert(ctx context.Context, input ProfileRow) (ProfileRow, error)
+
+	Get(ctx context.Context) (ProfileRow, error)
+	Select(ctx context.Context) ([]ProfileRow, error)
+
+	UpdateMany(ctx context.Context) (int64, error)
+	UpdateOne(ctx context.Context) (ProfileRow, error)
+
+	UpdateUsername(username string) ProfilesQ
+	UpdateOfficial(official bool) ProfilesQ
+	UpdatePseudonym(v *string) ProfilesQ
+	UpdateSourceUpdatedAt(v time.Time) ProfilesQ
+
+	FilterByAccountID(accountID ...uuid.UUID) ProfilesQ
+	FilterByUsername(username string) ProfilesQ
+
+	Delete(ctx context.Context) error
+}
+
 func (r Repository) CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
-	row, err := r.profilesQ(ctx).Insert(ctx, pgdb.ProfileInsertInput{
+	row, err := r.profilesQ().Insert(ctx, ProfileRow{
 		AccountID:       profile.AccountID,
 		Username:        profile.Username,
 		Official:        profile.Official,
@@ -26,80 +76,57 @@ func (r Repository) CreateProfile(ctx context.Context, profile models.Profile) (
 		return models.Profile{}, fmt.Errorf("failed to create profile, cause: %w", err)
 	}
 
-	return Profile(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) UpdateProfile(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error) {
-	row, err := r.profilesQ(ctx).
+	row, err := r.profilesQ().
 		FilterByAccountID(accountID).
 		UpdateUsername(params.Username).
 		UpdateOfficial(params.Official).
 		UpdatePseudonym(params.Pseudonym).
 		UpdateSourceUpdatedAt(params.UpdatedAt).
 		UpdateOne(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
-		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
-			fmt.Errorf("profile with accountID %s not found", accountID),
-		)
-	case err != nil:
-		return models.Profile{}, fmt.Errorf("failed to update profile with accountID %s, cause: %w", accountID, err)
+	if err != nil {
+		return models.Profile{}, fmt.Errorf("failed to update profile, cause: %w", err)
 	}
 
-	return Profile(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (models.Profile, error) {
-	row, err := r.profilesQ(ctx).FilterByAccountID(accountID).Get(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	row, err := r.profilesQ().FilterByAccountID(accountID).Get(ctx)
+	if err != nil {
+		return models.Profile{}, fmt.Errorf("failed to get profile by account ID, cause: %w", err)
+	}
+	if row.IsNil() {
 		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
-			fmt.Errorf("profile with accountID %s not found", accountID),
+			fmt.Errorf("profile with account ID %s not found", accountID),
 		)
-	case err != nil:
-		return models.Profile{}, fmt.Errorf("failed to get profile with accountID %s, cause: %w", accountID, err)
 	}
 
-	return Profile(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) GetProfileByUsername(ctx context.Context, username string) (models.Profile, error) {
-	row, err := r.profilesQ(ctx).FilterByUsername(username).Get(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	row, err := r.profilesQ().FilterByUsername(username).Get(ctx)
+	if err != nil {
+		return models.Profile{}, fmt.Errorf("failed to get profile by username, cause: %w", err)
+	}
+	if row.IsNil() {
 		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
 			fmt.Errorf("profile with username %s not found", username),
 		)
-	case err != nil:
-		return models.Profile{}, fmt.Errorf("failed to get profile with username %s, cause: %w", username, err)
 	}
 
-	return Profile(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) DeleteProfileByAccountID(ctx context.Context, accountID uuid.UUID) error {
-	err := r.profilesQ(ctx).FilterByAccountID(accountID).Delete(ctx)
+	err := r.profilesQ().FilterByAccountID(accountID).Delete(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to delete profile with accountID %s, cause: %w", accountID, err)
+		return fmt.Errorf("failed to delete profile by account ID, cause: %w", err)
 	}
 
 	return nil
-}
-
-func Profile(row pgdb.Profile) models.Profile {
-	res := models.Profile{
-		AccountID: row.AccountID,
-		Username:  row.Username,
-		Official:  row.Official,
-		CreatedAt: row.SourceCreatedAt,
-		UpdatedAt: row.SourceUpdatedAt,
-	}
-	if row.Pseudonym.Valid {
-		res.Pseudonym = &row.Pseudonym.String
-	}
-	if row.Avatar.Valid {
-		res.Avatar = &row.Avatar.String
-	}
-
-	return res
 }

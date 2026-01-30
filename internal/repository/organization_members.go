@@ -3,31 +3,100 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/pkg/errors"
+
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 	"github.com/netbill/pagi"
-	"github.com/pkg/errors"
 )
+
+type OrganizationMemberRow struct {
+	ID             uuid.UUID `db:"id"`
+	AccountID      uuid.UUID `db:"account_id"`
+	OrganizationID uuid.UUID `db:"organization_id"`
+	Position       *string   `db:"position,omitempty"`
+	Label          *string   `db:"label,omitempty"`
+	CreatedAt      time.Time `db:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at"`
+}
+
+func (r OrganizationMemberRow) IsNil() bool {
+	return r.ID == uuid.Nil
+}
+
+type OrganizationMemberWithProfileDataRow struct {
+	OrganizationMemberRow
+	Username  string  `db:"username"`
+	Official  bool    `db:"official"`
+	Pseudonym *string `db:"pseudonym,omitempty"`
+	Icon      *string `db:"icon,omitempty"`
+}
+
+func (r OrganizationMemberWithProfileDataRow) IsNil() bool {
+	return r.ID == uuid.Nil
+}
+
+func (r OrganizationMemberWithProfileDataRow) ToModel() models.Member {
+	return models.Member{
+		ID:             r.ID,
+		AccountID:      r.AccountID,
+		OrganizationID: r.OrganizationID,
+		Position:       r.Position,
+		Label:          r.Label,
+		Username:       r.Username,
+		Official:       r.Official,
+		Pseudonym:      r.Pseudonym,
+		Icon:           r.Icon,
+		CreatedAt:      r.CreatedAt,
+		UpdatedAt:      r.UpdatedAt,
+	}
+}
+
+type OrgMembersQ interface {
+	New() OrgMembersQ
+	Insert(ctx context.Context, params OrganizationMemberRow) (OrganizationMemberRow, error)
+
+	FilterByID(id uuid.UUID) OrgMembersQ
+	FilterByAccountID(accountID uuid.UUID) OrgMembersQ
+	FilterByOrganizationID(organizationID uuid.UUID) OrgMembersQ
+	FilterByUsername(username string) OrgMembersQ
+	FilterLikeUsername(username string) OrgMembersQ
+	FilterRoleID(roleID uuid.UUID) OrgMembersQ
+	FilterByPermissionCode(permissionCode string) OrgMembersQ
+	FilterByRoleRankUp(rank uint) OrgMembersQ
+	FilterByRoleRankDown(rank uint) OrgMembersQ
+	FilterLikeLabel(label string) OrgMembersQ
+	FilterLikePosition(position string) OrgMembersQ
+
+	UpdatePosition(position *string) OrgMembersQ
+	UpdateLabel(label *string) OrgMembersQ
+	UpdateOne(ctx context.Context) (OrganizationMemberRow, error)
+	UpdateMany(ctx context.Context) (int64, error)
+
+	GetWithUserData(ctx context.Context) (OrganizationMemberWithProfileDataRow, error)
+	SelectWithUserData(ctx context.Context) ([]OrganizationMemberWithProfileDataRow, error)
+
+	Page(limit, offset uint) OrgMembersQ
+	Count(ctx context.Context) (uint, error)
+	Exists(ctx context.Context) (bool, error)
+	Delete(ctx context.Context) error
+}
 
 func (r Repository) CreateMember(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := r.orgMembersQ(ctx).Insert(ctx, pgdb.InsertMemberParams{
+	row, err := r.orgMembersQ().Insert(ctx, OrganizationMemberRow{
 		AccountID:      accountID,
 		OrganizationID: organizationID,
 	})
 	if err != nil {
-		return models.Member{}, fmt.Errorf(
-			"failed to create member for organization ID %s and account ID %s cause: %w",
-			organizationID, accountID, err,
-		)
+		return models.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
 	}
 
 	return r.GetMember(ctx, row.ID)
@@ -35,77 +104,64 @@ func (r Repository) CreateMember(
 
 func (r Repository) UpdateMember(
 	ctx context.Context, ID uuid.UUID, params member.UpdateParams) (models.Member, error) {
-	q := r.orgMembersQ(ctx).FilterByID(ID)
-	if params.Position != nil {
-		if *params.Position == "" {
-			q.UpdatePosition(pgtype.Text{Valid: false})
-		} else {
-			q = q.UpdatePosition(pgtype.Text{String: *params.Position, Valid: true})
-		}
+	row, err := r.orgMembersQ().
+		FilterByID(ID).
+		UpdatePosition(params.Position).
+		UpdateLabel(params.Label).
+		UpdateOne(ctx)
+	if err != nil {
+		return models.Member{}, fmt.Errorf("failed to update member, cause: %w", err)
 	}
-	if params.Label != nil {
-		if *params.Label == "" {
-			q.UpdateLabel(pgtype.Text{Valid: false})
-		} else {
-			q = q.UpdateLabel(pgtype.Text{String: *params.Label, Valid: true})
-		}
-	}
-
-	row, err := q.UpdateOne(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	if row.IsNil() {
 		return models.Member{}, errx.ErrorMemberNotFound.Raise(
-			fmt.Errorf("member with ID %s not found, cause: %w", ID, err),
+			fmt.Errorf("member with ID %s not found", ID),
 		)
-	case err != nil:
-		return models.Member{}, fmt.Errorf("failed to updating member with ID %s, cause: %w", ID, err)
 	}
 
 	return r.GetMember(ctx, row.ID)
 }
 
 func (r Repository) GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
-	row, err := r.orgMembersQ(ctx).FilterByID(memberID).GetWithUserData(ctx)
+	row, err := r.orgMembersQ().FilterByID(memberID).GetWithUserData(ctx)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		return models.Member{}, errx.ErrorMemberNotFound.Raise(
-			fmt.Errorf("member with ID %s not found, cause: %w", memberID, err),
+			fmt.Errorf("member with ID %s not found", memberID),
 		)
 	case err != nil:
-		return models.Member{}, fmt.Errorf("failed to getting member by id: %w", err)
+		return models.Member{}, fmt.Errorf("failed to getting member by id, cause: %w", err)
 	}
 
-	return MemberWithUserData(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) GetMemberByAccountAndOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := r.orgMembersQ(ctx).
+	row, err := r.orgMembersQ().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		GetWithUserData(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	if err != nil {
+		return models.Member{}, fmt.Errorf("failed to get member, cause: %w", err)
+	}
+	if row.IsNil() {
 		return models.Member{}, errx.ErrorMemberNotFound.Raise(
-			fmt.Errorf("member with account ID %s and organization ID %s not found, cause: %w",
-				accountID, organizationID, err),
+			fmt.Errorf("member with account ID %s and organization ID %s not found", accountID, organizationID),
 		)
-	case err != nil:
-		return models.Member{}, fmt.Errorf("failed to getting member by account ID and organization ID: %w", err)
 	}
 
-	return MemberWithUserData(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error) {
-	exists, err := r.orgMembersQ(ctx).
+	exists, err := r.orgMembersQ().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		Exists(ctx)
 	if err != nil {
-		return false, fmt.Errorf("checking member existence by account ID and organization ID: %w", err)
+		return false, fmt.Errorf("failed to check member existence, cause: %w", err)
 	}
 
 	return exists, nil
@@ -117,7 +173,7 @@ func (r Repository) GetMembers(
 	limit uint,
 	offset uint,
 ) (pagi.Page[[]models.Member], error) {
-	q := r.orgMembersQ(ctx)
+	q := r.orgMembersQ()
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
 	}
@@ -155,21 +211,17 @@ func (r Repository) GetMembers(
 
 	rows, err := q.Page(limit, offset).SelectWithUserData(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Member]{}, fmt.Errorf(
-			"failed to get members with filter, cause: %w", err,
-		)
+		return pagi.Page[[]models.Member]{}, fmt.Errorf("failed to get members, cause: %w", err)
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Member]{}, fmt.Errorf(
-			"failed to count members with filter, cause: %w", err,
-		)
+		return pagi.Page[[]models.Member]{}, fmt.Errorf("failed to count members, cause: %w", err)
 	}
 
 	collection := make([]models.Member, 0, len(rows))
 	for _, row := range rows {
-		collection = append(collection, MemberWithUserData(row))
+		collection = append(collection, row.ToModel())
 	}
 
 	return pagi.Page[[]models.Member]{
@@ -181,54 +233,19 @@ func (r Repository) GetMembers(
 }
 
 func (r Repository) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
-	err := r.orgMembersQ(ctx).FilterByID(memberID).Delete(ctx)
+	err := r.orgMembersQ().FilterByID(memberID).Delete(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to delete member with ID %s cause: %w", memberID, err)
+		return fmt.Errorf("failed to delete member with ID %s, cause: %w", memberID, err)
 	}
 
 	return nil
 }
 
 func (r Repository) DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error {
-	err := r.orgMembersQ(ctx).FilterByAccountID(accountID).Delete(ctx)
+	err := r.orgMembersQ().FilterByAccountID(accountID).Delete(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to delete members with account ID %s cause: %w", accountID, err)
+		return fmt.Errorf("failed to delete members with account ID %s, cause: %w", accountID, err)
 	}
 
 	return nil
-}
-
-//func (s Repository) CanInteract(ctx context.Context, firstMemberID, secondMemberID uuid.UUID) (bool, error) {
-//	res, err := s.orgMembersQ(ctx).CanInteract(ctx, firstMemberID, secondMemberID)
-//	if err != nil {
-//		return false, fmt.Errorf("checking first member can interact: %w", err)
-//	}
-//
-//	return res, nil
-//}
-
-func MemberWithUserData(db pgdb.OrganizationMemberWithUserData) models.Member {
-	mem := models.Member{
-		ID:             db.ID,
-		AccountID:      db.AccountID,
-		OrganizationID: db.OrganizationID,
-		Username:       db.Username,
-		Official:       db.Official,
-		CreatedAt:      db.CreatedAt,
-		UpdatedAt:      db.UpdatedAt,
-	}
-	if db.Pseudonym.Valid {
-		mem.Pseudonym = &db.Pseudonym.String
-	}
-	if db.Icon.Valid {
-		mem.Icon = &db.Icon.String
-	}
-	if db.Position.Valid {
-		mem.Position = &db.Position.String
-	}
-	if db.Label.Valid {
-		mem.Label = &db.Label.String
-	}
-
-	return mem
 }

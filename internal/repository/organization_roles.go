@@ -2,20 +2,85 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/repository/pgdb"
 	"github.com/netbill/pagi"
 )
 
+type OrganizationRoleRow struct {
+	ID             uuid.UUID `json:"id"`
+	OrganizationID uuid.UUID `json:"organization_id"`
+	Head           bool      `json:"head"`
+	Rank           uint      `json:"rank"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	Color          string    `json:"color"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (r OrganizationRoleRow) IsNil() bool {
+	return r.ID == uuid.Nil
+}
+
+func (r OrganizationRoleRow) ToModel() models.Role {
+	return models.Role{
+		ID:             r.ID,
+		OrganizationID: r.OrganizationID,
+		Head:           r.Head,
+		Rank:           r.Rank,
+		Name:           r.Name,
+		Description:    r.Description,
+		Color:          r.Color,
+		CreatedAt:      r.CreatedAt,
+		UpdatedAt:      r.UpdatedAt,
+	}
+}
+
+type OrgRolesQ interface {
+	New() OrgRolesQ
+	Insert(ctx context.Context, input OrganizationRoleRow) (OrganizationRoleRow, error)
+
+	FilterByID(id ...uuid.UUID) OrgRolesQ
+	FilterByOrganizationID(organizationID uuid.UUID) OrgRolesQ
+	FilterByAccountID(accountID uuid.UUID) OrgRolesQ
+	FilterByMemberID(memberID uuid.UUID) OrgRolesQ
+	FilterHead(head bool) OrgRolesQ
+	FilterByRank(rank int) OrgRolesQ
+	FilterLikeName(name string) OrgRolesQ
+
+	Get(ctx context.Context) (OrganizationRoleRow, error)
+	Select(ctx context.Context) ([]OrganizationRoleRow, error)
+
+	UpdateMany(ctx context.Context) (int64, error)
+	UpdateOne(ctx context.Context) (OrganizationRoleRow, error)
+
+	UpdateName(name string) OrgRolesQ
+	UpdateDescription(description string) OrgRolesQ
+	UpdateColor(color string) OrgRolesQ
+
+	OrderByRoleRank(asc bool) OrgRolesQ
+	Page(limit, offset uint) OrgRolesQ
+
+	DeleteAndShiftRanks(ctx context.Context, roleID uuid.UUID) error
+	UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (OrganizationRoleRow, error)
+	UpdateRolesRanks(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		order map[uuid.UUID]uint,
+	) ([]OrganizationRoleRow, error)
+
+	Count(ctx context.Context) (uint, error)
+}
+
 func (r Repository) CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error) {
-	row, err := r.orgRolesQ(ctx).Insert(ctx, pgdb.InsertRoleParams{
+	row, err := r.orgRolesQ().Insert(ctx, OrganizationRoleRow{
 		OrganizationID: params.OrganizationID,
 		Rank:           params.Rank,
 		Name:           params.Name,
@@ -23,17 +88,14 @@ func (r Repository) CreateRole(ctx context.Context, params role.CreateParams) (m
 		Color:          params.Color,
 	})
 	if err != nil {
-		return models.Role{}, fmt.Errorf(
-			"failed to create role for organization ID %s cause: %w",
-			params.OrganizationID, err,
-		)
+		return models.Role{}, fmt.Errorf("failed to create role, cause: %w", err)
 	}
 
-	return Role(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (models.Role, error) {
-	row, err := r.orgRolesQ(ctx).Insert(ctx, pgdb.InsertRoleParams{
+	row, err := r.orgRolesQ().Insert(ctx, OrganizationRoleRow{
 		OrganizationID: organizationID,
 		Head:           true,
 		Rank:           1,
@@ -42,29 +104,24 @@ func (r Repository) CreateHeadRole(ctx context.Context, organizationID uuid.UUID
 		Color:          "#000000",
 	})
 	if err != nil {
-		return models.Role{}, fmt.Errorf(
-			"failed to create head role for organization ID %s cause: %w",
-			organizationID, err,
-		)
+		return models.Role{}, fmt.Errorf("failed to create head role, cause: %w", err)
 	}
 
-	return Role(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
-	row, err := r.orgRolesQ(ctx).FilterByID(roleID).Get(ctx)
+	row, err := r.orgRolesQ().FilterByID(roleID).Get(ctx)
 	if err != nil {
-		switch {
-		case errors.Is(err, pgx.ErrNoRows):
-			return models.Role{}, errx.ErrorRoleNotFound.Raise(
-				fmt.Errorf("role with ID %s not found, cause: %w", roleID, err),
-			)
-		default:
-			return models.Role{}, fmt.Errorf("failed to get role with ID %s cause: %w", roleID, err)
-		}
+		return models.Role{}, fmt.Errorf("failed to get role, cause: %w", err)
+	}
+	if row.IsNil() {
+		return models.Role{}, errx.ErrorRoleNotFound.Raise(
+			fmt.Errorf("role with ID %s not found", roleID),
+		)
 	}
 
-	return Role(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) GetRoles(
@@ -72,7 +129,7 @@ func (r Repository) GetRoles(
 	filter role.FilterParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Role], error) {
-	q := r.orgRolesQ(ctx)
+	q := r.orgRolesQ()
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
 	}
@@ -105,7 +162,7 @@ func (r Repository) GetRoles(
 
 	collection := make([]models.Role, 0, len(rows))
 	for _, row := range rows {
-		collection = append(collection, Role(row))
+		collection = append(collection, row.ToModel())
 	}
 
 	return pagi.Page[[]models.Role]{
@@ -117,7 +174,7 @@ func (r Repository) GetRoles(
 }
 
 func (r Repository) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (models.Role, error) {
-	q := r.orgRolesQ(ctx).FilterByID(roleID)
+	q := r.orgRolesQ().FilterByID(roleID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
 	}
@@ -129,30 +186,30 @@ func (r Repository) UpdateRole(ctx context.Context, roleID uuid.UUID, params rol
 	}
 
 	row, err := q.UpdateOne(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	if err != nil {
+		return models.Role{}, fmt.Errorf("failed to update role, cause: %w", err)
+	}
+	if row.IsNil() {
 		return models.Role{}, errx.ErrorRoleNotFound.Raise(
-			fmt.Errorf("role with ID %s not found, cause: %w", roleID, err),
+			fmt.Errorf("role with ID %s not found", roleID),
 		)
-	case err != nil:
-		return models.Role{}, fmt.Errorf("failed to update role with ID %s cause: %w", roleID, err)
 	}
 
-	return Role(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (models.Role, error) {
-	row, err := r.orgRolesQ(ctx).UpdateRoleRank(ctx, roleID, newRank)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	row, err := r.orgRolesQ().UpdateRoleRank(ctx, roleID, newRank)
+	if err != nil {
+		return models.Role{}, fmt.Errorf("failed to update role rank, cause: %w", err)
+	}
+	if row.IsNil() {
 		return models.Role{}, errx.ErrorRoleNotFound.Raise(
-			fmt.Errorf("role with ID %s not found, cause: %w", roleID, err),
+			fmt.Errorf("role with ID %s not found", roleID),
 		)
-	case err != nil:
-		return models.Role{}, fmt.Errorf("failed to update rank for role with ID %s cause: %w", roleID, err)
 	}
 
-	return Role(row), nil
+	return row.ToModel(), nil
 }
 
 func (r Repository) UpdateRolesRanks(
@@ -160,18 +217,18 @@ func (r Repository) UpdateRolesRanks(
 	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
-	_, err := r.orgRolesQ(ctx).UpdateRolesRanks(ctx, organizationID, order)
+	_, err := r.orgRolesQ().UpdateRolesRanks(ctx, organizationID, order)
 	if err != nil {
-		return fmt.Errorf("failed to update roles ranks for organization ID %s cause: %w", organizationID, err)
+		return fmt.Errorf("failed to update roles ranks, cause: %w", err)
 	}
 
 	return nil
 }
 
 func (r Repository) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
-	err := r.orgRolesQ(ctx).DeleteAndShiftRanks(ctx, roleID)
+	err := r.orgRolesQ().DeleteAndShiftRanks(ctx, roleID)
 	if err != nil {
-		return fmt.Errorf("failed to delete role with ID %s cause: %w", roleID, err)
+		return fmt.Errorf("failed to delete role, cause: %w", err)
 	}
 
 	return nil
@@ -181,32 +238,18 @@ func (r Repository) GetMemberMaxRole(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Role, error) {
-	res, err := r.orgRolesQ(ctx).
+	row, err := r.orgRolesQ().
 		FilterByMemberID(memberID).
 		OrderByRoleRank(false). // DESC => max
 		Get(ctx)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
+	if err != nil {
+		return models.Role{}, fmt.Errorf("failed to get member max role, cause: %w", err)
+	}
+	if row.IsNil() {
 		return models.Role{}, errx.ErrorRoleNotFound.Raise(
-			fmt.Errorf("no roles found for member ID %s, cause: %w", memberID, err),
+			fmt.Errorf("no roles found for member with ID %s", memberID),
 		)
-	case err != nil:
-		return models.Role{}, fmt.Errorf("failed to get max role for member ID %s, cause: %w", memberID, err)
 	}
 
-	return Role(res), nil
-}
-
-func Role(r pgdb.OrganizationRole) models.Role {
-	return models.Role{
-		ID:             r.ID,
-		OrganizationID: r.OrganizationID,
-		Head:           r.Head,
-		Rank:           r.Rank,
-		Name:           r.Name,
-		Description:    r.Description,
-		Color:          r.Color,
-		CreatedAt:      r.CreatedAt,
-		UpdatedAt:      r.UpdatedAt,
-	}
+	return row.ToModel(), nil
 }

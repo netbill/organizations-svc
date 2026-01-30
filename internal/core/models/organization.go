@@ -26,3 +26,11 @@ type Organization struct {
 func (e Organization) IsNil() bool {
 	return e.ID == uuid.Nil
 }
+
+type OrganizationUploadMediaLinks struct {
+	IconUploadLink   string `json:"icon_upload_link"`
+	IconGetLink      string `json:"icon_get_link"`
+	BannerUploadLink string `json:"banner_upload_link"`
+	BannerGetLink    string `json:"banner_get_link"`
+	UploadToken      string `json:"upload_token"`
+}

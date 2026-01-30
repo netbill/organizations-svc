@@ -3,6 +3,7 @@ package outbound
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (p Outbound) WriteOrgInviteCreated(
+func (o Outbound) WriteOrgInviteCreated(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -25,10 +26,10 @@ func (p Outbound) WriteOrgInviteCreated(
 		ExpiresAt:      invite.ExpiresAt,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal org invite created payload, cause: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -44,10 +45,14 @@ func (p Outbound) WriteOrgInviteCreated(
 		},
 	)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for org invite created, cause: %w", err)
+	}
+
+	return nil
 }
 
-func (p Outbound) WriteOrgInviteAccepted(
+func (o Outbound) WriteOrgInviteAccepted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -56,10 +61,10 @@ func (p Outbound) WriteOrgInviteAccepted(
 		AcceptedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal org invite accepted payload, cause: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -74,11 +79,14 @@ func (p Outbound) WriteOrgInviteAccepted(
 			},
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for org invite accepted, cause: %w", err)
+	}
 
-	return err
+	return nil
 }
 
-func (p Outbound) WriteOrgInviteDeclined(
+func (o Outbound) WriteOrgInviteDeclined(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -87,10 +95,10 @@ func (p Outbound) WriteOrgInviteDeclined(
 		DeclinedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal org invite declined payload, cause: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -105,11 +113,14 @@ func (p Outbound) WriteOrgInviteDeclined(
 			},
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for org invite declined, cause: %w", err)
+	}
 
-	return err
+	return nil
 }
 
-func (p Outbound) WriteOrgInviteDeleted(
+func (o Outbound) WriteOrgInviteDeleted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -118,10 +129,10 @@ func (p Outbound) WriteOrgInviteDeleted(
 		DeletedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal org invite deleted payload, cause: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -136,6 +147,9 @@ func (p Outbound) WriteOrgInviteDeleted(
 			},
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for org invite deleted, cause: %w", err)
+	}
 
-	return err
+	return nil
 }

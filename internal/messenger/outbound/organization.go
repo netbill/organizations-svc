@@ -3,6 +3,7 @@ package outbound
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (p Outbound) WriteOrganizationCreated(
+func (o Outbound) WriteOrganizationCreated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -24,10 +25,10 @@ func (p Outbound) WriteOrganizationCreated(
 		CreatedAt:      organization.CreatedAt,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal organization created payload: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -42,11 +43,14 @@ func (p Outbound) WriteOrganizationCreated(
 			},
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for organization created: %w", err)
+	}
 
-	return err
+	return nil
 }
 
-func (p Outbound) WriteOrganizationUpdated(
+func (o Outbound) WriteOrganizationUpdated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -58,10 +62,10 @@ func (p Outbound) WriteOrganizationUpdated(
 		UpdatedAt:      organization.UpdatedAt,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal organization updated payload: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -76,11 +80,14 @@ func (p Outbound) WriteOrganizationUpdated(
 			},
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for organization updated: %w", err)
+	}
 
-	return err
+	return nil
 }
 
-func (p Outbound) WriteOrganizationDeleted(
+func (o Outbound) WriteOrganizationDeleted(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -89,10 +96,10 @@ func (p Outbound) WriteOrganizationDeleted(
 		DeletedAt:      time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal organization deleted payload: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -107,11 +114,14 @@ func (p Outbound) WriteOrganizationDeleted(
 			},
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for organization deleted: %w", err)
+	}
 
-	return err
+	return nil
 }
 
-func (p Outbound) WriteOrganizationActivated(
+func (o Outbound) WriteOrganizationActivated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -120,10 +130,10 @@ func (p Outbound) WriteOrganizationActivated(
 		ActivatedAt:    organization.UpdatedAt,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal organization activated payload: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -138,11 +148,14 @@ func (p Outbound) WriteOrganizationActivated(
 			},
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for organization activated: %w", err)
+	}
 
-	return err
+	return nil
 }
 
-func (p Outbound) WriteOrganizationDeactivated(
+func (o Outbound) WriteOrganizationDeactivated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -151,10 +164,10 @@ func (p Outbound) WriteOrganizationDeactivated(
 		DeactivatedAt:  organization.UpdatedAt,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal organization deactivated payload: %w", err)
 	}
 
-	_, err = p.outbox.CreateOutboxEvent(
+	_, err = o.outbox.CreateOutboxEvent(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrganizationsTopicV1,
@@ -169,6 +182,9 @@ func (p Outbound) WriteOrganizationDeactivated(
 			},
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create outbox event for organization deactivated: %w", err)
+	}
 
-	return err
+	return nil
 }

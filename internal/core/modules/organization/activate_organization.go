@@ -17,13 +17,13 @@ func (s Service) ActivateOrganization(
 	if err != nil {
 		return models.Organization{}, err
 	}
-
-	initiator, err := s.getInitiator(ctx, accountID, organizationID)
-	if err != nil {
-		return models.Organization{}, err
+	if org.IsNil() {
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization %s is not found", organizationID),
+		)
 	}
 
-	err = s.chekPermissionForManageOrganization(ctx, initiator.ID)
+	err = s.chekPermissionForManageOrganization(ctx, accountID, org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -31,14 +31,12 @@ func (s Service) ActivateOrganization(
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		org, err = s.repo.UpdateOrganizationStatus(ctx, organizationID, models.OrganizationStatusActive)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to activate organization: %w", err))
+			return fmt.Errorf("failed to activate organization, cause: %w", err)
 		}
 
 		err = s.messenger.WriteOrganizationActivated(ctx, org)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to publish organization activated event: %w", err))
+			return fmt.Errorf("failed to publish organization activated event, cause: %w", err)
 		}
 
 		return nil
