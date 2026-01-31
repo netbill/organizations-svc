@@ -10,13 +10,13 @@ import (
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 func (c Controller) GetOrganizationInvites(w http.ResponseWriter, r *http.Request) {
-	initiator, err := rest.AccountData(r)
+	initiator, err := middlewares.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
@@ -37,7 +37,7 @@ func (c Controller) GetOrganizationInvites(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	res, err := c.core.GetOrganizationInvites(r.Context(), initiator.ID, organizationID, limit, offset)
+	res, err := c.core.GetOrganizationInvites(r.Context(), initiator.AccountID, organizationID, limit, offset)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get organization invites")
 		switch {

@@ -2,25 +2,16 @@ package role
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 func (s Service) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
 	role, err := s.repo.GetRole(ctx, roleID)
 	if err != nil {
-		return models.Role{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get role: %w", err),
-		)
-	}
-	if role.IsNil() {
-		return models.Role{}, errx.ErrorRoleNotFound.Raise(
-			fmt.Errorf("role not found: %s", roleID),
-		)
+		return models.Role{}, err
 	}
 
 	return role, nil
@@ -39,9 +30,7 @@ func (s Service) GetRoleWithPermissions(ctx context.Context, accountID, roleID u
 
 	permissions, err := s.repo.GetRolePermissions(ctx, roleID)
 	if err != nil {
-		return models.Role{}, nil, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get role permissions: %w", err),
-		)
+		return models.Role{}, nil, err
 	}
 
 	return role, permissions, nil
@@ -62,9 +51,7 @@ func (s Service) GetRoles(
 ) (pagi.Page[[]models.Role], error) {
 	res, err := s.repo.GetRoles(ctx, params, limit, offset)
 	if err != nil {
-		return pagi.Page[[]models.Role]{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to filter roles: %w", err),
-		)
+		return pagi.Page[[]models.Role]{}, err
 	}
 
 	return res, nil

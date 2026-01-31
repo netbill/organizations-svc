@@ -8,6 +8,7 @@ import (
 	"github.com/netbill/evebox/box/inbox"
 	"github.com/netbill/evebox/consumer"
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
+	"github.com/segmentio/kafka-go"
 )
 
 type handlers interface {
@@ -35,30 +36,49 @@ func (m Messenger) RunConsumer(ctx context.Context, handlers handlers) {
 		}()
 	}
 
-	profileConsumer := consumer.New(m.log, m.db, "profiles-svc-profile-consumer", consumer.OnUnknownDoNothing, m.addr...)
+	profileConsumer := consumer.New(
+		consumer.NewConsumerParams{
+			Log:  m.log,
+			DB:   m.db,
+			Name: "profiles-svc-profile-consumer",
+			Addr: m.addr,
+			OnUnknown: func(ctx context.Context, m kafka.Message, eventType string) error {
+				return nil
+			},
+		},
+	)
 
 	profileConsumer.Handle(contracts.ProfileCreatedEvent, handlers.ProfileCreated)
 	profileConsumer.Handle(contracts.ProfileDeletedEvent, handlers.ProfileDeleted)
 	profileConsumer.Handle(contracts.ProfileUpdatedEvent, handlers.ProfileUpdated)
 
-	inboxer1 := consumer.NewInboxer(m.log, m.db, consumer.ConfigInboxer{
-		Name:       "profiles-svc-inbox-worker-1",
-		BatchSize:  10,
-		RetryDelay: 1 * time.Minute,
-		MinSleep:   100 * time.Millisecond,
-		MaxSleep:   1 * time.Second,
-	})
+	inboxer1 := consumer.NewInboxer(
+		consumer.NewInboxerParams{
+			Log:        m.log,
+			Pool:       m.db,
+			Name:       "profiles-svc-inbox-worker-1",
+			BatchSize:  10,
+			RetryDelay: 1 * time.Minute,
+			MinSleep:   100 * time.Millisecond,
+			MaxSleep:   1 * time.Second,
+		},
+	)
 	inboxer1.Handle(contracts.ProfileCreatedEvent, handlers.ProfileCreated)
 	inboxer1.Handle(contracts.ProfileDeletedEvent, handlers.ProfileDeleted)
 	inboxer1.Handle(contracts.ProfileUpdatedEvent, handlers.ProfileUpdated)
 
-	inboxer2 := consumer.NewInboxer(m.log, m.db, consumer.ConfigInboxer{
-		Name:       "profiles-svc-inbox-worker-2",
-		BatchSize:  10,
-		RetryDelay: 1 * time.Minute,
-		MinSleep:   100 * time.Millisecond,
-		MaxSleep:   1 * time.Second,
-	})
+	inboxer2 := consumer.NewInboxer(
+		consumer.NewInboxerParams{
+			Log:        m.log,
+			Pool:       m.db,
+			Name:       "profiles-svc-inbox-worker-2",
+			BatchSize:  10,
+			RetryDelay: 1 * time.Minute,
+			MinSleep:   100 * time.Millisecond,
+			MaxSleep:   1 * time.Second,
+		},
+	)
+
 	inboxer2.Handle(contracts.ProfileCreatedEvent, handlers.ProfileCreated)
 	inboxer2.Handle(contracts.ProfileDeletedEvent, handlers.ProfileDeleted)
 	inboxer2.Handle(contracts.ProfileUpdatedEvent, handlers.ProfileUpdated)

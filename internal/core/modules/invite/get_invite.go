@@ -2,55 +2,37 @@ package invite
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
-func (s Service) getInvite(ctx context.Context, ID uuid.UUID) (models.Invite, error) {
-	res, err := s.repo.GetInvite(ctx, ID)
-	if err != nil {
-		return models.Invite{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get invite by ID %s: %w", ID.String(), err),
-		)
-	}
-	if res.IsNil() {
-		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
-			fmt.Errorf("invite with ID %s not found", ID.String()),
-		)
-	}
-
-	return res, nil
-}
-
-func (s Service) GetInvite(
+func (s Service) GetInviteForAccount(
 	ctx context.Context,
 	accountID, ID uuid.UUID,
 ) (models.Invite, error) {
-	res, err := s.getInvite(ctx, ID)
+	res, err := s.repo.GetInvite(ctx, ID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
 	if res.AccountID != accountID {
-		member, err := s.repo.GetMemberByAccountAndOrganization(
+		_, err = s.repo.GetMemberByAccountAndOrganization(
 			ctx,
 			accountID,
 			res.OrganizationID,
 		)
 		if err != nil {
-			return models.Invite{}, errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to get member by account %s and organization %s: %w",
-					accountID.String(), res.OrganizationID.String(), err),
-			)
-		}
-		if member.IsNil() {
-			return models.Invite{}, errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("account is not a member of the organization"),
-			)
+			if errors.Is(err, errx.ErrorMemberNotFound) {
+				return models.Invite{}, errx.ErrorInviteNotFound.Raise(
+					fmt.Errorf("account has no rights to view this invite"),
+				)
+			}
+			return models.Invite{}, err
 		}
 	}
 
@@ -69,9 +51,7 @@ func (s Service) GetOrganizationInvites(
 
 	res, err := s.repo.GetOrganizationInvites(ctx, organizationID, limit, offset)
 	if err != nil {
-		return pagi.Page[[]models.Invite]{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get organization invites: %w", err),
-		)
+		return pagi.Page[[]models.Invite]{}, err
 	}
 
 	return res, nil
@@ -84,9 +64,7 @@ func (s Service) GetAccountInvites(
 ) (pagi.Page[[]models.Invite], error) {
 	res, err := s.repo.GetAccountInvites(ctx, accountID, limit, offset)
 	if err != nil {
-		return pagi.Page[[]models.Invite]{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get account invites: %w", err),
-		)
+		return pagi.Page[[]models.Invite]{}, err
 	}
 
 	return res, nil

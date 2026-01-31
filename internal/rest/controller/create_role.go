@@ -8,7 +8,7 @@ import (
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
@@ -21,14 +21,14 @@ func (c Controller) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	initiator, err := rest.AccountData(r)
+	initiator, err := middlewares.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
-	res, err := c.core.CreateRole(r.Context(), initiator.ID, role.CreateParams{
+	res, err := c.core.CreateRole(r.Context(), initiator.AccountID, role.CreateParams{
 		OrganizationID: req.Data.Attributes.OrganizationId,
 		Name:           req.Data.Attributes.Name,
 		Rank:           req.Data.Attributes.Rank,

@@ -8,20 +8,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 func (s Service) GetMemberByID(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
 	row, err := s.repo.GetMember(ctx, memberID)
 	if err != nil {
-		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get member with id %s: %w", memberID, err),
-		)
-	}
-	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
-			fmt.Errorf("member with id %s not found", memberID),
-		)
+		return models.Member{}, err
 	}
 
 	return row, nil
@@ -33,15 +26,7 @@ func (s Service) GetMemberByAccountAndOrganization(
 ) (models.Member, error) {
 	row, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
-		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get member with account id %s and organization id %s: %w",
-				accountID, organizationID, err),
-		)
-	}
-	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
-			fmt.Errorf("member with account id %s and organization id %s not found", accountID, organizationID),
-		)
+		return models.Member{}, err
 	}
 
 	return row, nil
@@ -82,9 +67,7 @@ func (s Service) GetMembers(
 ) (pagi.Page[[]models.Member], error) {
 	res, err := s.repo.GetMembers(ctx, filter, limit, offset)
 	if err != nil {
-		return pagi.Page[[]models.Member]{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to filter members: %w", err),
-		)
+		return pagi.Page[[]models.Member]{}, err
 	}
 
 	return res, nil

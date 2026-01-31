@@ -105,6 +105,17 @@ components:
       required:
       - data
       - links
+    UpdateOrganizationLinks:
+      properties:
+        data:
+          $ref: "#/components/schemas/UpdateOrganizationLinks_data"
+        included:
+          items:
+            $ref: "#/components/schemas/Organization/properties/data"
+          type: array
+      required:
+      - data
+      - included
     Member:
       properties:
         data:
@@ -205,6 +216,16 @@ components:
         name:
           description: The name of the organization
           type: string
+        delete_icon:
+          description: Flag to indicate if the organization's icon should be deleted
+          type: boolean
+        delete_banner:
+          description: Flag to indicate if the organization's banner should be deleted
+          type: boolean
+      required:
+      - delete_banner
+      - delete_icon
+      - name
     UpdateOrganization_data:
       properties:
         id:
@@ -438,6 +459,75 @@ components:
       required:
       - attributes
       - id
+      - type
+    UpdateOrganizationLinks_data_attributes:
+      properties:
+        upload_token:
+          description: JWT upload session token
+          type: string
+        icon_upload_url:
+          description: Pre-signed PUT URL for icon upload
+          format: uri
+          type: string
+        icon_get_url:
+          description: Pre-signed GET URL to read uploaded icon
+          format: uri
+          type: string
+        banner_upload_url:
+          description: Pre-signed PUT URL for banner upload
+          format: uri
+          type: string
+        banner_get_url:
+          description: Pre-signed GET URL to read uploaded banner
+          format: uri
+          type: string
+      required:
+      - banner_get_url
+      - banner_upload_url
+      - icon_get_url
+      - icon_upload_url
+      - upload_token
+    UpdateOrganizationLinks_data_relationships_organization_data:
+      properties:
+        id:
+          description: organization id
+          format: uuid
+          type: string
+        type:
+          enum:
+          - organization
+          type: string
+      required:
+      - id
+      - type
+    UpdateOrganizationLinks_data_relationships_organization:
+      properties:
+        data:
+          $ref: "#/components/schemas/UpdateOrganizationLinks_data_relationships_organization_data"
+      required:
+      - data
+    UpdateOrganizationLinks_data_relationships:
+      properties:
+        organization:
+          $ref: "#/components/schemas/UpdateOrganizationLinks_data_relationships_organization"
+    UpdateOrganizationLinks_data:
+      properties:
+        id:
+          description: Upload session id
+          format: uuid
+          type: string
+        type:
+          enum:
+          - organization_avatar_upload
+          type: string
+        attributes:
+          $ref: "#/components/schemas/UpdateOrganizationLinks_data_attributes"
+        relationships:
+          $ref: "#/components/schemas/UpdateOrganizationLinks_data_relationships"
+      required:
+      - attributes
+      - id
+      - relationships
       - type
     Member_data_attributes:
       properties:

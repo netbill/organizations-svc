@@ -10,11 +10,11 @@ import (
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 )
 
 func (c Controller) DeleteMember(w http.ResponseWriter, r *http.Request) {
-	initiator, err := rest.AccountData(r)
+	initiator, err := middlewares.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
@@ -28,7 +28,7 @@ func (c Controller) DeleteMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.core.DeleteMember(r.Context(), initiator.ID, memberId)
+	err = c.core.DeleteMember(r.Context(), initiator.AccountID, memberId)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to delete member")
 		switch {

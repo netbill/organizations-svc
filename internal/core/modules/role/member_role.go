@@ -12,9 +12,7 @@ import (
 func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
 	roles, err := s.repo.GetMemberRoles(ctx, memberID)
 	if err != nil {
-		return nil, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get member roles: %w", err),
-		)
+		return nil, err
 	}
 
 	return roles, nil
@@ -23,9 +21,7 @@ func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]mode
 func (s Service) GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error) {
 	role, err := s.repo.GetMemberMaxRole(ctx, memberID)
 	if err != nil {
-		return models.Role{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get member max role: %w", err),
-		)
+		return models.Role{}, err
 	}
 
 	return role, nil
@@ -62,21 +58,17 @@ func (s Service) MemberAddRole(
 		)
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
+	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
 		return err
 	}
 
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		if err = s.repo.AddMemberRole(ctx, memberID, roleID); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("role Service MemberAddRoleByUser: repo AddMemberRole: %w", err),
-			)
+			return err
 		}
 
 		if err = s.messenger.WriteOrgMemberRoleAdd(ctx, memberID, roleID); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to write member role add event: %w", err),
-			)
+			return err
 		}
 
 		return nil
@@ -114,21 +106,17 @@ func (s Service) RemoveMemberRole(
 		)
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
+	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
 		return err
 	}
 
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		if err = s.repo.RemoveMemberRole(ctx, memberID, roleID); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("role Service MemberRemoveRoleByUser: repo RemoveMemberRole: %w", err),
-			)
+			return err
 		}
 
 		if err = s.messenger.WriteOrgMemberRoleRemove(ctx, memberID, roleID); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to write member role remove event: %w", err),
-			)
+			return err
 		}
 
 		return nil

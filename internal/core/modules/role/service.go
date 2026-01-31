@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 type Service struct {
@@ -120,10 +120,7 @@ func (s Service) checkPermissionsToManageRole(
 
 	maxRole, err := s.repo.GetMemberMaxRole(ctx, memberID)
 	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get max role for member %s, cause: %w",
-				memberID, err),
-		)
+		return err
 	}
 	if maxRole.IsNil() {
 		return errx.ErrorNotEnoughRights.Raise(

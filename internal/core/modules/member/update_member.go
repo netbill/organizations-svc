@@ -31,7 +31,7 @@ func (s Service) UpdateMember(
 
 	hasPermission, err := s.repo.CheckMemberHavePermission(
 		ctx,
-		initiator.ID,
+		initiator.AccountID,
 		models.RolePermissionManageMembers,
 	)
 	if err != nil {
@@ -45,23 +45,19 @@ func (s Service) UpdateMember(
 
 	firstMaxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
 	if err != nil {
-		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get max role for member %s: %w", initiator.ID, err),
-		)
+		return models.Member{}, fmt.Errorf("failed to get max role for member %s: %w", initiator.AccountID, err)
 	}
 	if firstMaxRole.Head == false {
 		secMaxRole, err := s.repo.GetMemberMaxRole(ctx, member.ID)
 		if err != nil {
-			return models.Member{}, errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to get max role for member %s: %w", member.ID, err),
-			)
+			return models.Member{}, fmt.Errorf("failed to get max role for member %s: %w", member.ID, err)
 		}
 
 		if firstMaxRole.Rank < secMaxRole.Rank {
 			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf(
 					"member %s with rank %d cannot manage member %s with rank %d",
-					initiator.ID,
+					initiator.AccountID,
 					firstMaxRole.Rank,
 					member.ID,
 					secMaxRole.Rank,
@@ -73,15 +69,11 @@ func (s Service) UpdateMember(
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		member, err = s.repo.UpdateMember(ctx, memberID, params)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to update member %s: %w", memberID, err),
-			)
+			return fmt.Errorf("failed to update member %s: %w", memberID, err)
 		}
 
 		if err = s.messenger.WriteOrgMemberUpdated(ctx, member); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to send member updated message for member %s: %w", memberID, err),
-			)
+			return fmt.Errorf("failed to send member updated message for member %s: %w", memberID, err)
 		}
 		return nil
 	})

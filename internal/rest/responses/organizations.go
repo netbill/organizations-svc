@@ -5,7 +5,7 @@ import (
 
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/resources"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 func Organization(organization models.Organization) resources.Organization {
@@ -39,6 +39,33 @@ func Organizations(r *http.Request, page pagi.Page[[]models.Organization]) resou
 			Prev:  links.Prev,
 			Next:  links.Next,
 			Self:  links.Self,
+		},
+	}
+}
+
+func UpdateOrganizationSession(uploadLinks models.UpdateOrganizationMedia, organization models.Organization) resources.UpdateOrganizationLinks {
+	return resources.UpdateOrganizationLinks{
+		Data: resources.UpdateOrganizationLinksData{
+			Id:   uploadLinks.UploadSessionID,
+			Type: "update_organization_session",
+			Attributes: resources.UpdateOrganizationLinksDataAttributes{
+				UploadToken:     uploadLinks.UploadToken,
+				IconGetUrl:      uploadLinks.Links.IconGetURL,
+				IconUploadUrl:   uploadLinks.Links.IconUploadURL,
+				BannerGetUrl:    uploadLinks.Links.BannerGetURL,
+				BannerUploadUrl: uploadLinks.Links.BannerUploadURL,
+			},
+			Relationships: resources.UpdateOrganizationLinksDataRelationships{
+				Organization: &resources.UpdateOrganizationLinksDataRelationshipsOrganization{
+					Data: resources.UpdateOrganizationLinksDataRelationshipsOrganizationData{
+						Id:   organization.ID,
+						Type: "organization",
+					},
+				},
+			},
+		},
+		Included: []resources.OrganizationData{
+			Organization(organization).Data,
 		},
 	}
 }

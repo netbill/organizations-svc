@@ -2,10 +2,8 @@ package role
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
@@ -27,23 +25,19 @@ func (s Service) CreateRole(
 		return role, err
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, params.Rank); err != nil {
+	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, params.Rank); err != nil {
 		return models.Role{}, err
 	}
 
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		role, err = s.repo.CreateRole(ctx, params)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to create role: %w", err),
-			)
+			return err
 		}
 
 		err = s.messenger.WriteOrgRoleCreated(ctx, role)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to write role to member %w", err),
-			)
+			return err
 		}
 
 		return nil

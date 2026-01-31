@@ -10,7 +10,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 type OrgInviteRow struct {

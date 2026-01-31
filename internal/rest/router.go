@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal"
 	"github.com/netbill/restkit/tokens/roles"
 )
 
@@ -20,7 +19,10 @@ type Handlers interface {
 	GetOrganizations(w http.ResponseWriter, r *http.Request)
 	GetMyOrganizations(w http.ResponseWriter, r *http.Request)
 
+	OpenUpdateOrganizationSession(w http.ResponseWriter, r *http.Request)
 	UpdateOrganization(w http.ResponseWriter, r *http.Request)
+	DeleteUploadOrganizationIcon(w http.ResponseWriter, r *http.Request)
+	DeleteUploadOrganizationBanner(w http.ResponseWriter, r *http.Request)
 
 	ActivateOrganization(w http.ResponseWriter, r *http.Request)
 	DeactivateOrganization(w http.ResponseWriter, r *http.Request)
@@ -57,8 +59,9 @@ type Handlers interface {
 }
 
 type Middlewares interface {
-	Auth() func(http.Handler) http.Handler
-	RoleGrant(allowedRoles map[string]bool) func(http.Handler) http.Handler
+	AccountAuth() func(http.Handler) http.Handler
+	AccountRoleGrant(allowedRoles map[string]bool) func(http.Handler) http.Handler
+	UpdateOrganization() func(http.Handler) http.Handler
 }
 
 type Service struct {
@@ -79,11 +82,20 @@ func New(
 	}
 }
 
-func (s *Service) Run(ctx context.Context, cfg internal.Config) {
-	auth := s.middlewares.Auth()
-	sysadmin := s.middlewares.RoleGrant(map[string]bool{
+type Config struct {
+	Port              string
+	TimeoutRead       time.Duration
+	TimeoutReadHeader time.Duration
+	TimeoutWrite      time.Duration
+	TimeoutIdle       time.Duration
+}
+
+func (s *Service) Run(ctx context.Context, cfg Config) {
+	auth := s.middlewares.AccountAuth()
+	sysadmin := s.middlewares.AccountRoleGrant(map[string]bool{
 		roles.SystemAdmin: true,
 	})
+	updOrganization := s.middlewares.UpdateOrganization()
 
 	r := chi.NewRouter()
 
@@ -96,7 +108,13 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 
 				r.Route("/{organization_id}", func(r chi.Router) {
 					r.Get("/", s.handlers.GetOrganization)
-					r.Put("/", s.handlers.UpdateOrganization)
+					r.With(auth).Route("/update-session", func(r chi.Router) {
+						r.Post("/", s.handlers.OpenUpdateOrganizationSession)
+
+						r.With(updOrganization).Put("/confirm", s.handlers.UpdateOrganization)
+						r.With(updOrganization).Delete("/upload-icon", s.handlers.DeleteUploadOrganizationIcon)
+						r.With(updOrganization).Delete("/upload-banner", s.handlers.DeleteUploadOrganizationBanner)
+					})
 
 					r.Patch("/activate", s.handlers.ActivateOrganization)
 					r.Patch("/deactivate", s.handlers.DeactivateOrganization)
@@ -155,15 +173,15 @@ func (s *Service) Run(ctx context.Context, cfg internal.Config) {
 	})
 
 	srv := &http.Server{
+		Addr:              cfg.Port,
 		Handler:           r,
-		Addr:              cfg.Rest.Port,
-		ReadTimeout:       cfg.Rest.Timeouts.Read,
-		ReadHeaderTimeout: cfg.Rest.Timeouts.ReadHeader,
-		WriteTimeout:      cfg.Rest.Timeouts.Write,
-		IdleTimeout:       cfg.Rest.Timeouts.Idle,
+		ReadTimeout:       cfg.TimeoutRead,
+		ReadHeaderTimeout: cfg.TimeoutReadHeader,
+		WriteTimeout:      cfg.TimeoutWrite,
+		IdleTimeout:       cfg.TimeoutIdle,
 	}
 
-	s.log.Infof("starting REST service on %s", cfg.Rest.Port)
+	s.log.Infof("starting REST service on %s", cfg.Port)
 
 	errCh := make(chan error, 1)
 	go func() {

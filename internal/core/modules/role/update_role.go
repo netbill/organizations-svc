@@ -31,22 +31,18 @@ func (s Service) UpdateRole(
 		return models.Role{}, err
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.ID, role.Rank); err != nil {
+	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
 		return models.Role{}, err
 	}
 
 	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		role, err = s.repo.UpdateRole(ctx, roleID, params)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to update role: %w", err),
-			)
+			return err
 		}
 
 		if err = s.messenger.WriteOrgRoleUpdated(ctx, role); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to send role updated message: %w", err),
-			)
+			return err
 		}
 
 		return nil
@@ -70,9 +66,7 @@ func (s Service) UpdateRolesRanks(
 
 	maxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
 	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get account max role in organization: %w", err),
-		)
+		return err
 	}
 
 	rolesIDs := make(map[uuid.UUID]struct{}, len(order))
@@ -83,16 +77,14 @@ func (s Service) UpdateRolesRanks(
 	rankToRole := make(map[uint]uuid.UUID, len(order))
 	for roleID, newRank := range order {
 		if prevRoleID, ok := rankToRole[newRank]; ok && prevRoleID != roleID {
-			return errx.ErrorInvalidInput.Raise(
-				fmt.Errorf("duplicate rank %d for roles %s and %s", newRank, prevRoleID, roleID),
-			)
+			return err
 		}
 		rankToRole[newRank] = roleID
 	}
 
 	hasPermission, err := s.repo.CheckMemberHavePermission(
 		ctx,
-		initiator.ID,
+		initiator.AccountID,
 		models.RolePermissionManageRoles,
 	)
 	if err != nil {
@@ -100,7 +92,7 @@ func (s Service) UpdateRolesRanks(
 	}
 	if !hasPermission {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member %s does not have permission %s", initiator.ID, models.RolePermissionManageRoles),
+			fmt.Errorf("member %s does not have permission %s", initiator.AccountID, models.RolePermissionManageRoles),
 		)
 	}
 
@@ -108,9 +100,7 @@ func (s Service) UpdateRolesRanks(
 		OrganizationID: &organizationID,
 	}, 1000, 0)
 	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to filter roles: %w", err),
-		)
+		return err
 	}
 
 	for _, role := range rolesBefore.Data {
@@ -143,15 +133,11 @@ func (s Service) UpdateRolesRanks(
 
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		if err = s.repo.UpdateRolesRanks(ctx, organizationID, order); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to update roles ranks: %w", err),
-			)
+			return err
 		}
 
 		if err = s.messenger.WriteOrgRolesRanksUpdated(ctx, organizationID, order); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to send role ranks updated message: %w", err),
-			)
+			return err
 		}
 
 		return nil

@@ -10,7 +10,7 @@ import (
 
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 type OrganizationRow struct {
@@ -96,8 +96,8 @@ func (r Repository) UpdateOrganization(
 	q := r.organizationsQ().
 		FilterByID(ID).
 		UpdateName(params.Name).
-		UpdateIcon(params.Icon()).
-		UpdateBanner(params.Banner())
+		UpdateIcon(params.GetUpdatedIcon()).
+		UpdateBanner(params.GetUpdatedBanner())
 
 	row, err := q.UpdateOne(ctx)
 	if err != nil {

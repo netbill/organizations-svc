@@ -18,44 +18,46 @@ components:
   schemas:
     # requestBodies:
     CreateOrganization:
-      $ref: './spec/components/schemas/CreateOrganization.yaml'
+      $ref: './spec/components/schemas/requests/CreateOrganization.yaml'
     UpdateOrganization:
-      $ref: './spec/components/schemas/UpdateOrganization.yaml'
+      $ref: './spec/components/schemas/requests/UpdateOrganization.yaml'
     UpdateMember:
-      $ref: './spec/components/schemas/UpdateMember.yaml'
+      $ref: './spec/components/schemas/requests/UpdateMember.yaml'
     CreateInvite:
-      $ref: './spec/components/schemas/CreateInvite.yaml'
+      $ref: './spec/components/schemas/requests/CreateInvite.yaml'
     CreateRole:
-      $ref: './spec/components/schemas/CreateRole.yaml'
+      $ref: './spec/components/schemas/requests/CreateRole.yaml'
     UpdateRole:
-      $ref: './spec/components/schemas/UpdateRole.yaml'
+      $ref: './spec/components/schemas/requests/UpdateRole.yaml'
     UpdateRolesRanks:
-      $ref: './spec/components/schemas/UpdateRolesRanks.yaml'
+      $ref: './spec/components/schemas/requests/UpdateRolesRanks.yaml'
     UpdateRolePermissions:
-      $ref: './spec/components/schemas/UpdateRolePermissions.yaml'
+      $ref: './spec/components/schemas/requests/UpdateRolePermissions.yaml'
 
     # responses:
     PaginationData:
-      $ref: './spec/components/schemas/PaginationData.yaml'
+      $ref: './spec/components/schemas/responses/PaginationData.yaml'
 
     Organization:
-      $ref: './spec/components/schemas/Organization.yaml'
+      $ref: './spec/components/schemas/responses/Organization.yaml'
     OrganizationsCollection:
-      $ref: './spec/components/schemas/OrganizationsCollection.yaml'
+      $ref: './spec/components/schemas/responses/OrganizationsCollection.yaml'
+    UpdateOrganizationLinks:
+      $ref: './spec/components/schemas/responses/UpdateOrganizationLinks.yaml'
 
     Member:
-      $ref: './spec/components/schemas/Member.yaml'
+      $ref: './spec/components/schemas/responses/Member.yaml'
     MemberCollection:
-      $ref: './spec/components/schemas/MemberCollection.yaml'
+      $ref: './spec/components/schemas/responses/MemberCollection.yaml'
 
     Invite:
-      $ref: './spec/components/schemas/Invite.yaml'
+      $ref: './spec/components/schemas/responses/Invite.yaml'
     InvitesCollection:
-      $ref: './spec/components/schemas/InvitesCollection.yaml'
+      $ref: './spec/components/schemas/responses/InvitesCollection.yaml'
 
     Role:
-      $ref: './spec/components/schemas/Role.yaml'
+      $ref: './spec/components/schemas/responses/Role.yaml'
     RolesCollection:
-      $ref: './spec/components/schemas/RolesCollection.yaml'
+      $ref: './spec/components/schemas/responses/RolesCollection.yaml'
     RolePermissions:
-      $ref: './spec/components/schemas/RolePermissions.yaml'
+      $ref: './spec/components/schemas/responses/RolePermissions.yaml'

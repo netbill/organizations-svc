@@ -2,12 +2,13 @@ package organization
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 type Service struct {
@@ -17,10 +18,12 @@ type Service struct {
 	messenger messanger
 }
 
-func New(repo repo, messenger messanger) Service {
+func New(repo repo, messenger messanger, token token, bucket bucket) Service {
 	return Service{
 		repo:      repo,
 		messenger: messenger,
+		token:     token,
+		bucket:    bucket,
 	}
 }
 
@@ -99,70 +102,40 @@ type messanger interface {
 }
 
 type bucket interface {
-	GeneratePreloadLinkForUpdateOrganizationIcon(
+	GeneratePreloadLinkForOrganizationMedia(
 		ctx context.Context,
 		organizationID, sessionID uuid.UUID,
-	) (uploadLink, getLink string, err error)
-
-	GeneratePreloadLinkForUpdateOrganizationBanner(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (uploadLink, getLink string, err error)
-
-	GetContentLengthForOrganizationIcon(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (int64, error)
-
-	GetContentLengthForOrganizationBanner(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (int64, error)
-
-	ValidateOrganizationIconSize(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (bool, error)
-
-	ValidateOrganizationBannerSize(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (bool, error)
-
-	GetLoadedOrganizationIcon(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (data []byte, err error)
-
-	GetLoadedOrganizationBanner(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (data []byte, err error)
-
-	ValidateOrganizationIconFormat(
-		ctx context.Context,
-		imageData []byte,
-	) (bool, error)
-
-	ValidateOrganizationBannerFormat(
-		ctx context.Context,
-		imageData []byte,
-	) (bool, error)
-
-	ValidateOrganizationIconContentType(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (bool, error)
-
-	ValidateOrganizationBannerContentType(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (bool, error)
+	) (models.OrganizationUploadMediaLinks, error)
 
 	AcceptUpdateOrganizationMedia(
 		ctx context.Context,
 		organizationID, sessionID uuid.UUID,
-	) (icon *string, banner *string, err error)
+	) (models.OrganizationMedia, error)
+
+	CancelUpdateOrganizationIcon(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) error
+
+	CancelUpdateOrganizationBanner(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) error
+
+	DeleteOrganizationIcon(
+		ctx context.Context,
+		organizationID uuid.UUID,
+	) error
+
+	DeleteOrganizationBanner(
+		ctx context.Context,
+		organizationID uuid.UUID,
+	) error
+
+	CleanOrganizationMediaSession(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) error
 }
 
 type token interface {
@@ -179,15 +152,12 @@ func (s Service) chekPermissionForManageOrganization(
 ) error {
 	member, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
-		return fmt.Errorf(
-			"failed to get member with account id %s and organization id %s: %w",
-			accountID, organizationID, err,
-		)
-	}
-	if member.IsNil() {
-		return fmt.Errorf(
-			"member with account id %s and organization id %s not found", accountID, organizationID,
-		)
+		if errors.Is(err, errx.ErrorMemberNotFound) {
+			return errx.ErrorNotEnoughRights.Raise(
+				fmt.Errorf("account is not a member of the organization"),
+			)
+		}
+		return err
 	}
 
 	access, err := s.repo.CheckMemberHavePermission(

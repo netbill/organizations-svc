@@ -14,13 +14,13 @@ func (s Service) DeclineInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.getInvite(ctx, inviteID)
+	invite, err = s.GetInviteForAccount(ctx, accountID, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
 	if invite.AccountID != accountID {
-		return models.Invite{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
 			fmt.Errorf("account has no rights to decline this invite"),
 		)
 	}
@@ -38,16 +38,12 @@ func (s Service) DeclineInvite(
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusDeclined)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to update invite status: %w", err),
-			)
+			return err
 		}
 
 		err = s.messenger.WriteOrgInviteDeclined(ctx, invite)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to write declined invite event: %w", err),
-			)
+			return err
 		}
 
 		return nil

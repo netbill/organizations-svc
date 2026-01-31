@@ -2,25 +2,16 @@ package organization
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 func (s Service) GetOrganization(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
 	res, err := s.repo.GetOrganizationByID(ctx, organizationID)
 	if err != nil {
-		return models.Organization{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get organization by id: %w", err),
-		)
-	}
-	if res.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
-			fmt.Errorf("organization with id %s not found", organizationID),
-		)
+		return models.Organization{}, err
 	}
 
 	return res, nil
@@ -38,9 +29,7 @@ func (s Service) GetOrganizations(
 ) (pagi.Page[[]models.Organization], error) {
 	res, err := s.repo.GetOrganizations(ctx, params, limit, offset)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("filter organizations: %w", err),
-		)
+		return pagi.Page[[]models.Organization]{}, err
 	}
 
 	return res, nil
@@ -53,9 +42,7 @@ func (s Service) GetOrganizationForUser(
 ) (pagi.Page[[]models.Organization], error) {
 	res, err := s.repo.GetOrganizationsForUser(ctx, accountID, limit, offset)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("get organization for user: %w", err),
-		)
+		return pagi.Page[[]models.Organization]{}, err
 	}
 
 	return res, nil

@@ -2,11 +2,9 @@ package profile
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
@@ -21,9 +19,7 @@ type UpdateParams struct {
 func (s Service) UpdateProfile(ctx context.Context, accountID uuid.UUID, params UpdateParams) (models.Profile, error) {
 	updatedProfile, err := s.repo.UpdateProfile(ctx, accountID, params)
 	if err != nil {
-		return models.Profile{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to update profile: %w", err),
-		)
+		return models.Profile{}, err
 	}
 
 	return updatedProfile, nil

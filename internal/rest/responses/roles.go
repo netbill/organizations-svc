@@ -5,7 +5,7 @@ import (
 
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/resources"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {

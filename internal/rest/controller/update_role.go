@@ -11,7 +11,7 @@ import (
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
@@ -24,7 +24,7 @@ func (c Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	initiator, err := rest.AccountData(r)
+	initiator, err := middlewares.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
@@ -38,7 +38,7 @@ func (c Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.core.UpdateRole(r.Context(), initiator.ID, roleID, role.UpdateParams{
+	res, err := c.core.UpdateRole(r.Context(), initiator.AccountID, roleID, role.UpdateParams{
 		Name:        req.Data.Attributes.Name,
 		Description: req.Data.Attributes.Description,
 		Color:       req.Data.Attributes.Color,

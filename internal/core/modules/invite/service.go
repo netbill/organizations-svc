@@ -2,12 +2,13 @@ package invite
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 type Service struct {
@@ -78,7 +79,7 @@ type messenger interface {
 	WriteOrgInviteDeleted(ctx context.Context, invite models.Invite) error
 }
 
-func (s Service) checkPermissionForManageInvite(
+func (s Service) checkPermissionForManageInvites(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) error {
@@ -88,8 +89,7 @@ func (s Service) checkPermissionForManageInvite(
 		models.RolePermissionManageInvites,
 	)
 	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to check initiator permissions: %w", err))
+		return err
 	}
 	if !access {
 		return errx.ErrorNotEnoughRights.Raise(
@@ -103,14 +103,7 @@ func (s Service) checkPermissionForManageInvite(
 func (s Service) checkOrganizationIsActiveAndExists(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
 	org, err := s.repo.GetOrganizationByID(ctx, organizationID)
 	if err != nil {
-		return models.Organization{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get organization by id: %w", err),
-		)
-	}
-	if org.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
-			fmt.Errorf("organization with id %s not found", organizationID),
-		)
+		return models.Organization{}, err
 	}
 
 	if org.Status != models.OrganizationStatusActive {
@@ -125,15 +118,13 @@ func (s Service) checkOrganizationIsActiveAndExists(ctx context.Context, organiz
 func (s Service) getInitiator(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error) {
 	row, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
-		return models.Member{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get member with account id %s and organization id %s: %w",
-				accountID, organizationID, err),
-		)
-	}
-	if row.IsNil() {
-		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member with account id %s and organization id %s not found", accountID, organizationID),
-		)
+		if errors.Is(err, errx.ErrorMemberNotFound) {
+			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+				fmt.Errorf("initiator with account id %s is not a member of organization %s",
+					accountID, organizationID),
+			)
+		}
+		return models.Member{}, err
 	}
 
 	return row, nil

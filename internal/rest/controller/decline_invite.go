@@ -9,7 +9,7 @@ import (
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
 
@@ -21,21 +21,25 @@ func (c Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	initiator, err := rest.AccountData(r)
+	initiator, err := middlewares.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
-	res, err := c.core.DeclineInvite(r.Context(), initiator.ID, inviteID)
+	res, err := c.core.DeclineInvite(r.Context(), initiator.AccountID, inviteID)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to decline invite")
 		switch {
 		case errors.Is(err, errx.ErrorInviteNotFound):
 			ape.RenderErr(w, problems.NotFound("invite not found"))
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			ape.RenderErr(w, problems.Forbidden("not enough rights to decline invite"))
+		case errors.Is(err, errx.ErrorInviteNotForInitiator):
+			ape.RenderErr(w, problems.Forbidden("invite not for this account"))
+		case errors.Is(err, errx.ErrorInviteAlreadyAnswered):
+			ape.RenderErr(w, problems.Conflict("invite already answered"))
+		case errors.Is(err, errx.ErrorInviteExpired):
+			ape.RenderErr(w, problems.Forbidden("invite has expired"))
 		default:
 			ape.RenderErr(w, problems.InternalError())
 		}

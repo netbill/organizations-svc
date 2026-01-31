@@ -7,7 +7,7 @@ import (
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 )
@@ -20,7 +20,7 @@ func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	initiator, err := rest.AccountData(r)
+	initiator, err := middlewares.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
@@ -32,7 +32,7 @@ func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request
 		dict[item.Code] = item.Status
 	}
 
-	role, perm, err := c.core.SetRolePermissions(r.Context(), initiator.ID, req.Data.Id, dict)
+	role, perm, err := c.core.SetRolePermissions(r.Context(), initiator.AccountID, req.Data.Id, dict)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update role permissions")
 		switch {

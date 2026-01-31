@@ -1,24 +1,28 @@
 package tokenmanager
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/bucket"
 	"github.com/netbill/restkit/tokens"
 )
 
 type Manager struct {
-	issuer   string
 	uploadSK string
+
+	organizationMediaTokenTTL time.Duration
 }
 
 const (
-	UploadOrgResource = "organization"
+	OrganizationsActor = "organizations-svc"
+	UploadOrgResource  = "organization"
 )
 
-func New(issuer, uploadSK string) Manager {
+func New(uploadSK string, organizationMediaTokenTTL time.Duration) Manager {
 	return Manager{
-		issuer:   issuer,
-		uploadSK: uploadSK,
+		uploadSK:                  uploadSK,
+		organizationMediaTokenTTL: organizationMediaTokenTTL,
 	}
 }
 
@@ -27,14 +31,20 @@ func (m Manager) NewUploadOrganizationMediaToken(
 	ResourceID uuid.UUID,
 	UploadSessionID uuid.UUID,
 ) (string, error) {
-	return tokens.NewUploadFileToken(
+	tkn, err := tokens.NewUploadFileToken(
 		tokens.GenerateUploadFilesJwtRequest{
 			OwnerAccountID:  OwnerAccountID,
 			UploadSessionID: UploadSessionID,
 			ResourceID:      ResourceID.String(),
 			Resource:        UploadOrgResource,
-			Issuer:          m.issuer,
-			Audience:        []string{m.issuer},
-			Ttl:             bucket.OrganizationUploadTTL,
-		}, m.uploadSK)
+			Issuer:          OrganizationsActor,
+			Audience:        []string{OrganizationsActor},
+			Ttl:             m.organizationMediaTokenTTL,
+		}, m.uploadSK,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate upload organization media token, cause: %w", err)
+	}
+
+	return tkn, nil
 }

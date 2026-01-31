@@ -22,7 +22,7 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 
 	hasPermission, err := s.repo.CheckMemberHavePermission(
 		ctx,
-		initiator.ID,
+		initiator.AccountID,
 		models.RolePermissionManageMembers,
 	)
 	if err != nil {
@@ -36,16 +36,12 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 
 	firstMaxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
 	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get max role for member %s: %w", initiator.ID, err),
-		)
+		return fmt.Errorf("failed to get max role for member %s: %w", initiator.AccountID, err)
 	}
 
 	secMaxRole, err := s.repo.GetMemberMaxRole(ctx, member.ID)
 	if err != nil {
-		return errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to get max role for member %s: %w", member.ID, err),
-		)
+		return fmt.Errorf("failed to get max role for member %s: %w", member.ID, err)
 	}
 	if secMaxRole.Head {
 		return errx.ErrorCannotDeleteOrganizationHeadMember.Raise(
@@ -57,7 +53,7 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf(
 				"member %s with rank %d cannot manage member %s with rank %d",
-				initiator.ID,
+				initiator.AccountID,
 				firstMaxRole.Rank,
 				member.ID,
 				secMaxRole.Rank,
@@ -68,15 +64,11 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		err = s.repo.DeleteMember(ctx, memberID)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to delete member %s: %w", memberID, err),
-			)
+			return fmt.Errorf("failed to delete member %s: %w", memberID, err)
 		}
 
 		if err = s.messenger.WriteOrgMemberDeleted(ctx, member.ID); err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to send member deleted message for member %s: %w", memberID, err),
-			)
+			return fmt.Errorf("failed to send member deleted message for member %s: %w", memberID, err)
 		}
 
 		return nil

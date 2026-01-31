@@ -14,13 +14,13 @@ func (s Service) AcceptInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.getInvite(ctx, inviteID)
+	invite, err = s.GetInviteForAccount(ctx, accountID, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
 	if invite.AccountID != accountID {
-		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
+		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
 	}
@@ -42,30 +42,22 @@ func (s Service) AcceptInvite(
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusAccepted)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to update invite status: %w", err),
-			)
+			return err
 		}
 
 		err = s.messenger.WriteOrgInviteAccepted(ctx, invite)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to write accepted invite event: %w", err),
-			)
+			return err
 		}
 
 		mem, err := s.repo.CreateMember(ctx, accountID, invite.OrganizationID)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to create member from invite: %w", err),
-			)
+			return err
 		}
 
 		err = s.messenger.WriteOrgMemberCreated(ctx, mem)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to write created member event: %w", err),
-			)
+			return err
 		}
 
 		return nil

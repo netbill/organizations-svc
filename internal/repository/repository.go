@@ -20,29 +20,6 @@ type Transactioner interface {
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
-func New(
-	transactioner Transactioner,
-	OrganizationsSql OrganizationsQ,
-	OrgMembersSql OrgMembersQ,
-	OrgMemberRolesSql OrgMemberRolesQ,
-	OrgRolesSql OrgRolesQ,
-	OrgRolePermissionLinksSql OrgRolePermissionLinksQ,
-	OrgRolePermissionsSql OrgRolePermissionsQ,
-	OrgInvitesSql OrgInvitesQ,
-	ProfilesSql ProfilesQ,
-) Repository {
-	return Repository{
-		Transactioner:             transactioner,
-		OrganizationsSql:          OrganizationsSql,
-		OrgMembersSql:             OrgMembersSql,
-		OrgMemberRolesSql:         OrgMemberRolesSql,
-		OrgRolesSql:               OrgRolesSql,
-		OrgRolePermissionLinksSql: OrgRolePermissionLinksSql,
-		OrgRolePermissionsSql:     OrgRolePermissionsSql,
-		OrgInvitesSql:             OrgInvitesSql,
-		ProfilesSql:               ProfilesSql,
-	}
-}
 func (r Repository) organizationsQ() OrganizationsQ {
 	return r.OrganizationsSql.New()
 }

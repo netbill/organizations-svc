@@ -43,6 +43,12 @@ docs/UpdateMemberDataAttributes.md
 docs/UpdateOrganization.md
 docs/UpdateOrganizationData.md
 docs/UpdateOrganizationDataAttributes.md
+docs/UpdateOrganizationLinks.md
+docs/UpdateOrganizationLinksData.md
+docs/UpdateOrganizationLinksDataAttributes.md
+docs/UpdateOrganizationLinksDataRelationships.md
+docs/UpdateOrganizationLinksDataRelationshipsOrganization.md
+docs/UpdateOrganizationLinksDataRelationshipsOrganizationData.md
 docs/UpdateRole.md
 docs/UpdateRoleData.md
 docs/UpdateRoleDataAttributes.md
@@ -94,6 +100,12 @@ model_update_member_data_attributes.go
 model_update_organization.go
 model_update_organization_data.go
 model_update_organization_data_attributes.go
+model_update_organization_links.go
+model_update_organization_links_data.go
+model_update_organization_links_data_attributes.go
+model_update_organization_links_data_relationships.go
+model_update_organization_links_data_relationships_organization.go
+model_update_organization_links_data_relationships_organization_data.go
 model_update_role.go
 model_update_role_data.go
 model_update_role_data_attributes.go

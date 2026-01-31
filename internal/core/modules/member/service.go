@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 type Service struct {

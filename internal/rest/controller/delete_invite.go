@@ -9,7 +9,7 @@ import (
 	"github.com/netbill/ape"
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest"
+	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 )
 
 func (c Controller) DeleteInvite(w http.ResponseWriter, r *http.Request) {
@@ -20,14 +20,14 @@ func (c Controller) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	initiator, err := rest.AccountData(r)
+	initiator, err := middlewares.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
 		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
-	err = c.core.DeleteInvite(r.Context(), initiator.ID, inviteID)
+	err = c.core.DeleteInvite(r.Context(), initiator.AccountID, inviteID)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to delete invite")
 		switch {

@@ -10,7 +10,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 type orgSvc interface {
@@ -35,11 +35,23 @@ type orgSvc interface {
 		organizationID uuid.UUID,
 	) (models.Organization, error)
 
+	OpenUpdateOrganizationSession(
+		ctx context.Context,
+		accountID, organizationID uuid.UUID,
+	) (models.Organization, models.UpdateOrganizationMedia, error)
 	UpdateOrganization(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
 		params organization.UpdateParams,
 	) (models.Organization, error)
+	DeleteUpdateOrganizationIconInSession(
+		ctx context.Context,
+		accountID, organizationID, uploadSessionID uuid.UUID,
+	) error
+	DeleteUpdateOrganizationBannerInSession(
+		ctx context.Context,
+		accountID, organizationID, uploadSessionID uuid.UUID,
+	) error
 
 	ActivateOrganization(
 		ctx context.Context,
@@ -63,7 +75,7 @@ type inviteSvc interface {
 		params invite.CreateParams,
 	) (models.Invite, error)
 
-	GetInvite(
+	GetInviteForAccount(
 		ctx context.Context,
 		accountID, inviteID uuid.UUID,
 	) (models.Invite, error)

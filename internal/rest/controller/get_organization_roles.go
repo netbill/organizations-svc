@@ -10,7 +10,7 @@ import (
 	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
-	"github.com/netbill/pagi"
+	"github.com/netbill/restkit/pagi"
 )
 
 func (c Controller) GetOrganizationRoles(w http.ResponseWriter, r *http.Request) {

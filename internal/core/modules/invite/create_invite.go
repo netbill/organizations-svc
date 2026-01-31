@@ -28,9 +28,7 @@ func (s Service) CreateInvite(
 
 	exist, err := s.repo.MemberExists(ctx, params.AccountID, params.OrganizationID)
 	if err != nil {
-		return models.Invite{}, errx.ErrorInternal.Raise(
-			fmt.Errorf("failed to check member existence: %w", err),
-		)
+		return models.Invite{}, err
 	}
 	if exist == true {
 		return models.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
@@ -38,7 +36,7 @@ func (s Service) CreateInvite(
 		)
 	}
 
-	if err = s.checkPermissionForManageInvite(ctx, initiator.ID); err != nil {
+	if err = s.checkPermissionForManageInvites(ctx, initiator.ID); err != nil {
 		return models.Invite{}, err
 	}
 
@@ -49,16 +47,12 @@ func (s Service) CreateInvite(
 	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = s.repo.CreateInvite(ctx, params)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to create invite: %w", err),
-			)
+			return err
 		}
 
 		err = s.messenger.WriteOrgInviteCreated(ctx, invite)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to write created invite event: %w", err),
-			)
+			return err
 		}
 
 		return nil

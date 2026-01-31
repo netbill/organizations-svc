@@ -14,7 +14,7 @@ func (s Service) DeleteInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) error {
-	invite, err := s.getInvite(ctx, accountID)
+	invite, err := s.GetInviteForAccount(ctx, accountID, inviteID)
 	if err != nil {
 		return err
 	}
@@ -40,9 +40,9 @@ func (s Service) DeleteInvite(
 		return err
 	}
 
-	if err = s.checkPermissionForManageInvite(
+	if err = s.checkPermissionForManageInvites(
 		ctx,
-		initiator.ID,
+		initiator.AccountID,
 	); err != nil {
 		return err
 	}
@@ -50,16 +50,12 @@ func (s Service) DeleteInvite(
 	return s.repo.Transaction(ctx, func(ctx context.Context) error {
 		err = s.repo.DeleteInvite(ctx, inviteID)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to delete invite: %w", err),
-			)
+			return err
 		}
 
 		err = s.messenger.WriteOrgInviteDeleted(ctx, invite)
 		if err != nil {
-			return errx.ErrorInternal.Raise(
-				fmt.Errorf("failed to write deleted invite event: %w", err),
-			)
+			return err
 		}
 
 		return nil
