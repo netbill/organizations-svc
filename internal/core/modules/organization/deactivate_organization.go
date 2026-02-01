@@ -7,29 +7,29 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) DeactivateOrganization(
+func (m *Module) DeactivateOrganization(
 	ctx context.Context,
 	accountID,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
-	org, err := s.GetOrganization(ctx, organizationID)
+	org, err := m.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	err = s.chekPermissionForManageOrganization(ctx, accountID, org.ID)
+	err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		org, err = s.repo.UpdateOrganizationStatus(ctx, organizationID, models.OrganizationStatusInactive)
+	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		org, err = m.repo.UpdateOrganizationStatus(ctx, organizationID, models.OrganizationStatusInactive)
 		if err != nil {
 			return err
 		}
 
 		//TODO clean organization
-		err = s.messenger.WriteOrganizationDeactivated(ctx, org)
+		err = m.messenger.WriteOrganizationDeactivated(ctx, org)
 		if err != nil {
 			return err
 		}

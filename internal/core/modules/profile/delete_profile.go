@@ -6,17 +6,17 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s Service) DeleteProfile(
+func (m *Module) DeleteProfile(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) error {
-	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err := s.repo.DeleteProfileByAccountID(ctx, accountID)
+	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		err := m.repo.DeleteProfileByAccountID(ctx, accountID)
 		if err != nil {
 			return err
 		}
 
-		err = s.repo.DeleteMembersByAccountID(ctx, accountID)
+		err = m.repo.DeleteMembersByAccountID(ctx, accountID)
 		if err != nil {
 			return err
 		}

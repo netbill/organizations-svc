@@ -11,15 +11,15 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type Service struct {
+type Module struct {
 	repo      repo
 	bucket    bucket
 	token     token
 	messenger messanger
 }
 
-func New(repo repo, messenger messanger, token token, bucket bucket) Service {
-	return Service{
+func New(repo repo, messenger messanger, token token, bucket bucket) *Module {
+	return &Module{
 		repo:      repo,
 		messenger: messenger,
 		token:     token,
@@ -146,11 +146,11 @@ type token interface {
 	) (string, error)
 }
 
-func (s Service) chekPermissionForManageOrganization(
+func (m *Module) chekPermissionForManageOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) error {
-	member, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
 			return errx.ErrorNotEnoughRights.Raise(
@@ -160,7 +160,7 @@ func (s Service) chekPermissionForManageOrganization(
 		return err
 	}
 
-	access, err := s.repo.CheckMemberHavePermission(
+	access, err := m.repo.CheckMemberHavePermission(
 		ctx,
 		member.ID,
 		models.RolePermissionManageOrganization,

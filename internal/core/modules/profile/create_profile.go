@@ -6,8 +6,8 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
-	createdProfile, err := s.repo.CreateProfile(ctx, profile)
+func (m *Module) CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
+	createdProfile, err := m.repo.CreateProfile(ctx, profile)
 	if err != nil {
 		return models.Profile{}, err
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 )
 
-func (i Inbound) ProfileUpdated(
+func (i *Inbound) ProfileUpdated(
 	ctx context.Context,
 	event inbox.Event,
 ) inbox.EventStatus {

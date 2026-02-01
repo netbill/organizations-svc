@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/netbill/logium"
-	"github.com/netbill/restkit/tokens/roles"
 )
 
 type Handlers interface {
@@ -59,12 +58,13 @@ type Handlers interface {
 }
 
 type Middlewares interface {
-	AccountAuth() func(http.Handler) http.Handler
-	AccountRoleGrant(allowedRoles map[string]bool) func(http.Handler) http.Handler
-	UpdateOrganization() func(http.Handler) http.Handler
+	AccountAuth(
+		allowedRoles ...string,
+	) func(next http.Handler) http.Handler
+	UpdateOrganization() func(next http.Handler) http.Handler
 }
 
-type Service struct {
+type Router struct {
 	handlers    Handlers
 	middlewares Middlewares
 	log         *logium.Logger
@@ -74,8 +74,8 @@ func New(
 	log *logium.Logger,
 	middlewares Middlewares,
 	handlers Handlers,
-) *Service {
-	return &Service{
+) *Router {
+	return &Router{
 		log:         log,
 		middlewares: middlewares,
 		handlers:    handlers,
@@ -90,12 +90,9 @@ type Config struct {
 	TimeoutIdle       time.Duration
 }
 
-func (s *Service) Run(ctx context.Context, cfg Config) {
-	auth := s.middlewares.AccountAuth()
-	sysadmin := s.middlewares.AccountRoleGrant(map[string]bool{
-		roles.SystemAdmin: true,
-	})
-	updOrganization := s.middlewares.UpdateOrganization()
+func (rt *Router) Run(ctx context.Context, cfg Config) {
+	auth := rt.middlewares.AccountAuth()
+	updOrganization := rt.middlewares.UpdateOrganization()
 
 	r := chi.NewRouter()
 
@@ -103,70 +100,65 @@ func (s *Service) Run(ctx context.Context, cfg Config) {
 		r.Route("/v1", func(r chi.Router) {
 
 			r.With(auth).Route("/organizations", func(r chi.Router) {
-				r.Get("/", s.handlers.GetOrganizations)
-				r.Post("/", s.handlers.CreateOrganization)
+				r.Get("/", rt.handlers.GetOrganizations)
+				r.Post("/", rt.handlers.CreateOrganization)
 
 				r.Route("/{organization_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetOrganization)
+					r.Get("/", rt.handlers.GetOrganization)
 					r.With(auth).Route("/update-session", func(r chi.Router) {
-						r.Post("/", s.handlers.OpenUpdateOrganizationSession)
+						r.Post("/", rt.handlers.OpenUpdateOrganizationSession)
 
-						r.With(updOrganization).Put("/confirm", s.handlers.UpdateOrganization)
-						r.With(updOrganization).Delete("/upload-icon", s.handlers.DeleteUploadOrganizationIcon)
-						r.With(updOrganization).Delete("/upload-banner", s.handlers.DeleteUploadOrganizationBanner)
+						r.With(updOrganization).Put("/confirm", rt.handlers.UpdateOrganization)
+						r.With(updOrganization).Delete("/upload-icon", rt.handlers.DeleteUploadOrganizationIcon)
+						r.With(updOrganization).Delete("/upload-banner", rt.handlers.DeleteUploadOrganizationBanner)
 					})
 
-					r.Patch("/activate", s.handlers.ActivateOrganization)
-					r.Patch("/deactivate", s.handlers.DeactivateOrganization)
-					r.Get("/members", s.handlers.GetOrganizationMembers)
-					r.Get("/invites", s.handlers.GetOrganizationInvites)
+					r.Patch("/activate", rt.handlers.ActivateOrganization)
+					r.Patch("/deactivate", rt.handlers.DeactivateOrganization)
+					r.Get("/members", rt.handlers.GetOrganizationMembers)
+					r.Get("/invites", rt.handlers.GetOrganizationInvites)
 					r.Route("/roles", func(r chi.Router) {
-						r.Get("/", s.handlers.GetOrganizationRoles)
-						r.Put("/ranks", s.handlers.UpdateRolesRanks)
+						r.Get("/", rt.handlers.GetOrganizationRoles)
+						r.Put("/ranks", rt.handlers.UpdateRolesRanks)
 					})
 				})
 
-				r.Get("/me", s.handlers.GetMyOrganizations)
+				r.Get("/me", rt.handlers.GetMyOrganizations)
 			})
 
 			r.With(auth).Route("/members", func(r chi.Router) {
 				r.Route("/{member_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetMember)
-					r.Put("/", s.handlers.UpdateMember)
-					r.Delete("/", s.handlers.DeleteMember)
+					r.Get("/", rt.handlers.GetMember)
+					r.Put("/", rt.handlers.UpdateMember)
+					r.Delete("/", rt.handlers.DeleteMember)
 
 					r.Route("/roles/{role_id}", func(r chi.Router) {
-						r.Post("/", s.handlers.MemberAddRole)
-						r.Delete("/", s.handlers.MemberRemoveRole)
+						r.Post("/", rt.handlers.MemberAddRole)
+						r.Delete("/", rt.handlers.MemberRemoveRole)
 					})
 				})
 			})
 
 			r.With(auth).Route("/invites", func(r chi.Router) {
-				r.Post("/", s.handlers.CreateInvite)
+				r.Post("/", rt.handlers.CreateInvite)
 
 				r.Route("/{invite_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetInvite)
-					r.Patch("/accept", s.handlers.AcceptInvite)
-					r.Patch("/decline", s.handlers.DeclineInvite)
+					r.Get("/", rt.handlers.GetInvite)
+					r.Patch("/accept", rt.handlers.AcceptInvite)
+					r.Patch("/decline", rt.handlers.DeclineInvite)
 				})
 			})
 
 			r.With(auth).Route("/roles", func(r chi.Router) {
-				r.Post("/", s.handlers.CreateRole)
-				r.Get("/permissions", s.handlers.GetAllPermissions)
+				r.Post("/", rt.handlers.CreateRole)
+				r.Get("/permissions", rt.handlers.GetAllPermissions)
 
 				r.Route("/{role_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetRole)
-					r.Put("/", s.handlers.UpdateRole)
-					r.Delete("/", s.handlers.DeleteRole)
+					r.Get("/", rt.handlers.GetRole)
+					r.Put("/", rt.handlers.UpdateRole)
+					r.Delete("/", rt.handlers.DeleteRole)
 
-					r.Put("/permissions", s.handlers.UpdateRolePermissions)
-				})
-			})
-
-			r.With(auth, sysadmin).Route("/admin", func(r chi.Router) {
-				r.Route("/organizations", func(r chi.Router) {
+					r.Put("/permissions", rt.handlers.UpdateRolePermissions)
 				})
 			})
 		})
@@ -181,7 +173,7 @@ func (s *Service) Run(ctx context.Context, cfg Config) {
 		IdleTimeout:       cfg.TimeoutIdle,
 	}
 
-	s.log.Infof("starting REST service on %s", cfg.Port)
+	rt.log.Infof("starting REST service on %s", cfg.Port)
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -194,18 +186,18 @@ func (s *Service) Run(ctx context.Context, cfg Config) {
 
 	select {
 	case <-ctx.Done():
-		s.log.Warnf("shutting down REST service...")
+		rt.log.Warnf("shutting down REST service...")
 	case err := <-errCh:
 		if err != nil {
-			s.log.Errorf("REST server error: %v", err)
+			rt.log.Errorf("REST server error: %v", err)
 		}
 	}
 
 	shCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shCtx); err != nil {
-		s.log.Errorf("REST shutdown error: %v", err)
+		rt.log.Errorf("REST shutdown error: %v", err)
 	} else {
-		s.log.Warnf("REST server stopped")
+		rt.log.Warnf("REST server stopped")
 	}
 }

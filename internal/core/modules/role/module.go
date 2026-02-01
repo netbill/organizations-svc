@@ -10,13 +10,13 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type Service struct {
+type Module struct {
 	repo      repo
 	messenger messenger
 }
 
-func New(repo repo, messenger messenger) Service {
-	return Service{
+func New(repo repo, messenger messenger) *Module {
+	return &Module{
 		repo:      repo,
 		messenger: messenger,
 	}
@@ -99,12 +99,12 @@ type messenger interface {
 	) error
 }
 
-func (s Service) checkPermissionsToManageRole(
+func (m *Module) checkPermissionsToManageRole(
 	ctx context.Context,
 	memberID uuid.UUID,
 	rank uint,
 ) error {
-	hasPermission, err := s.repo.CheckMemberHavePermission(
+	hasPermission, err := m.repo.CheckMemberHavePermission(
 		ctx,
 		memberID,
 		models.RolePermissionManageRoles,
@@ -118,7 +118,7 @@ func (s Service) checkPermissionsToManageRole(
 		)
 	}
 
-	maxRole, err := s.repo.GetMemberMaxRole(ctx, memberID)
+	maxRole, err := m.repo.GetMemberMaxRole(ctx, memberID)
 	if err != nil {
 		return err
 	}
@@ -138,11 +138,11 @@ func (s Service) checkPermissionsToManageRole(
 	return nil
 }
 
-func (s Service) getInitiator(
+func (m *Module) getInitiator(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	initiator, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+	initiator, err := m.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
@@ -156,11 +156,11 @@ func (s Service) getInitiator(
 	return initiator, nil
 }
 
-func (s Service) getMember(
+func (m *Module) getMember(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Member, error) {
-	initiator, err := s.repo.GetMember(ctx, memberID)
+	initiator, err := m.repo.GetMember(ctx, memberID)
 	if err != nil {
 		return models.Member{}, err
 	}

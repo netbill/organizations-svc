@@ -10,11 +10,11 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) AcceptInvite(
+func (m *Module) AcceptInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.GetInviteForAccount(ctx, accountID, inviteID)
+	invite, err = m.GetInviteForAccount(ctx, accountID, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -35,27 +35,27 @@ func (s Service) AcceptInvite(
 		)
 	}
 
-	if _, err = s.checkOrganizationIsActiveAndExists(ctx, invite.OrganizationID); err != nil {
+	if _, err = m.checkOrganizationIsActiveAndExists(ctx, invite.OrganizationID); err != nil {
 		return models.Invite{}, err
 	}
 
-	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusAccepted)
+	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		invite, err = m.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusAccepted)
 		if err != nil {
 			return err
 		}
 
-		err = s.messenger.WriteOrgInviteAccepted(ctx, invite)
+		err = m.messenger.WriteOrgInviteAccepted(ctx, invite)
 		if err != nil {
 			return err
 		}
 
-		mem, err := s.repo.CreateMember(ctx, accountID, invite.OrganizationID)
+		mem, err := m.repo.CreateMember(ctx, accountID, invite.OrganizationID)
 		if err != nil {
 			return err
 		}
 
-		err = s.messenger.WriteOrgMemberCreated(ctx, mem)
+		err = m.messenger.WriteOrgMemberCreated(ctx, mem)
 		if err != nil {
 			return err
 		}

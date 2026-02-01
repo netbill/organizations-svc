@@ -13,7 +13,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (o Outbound) WriteOrgInviteCreated(
+func (o *Outbound) WriteOrgInviteCreated(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -52,7 +52,7 @@ func (o Outbound) WriteOrgInviteCreated(
 	return nil
 }
 
-func (o Outbound) WriteOrgInviteAccepted(
+func (o *Outbound) WriteOrgInviteAccepted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -86,7 +86,7 @@ func (o Outbound) WriteOrgInviteAccepted(
 	return nil
 }
 
-func (o Outbound) WriteOrgInviteDeclined(
+func (o *Outbound) WriteOrgInviteDeclined(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -120,7 +120,7 @@ func (o Outbound) WriteOrgInviteDeclined(
 	return nil
 }
 
-func (o Outbound) WriteOrgInviteDeleted(
+func (o *Outbound) WriteOrgInviteDeleted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {

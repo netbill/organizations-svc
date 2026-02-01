@@ -10,11 +10,11 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) DeleteInvite(
+func (m *Module) DeleteInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) error {
-	invite, err := s.GetInviteForAccount(ctx, accountID, inviteID)
+	invite, err := m.GetInviteForAccount(ctx, accountID, inviteID)
 	if err != nil {
 		return err
 	}
@@ -35,25 +35,25 @@ func (s Service) DeleteInvite(
 		)
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, invite.OrganizationID)
+	initiator, err := m.getInitiator(ctx, accountID, invite.OrganizationID)
 	if err != nil {
 		return err
 	}
 
-	if err = s.checkPermissionForManageInvites(
+	if err = m.checkPermissionForManageInvites(
 		ctx,
 		initiator.AccountID,
 	); err != nil {
 		return err
 	}
 
-	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = s.repo.DeleteInvite(ctx, inviteID)
+	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = m.repo.DeleteInvite(ctx, inviteID)
 		if err != nil {
 			return err
 		}
 
-		err = s.messenger.WriteOrgInviteDeleted(ctx, invite)
+		err = m.messenger.WriteOrgInviteDeleted(ctx, invite)
 		if err != nil {
 			return err
 		}

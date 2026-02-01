@@ -59,7 +59,7 @@ type OrgInvitesQ interface {
 	Count(ctx context.Context) (uint, error)
 }
 
-func (r Repository) CreateInvite(
+func (r *Repository) CreateInvite(
 	ctx context.Context,
 	params invite.CreateParams,
 ) (models.Invite, error) {
@@ -78,7 +78,7 @@ func (r Repository) CreateInvite(
 	return row.ToModel(), nil
 }
 
-func (r Repository) GetInvite(
+func (r *Repository) GetInvite(
 	ctx context.Context,
 	id uuid.UUID,
 ) (models.Invite, error) {
@@ -95,7 +95,7 @@ func (r Repository) GetInvite(
 	return row.ToModel(), nil
 }
 
-func (r Repository) UpdateInviteStatus(
+func (r *Repository) UpdateInviteStatus(
 	ctx context.Context,
 	id uuid.UUID,
 	status string,
@@ -113,7 +113,7 @@ func (r Repository) UpdateInviteStatus(
 	return row.ToModel(), nil
 }
 
-func (r Repository) DeleteInvite(
+func (r *Repository) DeleteInvite(
 	ctx context.Context,
 	ID uuid.UUID,
 ) error {
@@ -125,7 +125,7 @@ func (r Repository) DeleteInvite(
 	return nil
 }
 
-func (r Repository) GetOrganizationInvites(
+func (r *Repository) GetOrganizationInvites(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	limit, offset uint,
@@ -166,7 +166,7 @@ func (r Repository) GetOrganizationInvites(
 	}, nil
 }
 
-func (r Repository) GetAccountInvites(
+func (r *Repository) GetAccountInvites(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,

@@ -5,32 +5,31 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/netbill/ape"
-	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
-	"github.com/netbill/organizations-svc/internal/rest/middlewares"
+	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/restkit/problems"
 )
 
-func (c Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	req, err := request.SentInvite(r)
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid create invite request")
-		ape.RenderErr(w, problems.BadRequest(err)...)
+		c.responser.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	initiator, err := middlewares.AccountData(r.Context())
+	initiator, err := contexter.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
-		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
+		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
 	inv, err := c.core.CreateInvite(r.Context(),
-		initiator.AccountID,
+		initiator.GetAccountID(),
 		invite.CreateParams{
 			OrganizationID: req.Data.Attributes.OrganizationId,
 			AccountID:      req.Data.Attributes.AccountId,
@@ -40,14 +39,14 @@ func (c Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 		c.log.WithError(err).Errorf("failed to create invite")
 		switch {
 		case errors.Is(err, errx.ErrorAccountAlreadyMember):
-			ape.RenderErr(w, problems.Conflict("account is already a member of the organization"))
+			c.responser.RenderErr(w, problems.Conflict("account is already a member of the organization"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
-			ape.RenderErr(w, problems.Forbidden("not enough rights to create invite"))
+			c.responser.RenderErr(w, problems.Forbidden("not enough rights to create invite"))
 		default:
-			ape.RenderErr(w, problems.InternalError())
+			c.responser.RenderErr(w, problems.InternalError())
 		}
 		return
 	}
 
-	ape.Render(w, http.StatusCreated, responses.Invite(inv))
+	c.responser.Render(w, http.StatusCreated, responses.Invite(inv))
 }

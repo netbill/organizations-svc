@@ -15,33 +15,33 @@ type UpdateParams struct {
 	Color       *string `json:"color"`
 }
 
-func (s Service) UpdateRole(
+func (m *Module) UpdateRole(
 	ctx context.Context,
 	accountID uuid.UUID,
 	roleID uuid.UUID,
 	params UpdateParams,
 ) (models.Role, error) {
-	role, err := s.GetRole(ctx, roleID)
+	role, err := m.GetRole(ctx, roleID)
 	if err != nil {
 		return models.Role{}, err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, role.OrganizationID)
+	initiator, err := m.getInitiator(ctx, accountID, role.OrganizationID)
 	if err != nil {
 		return models.Role{}, err
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
+	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
 		return models.Role{}, err
 	}
 
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		role, err = s.repo.UpdateRole(ctx, roleID, params)
+	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		role, err = m.repo.UpdateRole(ctx, roleID, params)
 		if err != nil {
 			return err
 		}
 
-		if err = s.messenger.WriteOrgRoleUpdated(ctx, role); err != nil {
+		if err = m.messenger.WriteOrgRoleUpdated(ctx, role); err != nil {
 			return err
 		}
 
@@ -53,18 +53,18 @@ func (s Service) UpdateRole(
 	return role, nil
 }
 
-func (s Service) UpdateRolesRanks(
+func (m *Module) UpdateRolesRanks(
 	ctx context.Context,
 	accountID uuid.UUID,
 	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
-	initiator, err := s.getInitiator(ctx, accountID, organizationID)
+	initiator, err := m.getInitiator(ctx, accountID, organizationID)
 	if err != nil {
 		return err
 	}
 
-	maxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
+	maxRole, err := m.repo.GetMemberMaxRole(ctx, initiator.ID)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (s Service) UpdateRolesRanks(
 		rankToRole[newRank] = roleID
 	}
 
-	hasPermission, err := s.repo.CheckMemberHavePermission(
+	hasPermission, err := m.repo.CheckMemberHavePermission(
 		ctx,
 		initiator.AccountID,
 		models.RolePermissionManageRoles,
@@ -96,7 +96,7 @@ func (s Service) UpdateRolesRanks(
 		)
 	}
 
-	rolesBefore, err := s.repo.GetRoles(ctx, FilterParams{
+	rolesBefore, err := m.repo.GetRoles(ctx, FilterParams{
 		OrganizationID: &organizationID,
 	}, 1000, 0)
 	if err != nil {
@@ -131,12 +131,12 @@ func (s Service) UpdateRolesRanks(
 		}
 	}
 
-	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		if err = s.repo.UpdateRolesRanks(ctx, organizationID, order); err != nil {
+	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		if err = m.repo.UpdateRolesRanks(ctx, organizationID, order); err != nil {
 			return err
 		}
 
-		if err = s.messenger.WriteOrgRolesRanksUpdated(ctx, organizationID, order); err != nil {
+		if err = m.messenger.WriteOrgRolesRanksUpdated(ctx, organizationID, order); err != nil {
 			return err
 		}
 

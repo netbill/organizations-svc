@@ -6,33 +6,33 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/netbill/ape"
-	"github.com/netbill/ape/problems"
-	"github.com/netbill/organizations-svc/internal/rest/middlewares"
+
+	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/restkit/problems"
 )
 
-func (c Controller) GetRole(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) GetRole(w http.ResponseWriter, r *http.Request) {
 	roleID, err := uuid.Parse(chi.URLParam(r, "role_id"))
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid role id")
-		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid role id"))...)
+		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid role id"))...)
 		return
 	}
 
-	initiator, err := middlewares.AccountData(r.Context())
+	initiator, err := contexter.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
-		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
+		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
-	role, perm, err := c.core.GetRoleWithPermissions(r.Context(), initiator.AccountID, roleID)
+	role, perm, err := c.core.GetRoleWithPermissions(r.Context(), initiator.GetAccountID(), roleID)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get role")
-		ape.RenderErr(w, problems.InternalError())
+		c.responser.RenderErr(w, problems.InternalError())
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Role(role, perm))
+	c.responser.Render(w, http.StatusOK, responses.Role(role, perm))
 }

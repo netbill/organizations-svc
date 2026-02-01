@@ -9,18 +9,18 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID) error {
-	member, err := s.GetMemberByID(ctx, memberID)
+func (m *Module) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID) error {
+	member, err := m.GetMemberByID(ctx, memberID)
 	if err != nil {
 		return err
 	}
 
-	initiator, err := s.GetInitiatorMember(ctx, accountID, member.OrganizationID)
+	initiator, err := m.GetInitiatorMember(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return err
 	}
 
-	hasPermission, err := s.repo.CheckMemberHavePermission(
+	hasPermission, err := m.repo.CheckMemberHavePermission(
 		ctx,
 		initiator.AccountID,
 		models.RolePermissionManageMembers,
@@ -34,12 +34,12 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 		)
 	}
 
-	firstMaxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
+	firstMaxRole, err := m.repo.GetMemberMaxRole(ctx, initiator.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get max role for member %s: %w", initiator.AccountID, err)
 	}
 
-	secMaxRole, err := s.repo.GetMemberMaxRole(ctx, member.ID)
+	secMaxRole, err := m.repo.GetMemberMaxRole(ctx, member.ID)
 	if err != nil {
 		return fmt.Errorf("failed to get max role for member %s: %w", member.ID, err)
 	}
@@ -61,13 +61,13 @@ func (s Service) DeleteMember(ctx context.Context, accountID, memberID uuid.UUID
 		)
 	}
 
-	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = s.repo.DeleteMember(ctx, memberID)
+	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = m.repo.DeleteMember(ctx, memberID)
 		if err != nil {
 			return fmt.Errorf("failed to delete member %s: %w", memberID, err)
 		}
 
-		if err = s.messenger.WriteOrgMemberDeleted(ctx, member.ID); err != nil {
+		if err = m.messenger.WriteOrgMemberDeleted(ctx, member.ID); err != nil {
 			return fmt.Errorf("failed to send member deleted message for member %s: %w", memberID, err)
 		}
 

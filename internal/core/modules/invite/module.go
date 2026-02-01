@@ -11,13 +11,13 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type Service struct {
+type Module struct {
 	repo      repo
 	messenger messenger
 }
 
-func New(repo repo, messenger messenger) Service {
-	return Service{
+func New(repo repo, messenger messenger) *Module {
+	return &Module{
 		repo:      repo,
 		messenger: messenger,
 	}
@@ -79,11 +79,11 @@ type messenger interface {
 	WriteOrgInviteDeleted(ctx context.Context, invite models.Invite) error
 }
 
-func (s Service) checkPermissionForManageInvites(
+func (m *Module) checkPermissionForManageInvites(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) error {
-	access, err := s.repo.CheckMemberHavePermission(
+	access, err := m.repo.CheckMemberHavePermission(
 		ctx,
 		memberID,
 		models.RolePermissionManageInvites,
@@ -100,8 +100,8 @@ func (s Service) checkPermissionForManageInvites(
 	return nil
 }
 
-func (s Service) checkOrganizationIsActiveAndExists(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
-	org, err := s.repo.GetOrganizationByID(ctx, organizationID)
+func (m *Module) checkOrganizationIsActiveAndExists(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
+	org, err := m.repo.GetOrganizationByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -115,8 +115,8 @@ func (s Service) checkOrganizationIsActiveAndExists(ctx context.Context, organiz
 	return org, nil
 }
 
-func (s Service) getInitiator(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error) {
-	row, err := s.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+func (m *Module) getInitiator(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error) {
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
 			return models.Member{}, errx.ErrorNotEnoughRights.Raise(

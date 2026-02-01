@@ -26,6 +26,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/tokenmanager"
 	"github.com/netbill/pgdbx"
+	"github.com/netbill/restkit"
 )
 
 func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync.WaitGroup) {
@@ -96,7 +97,7 @@ func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync
 	profilesSql := pg.NewProfilesQ(db)
 	transactioner := pg.NewTransaction(db)
 
-	repo := repository.Repository{
+	repo := &repository.Repository{
 		OrgInvitesSql:             orgInvitesSql,
 		OrgMemberRolesSql:         orgMemberRolesSql,
 		OrgMembersSql:             orgMembersSql,
@@ -118,11 +119,12 @@ func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync
 	inviteSvc := invite.New(repo, kafkaOutbound)
 	profileSvc := profile.New(repo)
 
-	ctrl := controller.New(orgSvc, memberSvc, roleSvc, inviteSvc, log)
+	responser := restkit.NewResponser()
+	ctrl := controller.New(log, responser, orgSvc, memberSvc, roleSvc, inviteSvc)
 	mdll := middlewares.New(log, middlewares.Config{
 		AccountAccessSK: cfg.Auth.Account.Token.Access.SecretKey,
 		UploadFilesSK:   cfg.S3.Upload.Token.SecretKey,
-	})
+	}, responser)
 	router := rest.New(log, mdll, ctrl)
 
 	msgx := messenger.New(log, db, cfg.Kafka.Brokers...)

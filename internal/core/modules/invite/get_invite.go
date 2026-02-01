@@ -11,17 +11,17 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func (s Service) GetInviteForAccount(
+func (m *Module) GetInviteForAccount(
 	ctx context.Context,
 	accountID, ID uuid.UUID,
 ) (models.Invite, error) {
-	res, err := s.repo.GetInvite(ctx, ID)
+	res, err := m.repo.GetInvite(ctx, ID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
 	if res.AccountID != accountID {
-		_, err = s.repo.GetMemberByAccountAndOrganization(
+		_, err = m.repo.GetMemberByAccountAndOrganization(
 			ctx,
 			accountID,
 			res.OrganizationID,
@@ -39,17 +39,17 @@ func (s Service) GetInviteForAccount(
 	return res, nil
 }
 
-func (s Service) GetOrganizationInvites(
+func (m *Module) GetOrganizationInvites(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	_, err := s.getInitiator(ctx, accountID, organizationID)
+	_, err := m.getInitiator(ctx, accountID, organizationID)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}
 
-	res, err := s.repo.GetOrganizationInvites(ctx, organizationID, limit, offset)
+	res, err := m.repo.GetOrganizationInvites(ctx, organizationID, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}
@@ -57,12 +57,12 @@ func (s Service) GetOrganizationInvites(
 	return res, nil
 }
 
-func (s Service) GetAccountInvites(
+func (m *Module) GetAccountInvites(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	res, err := s.repo.GetAccountInvites(ctx, accountID, limit, offset)
+	res, err := m.repo.GetAccountInvites(ctx, accountID, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}

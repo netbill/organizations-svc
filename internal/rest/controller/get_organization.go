@@ -7,17 +7,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/netbill/ape"
-	"github.com/netbill/ape/problems"
+
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/restkit/problems"
 )
 
-func (c Controller) GetOrganization(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) GetOrganization(w http.ResponseWriter, r *http.Request) {
 	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid organization ID")
-		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid organization ID"))...)
+		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid organization ID"))...)
 		return
 	}
 
@@ -26,12 +26,12 @@ func (c Controller) GetOrganization(w http.ResponseWriter, r *http.Request) {
 		c.log.WithError(err).Errorf("failed to get organization")
 		switch {
 		case errors.Is(err, errx.ErrorOrganizationNotFound):
-			ape.RenderErr(w, problems.NotFound("organization not found"))
+			c.responser.RenderErr(w, problems.NotFound("organization not found"))
 		default:
-			ape.RenderErr(w, problems.InternalError())
+			c.responser.RenderErr(w, problems.InternalError())
 		}
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Organization(org))
+	c.responser.Render(w, http.StatusOK, responses.Organization(org))
 }

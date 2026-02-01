@@ -15,27 +15,27 @@ type CreateParams struct {
 	Color          string    `json:"color"`
 }
 
-func (s Service) CreateRole(
+func (m *Module) CreateRole(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params CreateParams,
 ) (role models.Role, err error) {
-	initiator, err := s.getInitiator(ctx, accountID, params.OrganizationID)
+	initiator, err := m.getInitiator(ctx, accountID, params.OrganizationID)
 	if err != nil {
 		return role, err
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, params.Rank); err != nil {
+	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, params.Rank); err != nil {
 		return models.Role{}, err
 	}
 
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		role, err = s.repo.CreateRole(ctx, params)
+	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		role, err = m.repo.CreateRole(ctx, params)
 		if err != nil {
 			return err
 		}
 
-		err = s.messenger.WriteOrgRoleCreated(ctx, role)
+		err = m.messenger.WriteOrgRoleCreated(ctx, role)
 		if err != nil {
 			return err
 		}

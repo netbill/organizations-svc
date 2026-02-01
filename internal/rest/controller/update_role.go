@@ -7,38 +7,38 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/netbill/ape"
-	"github.com/netbill/ape/problems"
+
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/rest/middlewares"
+	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/restkit/problems"
 )
 
-func (c Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 	roleID, err := uuid.Parse(chi.URLParam(r, "role_id"))
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid role id")
-		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid role id"))...)
+		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid role id"))...)
 		return
 	}
 
-	initiator, err := middlewares.AccountData(r.Context())
+	initiator, err := contexter.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
-		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
+		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
 	req, err := request.UpdateRole(r)
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid update role request")
-		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid update role request"))...)
+		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid update role request"))...)
 		return
 	}
 
-	res, err := c.core.UpdateRole(r.Context(), initiator.AccountID, roleID, role.UpdateParams{
+	res, err := c.core.UpdateRole(r.Context(), initiator.GetAccountID(), roleID, role.UpdateParams{
 		Name:        req.Data.Attributes.Name,
 		Description: req.Data.Attributes.Description,
 		Color:       req.Data.Attributes.Color,
@@ -47,14 +47,14 @@ func (c Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		c.log.WithError(err).Errorf("failed to update role")
 		switch {
 		case errors.Is(err, errx.ErrorRoleNotFound):
-			ape.RenderErr(w, problems.NotFound("role not found"))
+			c.responser.RenderErr(w, problems.NotFound("role not found"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
-			ape.RenderErr(w, problems.Forbidden("not enough rights to update role"))
+			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update role"))
 		default:
-			ape.RenderErr(w, problems.InternalError())
+			c.responser.RenderErr(w, problems.InternalError())
 		}
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Role(res, nil))
+	c.responser.Render(w, http.StatusOK, responses.Role(res, nil))
 }

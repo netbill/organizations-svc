@@ -9,8 +9,8 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
-	roles, err := s.repo.GetMemberRoles(ctx, memberID)
+func (m *Module) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
+	roles, err := m.repo.GetMemberRoles(ctx, memberID)
 	if err != nil {
 		return nil, err
 	}
@@ -18,8 +18,8 @@ func (s Service) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]mode
 	return roles, nil
 }
 
-func (s Service) GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error) {
-	role, err := s.repo.GetMemberMaxRole(ctx, memberID)
+func (m *Module) GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error) {
+	role, err := m.repo.GetMemberMaxRole(ctx, memberID)
 	if err != nil {
 		return models.Role{}, err
 	}
@@ -27,21 +27,21 @@ func (s Service) GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (mode
 	return role, nil
 }
 
-func (s Service) MemberAddRole(
+func (m *Module) MemberAddRole(
 	ctx context.Context,
 	accountID, memberID, roleID uuid.UUID,
 ) error {
-	member, err := s.getMember(ctx, memberID)
+	member, err := m.getMember(ctx, memberID)
 	if err != nil {
 		return err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, member.OrganizationID)
+	initiator, err := m.getInitiator(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return err
 	}
 
-	role, err := s.GetRole(ctx, roleID)
+	role, err := m.GetRole(ctx, roleID)
 	if err != nil {
 		return err
 	}
@@ -58,16 +58,16 @@ func (s Service) MemberAddRole(
 		)
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
+	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
 		return err
 	}
 
-	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		if err = s.repo.AddMemberRole(ctx, memberID, roleID); err != nil {
+	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		if err = m.repo.AddMemberRole(ctx, memberID, roleID); err != nil {
 			return err
 		}
 
-		if err = s.messenger.WriteOrgMemberRoleAdd(ctx, memberID, roleID); err != nil {
+		if err = m.messenger.WriteOrgMemberRoleAdd(ctx, memberID, roleID); err != nil {
 			return err
 		}
 
@@ -75,21 +75,21 @@ func (s Service) MemberAddRole(
 	})
 }
 
-func (s Service) RemoveMemberRole(
+func (m *Module) RemoveMemberRole(
 	ctx context.Context,
 	accountID, memberID, roleID uuid.UUID,
 ) error {
-	member, err := s.getMember(ctx, memberID)
+	member, err := m.getMember(ctx, memberID)
 	if err != nil {
 		return err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, member.OrganizationID)
+	initiator, err := m.getInitiator(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return err
 	}
 
-	role, err := s.GetRole(ctx, roleID)
+	role, err := m.GetRole(ctx, roleID)
 	if err != nil {
 		return err
 	}
@@ -106,16 +106,16 @@ func (s Service) RemoveMemberRole(
 		)
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
+	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
 		return err
 	}
 
-	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		if err = s.repo.RemoveMemberRole(ctx, memberID, roleID); err != nil {
+	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		if err = m.repo.RemoveMemberRole(ctx, memberID, roleID); err != nil {
 			return err
 		}
 
-		if err = s.messenger.WriteOrgMemberRoleRemove(ctx, memberID, roleID); err != nil {
+		if err = m.messenger.WriteOrgMemberRoleRemove(ctx, memberID, roleID); err != nil {
 			return err
 		}
 

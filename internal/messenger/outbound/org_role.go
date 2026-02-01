@@ -13,7 +13,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (o Outbound) WriteOrgRoleCreated(
+func (o *Outbound) WriteOrgRoleCreated(
 	ctx context.Context,
 	role models.Role,
 ) error {
@@ -53,7 +53,7 @@ func (o Outbound) WriteOrgRoleCreated(
 	return nil
 }
 
-func (o Outbound) WriteOrgRoleUpdated(
+func (o *Outbound) WriteOrgRoleUpdated(
 	ctx context.Context,
 	role models.Role,
 ) error {
@@ -90,7 +90,7 @@ func (o Outbound) WriteOrgRoleUpdated(
 	return nil
 }
 
-func (o Outbound) WriteOrgRoleDeleted(
+func (o *Outbound) WriteOrgRoleDeleted(
 	ctx context.Context,
 	role models.Role,
 ) error {
@@ -124,7 +124,7 @@ func (o Outbound) WriteOrgRoleDeleted(
 	return nil
 }
 
-func (o Outbound) WriteOrgRolePermissionsUpdated(
+func (o *Outbound) WriteOrgRolePermissionsUpdated(
 	ctx context.Context,
 	role models.Role,
 	permissions map[models.Permission]bool,
@@ -164,7 +164,7 @@ func (o Outbound) WriteOrgRolePermissionsUpdated(
 	return nil
 }
 
-func (o Outbound) WriteOrgRolesRanksUpdated(
+func (o *Outbound) WriteOrgRolesRanksUpdated(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	ranks map[uuid.UUID]uint,

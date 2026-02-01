@@ -8,8 +8,8 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func (s Service) GetOrganization(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
-	res, err := s.repo.GetOrganizationByID(ctx, organizationID)
+func (m *Module) GetOrganization(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
+	res, err := m.repo.GetOrganizationByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -22,12 +22,12 @@ type FilterParams struct {
 	Status *string `json:"status,omitempty"`
 }
 
-func (s Service) GetOrganizations(
+func (m *Module) GetOrganizations(
 	ctx context.Context,
 	params FilterParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	res, err := s.repo.GetOrganizations(ctx, params, limit, offset)
+	res, err := m.repo.GetOrganizations(ctx, params, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, err
 	}
@@ -35,12 +35,12 @@ func (s Service) GetOrganizations(
 	return res, nil
 }
 
-func (s Service) GetOrganizationForUser(
+func (m *Module) GetOrganizationForUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	res, err := s.repo.GetOrganizationsForUser(ctx, accountID, limit, offset)
+	res, err := m.repo.GetOrganizationsForUser(ctx, accountID, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, err
 	}

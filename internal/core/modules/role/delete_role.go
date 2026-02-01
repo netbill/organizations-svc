@@ -8,18 +8,18 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/errx"
 )
 
-func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error {
-	role, err := s.GetRole(ctx, roleID)
+func (m *Module) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error {
+	role, err := m.GetRole(ctx, roleID)
 	if err != nil {
 		return err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, role.OrganizationID)
+	initiator, err := m.getInitiator(ctx, accountID, role.OrganizationID)
 	if err != nil {
 		return err
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
+	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
 		return err
 	}
 
@@ -29,12 +29,12 @@ func (s Service) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) er
 		)
 	}
 
-	return s.repo.Transaction(ctx, func(ctx context.Context) error {
-		if err = s.repo.DeleteRole(ctx, roleID); err != nil {
+	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		if err = m.repo.DeleteRole(ctx, roleID); err != nil {
 			return err
 		}
 
-		if err = s.messenger.WriteOrgRoleDeleted(ctx, role); err != nil {
+		if err = m.messenger.WriteOrgRoleDeleted(ctx, role); err != nil {
 			return err
 		}
 

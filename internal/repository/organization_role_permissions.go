@@ -68,7 +68,7 @@ type OrgRolePermissionLinksQ interface {
 	Exists(ctx context.Context) (bool, error)
 }
 
-func (r Repository) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error) {
+func (r *Repository) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error) {
 	rolePerm, err := r.orgRolePermissionsQ().FilterByRoleID(roleID).Select(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role permissions, cause: %w", err)
@@ -98,7 +98,7 @@ func (r Repository) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (m
 	return rolePermMap, nil
 }
 
-func (r Repository) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
+func (r *Repository) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
 	permissions, err := r.orgRolePermissionsQ().Select(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all permissions, cause: %w", err)
@@ -115,7 +115,7 @@ func (r Repository) GetAllPermissions(ctx context.Context) ([]models.Permission,
 	return result, nil
 }
 
-func (r Repository) SetRolePermissions(
+func (r *Repository) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
 	permissions map[string]bool,
@@ -162,7 +162,7 @@ func (r Repository) SetRolePermissions(
 	return nil
 }
 
-func (r Repository) CheckMemberHavePermission(
+func (r *Repository) CheckMemberHavePermission(
 	ctx context.Context,
 	memberID uuid.UUID,
 	permissionCode string,

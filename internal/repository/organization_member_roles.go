@@ -31,7 +31,7 @@ type OrgMemberRolesQ interface {
 	Get(ctx context.Context) (OrganizationMemberRoleRow, error)
 }
 
-func (r Repository) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
+func (r *Repository) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
 	memberRoles, err := r.orgRolesQ().
 		FilterByMemberID(memberID).
 		OrderByRoleRank(true).
@@ -48,7 +48,7 @@ func (r Repository) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]m
 	return result, nil
 }
 
-func (r Repository) RemoveMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
+func (r *Repository) RemoveMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
 	err := r.orgMemberRolesQ().
 		FilterByMemberID(memberID).
 		FilterByRoleID(roleID).
@@ -60,7 +60,7 @@ func (r Repository) RemoveMemberRole(ctx context.Context, memberID, roleID uuid.
 	return nil
 }
 
-func (r Repository) AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
+func (r *Repository) AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
 	_, err := r.orgMemberRolesQ().
 		Insert(ctx, OrganizationMemberRoleRow{
 			MemberID: memberID,

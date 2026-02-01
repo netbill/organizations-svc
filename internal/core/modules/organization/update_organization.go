@@ -8,26 +8,26 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) OpenUpdateOrganizationSession(
+func (m *Module) OpenUpdateOrganizationSession(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Organization, models.UpdateOrganizationMedia, error) {
-	org, err := s.GetOrganization(ctx, organizationID)
+	org, err := m.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, models.UpdateOrganizationMedia{}, err
 	}
 
-	if err = s.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
+	if err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
 		return models.Organization{}, models.UpdateOrganizationMedia{}, err
 	}
 
 	uploadSessionID := uuid.New()
-	links, err := s.bucket.GeneratePreloadLinkForOrganizationMedia(ctx, org.ID, uploadSessionID)
+	links, err := m.bucket.GeneratePreloadLinkForOrganizationMedia(ctx, org.ID, uploadSessionID)
 	if err != nil {
 		return models.Organization{}, models.UpdateOrganizationMedia{}, err
 	}
 
-	uploadToken, err := s.token.NewUploadOrganizationMediaToken(
+	uploadToken, err := m.token.NewUploadOrganizationMediaToken(
 		accountID,
 		organizationID,
 		uploadSessionID,
@@ -76,18 +76,18 @@ func (p UpdateParams) GetUpdatedBanner() *string {
 	return p.Media.banner
 }
 
-func (s Service) UpdateOrganization(
+func (m *Module) UpdateOrganization(
 	ctx context.Context,
 	accountID uuid.UUID,
 	organizationID uuid.UUID,
 	params UpdateParams,
 ) (models.Organization, error) {
-	org, err := s.GetOrganization(ctx, organizationID)
+	org, err := m.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	if err = s.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
+	if err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
 		return models.Organization{}, err
 	}
 
@@ -95,7 +95,7 @@ func (s Service) UpdateOrganization(
 	params.Media.banner = org.Banner
 
 	if params.Media.DeletedIcon == true {
-		if err = s.bucket.DeleteOrganizationIcon(
+		if err = m.bucket.DeleteOrganizationIcon(
 			ctx,
 			organizationID,
 		); err != nil {
@@ -106,7 +106,7 @@ func (s Service) UpdateOrganization(
 	}
 
 	if params.Media.DeletedBanner == true {
-		if err = s.bucket.DeleteOrganizationBanner(
+		if err = m.bucket.DeleteOrganizationBanner(
 			ctx,
 			organizationID,
 		); err != nil {
@@ -117,7 +117,7 @@ func (s Service) UpdateOrganization(
 	}
 
 	if !(params.Media.DeletedBanner == params.Media.DeletedIcon == true) {
-		links, err := s.bucket.AcceptUpdateOrganizationMedia(
+		links, err := m.bucket.AcceptUpdateOrganizationMedia(
 			ctx,
 			organizationID,
 			params.Media.UploadSessionID,
@@ -130,7 +130,7 @@ func (s Service) UpdateOrganization(
 		params.Media.banner = links.Banner
 	}
 
-	err = s.bucket.CleanOrganizationMediaSession(
+	err = m.bucket.CleanOrganizationMediaSession(
 		ctx,
 		organizationID,
 		params.Media.UploadSessionID,
@@ -139,13 +139,13 @@ func (s Service) UpdateOrganization(
 		return models.Organization{}, err
 	}
 
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		org, err = s.repo.UpdateOrganization(ctx, organizationID, params)
+	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		org, err = m.repo.UpdateOrganization(ctx, organizationID, params)
 		if err != nil {
 			return fmt.Errorf("failed to update organization: %w", err)
 		}
 
-		err = s.messenger.WriteOrganizationUpdated(ctx, org)
+		err = m.messenger.WriteOrganizationUpdated(ctx, org)
 		if err != nil {
 			return fmt.Errorf("failed to publish organization updated event: %w", err)
 		}
@@ -158,40 +158,40 @@ func (s Service) UpdateOrganization(
 	return org, nil
 }
 
-func (s Service) DeleteUpdateOrganizationIconInSession(
+func (m *Module) DeleteUpdateOrganizationIconInSession(
 	ctx context.Context,
 	accountID, organizationID, uploadSessionID uuid.UUID,
 ) error {
-	org, err := s.GetOrganization(ctx, organizationID)
+	org, err := m.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return err
 	}
 
-	if err = s.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
+	if err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
 		return err
 	}
 
-	return s.bucket.CancelUpdateOrganizationIcon(
+	return m.bucket.CancelUpdateOrganizationIcon(
 		ctx,
 		organizationID,
 		uploadSessionID,
 	)
 }
 
-func (s Service) DeleteUpdateOrganizationBannerInSession(
+func (m *Module) DeleteUpdateOrganizationBannerInSession(
 	ctx context.Context,
 	accountID, organizationID, uploadSessionID uuid.UUID,
 ) error {
-	org, err := s.GetOrganization(ctx, organizationID)
+	org, err := m.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return err
 	}
 
-	if err = s.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
+	if err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
 		return err
 	}
 
-	return s.bucket.CancelUpdateOrganizationBanner(
+	return m.bucket.CancelUpdateOrganizationBanner(
 		ctx,
 		organizationID,
 		uploadSessionID,

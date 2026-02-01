@@ -87,7 +87,7 @@ type OrgMembersQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r Repository) CreateMember(
+func (r *Repository) CreateMember(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
@@ -102,7 +102,7 @@ func (r Repository) CreateMember(
 	return r.GetMember(ctx, row.ID)
 }
 
-func (r Repository) UpdateMember(
+func (r *Repository) UpdateMember(
 	ctx context.Context, ID uuid.UUID, params member.UpdateParams) (models.Member, error) {
 	row, err := r.orgMembersQ().
 		FilterByID(ID).
@@ -121,7 +121,7 @@ func (r Repository) UpdateMember(
 	return r.GetMember(ctx, row.ID)
 }
 
-func (r Repository) GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
+func (r *Repository) GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
 	row, err := r.orgMembersQ().FilterByID(memberID).GetWithUserData(ctx)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
@@ -135,7 +135,7 @@ func (r Repository) GetMember(ctx context.Context, memberID uuid.UUID) (models.M
 	return row.ToModel(), nil
 }
 
-func (r Repository) GetMemberByAccountAndOrganization(
+func (r *Repository) GetMemberByAccountAndOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
@@ -155,7 +155,7 @@ func (r Repository) GetMemberByAccountAndOrganization(
 	return row.ToModel(), nil
 }
 
-func (r Repository) MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error) {
+func (r *Repository) MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error) {
 	exists, err := r.orgMembersQ().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
@@ -167,7 +167,7 @@ func (r Repository) MemberExists(ctx context.Context, accountID, organizationID 
 	return exists, nil
 }
 
-func (r Repository) GetMembers(
+func (r *Repository) GetMembers(
 	ctx context.Context,
 	filter member.FilterParams,
 	limit uint,
@@ -232,7 +232,7 @@ func (r Repository) GetMembers(
 	}, nil
 }
 
-func (r Repository) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
+func (r *Repository) DeleteMember(ctx context.Context, memberID uuid.UUID) error {
 	err := r.orgMembersQ().FilterByID(memberID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete member with ID %s, cause: %w", memberID, err)
@@ -241,7 +241,7 @@ func (r Repository) DeleteMember(ctx context.Context, memberID uuid.UUID) error 
 	return nil
 }
 
-func (r Repository) DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error {
+func (r *Repository) DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error {
 	err := r.orgMembersQ().FilterByAccountID(accountID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete members with account ID %s, cause: %w", accountID, err)

@@ -5,25 +5,25 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/netbill/ape"
-	"github.com/netbill/ape/problems"
+
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/middlewares"
+	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/restkit/problems"
 )
 
-func (c Controller) UpdateRolesRanks(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) UpdateRolesRanks(w http.ResponseWriter, r *http.Request) {
 	req, err := request.UpdateRolesRanks(r)
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid update roles ranks request")
-		ape.RenderErr(w, problems.BadRequest(err)...)
+		c.responser.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	initiator, err := middlewares.AccountData(r.Context())
+	initiator, err := contexter.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
-		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
+		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
@@ -32,20 +32,20 @@ func (c Controller) UpdateRolesRanks(w http.ResponseWriter, r *http.Request) {
 		dict[item.Id] = item.Rank
 	}
 
-	err = c.core.UpdateRolesRanks(r.Context(), initiator.AccountID, req.Data.Id, dict)
+	err = c.core.UpdateRolesRanks(r.Context(), initiator.GetAccountID(), req.Data.Id, dict)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update roles ranks")
 		switch {
 		case errors.Is(err, errx.ErrorNotEnoughRights):
-			ape.RenderErr(w, problems.Forbidden("not enough rights to update roles ranks"))
+			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update roles ranks"))
 		case errors.Is(err, errx.ErrorCannotUpdateHeadRoleRank):
-			ape.RenderErr(w, problems.Forbidden("cannot update head role rank"))
+			c.responser.RenderErr(w, problems.Forbidden("cannot update head role rank"))
 		//case errors.Is(err, errx.ErrorInvalidInput):
-		//	ape.RenderErr(w, problems.BadRequest(validation.Errors{
+		//	c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
 		//		"roles": fmt.Errorf(err.Error()),
 		//	})...)
 		default:
-			ape.RenderErr(w, problems.InternalError())
+			c.responser.RenderErr(w, problems.InternalError())
 		}
 		return
 	}

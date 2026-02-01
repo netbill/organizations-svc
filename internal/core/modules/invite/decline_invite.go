@@ -10,11 +10,11 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) DeclineInvite(
+func (m *Module) DeclineInvite(
 	ctx context.Context,
 	accountID, inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = s.GetInviteForAccount(ctx, accountID, inviteID)
+	invite, err = m.GetInviteForAccount(ctx, accountID, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -35,13 +35,13 @@ func (s Service) DeclineInvite(
 		)
 	}
 
-	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		invite, err = s.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusDeclined)
+	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		invite, err = m.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusDeclined)
 		if err != nil {
 			return err
 		}
 
-		err = s.messenger.WriteOrgInviteDeclined(ctx, invite)
+		err = m.messenger.WriteOrgInviteDeclined(ctx, invite)
 		if err != nil {
 			return err
 		}

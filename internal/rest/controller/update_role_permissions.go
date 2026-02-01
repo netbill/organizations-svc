@@ -4,26 +4,25 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/netbill/ape"
-	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/middlewares"
+	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/restkit/problems"
 )
 
-func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request) {
 	req, err := request.UpdateRolePermissions(r)
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid update role permissions request")
-		ape.RenderErr(w, problems.BadRequest(err)...)
+		c.responser.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	initiator, err := middlewares.AccountData(r.Context())
+	initiator, err := contexter.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
-		ape.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
+		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
@@ -32,21 +31,21 @@ func (c Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Request
 		dict[item.Code] = item.Status
 	}
 
-	role, perm, err := c.core.SetRolePermissions(r.Context(), initiator.AccountID, req.Data.Id, dict)
+	role, perm, err := c.core.SetRolePermissions(r.Context(), initiator.GetAccountID(), req.Data.Id, dict)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update role permissions")
 		switch {
 		case errors.Is(err, errx.ErrorRoleNotFound):
-			ape.RenderErr(w, problems.NotFound("role not found"))
+			c.responser.RenderErr(w, problems.NotFound("role not found"))
 		case errors.Is(err, errx.ErrorCannotUpdatePermissionsHeadRole):
-			ape.RenderErr(w, problems.Forbidden("cannot update permissions of head role"))
+			c.responser.RenderErr(w, problems.Forbidden("cannot update permissions of head role"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
-			ape.RenderErr(w, problems.Forbidden("not enough rights to update role permissions"))
+			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update role permissions"))
 		default:
-			ape.RenderErr(w, problems.InternalError())
+			c.responser.RenderErr(w, problems.InternalError())
 		}
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Role(role, perm))
+	c.responser.Render(w, http.StatusOK, responses.Role(role, perm))
 }

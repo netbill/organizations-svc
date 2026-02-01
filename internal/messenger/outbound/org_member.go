@@ -13,7 +13,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (o Outbound) WriteOrgMemberCreated(
+func (o *Outbound) WriteOrgMemberCreated(
 	ctx context.Context,
 	member models.Member,
 ) error {
@@ -52,7 +52,7 @@ func (o Outbound) WriteOrgMemberCreated(
 	return nil
 }
 
-func (o Outbound) WriteOrgMemberUpdated(
+func (o *Outbound) WriteOrgMemberUpdated(
 	ctx context.Context,
 	member models.Member,
 ) error {
@@ -88,7 +88,7 @@ func (o Outbound) WriteOrgMemberUpdated(
 	return nil
 }
 
-func (o Outbound) WriteOrgMemberDeleted(
+func (o *Outbound) WriteOrgMemberDeleted(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) error {
@@ -122,7 +122,7 @@ func (o Outbound) WriteOrgMemberDeleted(
 	return nil
 }
 
-func (o Outbound) WriteOrgMemberRoleAdd(
+func (o *Outbound) WriteOrgMemberRoleAdd(
 	ctx context.Context,
 	memberID uuid.UUID,
 	roleID uuid.UUID,
@@ -157,7 +157,7 @@ func (o Outbound) WriteOrgMemberRoleAdd(
 	return nil
 }
 
-func (o Outbound) WriteOrgMemberRoleRemove(
+func (o *Outbound) WriteOrgMemberRoleRemove(
 	ctx context.Context,
 	memberID uuid.UUID,
 	roleID uuid.UUID,

@@ -79,7 +79,7 @@ type OrgRolesQ interface {
 	Count(ctx context.Context) (uint, error)
 }
 
-func (r Repository) CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error) {
+func (r *Repository) CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error) {
 	row, err := r.orgRolesQ().Insert(ctx, OrganizationRoleRow{
 		OrganizationID: params.OrganizationID,
 		Rank:           params.Rank,
@@ -94,7 +94,7 @@ func (r Repository) CreateRole(ctx context.Context, params role.CreateParams) (m
 	return row.ToModel(), nil
 }
 
-func (r Repository) CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (models.Role, error) {
+func (r *Repository) CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (models.Role, error) {
 	row, err := r.orgRolesQ().Insert(ctx, OrganizationRoleRow{
 		OrganizationID: organizationID,
 		Head:           true,
@@ -110,7 +110,7 @@ func (r Repository) CreateHeadRole(ctx context.Context, organizationID uuid.UUID
 	return row.ToModel(), nil
 }
 
-func (r Repository) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
+func (r *Repository) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
 	row, err := r.orgRolesQ().FilterByID(roleID).Get(ctx)
 	if err != nil {
 		return models.Role{}, fmt.Errorf("failed to get role, cause: %w", err)
@@ -124,7 +124,7 @@ func (r Repository) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role,
 	return row.ToModel(), nil
 }
 
-func (r Repository) GetRoles(
+func (r *Repository) GetRoles(
 	ctx context.Context,
 	filter role.FilterParams,
 	limit, offset uint,
@@ -173,7 +173,7 @@ func (r Repository) GetRoles(
 	}, nil
 }
 
-func (r Repository) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (models.Role, error) {
+func (r *Repository) UpdateRole(ctx context.Context, roleID uuid.UUID, params role.UpdateParams) (models.Role, error) {
 	q := r.orgRolesQ().FilterByID(roleID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
@@ -198,7 +198,7 @@ func (r Repository) UpdateRole(ctx context.Context, roleID uuid.UUID, params rol
 	return row.ToModel(), nil
 }
 
-func (r Repository) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (models.Role, error) {
+func (r *Repository) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank uint) (models.Role, error) {
 	row, err := r.orgRolesQ().UpdateRoleRank(ctx, roleID, newRank)
 	if err != nil {
 		return models.Role{}, fmt.Errorf("failed to update role rank, cause: %w", err)
@@ -212,7 +212,7 @@ func (r Repository) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRan
 	return row.ToModel(), nil
 }
 
-func (r Repository) UpdateRolesRanks(
+func (r *Repository) UpdateRolesRanks(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
@@ -225,7 +225,7 @@ func (r Repository) UpdateRolesRanks(
 	return nil
 }
 
-func (r Repository) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
+func (r *Repository) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 	err := r.orgRolesQ().DeleteAndShiftRanks(ctx, roleID)
 	if err != nil {
 		return fmt.Errorf("failed to delete role, cause: %w", err)
@@ -234,7 +234,7 @@ func (r Repository) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 	return nil
 }
 
-func (r Repository) GetMemberMaxRole(
+func (r *Repository) GetMemberMaxRole(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Role, error) {

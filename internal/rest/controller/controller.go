@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/netbill/logium"
@@ -179,6 +180,11 @@ type roleSvc interface {
 	GetAllPermissions(ctx context.Context) ([]models.Permission, error)
 }
 
+type responser interface {
+	Render(w http.ResponseWriter, status int, res ...interface{})
+	RenderErr(w http.ResponseWriter, errs ...error)
+}
+
 type core struct {
 	orgSvc
 	inviteSvc
@@ -187,24 +193,27 @@ type core struct {
 }
 
 type Controller struct {
-	core core
-	log  *logium.Logger
+	core      core
+	responser responser
+	log       *logium.Logger
 }
 
 func New(
+	log *logium.Logger,
+	responser responser,
 	orgSvc orgSvc,
 	memberSvc memberSvc,
 	roleSvc roleSvc,
 	inviteSvc inviteSvc,
-	log *logium.Logger,
-) Controller {
-	return Controller{
+) *Controller {
+	return &Controller{
 		core: core{
 			orgSvc:    orgSvc,
 			inviteSvc: inviteSvc,
 			memberSvc: memberSvc,
 			roleSvc:   roleSvc,
 		},
-		log: log,
+		log:       log,
+		responser: responser,
 	}
 }

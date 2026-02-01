@@ -14,22 +14,22 @@ type UpdateParams struct {
 	Label    *string
 }
 
-func (s Service) UpdateMember(
+func (m *Module) UpdateMember(
 	ctx context.Context,
 	accountID, memberID uuid.UUID,
 	params UpdateParams,
 ) (models.Member, error) {
-	member, err := s.GetMemberByID(ctx, memberID)
+	member, err := m.GetMemberByID(ctx, memberID)
 	if err != nil {
 		return models.Member{}, err
 	}
 
-	initiator, err := s.GetInitiatorMember(ctx, accountID, member.OrganizationID)
+	initiator, err := m.GetInitiatorMember(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
 
-	hasPermission, err := s.repo.CheckMemberHavePermission(
+	hasPermission, err := m.repo.CheckMemberHavePermission(
 		ctx,
 		initiator.AccountID,
 		models.RolePermissionManageMembers,
@@ -43,12 +43,12 @@ func (s Service) UpdateMember(
 		)
 	}
 
-	firstMaxRole, err := s.repo.GetMemberMaxRole(ctx, initiator.ID)
+	firstMaxRole, err := m.repo.GetMemberMaxRole(ctx, initiator.ID)
 	if err != nil {
 		return models.Member{}, fmt.Errorf("failed to get max role for member %s: %w", initiator.AccountID, err)
 	}
 	if firstMaxRole.Head == false {
-		secMaxRole, err := s.repo.GetMemberMaxRole(ctx, member.ID)
+		secMaxRole, err := m.repo.GetMemberMaxRole(ctx, member.ID)
 		if err != nil {
 			return models.Member{}, fmt.Errorf("failed to get max role for member %s: %w", member.ID, err)
 		}
@@ -66,13 +66,13 @@ func (s Service) UpdateMember(
 		}
 	}
 
-	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		member, err = s.repo.UpdateMember(ctx, memberID, params)
+	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		member, err = m.repo.UpdateMember(ctx, memberID, params)
 		if err != nil {
 			return fmt.Errorf("failed to update member %s: %w", memberID, err)
 		}
 
-		if err = s.messenger.WriteOrgMemberUpdated(ctx, member); err != nil {
+		if err = m.messenger.WriteOrgMemberUpdated(ctx, member); err != nil {
 			return fmt.Errorf("failed to send member updated message for member %s: %w", memberID, err)
 		}
 		return nil

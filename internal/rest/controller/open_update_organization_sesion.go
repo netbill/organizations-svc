@@ -8,18 +8,18 @@ import (
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-	"github.com/netbill/ape"
-	"github.com/netbill/ape/problems"
+
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/middlewares"
+	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/restkit/problems"
 )
 
-func (c Controller) OpenUpdateOrganizationSession(w http.ResponseWriter, r *http.Request) {
-	initiator, err := middlewares.AccountData(r.Context())
+func (c *Controller) OpenUpdateOrganizationSession(w http.ResponseWriter, r *http.Request) {
+	initiator, err := contexter.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Error("failed to get user from context")
-		ape.RenderErr(w, problems.Unauthorized("failed to get user from context"))
+		c.responser.RenderErr(w, problems.Unauthorized("failed to get user from context"))
 
 		return
 	}
@@ -27,7 +27,7 @@ func (c Controller) OpenUpdateOrganizationSession(w http.ResponseWriter, r *http
 	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
 		c.log.WithError(err).Errorf("invalid organization id")
-		ape.RenderErr(w, problems.BadRequest(validation.Errors{
+		c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
 			"query": fmt.Errorf("invalid organization id: %s", chi.URLParam(r, "organization_id")),
 		})...)
 
@@ -36,22 +36,22 @@ func (c Controller) OpenUpdateOrganizationSession(w http.ResponseWriter, r *http
 
 	organization, media, err := c.core.OpenUpdateOrganizationSession(
 		r.Context(),
-		initiator.AccountID,
+		initiator.GetAccountID(),
 		organizationID,
 	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get preload link for update organization")
 		switch {
 		case errors.Is(err, errx.ErrorOrganizationNotFound):
-			ape.RenderErr(w, problems.NotFound("organization does not exist"))
+			c.responser.RenderErr(w, problems.NotFound("organization does not exist"))
 		case errors.Is(err, errx.ErrorNotEnoughRights):
-			ape.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
+			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
 		default:
-			ape.RenderErr(w, problems.InternalError())
+			c.responser.RenderErr(w, problems.InternalError())
 		}
 
 		return
 	}
 
-	ape.Render(w, 200, responses.UpdateOrganizationSession(media, organization))
+	c.responser.Render(w, 200, responses.UpdateOrganizationSession(media, organization))
 }

@@ -8,13 +8,13 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type Service struct {
+type Module struct {
 	repo      repo
 	messenger messenger
 }
 
-func New(repo repo, messenger messenger) Service {
-	return Service{
+func New(repo repo, messenger messenger) *Module {
+	return &Module{
 		repo:      repo,
 		messenger: messenger,
 	}

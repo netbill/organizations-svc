@@ -5,14 +5,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/netbill/ape"
-	"github.com/netbill/ape/problems"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/restkit/pagi"
+	"github.com/netbill/restkit/problems"
 )
 
-func (c Controller) GetOrganizations(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) GetOrganizations(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
 	params := organization.FilterParams{}
@@ -29,16 +28,16 @@ func (c Controller) GetOrganizations(w http.ResponseWriter, r *http.Request) {
 
 	limit, offset := pagi.GetPagination(r)
 	if limit < 1 || limit > 100 {
-		ape.RenderErr(w, problems.BadRequest(fmt.Errorf("pagination limit must be between 1 and 100"))...)
+		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("pagination limit must be between 1 and 100"))...)
 		return
 	}
 
 	organizations, err := c.core.GetOrganizations(r.Context(), params, limit, offset)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get organizations")
-		ape.RenderErr(w, problems.InternalError())
+		c.responser.RenderErr(w, problems.InternalError())
 		return
 	}
 
-	ape.Render(w, http.StatusOK, responses.Organizations(r, organizations))
+	c.responser.Render(w, http.StatusOK, responses.Organizations(r, organizations))
 }

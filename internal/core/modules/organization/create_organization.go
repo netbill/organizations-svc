@@ -11,28 +11,28 @@ type CreateParams struct {
 	Name string
 }
 
-func (s Service) CreateOrganization(
+func (m *Module) CreateOrganization(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params CreateParams,
 ) (org models.Organization, err error) {
-	if err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		org, err = s.repo.CreateOrganization(ctx, params)
+	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		org, err = m.repo.CreateOrganization(ctx, params)
 		if err != nil {
 			return err
 		}
 
-		err = s.messenger.WriteOrganizationCreated(ctx, org)
+		err = m.messenger.WriteOrganizationCreated(ctx, org)
 		if err != nil {
 			return err
 		}
 
-		role, err := s.createRoleHead(ctx, org.ID)
+		role, err := m.createRoleHead(ctx, org.ID)
 		if err != nil {
 			return err
 		}
 
-		if _, err = s.createMemberHead(ctx, accountID, org.ID, role.ID); err != nil {
+		if _, err = m.createMemberHead(ctx, accountID, org.ID, role.ID); err != nil {
 			return err
 		}
 
@@ -44,49 +44,49 @@ func (s Service) CreateOrganization(
 	return org, err
 }
 
-func (s Service) createRoleHead(
+func (m *Module) createRoleHead(
 	ctx context.Context,
 	organizationID uuid.UUID,
 ) (role models.Role, err error) {
-	role, err = s.repo.CreateHeadRole(ctx, organizationID)
+	role, err = m.repo.CreateHeadRole(ctx, organizationID)
 	if err != nil {
 		return models.Role{}, err
 	}
 
-	err = s.messenger.WriteOrgRoleCreated(ctx, role)
+	err = m.messenger.WriteOrgRoleCreated(ctx, role)
 	if err != nil {
 		return models.Role{}, err
 	}
 
-	per, err := s.repo.GetRolePermissions(ctx, role.ID)
+	per, err := m.repo.GetRolePermissions(ctx, role.ID)
 	if err != nil {
 		return models.Role{}, err
 	}
 
-	if err = s.messenger.WriteOrgRolePermissionsUpdated(ctx, role, per); err != nil {
+	if err = m.messenger.WriteOrgRolePermissionsUpdated(ctx, role, per); err != nil {
 		return models.Role{}, err
 	}
 
 	return role, nil
 }
 
-func (s Service) createMemberHead(
+func (m *Module) createMemberHead(
 	ctx context.Context,
 	accountID uuid.UUID,
 	organizationID uuid.UUID,
 	roleID uuid.UUID,
 ) (member models.Member, err error) {
-	member, err = s.repo.CreateMember(ctx, accountID, organizationID)
+	member, err = m.repo.CreateMember(ctx, accountID, organizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
 
-	err = s.repo.AddMemberRole(ctx, member.ID, roleID)
+	err = m.repo.AddMemberRole(ctx, member.ID, roleID)
 	if err != nil {
 		return models.Member{}, err
 	}
 
-	err = s.messenger.WriteOrgMemberCreated(ctx, member)
+	err = m.messenger.WriteOrgMemberCreated(ctx, member)
 	if err != nil {
 		return models.Member{}, err
 	}

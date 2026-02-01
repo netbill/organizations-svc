@@ -9,22 +9,22 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (s Service) SetRolePermissions(
+func (m *Module) SetRolePermissions(
 	ctx context.Context,
 	accountID, roleID uuid.UUID,
 	permissions map[string]bool,
 ) (role models.Role, perm map[models.Permission]bool, err error) {
-	role, err = s.GetRole(ctx, roleID)
+	role, err = m.GetRole(ctx, roleID)
 	if err != nil {
 		return models.Role{}, nil, err
 	}
 
-	initiator, err := s.getInitiator(ctx, accountID, role.OrganizationID)
+	initiator, err := m.getInitiator(ctx, accountID, role.OrganizationID)
 	if err != nil {
 		return models.Role{}, nil, err
 	}
 
-	if err = s.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
+	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
 		return models.Role{}, nil, err
 	}
 
@@ -34,18 +34,18 @@ func (s Service) SetRolePermissions(
 		)
 	}
 
-	err = s.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = s.repo.SetRolePermissions(ctx, roleID, permissions)
+	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = m.repo.SetRolePermissions(ctx, roleID, permissions)
 		if err != nil {
 			return err
 		}
 
-		perm, err = s.repo.GetRolePermissions(ctx, roleID)
+		perm, err = m.repo.GetRolePermissions(ctx, roleID)
 		if err != nil {
 			return err
 		}
 
-		err = s.messenger.WriteOrgRolePermissionsUpdated(ctx, role, perm)
+		err = m.messenger.WriteOrgRolePermissionsUpdated(ctx, role, perm)
 		if err != nil {
 			return err
 		}
@@ -59,8 +59,8 @@ func (s Service) SetRolePermissions(
 	return role, perm, nil
 }
 
-func (s Service) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
-	res, err := s.repo.GetAllPermissions(ctx)
+func (m *Module) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
+	res, err := m.repo.GetAllPermissions(ctx)
 	if err != nil {
 		return nil, err
 	}

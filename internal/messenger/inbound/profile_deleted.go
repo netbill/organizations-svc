@@ -10,7 +10,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/messenger/contracts"
 )
 
-func (i Inbound) ProfileDeleted(
+func (i *Inbound) ProfileDeleted(
 	ctx context.Context,
 	event inbox.Event,
 ) inbox.EventStatus {

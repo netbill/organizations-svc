@@ -71,7 +71,7 @@ type OrganizationsQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r Repository) CreateOrganization(
+func (r *Repository) CreateOrganization(
 	ctx context.Context,
 	params organization.CreateParams,
 ) (models.Organization, error) {
@@ -88,7 +88,7 @@ func (r Repository) CreateOrganization(
 	return row.ToModel(), nil
 }
 
-func (r Repository) UpdateOrganization(
+func (r *Repository) UpdateOrganization(
 	ctx context.Context,
 	ID uuid.UUID,
 	params organization.UpdateParams,
@@ -110,7 +110,7 @@ func (r Repository) UpdateOrganization(
 	return row.ToModel(), nil
 }
 
-func (r Repository) UpdateOrganizationStatus(
+func (r *Repository) UpdateOrganizationStatus(
 	ctx context.Context,
 	ID uuid.UUID,
 	status string,
@@ -126,7 +126,7 @@ func (r Repository) UpdateOrganizationStatus(
 	return row.ToModel(), nil
 }
 
-func (r Repository) UpdateOrganizationMaxRoles(
+func (r *Repository) UpdateOrganizationMaxRoles(
 	ctx context.Context,
 	ID uuid.UUID,
 	maxRoles uint,
@@ -142,7 +142,7 @@ func (r Repository) UpdateOrganizationMaxRoles(
 	return row.ToModel(), nil
 }
 
-func (r Repository) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error) {
+func (r *Repository) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error) {
 	row, err := r.organizationsQ().FilterByID(ID).Get(ctx)
 	if err != nil {
 		return models.Organization{}, fmt.Errorf(
@@ -159,7 +159,7 @@ func (r Repository) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (mode
 	return row.ToModel(), nil
 }
 
-func (r Repository) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
+func (r *Repository) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
 	err := r.organizationsQ().FilterByID(ID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete organization with ID %s, cause: %w", ID, err)
@@ -168,7 +168,7 @@ func (r Repository) DeleteOrganization(ctx context.Context, ID uuid.UUID) error 
 	return nil
 }
 
-func (r Repository) GetOrganizations(
+func (r *Repository) GetOrganizations(
 	ctx context.Context,
 	filter organization.FilterParams,
 	limit, offset uint,
@@ -209,7 +209,7 @@ func (r Repository) GetOrganizations(
 
 }
 
-func (r Repository) GetOrganizationsForUser(
+func (r *Repository) GetOrganizationsForUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,

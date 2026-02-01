@@ -7,7 +7,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type Service struct {
+type Module struct {
 	repo repo
 }
 
@@ -21,6 +21,6 @@ type repo interface {
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
-func New(repo repo) Service {
-	return Service{repo: repo}
+func New(repo repo) *Module {
+	return &Module{repo: repo}
 }

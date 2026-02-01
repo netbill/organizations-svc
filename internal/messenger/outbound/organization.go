@@ -13,7 +13,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (o Outbound) WriteOrganizationCreated(
+func (o *Outbound) WriteOrganizationCreated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -50,7 +50,7 @@ func (o Outbound) WriteOrganizationCreated(
 	return nil
 }
 
-func (o Outbound) WriteOrganizationUpdated(
+func (o *Outbound) WriteOrganizationUpdated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -87,7 +87,7 @@ func (o Outbound) WriteOrganizationUpdated(
 	return nil
 }
 
-func (o Outbound) WriteOrganizationDeleted(
+func (o *Outbound) WriteOrganizationDeleted(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -121,7 +121,7 @@ func (o Outbound) WriteOrganizationDeleted(
 	return nil
 }
 
-func (o Outbound) WriteOrganizationActivated(
+func (o *Outbound) WriteOrganizationActivated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -155,7 +155,7 @@ func (o Outbound) WriteOrganizationActivated(
 	return nil
 }
 
-func (o Outbound) WriteOrganizationDeactivated(
+func (o *Outbound) WriteOrganizationDeactivated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
