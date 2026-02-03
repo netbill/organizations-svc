@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/restkit/problems"
@@ -30,7 +31,9 @@ func (c *Controller) ActivateOrganization(w http.ResponseWriter, r *http.Request
 
 	res, err := c.core.ActivateOrganization(
 		r.Context(),
-		initiator.GetAccountID(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
 		organizationID,
 	)
 	if err != nil {

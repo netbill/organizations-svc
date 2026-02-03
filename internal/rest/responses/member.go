@@ -16,6 +16,7 @@ func Member(mod models.Member) resources.Member {
 			Attributes: resources.MemberDataAttributes{
 				OrganizationId: mod.OrganizationID,
 				AccountId:      mod.AccountID,
+				Head:           mod.Head,
 				Position:       mod.Position,
 				Label:          mod.Label,
 				Username:       mod.Username,

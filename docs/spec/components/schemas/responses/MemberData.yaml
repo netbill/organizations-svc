@@ -16,6 +16,7 @@ properties:
     required:
       - account_id
       - organization_id
+      - head
       - username
       - official
       - created_at
@@ -29,6 +30,9 @@ properties:
         type: string
         format: uuid
         description: "The ID of the organization the member belongs to"
+      head:
+        type: boolean
+        description: "Indicates if the member is the head of the organization"
       position:
         type: string
         description: "The position or role of the member within the organization"

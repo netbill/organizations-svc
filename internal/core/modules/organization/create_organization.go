@@ -13,7 +13,7 @@ type CreateParams struct {
 
 func (m *Module) CreateOrganization(
 	ctx context.Context,
-	accountID uuid.UUID,
+	initiator models.InitiatorData,
 	params CreateParams,
 ) (org models.Organization, err error) {
 	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -27,12 +27,8 @@ func (m *Module) CreateOrganization(
 			return err
 		}
 
-		role, err := m.createRoleHead(ctx, org.ID)
+		_, err = m.createMemberHead(ctx, initiator.AccountID, org.ID)
 		if err != nil {
-			return err
-		}
-
-		if _, err = m.createMemberHead(ctx, accountID, org.ID, role.ID); err != nil {
 			return err
 		}
 
@@ -44,44 +40,12 @@ func (m *Module) CreateOrganization(
 	return org, err
 }
 
-func (m *Module) createRoleHead(
-	ctx context.Context,
-	organizationID uuid.UUID,
-) (role models.Role, err error) {
-	role, err = m.repo.CreateHeadRole(ctx, organizationID)
-	if err != nil {
-		return models.Role{}, err
-	}
-
-	err = m.messenger.WriteOrgRoleCreated(ctx, role)
-	if err != nil {
-		return models.Role{}, err
-	}
-
-	per, err := m.repo.GetRolePermissions(ctx, role.ID)
-	if err != nil {
-		return models.Role{}, err
-	}
-
-	if err = m.messenger.WriteOrgRolePermissionsUpdated(ctx, role, per); err != nil {
-		return models.Role{}, err
-	}
-
-	return role, nil
-}
-
 func (m *Module) createMemberHead(
 	ctx context.Context,
 	accountID uuid.UUID,
 	organizationID uuid.UUID,
-	roleID uuid.UUID,
 ) (member models.Member, err error) {
 	member, err = m.repo.CreateMember(ctx, accountID, organizationID)
-	if err != nil {
-		return models.Member{}, err
-	}
-
-	err = m.repo.AddMemberRole(ctx, member.ID, roleID)
 	if err != nil {
 		return models.Member{}, err
 	}

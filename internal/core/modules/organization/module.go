@@ -71,7 +71,7 @@ type repo interface {
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
 	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-	CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (models.Role, error)
+	CreateMemberHead(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 	AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
 
 	GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error)
@@ -148,9 +148,10 @@ type token interface {
 
 func (m *Module) chekPermissionForManageOrganization(
 	ctx context.Context,
-	accountID, organizationID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
 ) error {
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
 			return errx.ErrorNotEnoughRights.Raise(
@@ -158,6 +159,10 @@ func (m *Module) chekPermissionForManageOrganization(
 			)
 		}
 		return err
+	}
+
+	if member.Head {
+		return nil
 	}
 
 	access, err := m.repo.CheckMemberHavePermission(

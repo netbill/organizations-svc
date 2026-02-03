@@ -25,8 +25,6 @@ var _ MappedNullable = &RoleDataAttributes{}
 type RoleDataAttributes struct {
 	// The ID of the organization this role belongs to
 	OrganizationId uuid.UUID `json:"organization_id"`
-	// Indicates if this role is the head role of the organization
-	Head bool `json:"head"`
 	// The rank of the role within the organization
 	Rank uint `json:"rank"`
 	// The name of the role
@@ -47,10 +45,9 @@ type _RoleDataAttributes RoleDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRoleDataAttributes(organizationId uuid.UUID, head bool, rank uint, name string, description string, color string, createdAt time.Time, updatedAt time.Time) *RoleDataAttributes {
+func NewRoleDataAttributes(organizationId uuid.UUID, rank uint, name string, description string, color string, createdAt time.Time, updatedAt time.Time) *RoleDataAttributes {
 	this := RoleDataAttributes{}
 	this.OrganizationId = organizationId
-	this.Head = head
 	this.Rank = rank
 	this.Name = name
 	this.Description = description
@@ -90,30 +87,6 @@ func (o *RoleDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool) {
 // SetOrganizationId sets field value
 func (o *RoleDataAttributes) SetOrganizationId(v uuid.UUID) {
 	o.OrganizationId = v
-}
-
-// GetHead returns the Head field value
-func (o *RoleDataAttributes) GetHead() bool {
-	if o == nil {
-		var ret bool
-		return ret
-	}
-
-	return o.Head
-}
-
-// GetHeadOk returns a tuple with the Head field value
-// and a boolean to check if the value has been set.
-func (o *RoleDataAttributes) GetHeadOk() (*bool, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Head, true
-}
-
-// SetHead sets field value
-func (o *RoleDataAttributes) SetHead(v bool) {
-	o.Head = v
 }
 
 // GetRank returns the Rank field value
@@ -271,7 +244,6 @@ func (o RoleDataAttributes) MarshalJSON() ([]byte, error) {
 func (o RoleDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["organization_id"] = o.OrganizationId
-	toSerialize["head"] = o.Head
 	toSerialize["rank"] = o.Rank
 	toSerialize["name"] = o.Name
 	toSerialize["description"] = o.Description
@@ -287,7 +259,6 @@ func (o *RoleDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"organization_id",
-		"head",
 		"rank",
 		"name",
 		"description",

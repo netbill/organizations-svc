@@ -17,7 +17,7 @@ type UpdateParams struct {
 
 func (m *Module) UpdateRole(
 	ctx context.Context,
-	accountID uuid.UUID,
+	initiator models.InitiatorData,
 	roleID uuid.UUID,
 	params UpdateParams,
 ) (models.Role, error) {
@@ -26,13 +26,15 @@ func (m *Module) UpdateRole(
 		return models.Role{}, err
 	}
 
-	initiator, err := m.getInitiator(ctx, accountID, role.OrganizationID)
+	member, err := m.getInitiator(ctx, initiator, role.OrganizationID)
 	if err != nil {
 		return models.Role{}, err
 	}
 
-	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
-		return models.Role{}, err
+	if !member.Head {
+		if err = m.checkPermissionsToManageRole(ctx, initiator, member.OrganizationID, role.Rank); err != nil {
+			return models.Role{}, err
+		}
 	}
 
 	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -55,79 +57,71 @@ func (m *Module) UpdateRole(
 
 func (m *Module) UpdateRolesRanks(
 	ctx context.Context,
-	accountID uuid.UUID,
+	initiator models.InitiatorData,
 	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
-	initiator, err := m.getInitiator(ctx, accountID, organizationID)
+	member, err := m.getInitiator(ctx, initiator, organizationID)
 	if err != nil {
 		return err
 	}
 
-	maxRole, err := m.repo.GetMemberMaxRole(ctx, initiator.ID)
-	if err != nil {
-		return err
-	}
-
-	rolesIDs := make(map[uuid.UUID]struct{}, len(order))
-	for roleID := range order {
-		rolesIDs[roleID] = struct{}{}
-	}
-
-	rankToRole := make(map[uint]uuid.UUID, len(order))
-	for roleID, newRank := range order {
-		if prevRoleID, ok := rankToRole[newRank]; ok && prevRoleID != roleID {
+	if !member.Head {
+		maxRole, err := m.repo.GetMemberMaxRole(ctx, member.ID)
+		if err != nil {
 			return err
 		}
-		rankToRole[newRank] = roleID
-	}
 
-	hasPermission, err := m.repo.CheckMemberHavePermission(
-		ctx,
-		initiator.AccountID,
-		models.RolePermissionManageRoles,
-	)
-	if err != nil {
-		return err
-	}
-	if !hasPermission {
-		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member %s does not have permission %s", initiator.AccountID, models.RolePermissionManageRoles),
+		rolesIDs := make(map[uuid.UUID]struct{}, len(order))
+		for roleID := range order {
+			rolesIDs[roleID] = struct{}{}
+		}
+
+		hasPermission, err := m.repo.CheckMemberHavePermission(
+			ctx,
+			member.AccountID,
+			models.RolePermissionManageRoles,
 		)
-	}
-
-	rolesBefore, err := m.repo.GetRoles(ctx, FilterParams{
-		OrganizationID: &organizationID,
-	}, 1000, 0)
-	if err != nil {
-		return err
-	}
-
-	for _, role := range rolesBefore.Data {
-		if _, ok := rolesIDs[role.ID]; !ok {
-			continue
+		if err != nil {
+			return err
 		}
-
-		if role.Head {
-			return errx.ErrorCannotUpdateHeadRoleRank.Raise(
-				fmt.Errorf("cannot update rank of head role %s", role.ID),
-			)
-		}
-
-		if role.Rank >= maxRole.Rank {
+		if !hasPermission {
 			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
-					accountID, maxRole.Rank, role.Rank),
+				fmt.Errorf("member %s does not have permission %s", initiator.AccountID, models.RolePermissionManageRoles),
 			)
 		}
-	}
 
-	for _, newRank := range order {
-		if newRank >= maxRole.Rank {
-			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
-					accountID, maxRole.Rank, newRank),
-			)
+		rolesBefore, err := m.repo.GetRoles(ctx, FilterParams{
+			OrganizationID: &organizationID,
+		}, 1000, 0)
+		if err != nil {
+			return err
+		}
+
+		for _, role := range rolesBefore.Data {
+			if _, ok := rolesIDs[role.ID]; !ok {
+				continue
+			}
+
+			if role.Rank >= maxRole.Rank {
+				return errx.ErrorNotEnoughRights.Raise(
+					fmt.Errorf(
+						"member %s with max role rank %d cannot manage role with rank %d",
+						initiator.AccountID, maxRole.Rank, role.Rank,
+					),
+				)
+			}
+		}
+
+		for _, newRank := range order {
+			if newRank >= maxRole.Rank {
+				return errx.ErrorNotEnoughRights.Raise(
+					fmt.Errorf(
+						"member %s with max role rank %d cannot manage role with rank %d",
+						initiator.AccountID, maxRole.Rank, newRank,
+					),
+				)
+			}
 		}
 	}
 

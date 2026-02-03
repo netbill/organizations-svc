@@ -15,7 +15,6 @@ func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {
 			Type: "role",
 			Attributes: resources.RoleDataAttributes{
 				OrganizationId: mod.OrganizationID,
-				Head:           mod.Head,
 				Rank:           mod.Rank,
 				Name:           mod.Name,
 				Description:    mod.Description,

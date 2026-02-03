@@ -15,8 +15,8 @@ import (
 )
 
 const organizationMembersTable = "organization_members"
-const organizationMemberColumns = "id, account_id, organization_id, position, label, created_at, updated_at"
-const organizationMemberColumnsM = "m.id, m.account_id, m.organization_id, m.position, m.label, m.created_at, m.updated_at"
+const organizationMemberColumns = "id, account_id, organization_id, head, position, label, created_at, updated_at"
+const organizationMemberColumnsM = "m.id, m.account_id, m.organization_id, m.head, m.position, m.label, m.created_at, m.updated_at"
 
 func scanOrganizationMember(row sq.RowScanner) (m repository.OrganizationMemberRow, err error) {
 	position := pgtype.Text{}
@@ -26,6 +26,7 @@ func scanOrganizationMember(row sq.RowScanner) (m repository.OrganizationMemberR
 		&m.ID,
 		&m.AccountID,
 		&m.OrganizationID,
+		&m.Head,
 		&position,
 		&label,
 		&m.CreatedAt,
@@ -78,6 +79,7 @@ func (q *orgMembers) Insert(ctx context.Context, data repository.OrganizationMem
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"account_id":      data.AccountID,
 		"organization_id": data.OrganizationID,
+		"head":            data.Head,
 		"position":        data.Position,
 		"label":           data.Label,
 	}).Suffix("RETURNING " + organizationMemberColumns).ToSql()
@@ -184,6 +186,14 @@ func (q *orgMembers) FilterLikeLabel(label string) repository.OrgMembersQ {
 	q.counter = q.counter.Where(sq.ILike{"m.label": "%" + label + "%"})
 	q.updater = q.updater.Where(sq.ILike{"m.label": "%" + label + "%"})
 	q.deleter = q.deleter.Where(sq.ILike{"m.label": "%" + label + "%"})
+	return q
+}
+
+func (q *orgMembers) FilterByHead(head bool) repository.OrgMembersQ {
+	q.selector = q.selector.Where(sq.Eq{"m.head": head})
+	q.counter = q.counter.Where(sq.Eq{"m.head": head})
+	q.updater = q.updater.Where(sq.Eq{"m.head": head})
+	q.deleter = q.deleter.Where(sq.Eq{"m.head": head})
 	return q
 }
 

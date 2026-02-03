@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/models"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
@@ -37,7 +38,14 @@ func (c *Controller) GetOrganizationInvites(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	res, err := c.core.GetOrganizationInvites(r.Context(), initiator.GetAccountID(), organizationID, limit, offset)
+	res, err := c.core.GetOrganizationInvites(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		organizationID,
+		limit, offset,
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get organization invites")
 		switch {

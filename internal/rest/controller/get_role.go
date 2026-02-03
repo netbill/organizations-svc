@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/models"
 
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
@@ -27,7 +28,13 @@ func (c *Controller) GetRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, perm, err := c.core.GetRoleWithPermissions(r.Context(), initiator.GetAccountID(), roleID)
+	role, perm, err := c.core.GetRoleWithPermissions(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		roleID,
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get role")
 		c.responser.RenderErr(w, problems.InternalError())

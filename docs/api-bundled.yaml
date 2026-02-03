@@ -462,6 +462,7 @@ components:
               required:
                 - account_id
                 - organization_id
+                - head
                 - username
                 - official
                 - created_at
@@ -475,6 +476,9 @@ components:
                   type: string
                   format: uuid
                   description: The ID of the organization the member belongs to
+                head:
+                  type: boolean
+                  description: Indicates if the member is the head of the organization
                 position:
                   type: string
                   description: The position or role of the member within the organization
@@ -595,7 +599,6 @@ components:
               type: object
               required:
                 - organization_id
-                - head
                 - rank
                 - name
                 - description
@@ -607,9 +610,6 @@ components:
                   type: string
                   format: uuid
                   description: The ID of the organization this role belongs to
-                head:
-                  type: boolean
-                  description: Indicates if this role is the head role of the organization
                 rank:
                   type: integer
                   format: uint

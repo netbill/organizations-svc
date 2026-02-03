@@ -2,16 +2,15 @@ package role
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (m *Module) SetRolePermissions(
 	ctx context.Context,
-	accountID, roleID uuid.UUID,
+	initiator models.InitiatorData,
+	roleID uuid.UUID,
 	permissions map[string]bool,
 ) (role models.Role, perm map[models.Permission]bool, err error) {
 	role, err = m.GetRole(ctx, roleID)
@@ -19,19 +18,13 @@ func (m *Module) SetRolePermissions(
 		return models.Role{}, nil, err
 	}
 
-	initiator, err := m.getInitiator(ctx, accountID, role.OrganizationID)
+	member, err := m.getInitiator(ctx, initiator, role.OrganizationID)
 	if err != nil {
 		return models.Role{}, nil, err
 	}
 
-	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
+	if err = m.checkPermissionsToManageRole(ctx, initiator, member.OrganizationID, role.Rank); err != nil {
 		return models.Role{}, nil, err
-	}
-
-	if role.Head {
-		return models.Role{}, nil, errx.ErrorCannotUpdatePermissionsHeadRole.Raise(
-			fmt.Errorf("cannot update permissions of head role"),
-		)
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {

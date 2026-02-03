@@ -16,14 +16,13 @@ import (
 
 const organizationRoleTable = "organization_roles"
 
-const organizationRoleColumns = "id, organization_id, head, rank, name, description, color, created_at, updated_at"
-const organizationRoleColumnsR = "r.id, r.organization_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at"
+const organizationRoleColumns = "id, organization_id, rank, name, description, color, created_at, updated_at"
+const organizationRoleColumnsR = "r.id, r.organization_id, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at"
 
 func scanOrganizationRole(row sq.RowScanner) (r repository.OrganizationRoleRow, err error) {
 	err = row.Scan(
 		&r.ID,
 		&r.OrganizationID,
-		&r.Head,
 		&r.Rank,
 		&r.Name,
 		&r.Description,
@@ -77,18 +76,17 @@ func (q *orgRoles) Insert(ctx context.Context, data repository.OrganizationRoleR
 			RETURNING 1
 		),
 		ins AS (
-			INSERT INTO organization_roles (organization_id, head, rank, name, description, color)
+			INSERT INTO organization_roles (organization_id, rank, name, description, color)
 			VALUES ($1, $3, $2, $4, $5, $6)
-			RETURNING id, organization_id, head, rank, name, description, color, created_at, updated_at
+			RETURNING id, organization_id, rank, name, description, color, created_at, updated_at
 		)
-		SELECT id, organization_id, head, rank, name, description, color, created_at, updated_at
+		SELECT id, organization_id, rank, name, description, color, created_at, updated_at
 		FROM ins;
 	`
 
 	args := []any{
 		data.OrganizationID,
 		data.Rank,
-		data.Head,
 		data.Name,
 		data.Description,
 		data.Color,
@@ -267,14 +265,6 @@ func (q *orgRoles) FilterByMemberID(memberID uuid.UUID) repository.OrgRolesQ {
 	return q
 }
 
-func (q *orgRoles) FilterHead(head bool) repository.OrgRolesQ {
-	q.selector = q.selector.Where(sq.Eq{"r.head": head})
-	q.counter = q.counter.Where(sq.Eq{"r.head": head})
-	q.updater = q.updater.Where(sq.Eq{"r.head": head})
-	q.deleter = q.deleter.Where(sq.Eq{"r.head": head})
-	return q
-}
-
 func (q *orgRoles) FilterByRank(rank int) repository.OrgRolesQ {
 	q.selector = q.selector.Where(sq.Eq{"r.rank": rank})
 	q.counter = q.counter.Where(sq.Eq{"r.rank": rank})
@@ -358,9 +348,9 @@ func (q *orgRoles) UpdateRoleRank(ctx context.Context, roleID uuid.UUID, newRank
 				END,
 				updated_at = now()
 			WHERE organization_id = $4
-			RETURNING id, organization_id, head, rank, name, description, color, created_at, updated_at
+			RETURNING id, organization_id, rank, name, description, color, created_at, updated_at
 		)
-		SELECT id, organization_id, head, rank, name, description, color, created_at, updated_at
+		SELECT id, organization_id, rank, name, description, color, created_at, updated_at
 		FROM upd
 		WHERE id = $1
 	`
@@ -456,7 +446,7 @@ func (q *orgRoles) UpdateRolesRanks(
 		) v
 		WHERE r.id = v.id
 		  AND r.organization_id = $3
-		RETURNING r.id, r.organization_id, r.head, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at
+		RETURNING r.id, r.organization_id, r.rank, r.name, r.description, r.color, r.created_at, r.updated_at
 	`
 
 	rows, err := q.db.Query(

@@ -11,7 +11,6 @@ const OrgRoleCreatedEvent = "role.created"
 type OrgRoleCreatedPayload struct {
 	RoleID         uuid.UUID `json:"role_id"`
 	OrganizationID uuid.UUID `json:"organization_id"`
-	Head           bool      `json:"head"`
 	Rank           uint      `json:"rank"`
 	Name           string    `json:"name"`
 	Description    string    `json:"description"`

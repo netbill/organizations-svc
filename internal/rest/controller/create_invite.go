@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
@@ -29,7 +30,9 @@ func (c *Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	inv, err := c.core.CreateInvite(r.Context(),
-		initiator.GetAccountID(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
 		invite.CreateParams{
 			OrganizationID: req.Data.Attributes.OrganizationId,
 			AccountID:      req.Data.Attributes.AccountId,

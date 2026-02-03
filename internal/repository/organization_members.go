@@ -19,6 +19,7 @@ type OrganizationMemberRow struct {
 	ID             uuid.UUID `db:"id"`
 	AccountID      uuid.UUID `db:"account_id"`
 	OrganizationID uuid.UUID `db:"organization_id"`
+	Head           bool      `db:"head"`
 	Position       *string   `db:"position,omitempty"`
 	Label          *string   `db:"label,omitempty"`
 	CreatedAt      time.Time `db:"created_at"`
@@ -46,6 +47,7 @@ func (r OrganizationMemberWithProfileDataRow) ToModel() models.Member {
 		ID:             r.ID,
 		AccountID:      r.AccountID,
 		OrganizationID: r.OrganizationID,
+		Head:           r.Head,
 		Position:       r.Position,
 		Label:          r.Label,
 		Username:       r.Username,
@@ -72,6 +74,7 @@ type OrgMembersQ interface {
 	FilterByRoleRankDown(rank uint) OrgMembersQ
 	FilterLikeLabel(label string) OrgMembersQ
 	FilterLikePosition(position string) OrgMembersQ
+	FilterByHead(head bool) OrgMembersQ
 
 	UpdatePosition(position *string) OrgMembersQ
 	UpdateLabel(label *string) OrgMembersQ
@@ -94,6 +97,22 @@ func (r *Repository) CreateMember(
 	row, err := r.orgMembersQ().Insert(ctx, OrganizationMemberRow{
 		AccountID:      accountID,
 		OrganizationID: organizationID,
+	})
+	if err != nil {
+		return models.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
+	}
+
+	return r.GetMember(ctx, row.ID)
+}
+
+func (r *Repository) CreateMemberHead(
+	ctx context.Context,
+	accountID, organizationID uuid.UUID,
+) (models.Member, error) {
+	row, err := r.orgMembersQ().Insert(ctx, OrganizationMemberRow{
+		AccountID:      accountID,
+		OrganizationID: organizationID,
+		Head:           true,
 	})
 	if err != nil {
 		return models.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
@@ -203,6 +222,9 @@ func (r *Repository) GetMembers(
 	}
 	if filter.Position != nil {
 		q = q.FilterLikePosition(*filter.Position)
+	}
+	if filter.Head != nil {
+		q = q.FilterByHead(*filter.Head)
 	}
 
 	if limit == 0 {

@@ -18,25 +18,20 @@ type CreateParams struct {
 
 func (m *Module) CreateInvite(
 	ctx context.Context,
-	accountID uuid.UUID,
+	initiator models.InitiatorData,
 	params CreateParams,
 ) (invite models.Invite, err error) {
-	initiator, err := m.getInitiator(ctx, accountID, params.OrganizationID)
-	if err != nil {
-		return invite, err
-	}
-
 	exist, err := m.repo.MemberExists(ctx, params.AccountID, params.OrganizationID)
 	if err != nil {
 		return models.Invite{}, err
 	}
-	if exist == true {
+	if exist {
 		return models.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
 			fmt.Errorf("account '%s' is already a member of organization '%s'", params.AccountID, params.OrganizationID),
 		)
 	}
 
-	if err = m.checkPermissionForManageInvites(ctx, initiator.ID); err != nil {
+	if err = m.checkPermissionForManageInvites(ctx, initiator, params.OrganizationID); err != nil {
 		return models.Invite{}, err
 	}
 

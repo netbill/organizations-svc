@@ -15,7 +15,6 @@ properties:
     type: object
     required:
       - organization_id
-      - head
       - rank
       - name
       - description
@@ -27,9 +26,6 @@ properties:
         type: string
         format: uuid
         description: "The ID of the organization this role belongs to"
-      head:
-        type: boolean
-        description: "Indicates if this role is the head role of the organization"
       rank:
         type: integer
         format: uint

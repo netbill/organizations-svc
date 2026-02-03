@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/restkit/problems"
 )
@@ -27,7 +28,13 @@ func (c *Controller) DeleteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = c.core.DeleteRole(r.Context(), initiator.GetAccountID(), roleID); err != nil {
+	if err = c.core.DeleteRole(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		roleID,
+	); err != nil {
 		c.log.WithError(err).Errorf("failed to delete role")
 		switch {
 		case errors.Is(err, errx.ErrorRoleNotFound):

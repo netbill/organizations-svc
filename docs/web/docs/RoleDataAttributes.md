@@ -5,7 +5,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **OrganizationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the organization this role belongs to | 
-**Head** | **bool** | Indicates if this role is the head role of the organization | 
 **Rank** | **uint** | The rank of the role within the organization | 
 **Name** | **string** | The name of the role | 
 **Description** | **string** | A brief description of the role | 
@@ -17,7 +16,7 @@ Name | Type | Description | Notes
 
 ### NewRoleDataAttributes
 
-`func NewRoleDataAttributes(organizationId uuid.UUID, head bool, rank uint, name string, description string, color string, createdAt time.Time, updatedAt time.Time, ) *RoleDataAttributes`
+`func NewRoleDataAttributes(organizationId uuid.UUID, rank uint, name string, description string, color string, createdAt time.Time, updatedAt time.Time, ) *RoleDataAttributes`
 
 NewRoleDataAttributes instantiates a new RoleDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -50,26 +49,6 @@ and a boolean to check if the value has been set.
 `func (o *RoleDataAttributes) SetOrganizationId(v uuid.UUID)`
 
 SetOrganizationId sets OrganizationId field to given value.
-
-
-### GetHead
-
-`func (o *RoleDataAttributes) GetHead() bool`
-
-GetHead returns the Head field if non-nil, zero value otherwise.
-
-### GetHeadOk
-
-`func (o *RoleDataAttributes) GetHeadOk() (*bool, bool)`
-
-GetHeadOk returns a tuple with the Head field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetHead
-
-`func (o *RoleDataAttributes) SetHead(v bool)`
-
-SetHead sets Head field to given value.
 
 
 ### GetRank

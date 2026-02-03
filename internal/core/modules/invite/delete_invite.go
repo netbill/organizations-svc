@@ -12,14 +12,15 @@ import (
 
 func (m *Module) DeleteInvite(
 	ctx context.Context,
-	accountID, inviteID uuid.UUID,
+	initiator models.InitiatorData,
+	inviteID uuid.UUID,
 ) error {
-	invite, err := m.GetInviteForAccount(ctx, accountID, inviteID)
+	invite, err := m.GetInviteForAccount(ctx, initiator, inviteID)
 	if err != nil {
 		return err
 	}
 
-	if invite.AccountID != accountID {
+	if invite.AccountID != initiator.AccountID {
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
@@ -35,14 +36,10 @@ func (m *Module) DeleteInvite(
 		)
 	}
 
-	initiator, err := m.getInitiator(ctx, accountID, invite.OrganizationID)
-	if err != nil {
-		return err
-	}
-
 	if err = m.checkPermissionForManageInvites(
 		ctx,
-		initiator.AccountID,
+		initiator,
+		invite.OrganizationID,
 	); err != nil {
 		return err
 	}

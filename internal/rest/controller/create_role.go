@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
@@ -27,13 +28,19 @@ func (c *Controller) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.core.CreateRole(r.Context(), initiator.GetAccountID(), role.CreateParams{
-		OrganizationID: req.Data.Attributes.OrganizationId,
-		Name:           req.Data.Attributes.Name,
-		Rank:           req.Data.Attributes.Rank,
-		Description:    req.Data.Attributes.Description,
-		Color:          req.Data.Attributes.Color,
-	})
+	res, err := c.core.CreateRole(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		role.CreateParams{
+			OrganizationID: req.Data.Attributes.OrganizationId,
+			Name:           req.Data.Attributes.Name,
+			Rank:           req.Data.Attributes.Rank,
+			Description:    req.Data.Attributes.Description,
+			Color:          req.Data.Attributes.Color,
+		},
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to create role")
 		switch {

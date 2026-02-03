@@ -21,6 +21,7 @@ func (o *Outbound) WriteOrgMemberCreated(
 		MemberID:       member.ID,
 		AccountID:      member.AccountID,
 		OrganizationID: member.OrganizationID,
+		Head:           member.Head,
 		Position:       member.Position,
 		Label:          member.Label,
 		CreatedAt:      member.CreatedAt,

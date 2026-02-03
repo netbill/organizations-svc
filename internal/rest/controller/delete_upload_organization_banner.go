@@ -9,6 +9,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/restkit/problems"
 )
@@ -41,7 +42,9 @@ func (c *Controller) DeleteUploadOrganizationBanner(w http.ResponseWriter, r *ht
 
 	err = c.core.DeleteUpdateOrganizationBannerInSession(
 		r.Context(),
-		initiator.GetAccountID(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
 		organizationID,
 		uploadContentData.GetUploadSessionID(),
 	)

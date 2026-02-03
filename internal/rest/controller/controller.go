@@ -17,7 +17,7 @@ import (
 type orgSvc interface {
 	CreateOrganization(
 		ctx context.Context,
-		accountID uuid.UUID,
+		initiator models.InitiatorData,
 		params organization.CreateParams,
 	) (models.Organization, error)
 
@@ -28,7 +28,7 @@ type orgSvc interface {
 	) (pagi.Page[[]models.Organization], error)
 	GetOrganizationForUser(
 		ctx context.Context,
-		accountID uuid.UUID,
+		initiator models.InitiatorData,
 		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
 	GetOrganization(
@@ -38,79 +38,103 @@ type orgSvc interface {
 
 	OpenUpdateOrganizationSession(
 		ctx context.Context,
-		accountID, organizationID uuid.UUID,
+		initiator models.InitiatorData,
+		organizationID uuid.UUID,
 	) (models.Organization, models.UpdateOrganizationMedia, error)
 	UpdateOrganization(
 		ctx context.Context,
-		accountID, organizationID uuid.UUID,
+		initiator models.InitiatorData,
+		organizationID uuid.UUID,
 		params organization.UpdateParams,
 	) (models.Organization, error)
 	DeleteUpdateOrganizationIconInSession(
 		ctx context.Context,
-		accountID, organizationID, uploadSessionID uuid.UUID,
+		initiator models.InitiatorData, organizationID, uploadSessionID uuid.UUID,
 	) error
 	DeleteUpdateOrganizationBannerInSession(
 		ctx context.Context,
-		accountID, organizationID, uploadSessionID uuid.UUID,
+		initiator models.InitiatorData,
+		organizationID, uploadSessionID uuid.UUID,
 	) error
 
 	ActivateOrganization(
 		ctx context.Context,
-		accountID, organizationID uuid.UUID,
+		initiator models.InitiatorData,
+		organizationID uuid.UUID,
 	) (models.Organization, error)
 	DeactivateOrganization(
 		ctx context.Context,
-		accountID, organizationID uuid.UUID,
+		initiator models.InitiatorData,
+		organizationID uuid.UUID,
 	) (models.Organization, error)
 
 	DeleteOrganization(
 		ctx context.Context,
-		accountID, organizationID uuid.UUID,
+		initiator models.InitiatorData,
+		organizationID uuid.UUID,
 	) error
 }
 
 type inviteSvc interface {
 	CreateInvite(
 		ctx context.Context,
-		accountID uuid.UUID,
+		initiator models.InitiatorData,
 		params invite.CreateParams,
 	) (models.Invite, error)
 
 	GetInviteForAccount(
 		ctx context.Context,
-		accountID, inviteID uuid.UUID,
+		initiator models.InitiatorData,
+		inviteID uuid.UUID,
 	) (models.Invite, error)
 
 	DeclineInvite(
 		ctx context.Context,
-		accountID, inviteID uuid.UUID,
+		initiator models.InitiatorData,
+		inviteID uuid.UUID,
 	) (models.Invite, error)
 	AcceptInvite(
 		ctx context.Context,
-		accountID, inviteID uuid.UUID,
+		initiator models.InitiatorData,
+		inviteID uuid.UUID,
 	) (models.Invite, error)
 
 	DeleteInvite(
 		ctx context.Context,
-		accountID, inviteID uuid.UUID,
+		initiator models.InitiatorData,
+		inviteID uuid.UUID,
 	) error
 
 	GetOrganizationInvites(
 		ctx context.Context,
-		accountID, organizationID uuid.UUID,
+		initiator models.InitiatorData,
+		organizationID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
 	GetAccountInvites(
 		ctx context.Context,
-		accountID uuid.UUID,
+		initiator models.InitiatorData,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
 }
 
 type memberSvc interface {
-	GetMemberByID(ctx context.Context, ID uuid.UUID) (models.Member, error)
-	GetMemberByAccountAndOrganization(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-	GetInitiatorMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
+	GetMemberByID(
+		ctx context.Context,
+		memberID uuid.UUID,
+	) (models.Member, error)
+
+	GetMemberByAccountAndOrganization(
+		ctx context.Context,
+		initiator models.InitiatorData,
+		organizationID uuid.UUID,
+	) (models.Member, error)
+
+	GetInitiatorMember(
+		ctx context.Context,
+		initiator models.InitiatorData,
+		organizationID uuid.UUID,
+	) (models.Member, error)
 
 	GetMembers(
 		ctx context.Context,
@@ -120,25 +144,36 @@ type memberSvc interface {
 
 	UpdateMember(
 		ctx context.Context,
-		accountID, memberID uuid.UUID,
+		initiator models.InitiatorData,
+		memberID uuid.UUID,
 		params member.UpdateParams,
 	) (models.Member, error)
 
 	DeleteMember(
 		ctx context.Context,
-		accountID, memberID uuid.UUID,
+		initiator models.InitiatorData,
+		memberID uuid.UUID,
 	) error
 }
 
 type roleSvc interface {
 	CreateRole(
 		ctx context.Context,
-		initiatorID uuid.UUID,
+		initiator models.InitiatorData,
 		params role.CreateParams,
 	) (models.Role, error)
 
-	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
-	GetRoleWithPermissions(ctx context.Context, accountID, roleID uuid.UUID) (models.Role, map[models.Permission]bool, error)
+	GetRole(
+		ctx context.Context,
+		roleID uuid.UUID,
+	) (models.Role, error)
+
+	GetRoleWithPermissions(
+		ctx context.Context,
+		initiator models.InitiatorData,
+		roleID uuid.UUID,
+	) (models.Role, map[models.Permission]bool, error)
+
 	GetRoles(
 		ctx context.Context,
 		params role.FilterParams,
@@ -147,34 +182,41 @@ type roleSvc interface {
 
 	UpdateRole(
 		ctx context.Context,
-		accountID uuid.UUID,
+		initiator models.InitiatorData,
 		roleID uuid.UUID,
 		params role.UpdateParams,
 	) (models.Role, error)
 
 	UpdateRolesRanks(
 		ctx context.Context,
-		accountID uuid.UUID,
+		initiator models.InitiatorData,
 		organizationID uuid.UUID,
 		order map[uuid.UUID]uint,
 	) error
 
-	DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error
+	DeleteRole(
+		ctx context.Context,
+		initiator models.InitiatorData,
+		roleID uuid.UUID,
+	) error
 
 	SetRolePermissions(
 		ctx context.Context,
-		accountID uuid.UUID,
+		initiator models.InitiatorData,
 		roleID uuid.UUID,
 		permissions map[string]bool,
 	) (models.Role, map[models.Permission]bool, error)
 
 	MemberAddRole(
 		ctx context.Context,
-		accountID, memberID, roleID uuid.UUID,
+		initiator models.InitiatorData,
+		memberID, roleID uuid.UUID,
 	) error
-	RemoveMemberRole(
+
+	MemberRemoveRole(
 		ctx context.Context,
-		accountID, memberID, roleID uuid.UUID,
+		initiator models.InitiatorData,
+		memberID, roleID uuid.UUID,
 	) error
 
 	GetAllPermissions(ctx context.Context) ([]models.Permission, error)

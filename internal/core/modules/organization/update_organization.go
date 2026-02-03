@@ -10,14 +10,16 @@ import (
 
 func (m *Module) OpenUpdateOrganizationSession(
 	ctx context.Context,
-	accountID, organizationID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
 ) (models.Organization, models.UpdateOrganizationMedia, error) {
 	org, err := m.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, models.UpdateOrganizationMedia{}, err
 	}
 
-	if err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
+	err = m.chekPermissionForManageOrganization(ctx, initiator, org.ID)
+	if err != nil {
 		return models.Organization{}, models.UpdateOrganizationMedia{}, err
 	}
 
@@ -28,7 +30,7 @@ func (m *Module) OpenUpdateOrganizationSession(
 	}
 
 	uploadToken, err := m.token.NewUploadOrganizationMediaToken(
-		accountID,
+		initiator.AccountID,
 		organizationID,
 		uploadSessionID,
 	)
@@ -78,7 +80,7 @@ func (p UpdateParams) GetUpdatedBanner() *string {
 
 func (m *Module) UpdateOrganization(
 	ctx context.Context,
-	accountID uuid.UUID,
+	initiator models.InitiatorData,
 	organizationID uuid.UUID,
 	params UpdateParams,
 ) (models.Organization, error) {
@@ -87,7 +89,8 @@ func (m *Module) UpdateOrganization(
 		return models.Organization{}, err
 	}
 
-	if err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
+	err = m.chekPermissionForManageOrganization(ctx, initiator, org.ID)
+	if err != nil {
 		return models.Organization{}, err
 	}
 
@@ -160,14 +163,11 @@ func (m *Module) UpdateOrganization(
 
 func (m *Module) DeleteUpdateOrganizationIconInSession(
 	ctx context.Context,
-	accountID, organizationID, uploadSessionID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID, uploadSessionID uuid.UUID,
 ) error {
-	org, err := m.GetOrganization(ctx, organizationID)
+	err := m.chekPermissionForManageOrganization(ctx, initiator, organizationID)
 	if err != nil {
-		return err
-	}
-
-	if err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
 		return err
 	}
 
@@ -180,14 +180,11 @@ func (m *Module) DeleteUpdateOrganizationIconInSession(
 
 func (m *Module) DeleteUpdateOrganizationBannerInSession(
 	ctx context.Context,
-	accountID, organizationID, uploadSessionID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID, uploadSessionID uuid.UUID,
 ) error {
-	org, err := m.GetOrganization(ctx, organizationID)
+	err := m.chekPermissionForManageOrganization(ctx, initiator, organizationID)
 	if err != nil {
-		return err
-	}
-
-	if err = m.chekPermissionForManageOrganization(ctx, accountID, org.ID); err != nil {
 		return err
 	}
 

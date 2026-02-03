@@ -2,31 +2,24 @@ package role
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) DeleteRole(ctx context.Context, accountID, roleID uuid.UUID) error {
+func (m *Module) DeleteRole(
+	ctx context.Context,
+	initiator models.InitiatorData,
+	roleID uuid.UUID,
+) error {
 	role, err := m.GetRole(ctx, roleID)
 	if err != nil {
 		return err
 	}
 
-	initiator, err := m.getInitiator(ctx, accountID, role.OrganizationID)
+	err = m.checkPermissionsToManageRole(ctx, initiator, role.OrganizationID, role.Rank)
 	if err != nil {
 		return err
-	}
-
-	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
-		return err
-	}
-
-	if role.Head {
-		return errx.ErrorCannotDeleteHeadRole.Raise(
-			fmt.Errorf("cannot delete head role"),
-		)
 	}
 
 	return m.repo.Transaction(ctx, func(ctx context.Context) error {

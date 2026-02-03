@@ -9,7 +9,10 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
+func (m *Module) GetMemberRoles(
+	ctx context.Context,
+	memberID uuid.UUID,
+) ([]models.Role, error) {
 	roles, err := m.repo.GetMemberRoles(ctx, memberID)
 	if err != nil {
 		return nil, err
@@ -18,7 +21,10 @@ func (m *Module) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]mode
 	return roles, nil
 }
 
-func (m *Module) GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error) {
+func (m *Module) GetMemberMaxRole(
+	ctx context.Context,
+	memberID uuid.UUID,
+) (models.Role, error) {
 	role, err := m.repo.GetMemberMaxRole(ctx, memberID)
 	if err != nil {
 		return models.Role{}, err
@@ -27,16 +33,17 @@ func (m *Module) GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (mode
 	return role, nil
 }
 
+type MemberAddRoleParams struct {
+	MemberID uuid.UUID
+	RoleID   uuid.UUID
+}
+
 func (m *Module) MemberAddRole(
 	ctx context.Context,
-	accountID, memberID, roleID uuid.UUID,
+	initiator models.InitiatorData,
+	memberID, roleID uuid.UUID,
 ) error {
 	member, err := m.getMember(ctx, memberID)
-	if err != nil {
-		return err
-	}
-
-	initiator, err := m.getInitiator(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return err
 	}
@@ -52,13 +59,8 @@ func (m *Module) MemberAddRole(
 		)
 	}
 
-	if role.Head {
-		return errx.ErrorCannotAddHeadRoleToMember.Raise(
-			fmt.Errorf("cannot add head role %s to member %s", role.ID, member.ID),
-		)
-	}
-
-	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
+	err = m.checkPermissionsToManageRole(ctx, initiator, role.OrganizationID, role.Rank)
+	if err != nil {
 		return err
 	}
 
@@ -75,16 +77,17 @@ func (m *Module) MemberAddRole(
 	})
 }
 
-func (m *Module) RemoveMemberRole(
+type MemberRemoveRoleParams struct {
+	MemberID uuid.UUID
+	RoleID   uuid.UUID
+}
+
+func (m *Module) MemberRemoveRole(
 	ctx context.Context,
-	accountID, memberID, roleID uuid.UUID,
+	initiator models.InitiatorData,
+	memberID, roleID uuid.UUID,
 ) error {
 	member, err := m.getMember(ctx, memberID)
-	if err != nil {
-		return err
-	}
-
-	initiator, err := m.getInitiator(ctx, accountID, member.OrganizationID)
 	if err != nil {
 		return err
 	}
@@ -94,19 +97,14 @@ func (m *Module) RemoveMemberRole(
 		return err
 	}
 
-	if role.Head {
-		return errx.ErrorCannotRemoveHeadRoleFromMember.Raise(
-			fmt.Errorf("cannot remove head role %s from member %s", role.ID, member.ID),
-		)
-	}
-
 	if role.OrganizationID != member.OrganizationID {
 		return errx.ErrorRoleNotFound.Raise(
 			fmt.Errorf("role with id %s is not available in organization %s", role.ID, role.OrganizationID),
 		)
 	}
 
-	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, role.Rank); err != nil {
+	err = m.checkPermissionsToManageRole(ctx, initiator, role.OrganizationID, role.Rank)
+	if err != nil {
 		return err
 	}
 

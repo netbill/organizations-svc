@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/models"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
@@ -38,10 +39,17 @@ func (c *Controller) UpdateMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.core.UpdateMember(r.Context(), initiator.GetAccountID(), memberId, member.UpdateParams{
-		Position: req.Data.Attributes.Position,
-		Label:    req.Data.Attributes.Label,
-	})
+	res, err := c.core.UpdateMember(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		memberId,
+		member.UpdateParams{
+			Position: req.Data.Attributes.Position,
+			Label:    req.Data.Attributes.Label,
+		},
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update member")
 		switch {

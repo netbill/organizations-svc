@@ -81,26 +81,38 @@ type messenger interface {
 
 func (m *Module) checkPermissionForManageInvites(
 	ctx context.Context,
-	memberID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
 ) error {
-	access, err := m.repo.CheckMemberHavePermission(
-		ctx,
-		memberID,
-		models.RolePermissionManageInvites,
-	)
+	member, err := m.getInitiator(ctx, initiator, organizationID)
 	if err != nil {
 		return err
 	}
-	if !access {
-		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator has no access to activate organization"),
+
+	if !member.Head {
+		access, err := m.repo.CheckMemberHavePermission(
+			ctx,
+			member.ID,
+			models.RolePermissionManageInvites,
 		)
+		if err != nil {
+			return err
+		}
+
+		if !access {
+			return errx.ErrorNotEnoughRights.Raise(
+				fmt.Errorf("initiator has no access to activate organization"),
+			)
+		}
 	}
 
 	return nil
 }
 
-func (m *Module) checkOrganizationIsActiveAndExists(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
+func (m *Module) checkOrganizationIsActiveAndExists(
+	ctx context.Context,
+	organizationID uuid.UUID,
+) (models.Organization, error) {
 	org, err := m.repo.GetOrganizationByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
@@ -115,13 +127,19 @@ func (m *Module) checkOrganizationIsActiveAndExists(ctx context.Context, organiz
 	return org, nil
 }
 
-func (m *Module) getInitiator(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error) {
-	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+func (m *Module) getInitiator(
+	ctx context.Context,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
+) (models.Member, error) {
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
 			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("initiator with account id %s is not a member of organization %s",
-					accountID, organizationID),
+				fmt.Errorf(
+					"initiator with account id %s is not a member of organization %s",
+					initiator.AccountID, organizationID,
+				),
 			)
 		}
 		return models.Member{}, err

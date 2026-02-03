@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
@@ -27,7 +28,9 @@ func (c *Controller) CreateOrganization(w http.ResponseWriter, r *http.Request) 
 
 	res, err := c.core.CreateOrganization(
 		r.Context(),
-		initiator.GetAccountID(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
 		organization.CreateParams{
 			Name: req.Data.Attributes.Name,
 		},

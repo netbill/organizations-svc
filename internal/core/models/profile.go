@@ -6,6 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type InitiatorData struct {
+	AccountID uuid.UUID
+}
+
 type Profile struct {
 	AccountID uuid.UUID `json:"account_id"`
 	Username  string    `json:"username"`

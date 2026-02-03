@@ -36,6 +36,7 @@ CREATE TABLE organization_members (
     id               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     account_id       UUID NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
     organization_id  UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    head             BOOLEAN NOT NULL DEFAULT FALSE,
     position         VARCHAR(255),
     label            VARCHAR(128),
 
@@ -44,6 +45,10 @@ CREATE TABLE organization_members (
 
     UNIQUE(account_id, organization_id)
 );
+
+CREATE UNIQUE INDEX members_one_head_per_organization
+    ON organization_members (organization_id)
+    WHERE head = true;
 
 CREATE TYPE organization_invite_status AS ENUM (
     'sent',
@@ -66,6 +71,8 @@ DROP TABLE IF EXISTS organization_members CASCADE;
 DROP TABLE IF EXISTS organization_invites CASCADE;
 DROP TABLE IF EXISTS organizations CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
+
+DROP INDEX IF EXISTS members_one_head_per_organization;
 
 DROP TYPE IF EXISTS organization_status;
 DROP TYPE IF EXISTS organization_invite_status;

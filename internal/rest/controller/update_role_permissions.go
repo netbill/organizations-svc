@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
@@ -31,7 +32,14 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 		dict[item.Code] = item.Status
 	}
 
-	role, perm, err := c.core.SetRolePermissions(r.Context(), initiator.GetAccountID(), req.Data.Id, dict)
+	role, perm, err := c.core.SetRolePermissions(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		req.Data.Id,
+		dict,
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update role permissions")
 		switch {

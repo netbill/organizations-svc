@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/models"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
@@ -35,7 +36,14 @@ func (c *Controller) MemberRemoveRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.core.RemoveMemberRole(r.Context(), initiator.GetAccountID(), memberID, roleID)
+	err = c.core.MemberRemoveRole(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		memberID,
+		roleID,
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to remove role to member")
 		switch {

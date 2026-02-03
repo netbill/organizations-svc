@@ -16,7 +16,11 @@ type UpdateParams struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (m *Module) UpdateProfile(ctx context.Context, accountID uuid.UUID, params UpdateParams) (models.Profile, error) {
+func (m *Module) UpdateProfile(
+	ctx context.Context,
+	accountID uuid.UUID,
+	params UpdateParams,
+) (models.Profile, error) {
 	updatedProfile, err := m.repo.UpdateProfile(ctx, accountID, params)
 	if err != nil {
 		return models.Profile{}, err

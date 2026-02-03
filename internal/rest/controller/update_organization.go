@@ -7,6 +7,7 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
@@ -39,7 +40,9 @@ func (c *Controller) UpdateOrganization(w http.ResponseWriter, r *http.Request) 
 
 	res, err := c.core.UpdateOrganization(
 		r.Context(),
-		initiator.GetAccountID(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
 		req.Data.Id,
 		organization.UpdateParams{
 			Name: req.Data.Attributes.Name,

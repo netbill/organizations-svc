@@ -2,38 +2,31 @@ package organization
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) DeleteOrganization(ctx context.Context, accountID, organizationID uuid.UUID) error {
+func (m *Module) DeleteOrganization(
+	ctx context.Context,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
+) error {
 	organization, err := m.GetOrganization(ctx, organizationID)
 	if err != nil {
 		return err
 	}
 
-	initiator, err := m.repo.GetMemberByAccountAndOrganization(ctx, accountID, organization.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organization.ID)
 	if err != nil {
 		return err
 	}
 
-	role, err := m.repo.GetMemberMaxRole(ctx, initiator.ID)
-	if err != nil {
-		if errors.Is(err, errx.ErrorRoleNotFound) {
-			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("member with id %s has no role in organization %s: %w",
-					initiator.AccountID, organization.ID, err.Error()),
-			)
-		}
-		return err
-	}
-
-	if role.Head != true {
+	if !member.Head {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("only organization head can delete organization"),
+			fmt.Errorf("initiator member %s is not head of organization %s", member.ID, organization.ID),
 		)
 	}
 

@@ -15,7 +15,6 @@ import (
 type OrganizationRoleRow struct {
 	ID             uuid.UUID `json:"id"`
 	OrganizationID uuid.UUID `json:"organization_id"`
-	Head           bool      `json:"head"`
 	Rank           uint      `json:"rank"`
 	Name           string    `json:"name"`
 	Description    string    `json:"description"`
@@ -33,7 +32,6 @@ func (r OrganizationRoleRow) ToModel() models.Role {
 	return models.Role{
 		ID:             r.ID,
 		OrganizationID: r.OrganizationID,
-		Head:           r.Head,
 		Rank:           r.Rank,
 		Name:           r.Name,
 		Description:    r.Description,
@@ -51,7 +49,6 @@ type OrgRolesQ interface {
 	FilterByOrganizationID(organizationID uuid.UUID) OrgRolesQ
 	FilterByAccountID(accountID uuid.UUID) OrgRolesQ
 	FilterByMemberID(memberID uuid.UUID) OrgRolesQ
-	FilterHead(head bool) OrgRolesQ
 	FilterByRank(rank int) OrgRolesQ
 	FilterLikeName(name string) OrgRolesQ
 
@@ -94,22 +91,6 @@ func (r *Repository) CreateRole(ctx context.Context, params role.CreateParams) (
 	return row.ToModel(), nil
 }
 
-func (r *Repository) CreateHeadRole(ctx context.Context, organizationID uuid.UUID) (models.Role, error) {
-	row, err := r.orgRolesQ().Insert(ctx, OrganizationRoleRow{
-		OrganizationID: organizationID,
-		Head:           true,
-		Rank:           1,
-		Name:           "Head",
-		Description:    "Head role with all permissions",
-		Color:          "#000000",
-	})
-	if err != nil {
-		return models.Role{}, fmt.Errorf("failed to create head role, cause: %w", err)
-	}
-
-	return row.ToModel(), nil
-}
-
 func (r *Repository) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
 	row, err := r.orgRolesQ().FilterByID(roleID).Get(ctx)
 	if err != nil {
@@ -135,9 +116,6 @@ func (r *Repository) GetRoles(
 	}
 	if filter.RolesID != nil && len(*filter.RolesID) > 0 {
 		q = q.FilterByID(*filter.RolesID...)
-	}
-	if filter.Head != nil {
-		q = q.FilterHead(*filter.Head)
 	}
 	if filter.Rank != nil {
 		q = q.FilterByRank(*filter.Rank)

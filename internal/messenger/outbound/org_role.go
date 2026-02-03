@@ -20,7 +20,6 @@ func (o *Outbound) WriteOrgRoleCreated(
 	payload, err := json.Marshal(contracts.OrgRoleCreatedPayload{
 		RoleID:         role.ID,
 		OrganizationID: role.OrganizationID,
-		Head:           role.Head,
 		Rank:           role.Rank,
 		Name:           role.Name,
 		Description:    role.Description,

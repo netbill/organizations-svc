@@ -8,7 +8,10 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func (m *Module) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
+func (m *Module) GetRole(
+	ctx context.Context,
+	roleID uuid.UUID,
+) (models.Role, error) {
 	role, err := m.repo.GetRole(ctx, roleID)
 	if err != nil {
 		return models.Role{}, err
@@ -17,13 +20,17 @@ func (m *Module) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, er
 	return role, nil
 }
 
-func (m *Module) GetRoleWithPermissions(ctx context.Context, accountID, roleID uuid.UUID) (models.Role, map[models.Permission]bool, error) {
+func (m *Module) GetRoleWithPermissions(
+	ctx context.Context,
+	initiator models.InitiatorData,
+	roleID uuid.UUID,
+) (models.Role, map[models.Permission]bool, error) {
 	role, err := m.GetRole(ctx, roleID)
 	if err != nil {
 		return models.Role{}, nil, err
 	}
 
-	_, err = m.getInitiator(ctx, accountID, role.OrganizationID)
+	_, err = m.getInitiator(ctx, initiator, role.OrganizationID)
 	if err != nil {
 		return models.Role{}, nil, err
 	}
@@ -39,7 +46,6 @@ func (m *Module) GetRoleWithPermissions(ctx context.Context, accountID, roleID u
 type FilterParams struct {
 	OrganizationID *uuid.UUID
 	RolesID        *[]uuid.UUID
-	Head           *bool
 	Rank           *int
 	Name           *string
 }

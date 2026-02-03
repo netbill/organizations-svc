@@ -101,12 +101,18 @@ type messenger interface {
 
 func (m *Module) checkPermissionsToManageRole(
 	ctx context.Context,
-	memberID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
 	rank uint,
 ) error {
+	member, err := m.getInitiator(ctx, initiator, organizationID)
+	if err != nil {
+		return err
+	}
+
 	hasPermission, err := m.repo.CheckMemberHavePermission(
 		ctx,
-		memberID,
+		member.ID,
 		models.RolePermissionManageRoles,
 	)
 	if err != nil {
@@ -114,24 +120,25 @@ func (m *Module) checkPermissionsToManageRole(
 	}
 	if !hasPermission {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member %s does not have permission %s", memberID, models.RolePermissionManageRoles),
+			fmt.Errorf("member %s does not have permission %s", member.ID, models.RolePermissionManageRoles),
 		)
 	}
 
-	maxRole, err := m.repo.GetMemberMaxRole(ctx, memberID)
+	maxRole, err := m.repo.GetMemberMaxRole(ctx, member.ID)
 	if err != nil {
 		return err
 	}
 	if maxRole.IsNil() {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member %s has no roles assigned", memberID),
+			fmt.Errorf("member %s has no roles assigned", member.ID),
 		)
 	}
 
 	if maxRole.Rank < rank {
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
-				memberID, maxRole.Rank, rank),
+				member.ID, maxRole.Rank, rank,
+			),
 		)
 	}
 
@@ -140,20 +147,23 @@ func (m *Module) checkPermissionsToManageRole(
 
 func (m *Module) getInitiator(
 	ctx context.Context,
-	accountID, organizationID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
 ) (models.Member, error) {
-	initiator, err := m.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
-	if initiator.IsNil() {
+	if member.IsNil() {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member with account id %s and organization id %s not found: %w",
-				accountID, organizationID, err),
+			fmt.Errorf(
+				"initiator member with account id %s and organization id %s not found: %w",
+				initiator.AccountID, organizationID, err,
+			),
 		)
 	}
 
-	return initiator, nil
+	return member, nil
 }
 
 func (m *Module) getMember(

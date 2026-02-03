@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **AccountId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the account associated with the member | 
 **OrganizationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the organization the member belongs to | 
+**Head** | **bool** | Indicates if the member is the head of the organization | 
 **Position** | Pointer to **string** | The position or role of the member within the organization | [optional] 
 **Label** | Pointer to **string** | A label or title associated with the member | [optional] 
 **Username** | **string** | The username of the member | 
@@ -17,7 +18,7 @@ Name | Type | Description | Notes
 
 ### NewMemberDataAttributes
 
-`func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, username string, official bool, createdAt time.Time, updatedAt time.Time, ) *MemberDataAttributes`
+`func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, head bool, username string, official bool, createdAt time.Time, updatedAt time.Time, ) *MemberDataAttributes`
 
 NewMemberDataAttributes instantiates a new MemberDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -70,6 +71,26 @@ and a boolean to check if the value has been set.
 `func (o *MemberDataAttributes) SetOrganizationId(v uuid.UUID)`
 
 SetOrganizationId sets OrganizationId field to given value.
+
+
+### GetHead
+
+`func (o *MemberDataAttributes) GetHead() bool`
+
+GetHead returns the Head field if non-nil, zero value otherwise.
+
+### GetHeadOk
+
+`func (o *MemberDataAttributes) GetHeadOk() (*bool, bool)`
+
+GetHeadOk returns a tuple with the Head field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetHead
+
+`func (o *MemberDataAttributes) SetHead(v bool)`
+
+SetHead sets Head field to given value.
 
 
 ### GetPosition

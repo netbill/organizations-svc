@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/models"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
@@ -32,14 +33,21 @@ func (c *Controller) UpdateRolesRanks(w http.ResponseWriter, r *http.Request) {
 		dict[item.Id] = item.Rank
 	}
 
-	err = c.core.UpdateRolesRanks(r.Context(), initiator.GetAccountID(), req.Data.Id, dict)
+	err = c.core.UpdateRolesRanks(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		req.Data.Id,
+		dict,
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update roles ranks")
 		switch {
 		case errors.Is(err, errx.ErrorNotEnoughRights):
 			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update roles ranks"))
-		case errors.Is(err, errx.ErrorCannotUpdateHeadRoleRank):
-			c.responser.RenderErr(w, problems.Forbidden("cannot update head role rank"))
+		//case errors.Is(err, errx.ErrorCannotUpdateHeadRoleRank):
+		//	c.responser.RenderErr(w, problems.Forbidden("cannot update head role rank"))
 		//case errors.Is(err, errx.ErrorInvalidInput):
 		//	c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
 		//		"roles": fmt.Errorf(err.Error()),

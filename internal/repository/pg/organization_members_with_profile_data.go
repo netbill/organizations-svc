@@ -22,6 +22,7 @@ func scanOrganizationMemberWithProfileData(row sq.RowScanner) (m repository.Orga
 		&m.ID,
 		&m.AccountID,
 		&m.OrganizationID,
+		&m.Head,
 		&position,
 		&label,
 		&m.CreatedAt,

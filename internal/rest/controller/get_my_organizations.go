@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/restkit/pagi"
@@ -25,7 +26,13 @@ func (c *Controller) GetMyOrganizations(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res, err := c.core.GetOrganizationForUser(r.Context(), initiator.GetAccountID(), limit, offset)
+	res, err := c.core.GetOrganizationForUser(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		limit, offset,
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get organizations")
 		c.responser.RenderErr(w, problems.InternalError())

@@ -13,17 +13,18 @@ import (
 
 func (m *Module) GetInviteForAccount(
 	ctx context.Context,
-	accountID, ID uuid.UUID,
+	initiator models.InitiatorData,
+	inviteID uuid.UUID,
 ) (models.Invite, error) {
-	res, err := m.repo.GetInvite(ctx, ID)
+	res, err := m.repo.GetInvite(ctx, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	if res.AccountID != accountID {
+	if res.AccountID != initiator.AccountID {
 		_, err = m.repo.GetMemberByAccountAndOrganization(
 			ctx,
-			accountID,
+			initiator.AccountID,
 			res.OrganizationID,
 		)
 		if err != nil {
@@ -41,10 +42,11 @@ func (m *Module) GetInviteForAccount(
 
 func (m *Module) GetOrganizationInvites(
 	ctx context.Context,
-	accountID, organizationID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	_, err := m.getInitiator(ctx, accountID, organizationID)
+	_, err := m.getInitiator(ctx, initiator, organizationID)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}
@@ -59,10 +61,10 @@ func (m *Module) GetOrganizationInvites(
 
 func (m *Module) GetAccountInvites(
 	ctx context.Context,
-	accountID uuid.UUID,
+	initiator models.InitiatorData,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	res, err := m.repo.GetAccountInvites(ctx, accountID, limit, offset)
+	res, err := m.repo.GetAccountInvites(ctx, initiator.AccountID, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}

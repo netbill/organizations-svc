@@ -2,8 +2,10 @@ package member
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/restkit/pagi"
 )
@@ -50,4 +52,56 @@ type messenger interface {
 	WriteOrgMemberCreated(ctx context.Context, member models.Member) error
 	WriteOrgMemberUpdated(ctx context.Context, member models.Member) error
 	WriteOrgMemberDeleted(ctx context.Context, memberID uuid.UUID) error
+}
+
+func (m *Module) checkPermissionToInteractWithMember(
+	ctx context.Context,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
+	memberID uuid.UUID,
+) error {
+	member, err := m.GetInitiatorMember(ctx, initiator, organizationID)
+	if err != nil {
+		return err
+	}
+
+	if !member.Head {
+		hasPermission, err := m.repo.CheckMemberHavePermission(
+			ctx,
+			member.AccountID,
+			models.RolePermissionManageMembers,
+		)
+		if err != nil {
+			return err
+		}
+		if !hasPermission {
+			return errx.ErrorNotEnoughRights.Raise(
+				fmt.Errorf("initiator member %s has no manage members permission", member.ID),
+			)
+		}
+
+		firstMaxRole, err := m.repo.GetMemberMaxRole(ctx, member.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get max role for member %s: %w", member.AccountID, err)
+		}
+
+		secMaxRole, err := m.repo.GetMemberMaxRole(ctx, memberID)
+		if err != nil {
+			return fmt.Errorf("failed to get max role for member %s: %w", memberID, err)
+		}
+
+		if firstMaxRole.Rank < secMaxRole.Rank {
+			return errx.ErrorNotEnoughRights.Raise(
+				fmt.Errorf(
+					"member %s with rank %d cannot manage member %s with rank %d",
+					member.AccountID,
+					firstMaxRole.Rank,
+					memberID,
+					secMaxRole.Rank,
+				),
+			)
+		}
+	}
+
+	return nil
 }

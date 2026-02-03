@@ -16,54 +16,23 @@ type UpdateParams struct {
 
 func (m *Module) UpdateMember(
 	ctx context.Context,
-	accountID, memberID uuid.UUID,
+	initiator models.InitiatorData,
+	memberID uuid.UUID,
 	params UpdateParams,
 ) (models.Member, error) {
 	member, err := m.GetMemberByID(ctx, memberID)
 	if err != nil {
 		return models.Member{}, err
 	}
-
-	initiator, err := m.GetInitiatorMember(ctx, accountID, member.OrganizationID)
-	if err != nil {
-		return models.Member{}, err
-	}
-
-	hasPermission, err := m.repo.CheckMemberHavePermission(
-		ctx,
-		initiator.AccountID,
-		models.RolePermissionManageMembers,
-	)
-	if err != nil {
-		return models.Member{}, err
-	}
-	if !hasPermission {
+	if member.Head {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member %s has no manage members permission", initiator.ID),
+			fmt.Errorf("cannot update organization head member %s", member.ID),
 		)
 	}
 
-	firstMaxRole, err := m.repo.GetMemberMaxRole(ctx, initiator.ID)
+	err = m.checkPermissionToInteractWithMember(ctx, initiator, member.OrganizationID, memberID)
 	if err != nil {
-		return models.Member{}, fmt.Errorf("failed to get max role for member %s: %w", initiator.AccountID, err)
-	}
-	if firstMaxRole.Head == false {
-		secMaxRole, err := m.repo.GetMemberMaxRole(ctx, member.ID)
-		if err != nil {
-			return models.Member{}, fmt.Errorf("failed to get max role for member %s: %w", member.ID, err)
-		}
-
-		if firstMaxRole.Rank < secMaxRole.Rank {
-			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf(
-					"member %s with rank %d cannot manage member %s with rank %d",
-					initiator.AccountID,
-					firstMaxRole.Rank,
-					member.ID,
-					secMaxRole.Rank,
-				),
-			)
-		}
+		return models.Member{}, err
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {

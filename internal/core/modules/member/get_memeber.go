@@ -11,7 +11,10 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func (m *Module) GetMemberByID(ctx context.Context, memberID uuid.UUID) (models.Member, error) {
+func (m *Module) GetMemberByID(
+	ctx context.Context,
+	memberID uuid.UUID,
+) (models.Member, error) {
 	row, err := m.repo.GetMember(ctx, memberID)
 	if err != nil {
 		return models.Member{}, err
@@ -22,9 +25,10 @@ func (m *Module) GetMemberByID(ctx context.Context, memberID uuid.UUID) (models.
 
 func (m *Module) GetMemberByAccountAndOrganization(
 	ctx context.Context,
-	accountID, organizationID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
@@ -34,23 +38,27 @@ func (m *Module) GetMemberByAccountAndOrganization(
 
 func (m *Module) GetInitiatorMember(
 	ctx context.Context,
-	accountID, organizationID uuid.UUID,
+	initiator models.InitiatorData,
+	organizationID uuid.UUID,
 ) (models.Member, error) {
-	initiator, err := m.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
+	member, err := m.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
 	if errors.Is(err, errx.ErrorMemberNotFound) {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator member with account id %s and organization id %s not found: %w",
-				accountID, organizationID, err.Error()),
+			fmt.Errorf(
+				"initiator member with account id %s and organization id %s not found: %w",
+				member.AccountID, organizationID, err,
+			),
 		)
 	}
 
-	return initiator, err
+	return member, err
 }
 
 type FilterParams struct {
 	OrganizationID *uuid.UUID
 	AccountID      *uuid.UUID
 	RoleID         *uuid.UUID
+	Head           *bool
 	Username       *string
 	BestMatch      *string
 	PermissionCode *string

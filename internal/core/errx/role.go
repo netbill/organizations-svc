@@ -9,5 +9,4 @@ var (
 	ErrorCannotDeleteHeadRole            = ape.DeclareError("CANNOT_DELETE_HEAD_ROLE")
 	ErrorCannotRemoveHeadRoleFromMember  = ape.DeclareError("CANNOT_REMOVE_HEAD_ROLE_FROM_MEMBER")
 	ErrorCannotAddHeadRoleToMember       = ape.DeclareError("CANNOT_ADD_HEAD_ROLE_TO_MEMBER")
-	ErrorCannotUpdateHeadRoleRank        = ape.DeclareError("CANNOT_UPDATE_HEAD_ROLE_RANK")
 )

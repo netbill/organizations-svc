@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/models"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
@@ -38,11 +39,18 @@ func (c *Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.core.UpdateRole(r.Context(), initiator.GetAccountID(), roleID, role.UpdateParams{
-		Name:        req.Data.Attributes.Name,
-		Description: req.Data.Attributes.Description,
-		Color:       req.Data.Attributes.Color,
-	})
+	res, err := c.core.UpdateRole(
+		r.Context(),
+		models.InitiatorData{
+			AccountID: initiator.GetAccountID(),
+		},
+		roleID,
+		role.UpdateParams{
+			Name:        req.Data.Attributes.Name,
+			Description: req.Data.Attributes.Description,
+			Color:       req.Data.Attributes.Color,
+		},
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update role")
 		switch {

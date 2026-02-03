@@ -17,15 +17,11 @@ type CreateParams struct {
 
 func (m *Module) CreateRole(
 	ctx context.Context,
-	accountID uuid.UUID,
+	initiator models.InitiatorData,
 	params CreateParams,
 ) (role models.Role, err error) {
-	initiator, err := m.getInitiator(ctx, accountID, params.OrganizationID)
+	err = m.checkPermissionsToManageRole(ctx, initiator, params.OrganizationID, params.Rank)
 	if err != nil {
-		return role, err
-	}
-
-	if err = m.checkPermissionsToManageRole(ctx, initiator.AccountID, params.Rank); err != nil {
 		return models.Role{}, err
 	}
 

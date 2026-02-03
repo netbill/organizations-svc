@@ -27,6 +27,8 @@ type MemberDataAttributes struct {
 	AccountId uuid.UUID `json:"account_id"`
 	// The ID of the organization the member belongs to
 	OrganizationId uuid.UUID `json:"organization_id"`
+	// Indicates if the member is the head of the organization
+	Head bool `json:"head"`
 	// The position or role of the member within the organization
 	Position *string `json:"position,omitempty"`
 	// A label or title associated with the member
@@ -47,10 +49,11 @@ type _MemberDataAttributes MemberDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, username string, official bool, createdAt time.Time, updatedAt time.Time) *MemberDataAttributes {
+func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, head bool, username string, official bool, createdAt time.Time, updatedAt time.Time) *MemberDataAttributes {
 	this := MemberDataAttributes{}
 	this.AccountId = accountId
 	this.OrganizationId = organizationId
+	this.Head = head
 	this.Username = username
 	this.Official = official
 	this.CreatedAt = createdAt
@@ -112,6 +115,30 @@ func (o *MemberDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool) {
 // SetOrganizationId sets field value
 func (o *MemberDataAttributes) SetOrganizationId(v uuid.UUID) {
 	o.OrganizationId = v
+}
+
+// GetHead returns the Head field value
+func (o *MemberDataAttributes) GetHead() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.Head
+}
+
+// GetHeadOk returns a tuple with the Head field value
+// and a boolean to check if the value has been set.
+func (o *MemberDataAttributes) GetHeadOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Head, true
+}
+
+// SetHead sets field value
+func (o *MemberDataAttributes) SetHead(v bool) {
+	o.Head = v
 }
 
 // GetPosition returns the Position field value if set, zero value otherwise.
@@ -286,6 +313,7 @@ func (o MemberDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["account_id"] = o.AccountId
 	toSerialize["organization_id"] = o.OrganizationId
+	toSerialize["head"] = o.Head
 	if !IsNil(o.Position) {
 		toSerialize["position"] = o.Position
 	}
@@ -306,6 +334,7 @@ func (o *MemberDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"account_id",
 		"organization_id",
+		"head",
 		"username",
 		"official",
 		"created_at",
