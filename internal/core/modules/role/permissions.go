@@ -28,17 +28,12 @@ func (m *Module) SetRolePermissions(
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = m.repo.SetRolePermissions(ctx, roleID, permissions)
+		res, err := m.repo.SetRolePermissions(ctx, roleID, permissions)
 		if err != nil {
 			return err
 		}
 
-		perm, err = m.repo.GetRolePermissions(ctx, roleID)
-		if err != nil {
-			return err
-		}
-
-		err = m.messenger.WriteOrgRolePermissionsUpdated(ctx, role, perm)
+		err = m.messenger.WriteOrgRolePermissionsUpdated(ctx, role, res)
 		if err != nil {
 			return err
 		}

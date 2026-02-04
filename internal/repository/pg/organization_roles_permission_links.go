@@ -14,7 +14,21 @@ import (
 )
 
 const organizationRolePermissionLinksTable = "organization_role_permission_links"
-const organizationRolePermissionLinksColumns = "role_id, permission_code"
+const organizationRolePermissionLinksColumns = "role_id, permission_code, created_at"
+
+func scanOrganizationRolePermissionLink(row sq.RowScanner) (rp repository.OrganizationRolePermissionLinkRow, err error) {
+	err = row.Scan(&rp.RoleID, &rp.PermissionCode, &rp.CreatedAt)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return repository.OrganizationRolePermissionLinkRow{}, nil
+	case err != nil:
+		return repository.OrganizationRolePermissionLinkRow{}, fmt.Errorf(
+			"scanning organization role permission link: %w",
+			err,
+		)
+	}
+	return rp, nil
+}
 
 type orgRolePermissionLinks struct {
 	db       *pgdbx.DB
@@ -74,19 +88,7 @@ func (q *orgRolePermissionLinks) Get(ctx context.Context) (repository.Organizati
 		)
 	}
 
-	var out repository.OrganizationRolePermissionLinkRow
-	if err = q.db.QueryRow(ctx, query, args...).Scan(&out.RoleID, &out.PermissionCode); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return repository.OrganizationRolePermissionLinkRow{}, nil
-		}
-		return repository.OrganizationRolePermissionLinkRow{}, fmt.Errorf(
-			"scanning row for table %s, cause: %w",
-			organizationRolePermissionLinksTable,
-			err,
-		)
-	}
-
-	return out, nil
+	return scanOrganizationRolePermissionLink(q.db.QueryRow(ctx, query, args...))
 }
 
 func (q *orgRolePermissionLinks) Select(
@@ -113,17 +115,12 @@ func (q *orgRolePermissionLinks) Select(
 
 	out := make([]repository.OrganizationRolePermissionLinkRow, 0)
 	for rows.Next() {
-		var rp repository.OrganizationRolePermissionLinkRow
-		if err = rows.Scan(&rp.RoleID, &rp.PermissionCode); err != nil {
-			return nil, fmt.Errorf(
-				"scanning row for %s: %w",
-				organizationRolePermissionLinksTable,
-				err,
-			)
+		p, err := scanOrganizationRolePermissionLink(rows)
+		if err != nil {
+			return nil, err
 		}
-		out = append(out, rp)
+		out = append(out, p)
 	}
-
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}

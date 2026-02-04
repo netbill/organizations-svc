@@ -72,7 +72,6 @@ type repo interface {
 
 	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 	CreateMemberHead(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-	AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
 
 	GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error)
 
@@ -89,12 +88,6 @@ type messanger interface {
 
 	WriteOrganizationDeleted(ctx context.Context, organization models.Organization) error
 
-	WriteOrgRoleCreated(ctx context.Context, role models.Role) error
-	WriteOrgRolePermissionsUpdated(
-		ctx context.Context,
-		role models.Role,
-		permissions map[models.Permission]bool,
-	) error
 	WriteOrgMemberCreated(
 		ctx context.Context,
 		member models.Member,

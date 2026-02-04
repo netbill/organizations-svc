@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -41,6 +42,7 @@ type OrgRolePermissionsQ interface {
 type OrganizationRolePermissionLinkRow struct {
 	RoleID         uuid.UUID `db:"role_id"`
 	PermissionCode string    `db:"permission_code"`
+	CreatedAt      time.Time `db:"created_at"`
 }
 
 func (r OrganizationRolePermissionLinkRow) IsNil() bool {
@@ -119,7 +121,7 @@ func (r *Repository) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
 	permissions map[string]bool,
-) error {
+) ([]models.OrgRolePermissionLink, error) {
 	deletePermissions := make([]string, 0)
 	addPermissions := make([]string, 0)
 
@@ -137,14 +139,14 @@ func (r *Repository) SetRolePermissions(
 			FilterByPermissionCode(deletePermissions...).
 			Delete(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to delete role permissions, cause: %w", err)
+			return nil, fmt.Errorf("failed to delete role permissions, cause: %w", err)
 		}
 	}
 
 	if len(addPermissions) > 0 {
 		p, err := r.orgRolePermissionsQ().FilterByCode(addPermissions...).Select(ctx)
 		if err != nil {
-			return fmt.Errorf("filed to getting existing permissions, cause: %w", err)
+			return nil, fmt.Errorf("filed to getting existing permissions, cause: %w", err)
 		}
 
 		existingPermissionsMap := make([]OrganizationRolePermissionLinkRow, len(p))
@@ -155,11 +157,25 @@ func (r *Repository) SetRolePermissions(
 			}
 		}
 		if err = r.orgRolePermissionLinksQ().Insert(ctx, existingPermissionsMap...); err != nil {
-			return fmt.Errorf("failed to adding role permissions, cause: %w", err)
+			return nil, fmt.Errorf("failed to adding role permissions, cause: %w", err)
 		}
 	}
 
-	return nil
+	rows, err := r.orgRolePermissionLinksQ().FilterByRoleID(roleID).Select(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get role permissions, cause: %w", err)
+	}
+
+	result := make([]models.OrgRolePermissionLink, len(rows))
+	for i, row := range rows {
+		result[i] = models.OrgRolePermissionLink{
+			RoleID:         roleID,
+			PermissionCode: row.PermissionCode,
+			CreatedAt:      row.CreatedAt,
+		}
+	}
+
+	return result, nil
 }
 
 func (r *Repository) CheckMemberHavePermission(

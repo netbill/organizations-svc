@@ -3,32 +3,42 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type OrganizationMemberRoleRow struct {
-	MemberID uuid.UUID `db:"member_id"`
-	RoleID   uuid.UUID `db:"role_id"`
+type OrganizationMemberRolesRow struct {
+	MemberID  uuid.UUID `db:"member_id"`
+	RoleID    uuid.UUID `db:"role_id"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
-func (r OrganizationMemberRoleRow) IsNil() bool {
+func (r OrganizationMemberRolesRow) IsNil() bool {
 	return r.MemberID == uuid.Nil && r.RoleID == uuid.Nil
+}
+
+func (r OrganizationMemberRolesRow) ToModel() models.OrgMemberRolesLink {
+	return models.OrgMemberRolesLink{
+		MemberID:  r.MemberID,
+		RoleID:    r.RoleID,
+		CreatedAt: r.CreatedAt,
+	}
 }
 
 type OrgMemberRolesQ interface {
 	New() OrgMemberRolesQ
 
-	Insert(ctx context.Context, input OrganizationMemberRoleRow) (OrganizationMemberRoleRow, error)
+	Insert(ctx context.Context, input OrganizationMemberRolesRow) (OrganizationMemberRolesRow, error)
 
 	Delete(ctx context.Context) error
 	FilterByMemberID(memberID uuid.UUID) OrgMemberRolesQ
 	FilterByRoleID(roleID uuid.UUID) OrgMemberRolesQ
 
-	Select(ctx context.Context) ([]OrganizationMemberRoleRow, error)
-	Get(ctx context.Context) (OrganizationMemberRoleRow, error)
+	Select(ctx context.Context) ([]OrganizationMemberRolesRow, error)
+	Get(ctx context.Context) (OrganizationMemberRolesRow, error)
 }
 
 func (r *Repository) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
@@ -60,16 +70,19 @@ func (r *Repository) RemoveMemberRole(ctx context.Context, memberID, roleID uuid
 	return nil
 }
 
-func (r *Repository) AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error {
-	_, err := r.orgMemberRolesQ().
-		Insert(ctx, OrganizationMemberRoleRow{
+func (r *Repository) AddMemberRole(
+	ctx context.Context,
+	memberID, roleID uuid.UUID,
+) (models.OrgMemberRolesLink, error) {
+	link, err := r.orgMemberRolesQ().
+		Insert(ctx, OrganizationMemberRolesRow{
 			MemberID: memberID,
 			RoleID:   roleID,
 		})
 
 	if err != nil {
-		return fmt.Errorf("failed to add member role, cause: %w", err)
+		return models.OrgMemberRolesLink{}, fmt.Errorf("failed to add member role, cause: %w", err)
 	}
 
-	return nil
+	return link.ToModel(), nil
 }

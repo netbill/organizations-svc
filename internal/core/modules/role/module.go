@@ -32,7 +32,11 @@ type repo interface {
 		limit, offset uint,
 	) (pagi.Page[[]models.Role], error)
 
-	UpdateRole(ctx context.Context, roleID uuid.UUID, params UpdateParams) (models.Role, error)
+	UpdateRole(
+		ctx context.Context,
+		roleID uuid.UUID,
+		params UpdateParams,
+	) (models.Role, error)
 	UpdateRolesRanks(
 		ctx context.Context,
 		organizationID uuid.UUID,
@@ -52,15 +56,21 @@ type repo interface {
 		ctx context.Context,
 		roleID uuid.UUID,
 		permissions map[string]bool,
-	) error
+	) ([]models.OrgRolePermissionLink, error)
 
 	GetAllPermissions(ctx context.Context) ([]models.Permission, error)
 
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
 	GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error)
-	RemoveMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
-	AddMemberRole(ctx context.Context, memberID, roleID uuid.UUID) error
+	RemoveMemberRole(
+		ctx context.Context,
+		memberID, roleID uuid.UUID,
+	) error
+	AddMemberRole(
+		ctx context.Context,
+		memberID, roleID uuid.UUID,
+	) (models.OrgMemberRolesLink, error)
 
 	CheckMemberHavePermission(
 		ctx context.Context,
@@ -84,13 +94,12 @@ type messenger interface {
 	WriteOrgRolePermissionsUpdated(
 		ctx context.Context,
 		role models.Role,
-		permissions map[models.Permission]bool,
+		permissions []models.OrgRolePermissionLink,
 	) error
 
 	WriteOrgMemberRoleAdd(
 		ctx context.Context,
-		memberID uuid.UUID,
-		roleID uuid.UUID,
+		link models.OrgMemberRolesLink,
 	) error
 	WriteOrgMemberRoleRemove(
 		ctx context.Context,

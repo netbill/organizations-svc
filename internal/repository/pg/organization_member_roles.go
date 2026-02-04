@@ -13,16 +13,17 @@ import (
 )
 
 const organizationMemberRoleTable = "organization_member_roles"
-const organizationMemberRoleColumns = "member_id, role_id"
+const organizationMemberRoleColumns = "member_id, role_id, created_at"
 
-func scanOrganizationMemberRole(row sq.RowScanner) (r repository.OrganizationMemberRoleRow, err error) {
-	err = row.Scan(&r.MemberID, &r.RoleID)
+func scanOrganizationMemberRole(row sq.RowScanner) (r repository.OrganizationMemberRolesRow, err error) {
+	err = row.Scan(&r.MemberID, &r.RoleID, &r.CreatedAt)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
-		return repository.OrganizationMemberRoleRow{}, nil
+		return repository.OrganizationMemberRolesRow{}, nil
 	case err != nil:
-		return repository.OrganizationMemberRoleRow{}, fmt.Errorf("scanning member_role: %w", err)
+		return repository.OrganizationMemberRolesRow{}, fmt.Errorf("scanning member_role: %w", err)
 	}
+
 	return r, nil
 }
 
@@ -49,28 +50,28 @@ func (q *orgMemberRoles) New() repository.OrgMemberRolesQ {
 	return NewOrgMemberRolesQ(q.db)
 }
 
-func (q *orgMemberRoles) Insert(ctx context.Context, data repository.OrganizationMemberRoleRow) (repository.OrganizationMemberRoleRow, error) {
+func (q *orgMemberRoles) Insert(ctx context.Context, data repository.OrganizationMemberRolesRow) (repository.OrganizationMemberRolesRow, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"member_id": data.MemberID,
 		"role_id":   data.RoleID,
 	}).Suffix("RETURNING " + organizationMemberRoleColumns).ToSql()
 	if err != nil {
-		return repository.OrganizationMemberRoleRow{}, fmt.Errorf("building insert query for %s: %w", organizationMemberRoleTable, err)
+		return repository.OrganizationMemberRolesRow{}, fmt.Errorf("building insert query for %s: %w", organizationMemberRoleTable, err)
 	}
 
 	return scanOrganizationMemberRole(q.db.QueryRow(ctx, query, args...))
 }
 
-func (q *orgMemberRoles) Get(ctx context.Context) (repository.OrganizationMemberRoleRow, error) {
+func (q *orgMemberRoles) Get(ctx context.Context) (repository.OrganizationMemberRolesRow, error) {
 	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return repository.OrganizationMemberRoleRow{}, fmt.Errorf("building select query for %s: %w", organizationMemberRoleTable, err)
+		return repository.OrganizationMemberRolesRow{}, fmt.Errorf("building select query for %s: %w", organizationMemberRoleTable, err)
 	}
 
 	return scanOrganizationMemberRole(q.db.QueryRow(ctx, query, args...))
 }
 
-func (q *orgMemberRoles) Select(ctx context.Context) ([]repository.OrganizationMemberRoleRow, error) {
+func (q *orgMemberRoles) Select(ctx context.Context) ([]repository.OrganizationMemberRolesRow, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("building select query for %s: %w", organizationMemberRoleTable, err)
@@ -82,7 +83,7 @@ func (q *orgMemberRoles) Select(ctx context.Context) ([]repository.OrganizationM
 	}
 	defer rows.Close()
 
-	out := make([]repository.OrganizationMemberRoleRow, 0)
+	out := make([]repository.OrganizationMemberRolesRow, 0)
 	for rows.Next() {
 		r, err := scanOrganizationMemberRole(rows)
 		if err != nil {

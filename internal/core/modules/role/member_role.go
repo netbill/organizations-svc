@@ -65,11 +65,12 @@ func (m *Module) MemberAddRole(
 	}
 
 	return m.repo.Transaction(ctx, func(ctx context.Context) error {
-		if err = m.repo.AddMemberRole(ctx, memberID, roleID); err != nil {
+		res, err := m.repo.AddMemberRole(ctx, memberID, roleID)
+		if err != nil {
 			return err
 		}
 
-		if err = m.messenger.WriteOrgMemberRoleAdd(ctx, memberID, roleID); err != nil {
+		if err = m.messenger.WriteOrgMemberRoleAdd(ctx, res); err != nil {
 			return err
 		}
 

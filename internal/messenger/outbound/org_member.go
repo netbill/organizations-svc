@@ -125,12 +125,12 @@ func (o *Outbound) WriteOrgMemberDeleted(
 
 func (o *Outbound) WriteOrgMemberRoleAdd(
 	ctx context.Context,
-	memberID uuid.UUID,
-	roleID uuid.UUID,
+	link models.OrgMemberRolesLink,
 ) error {
 	payload, err := json.Marshal(contracts.OrgMemberRoleAddedPayload{
-		MemberID: memberID,
-		RoleID:   roleID,
+		MemberID: link.MemberID,
+		RoleID:   link.RoleID,
+		AddedAt:  link.CreatedAt,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal org member role added payload, cause: %w", err)
@@ -140,7 +140,7 @@ func (o *Outbound) WriteOrgMemberRoleAdd(
 		ctx,
 		kafka.Message{
 			Topic: contracts.OrgMemberTopicV1,
-			Key:   []byte(memberID.String()),
+			Key:   []byte(link.MemberID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
 				{Key: header.EventID, Value: []byte(uuid.New().String())},

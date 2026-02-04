@@ -13,15 +13,15 @@ import (
 )
 
 type OrganizationRoleRow struct {
-	ID             uuid.UUID `json:"id"`
-	OrganizationID uuid.UUID `json:"organization_id"`
-	Rank           uint      `json:"rank"`
-	Name           string    `json:"name"`
-	Description    string    `json:"description"`
-	Color          string    `json:"color"`
+	ID             uuid.UUID `db:"id"`
+	OrganizationID uuid.UUID `db:"organization_id"`
+	Rank           uint      `db:"rank"`
+	Name           string    `db:"name"`
+	Description    string    `db:"description"`
+	Color          string    `db:"color"`
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
 
 func (r OrganizationRoleRow) IsNil() bool {
