@@ -126,7 +126,7 @@ func (o *Outbound) WriteOrgRoleDeleted(
 func (o *Outbound) WriteOrgRolePermissionsUpdated(
 	ctx context.Context,
 	role models.Role,
-	permissions []models.OrgRolePermissionLink,
+	permissions models.OrgRolePermissionLinks,
 ) error {
 	payload, err := json.Marshal(contracts.OrgRolePermissionsUpdatedPayload{
 		RoleID:      role.ID,
@@ -163,7 +163,7 @@ func (o *Outbound) WriteOrgRolesRanksUpdated(
 	organizationID uuid.UUID,
 	ranks map[uuid.UUID]uint,
 ) error {
-	payload, err := json.Marshal(contracts.RolesRanksUpdatedPayload{
+	payload, err := json.Marshal(contracts.OrgRolesRanksUpdatedPayload{
 		OrganizationID: organizationID,
 		Ranks:          ranks,
 	})

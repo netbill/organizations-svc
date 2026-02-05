@@ -52,7 +52,11 @@ func (r OrganizationRolePermissionLinkRow) IsNil() bool {
 type OrgRolePermissionLinksQ interface {
 	New() OrgRolePermissionLinksQ
 
-	Insert(ctx context.Context, input ...OrganizationRolePermissionLinkRow) error
+	Insert(
+		ctx context.Context,
+		roleID uuid.UUID,
+		codes ...string,
+	) ([]OrganizationRolePermissionLinkRow, error)
 
 	Select(ctx context.Context) ([]OrganizationRolePermissionLinkRow, error)
 	Get(ctx context.Context) (OrganizationRolePermissionLinkRow, error)
@@ -70,45 +74,78 @@ type OrgRolePermissionLinksQ interface {
 	Exists(ctx context.Context) (bool, error)
 }
 
-func (r *Repository) GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error) {
-	rolePerm, err := r.orgRolePermissionsQ().FilterByRoleID(roleID).Select(ctx)
+func (r *Repository) GetRolePermissions(
+	ctx context.Context,
+	roleID uuid.UUID,
+) (models.OrgRolePermissionLinks, error) {
+	dict, err := r.orgRolePermissionsQ().Select(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get role permissions, cause: %w", err)
+		return models.OrgRolePermissionLinks{}, fmt.Errorf("failed to get permissions dict: %w", err)
 	}
 
-	perm, err := r.orgRolePermissionsQ().Select(ctx)
+	links, err := r.orgRolePermissionLinksQ().
+		FilterByRoleID(roleID).
+		Select(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all permissions, cause: %w", err)
+		return models.OrgRolePermissionLinks{}, fmt.Errorf("failed to get role permission links: %w", err)
 	}
 
-	rolePermMap := make(map[models.Permission]bool, len(perm))
-	for _, p := range perm {
-		exist := false
-		for _, rp := range rolePerm {
-			if p.Code == rp.Code {
-				exist = true
-				break
-			}
-		}
-
-		rolePermMap[models.Permission{
-			Code:        p.Code,
-			Description: p.Description,
-		}] = exist
+	enabled := make(map[string]struct{}, len(links))
+	for i := range links {
+		enabled[links[i].PermissionCode] = struct{}{}
 	}
 
-	return rolePermMap, nil
+	desc := make(map[string]string, len(dict))
+	for i := range dict {
+		desc[dict[i].Code] = dict[i].Description
+	}
+
+	out := models.OrgRolePermissionLinks{
+		ManageOrganization: models.OrgRolePermissionWithFlag{
+			Code:        models.RolePermissionManageOrganization,
+			Description: desc[models.RolePermissionManageOrganization],
+		},
+		ManageInvites: models.OrgRolePermissionWithFlag{
+			Code:        models.RolePermissionManageInvites,
+			Description: desc[models.RolePermissionManageInvites],
+		},
+		ManageMembers: models.OrgRolePermissionWithFlag{
+			Code:        models.RolePermissionManageMembers,
+			Description: desc[models.RolePermissionManageMembers],
+		},
+		ManageRoles: models.OrgRolePermissionWithFlag{
+			Code:        models.RolePermissionManageRoles,
+			Description: desc[models.RolePermissionManageRoles],
+		},
+	}
+
+	if _, ok := enabled[models.RolePermissionManageOrganization]; ok {
+		out.ManageOrganization.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionManageInvites]; ok {
+		out.ManageInvites.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionManageMembers]; ok {
+		out.ManageMembers.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionManageRoles]; ok {
+		out.ManageRoles.Enabled = true
+	}
+
+	return out, nil
 }
 
-func (r *Repository) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
+func (r *Repository) GetAllPermissions(
+	ctx context.Context,
+) ([]models.OrgRolePermission, error) {
 	permissions, err := r.orgRolePermissionsQ().Select(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all permissions, cause: %w", err)
 	}
 
-	result := make([]models.Permission, len(permissions))
+	result := make([]models.OrgRolePermission, len(permissions))
 	for i, perm := range permissions {
-		result[i] = models.Permission{
+		result[i] = models.OrgRolePermission{
 			Code:        perm.Code,
 			Description: perm.Description,
 		}
@@ -120,62 +157,80 @@ func (r *Repository) GetAllPermissions(ctx context.Context) ([]models.Permission
 func (r *Repository) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
-	permissions map[string]bool,
-) ([]models.OrgRolePermissionLink, error) {
-	deletePermissions := make([]string, 0)
-	addPermissions := make([]string, 0)
+	permissions models.OrgRolePermissionDict,
+) (models.OrgRolePermissionLinks, error) {
+	codes := make([]string, 0, 4)
 
-	for perm, toSet := range permissions {
-		if toSet {
-			addPermissions = append(addPermissions, perm)
-		} else {
-			deletePermissions = append(deletePermissions, perm)
-		}
+	if permissions.ManageOrganization {
+		codes = append(codes, models.RolePermissionManageOrganization)
+	}
+	if permissions.ManageInvites {
+		codes = append(codes, models.RolePermissionManageInvites)
+	}
+	if permissions.ManageMembers {
+		codes = append(codes, models.RolePermissionManageMembers)
+	}
+	if permissions.ManageRoles {
+		codes = append(codes, models.RolePermissionManageRoles)
 	}
 
-	if len(deletePermissions) > 0 {
-		err := r.orgRolePermissionLinksQ().
-			FilterByRoleID(roleID).
-			FilterByPermissionCode(deletePermissions...).
-			Delete(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to delete role permissions, cause: %w", err)
-		}
-	}
-
-	if len(addPermissions) > 0 {
-		p, err := r.orgRolePermissionsQ().FilterByCode(addPermissions...).Select(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("filed to getting existing permissions, cause: %w", err)
-		}
-
-		existingPermissionsMap := make([]OrganizationRolePermissionLinkRow, len(p))
-		for i, perm := range p {
-			existingPermissionsMap[i] = OrganizationRolePermissionLinkRow{
-				RoleID:         roleID,
-				PermissionCode: perm.Code,
-			}
-		}
-		if err = r.orgRolePermissionLinksQ().Insert(ctx, existingPermissionsMap...); err != nil {
-			return nil, fmt.Errorf("failed to adding role permissions, cause: %w", err)
-		}
-	}
-
-	rows, err := r.orgRolePermissionLinksQ().FilterByRoleID(roleID).Select(ctx)
+	rows, err := r.orgRolePermissionLinksQ().Insert(ctx, roleID, codes...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get role permissions, cause: %w", err)
+		return models.OrgRolePermissionLinks{}, fmt.Errorf("set role permissions: %w", err)
 	}
 
-	result := make([]models.OrgRolePermissionLink, len(rows))
-	for i, row := range rows {
-		result[i] = models.OrgRolePermissionLink{
-			RoleID:         roleID,
-			PermissionCode: row.PermissionCode,
-			CreatedAt:      row.CreatedAt,
-		}
+	enabled := make(map[string]struct{}, len(rows))
+	for i := range rows {
+		enabled[rows[i].PermissionCode] = struct{}{}
 	}
 
-	return result, nil
+	dict, err := r.orgRolePermissionsQ().Select(ctx)
+	if err != nil {
+		return models.OrgRolePermissionLinks{}, fmt.Errorf("select permissions dict: %w", err)
+	}
+
+	desc := make(map[string]string, len(dict))
+	for i := range dict {
+		desc[dict[i].Code] = dict[i].Description
+	}
+
+	out := models.OrgRolePermissionLinks{
+		ManageOrganization: models.OrgRolePermissionWithFlag{
+			Code:        models.RolePermissionManageOrganization,
+			Description: desc[models.RolePermissionManageOrganization],
+			Enabled:     false,
+		},
+		ManageInvites: models.OrgRolePermissionWithFlag{
+			Code:        models.RolePermissionManageInvites,
+			Description: desc[models.RolePermissionManageInvites],
+			Enabled:     false,
+		},
+		ManageMembers: models.OrgRolePermissionWithFlag{
+			Code:        models.RolePermissionManageMembers,
+			Description: desc[models.RolePermissionManageMembers],
+			Enabled:     false,
+		},
+		ManageRoles: models.OrgRolePermissionWithFlag{
+			Code:        models.RolePermissionManageRoles,
+			Description: desc[models.RolePermissionManageRoles],
+			Enabled:     false,
+		},
+	}
+
+	if _, ok := enabled[models.RolePermissionManageOrganization]; ok {
+		out.ManageOrganization.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionManageInvites]; ok {
+		out.ManageInvites.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionManageMembers]; ok {
+		out.ManageMembers.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionManageRoles]; ok {
+		out.ManageRoles.Enabled = true
+	}
+
+	return out, nil
 }
 
 func (r *Repository) CheckMemberHavePermission(

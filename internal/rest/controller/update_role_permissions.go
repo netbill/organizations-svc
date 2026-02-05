@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
@@ -27,9 +28,24 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	dict := make(map[string]bool)
-	for _, item := range req.Data.Attributes.Permissions {
-		dict[item.Code] = item.Status
+	dict := models.OrgRolePermissionDict{}
+	for _, p := range req.Data.Attributes.Permissions {
+		switch p.Code {
+		case models.RolePermissionManageOrganization:
+			dict.ManageOrganization = true
+		case models.RolePermissionManageInvites:
+			dict.ManageInvites = true
+		case models.RolePermissionManageMembers:
+			dict.ManageMembers = true
+		case models.RolePermissionManageRoles:
+			dict.ManageRoles = true
+		default:
+			c.log.Errorf("invalid permission code: %s", p)
+			c.responser.RenderErr(w, problems.BadRequest(
+				fmt.Errorf("invalid permission code: %s", p),
+			)...)
+			return
+		}
 	}
 
 	role, perm, err := c.core.SetRolePermissions(
@@ -55,5 +71,5 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	c.responser.Render(w, http.StatusOK, responses.Role(role, perm))
+	c.responser.Render(w, http.StatusOK, responses.Role(role, &perm))
 }

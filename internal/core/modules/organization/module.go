@@ -73,7 +73,10 @@ type repo interface {
 	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 	CreateMemberHead(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 
-	GetRolePermissions(ctx context.Context, roleID uuid.UUID) (map[models.Permission]bool, error)
+	GetRolePermissions(
+		ctx context.Context,
+		roleID uuid.UUID,
+	) (models.OrgRolePermissionLinks, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }

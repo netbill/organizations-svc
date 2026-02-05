@@ -55,6 +55,7 @@ type ProfilesQ interface {
 	UpdateUsername(username string) ProfilesQ
 	UpdateOfficial(official bool) ProfilesQ
 	UpdatePseudonym(v *string) ProfilesQ
+	UpdateAvatar(avatar *string) ProfilesQ
 	UpdateSourceUpdatedAt(v time.Time) ProfilesQ
 
 	FilterByAccountID(accountID ...uuid.UUID) ProfilesQ
@@ -69,6 +70,7 @@ func (r *Repository) CreateProfile(ctx context.Context, profile models.Profile) 
 		Username:        profile.Username,
 		Official:        profile.Official,
 		Pseudonym:       profile.Pseudonym,
+		Avatar:          profile.Avatar,
 		SourceUpdatedAt: profile.UpdatedAt,
 		SourceCreatedAt: profile.CreatedAt,
 	})
@@ -85,6 +87,7 @@ func (r *Repository) UpdateProfile(ctx context.Context, accountID uuid.UUID, par
 		UpdateUsername(params.Username).
 		UpdateOfficial(params.Official).
 		UpdatePseudonym(params.Pseudonym).
+		UpdateAvatar(params.Avatar).
 		UpdateSourceUpdatedAt(params.UpdatedAt).
 		UpdateOne(ctx)
 	if err != nil {

@@ -38,7 +38,7 @@ type OrgRoleDeletedPayload struct {
 
 const OrgRolesRanksUpdatedEvent = "roles.ranks.updated"
 
-type RolesRanksUpdatedPayload struct {
+type OrgRolesRanksUpdatedPayload struct {
 	OrganizationID uuid.UUID          `json:"organization_id"`
 	Ranks          map[uuid.UUID]uint `json:"ranks"`
 	UpdatedAt      time.Time          `json:"updated_at"`
@@ -47,8 +47,8 @@ type RolesRanksUpdatedPayload struct {
 const OrgRolePermissionsUpdatedEvent = "role.permissions.updated"
 
 type OrgRolePermissionsUpdatedPayload struct {
-	RoleID      uuid.UUID                      `json:"role_id"`
-	Permissions []models.OrgRolePermissionLink `json:"permissions"`
+	RoleID      uuid.UUID                     `json:"role_id"`
+	Permissions models.OrgRolePermissionLinks `json:"permissions"`
 }
 
 const OrgMemberRoleAddedEvent = "member_role.added"

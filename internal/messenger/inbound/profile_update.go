@@ -24,6 +24,7 @@ func (i *Inbound) ProfileUpdated(
 	if _, err := i.domain.UpdateProfile(ctx, payload.AccountID, profile.UpdateParams{
 		Username:  payload.Username,
 		Official:  payload.Official,
+		Avatar:    payload.Avatar,
 		Pseudonym: payload.Pseudonym,
 		UpdatedAt: payload.UpdatedAt,
 	}); err != nil {

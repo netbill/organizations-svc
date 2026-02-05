@@ -55,27 +55,53 @@ func (q *orgRolePermissionLinks) New() repository.OrgRolePermissionLinksQ {
 
 func (q *orgRolePermissionLinks) Insert(
 	ctx context.Context,
-	data ...repository.OrganizationRolePermissionLinkRow,
-) error {
-	if len(data) == 0 {
-		return nil
+	roleID uuid.UUID,
+	code ...string,
+) ([]repository.OrganizationRolePermissionLinkRow, error) {
+	codes := make([]string, 0, len(code))
+	seen := make(map[string]struct{}, len(code))
+
+	for _, c := range code {
+		if c == "" {
+			continue
+		}
+		if _, ok := seen[c]; ok {
+			continue
+		}
+		seen[c] = struct{}{}
+		codes = append(codes, c)
 	}
 
-	ins := q.inserter.Columns("role_id", "permission_code")
-	for _, rp := range data {
-		ins = ins.Values(rp.RoleID, rp.PermissionCode)
-	}
+	const sqlq = `
+		WITH del AS (
+			DELETE FROM organization_role_permission_links
+			WHERE role_id = $1
+		)
+		INSERT INTO organization_role_permission_links (role_id, permission_code)
+		SELECT $1, x.code
+		FROM UNNEST($2::text[]) AS x(code)
+		RETURNING role_id, permission_code, created_at
+	`
 
-	query, args, err := ins.ToSql()
+	rows, err := q.db.Query(ctx, sqlq, roleID, codes)
 	if err != nil {
-		return fmt.Errorf("building insert query for %s: %w", organizationRolePermissionLinksTable, err)
+		return nil, fmt.Errorf("upsert role permission links: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]repository.OrganizationRolePermissionLinkRow, 0, len(codes))
+	for rows.Next() {
+		var r repository.OrganizationRolePermissionLinkRow
+		if err := rows.Scan(&r.RoleID, &r.PermissionCode, &r.CreatedAt); err != nil {
+			return nil, fmt.Errorf("scanning role permission link: %w", err)
+		}
+		out = append(out, r)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
-	if _, err := q.db.Exec(ctx, query, args...); err != nil {
-		return fmt.Errorf("executing insert query for %s: %w", organizationRolePermissionLinksTable, err)
-	}
-
-	return nil
+	return out, nil
 }
 
 func (q *orgRolePermissionLinks) Get(ctx context.Context) (repository.OrganizationRolePermissionLinkRow, error) {

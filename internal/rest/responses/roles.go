@@ -8,7 +8,7 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {
+func Role(mod models.Role, perms *models.OrgRolePermissionLinks) resources.Role {
 	res := resources.Role{
 		Data: resources.RoleData{
 			Id:   mod.ID,
@@ -26,21 +26,36 @@ func Role(mod models.Role, perms map[models.Permission]bool) resources.Role {
 	}
 
 	if perms != nil {
-		ps := make([]resources.RoleDataIncludedPermissionsInner, 0, len(perms))
+		ps := make([]resources.RoleDataIncludedPermissionsInner, 0, 4)
 
-		for perm, has := range perms {
-			ps = append(ps, resources.RoleDataIncludedPermissionsInner{
-				Code:        perm.Code,
-				Description: perm.Description,
-				Enabled:     has,
-			})
-		}
+		ps = append(ps,
+			resources.RoleDataIncludedPermissionsInner{
+				Code:        perms.ManageOrganization.Code,
+				Description: perms.ManageOrganization.Description,
+				Enabled:     perms.ManageOrganization.Enabled,
+			},
+			resources.RoleDataIncludedPermissionsInner{
+				Code:        perms.ManageInvites.Code,
+				Description: perms.ManageInvites.Description,
+				Enabled:     perms.ManageInvites.Enabled,
+			},
+			resources.RoleDataIncludedPermissionsInner{
+				Code:        perms.ManageMembers.Code,
+				Description: perms.ManageMembers.Description,
+				Enabled:     perms.ManageMembers.Enabled,
+			},
+			resources.RoleDataIncludedPermissionsInner{
+				Code:        perms.ManageRoles.Code,
+				Description: perms.ManageRoles.Description,
+				Enabled:     perms.ManageRoles.Enabled,
+			},
+		)
 
 		res.Data.Included = &resources.RoleDataIncluded{
 			Permissions: ps,
 		}
 	}
-
+	
 	return res
 }
 
@@ -64,7 +79,7 @@ func Roles(r *http.Request, mods pagi.Page[[]models.Role]) resources.RolesCollec
 	}
 }
 
-func RolePermissions(mods []models.Permission) resources.RolePermissions {
+func RolePermissions(mods []models.OrgRolePermission) resources.RolePermissions {
 	result := make([]resources.RolePermissionsDataInner, len(mods))
 	for i, mod := range mods {
 		result[i] = resources.RolePermissionsDataInner{

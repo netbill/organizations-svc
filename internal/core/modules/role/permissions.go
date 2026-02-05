@@ -11,29 +11,30 @@ func (m *Module) SetRolePermissions(
 	ctx context.Context,
 	initiator models.InitiatorData,
 	roleID uuid.UUID,
-	permissions map[string]bool,
-) (role models.Role, perm map[models.Permission]bool, err error) {
+	permissions models.OrgRolePermissionDict,
+) (role models.Role, links models.OrgRolePermissionLinks, err error) {
 	role, err = m.GetRole(ctx, roleID)
 	if err != nil {
-		return models.Role{}, nil, err
+		return models.Role{}, models.OrgRolePermissionLinks{}, err
 	}
 
 	member, err := m.getInitiator(ctx, initiator, role.OrganizationID)
 	if err != nil {
-		return models.Role{}, nil, err
+		return models.Role{}, models.OrgRolePermissionLinks{}, err
 	}
 
-	if err = m.checkPermissionsToManageRole(ctx, initiator, member.OrganizationID, role.Rank); err != nil {
-		return models.Role{}, nil, err
+	err = m.checkPermissionsToManageRole(ctx, initiator, member.OrganizationID, role.Rank)
+	if err != nil {
+		return models.Role{}, models.OrgRolePermissionLinks{}, err
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
-		res, err := m.repo.SetRolePermissions(ctx, roleID, permissions)
+		links, err = m.repo.SetRolePermissions(ctx, roleID, permissions)
 		if err != nil {
 			return err
 		}
 
-		err = m.messenger.WriteOrgRolePermissionsUpdated(ctx, role, res)
+		err = m.messenger.WriteOrgRolePermissionsUpdated(ctx, role, links)
 		if err != nil {
 			return err
 		}
@@ -41,13 +42,13 @@ func (m *Module) SetRolePermissions(
 		return nil
 	})
 	if err != nil {
-		return models.Role{}, nil, err
+		return models.Role{}, models.OrgRolePermissionLinks{}, err
 	}
 
-	return role, perm, nil
+	return role, links, nil
 }
 
-func (m *Module) GetAllPermissions(ctx context.Context) ([]models.Permission, error) {
+func (m *Module) GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error) {
 	res, err := m.repo.GetAllPermissions(ctx)
 	if err != nil {
 		return nil, err

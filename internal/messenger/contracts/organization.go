@@ -35,14 +35,14 @@ type OrganizationDeletedPayload struct {
 	DeletedAt      time.Time `json:"deleted_at"`
 }
 
-const OrganizationActivatedEvent = "organization.statys.activated"
+const OrganizationActivatedEvent = "organization.status.activated"
 
 type OrganizationActivatedPayload struct {
 	OrganizationID uuid.UUID `json:"organization_id"`
 	ActivatedAt    time.Time `json:"activated_at"`
 }
 
-const OrganizationDeactivatedEvent = "organization.deactivated"
+const OrganizationDeactivatedEvent = "organization.status.deactivated"
 
 type OrganizationDeactivatedPayload struct {
 	OrganizationID uuid.UUID `json:"organization_id"`

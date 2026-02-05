@@ -41,5 +41,5 @@ func (c *Controller) GetRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.responser.Render(w, http.StatusOK, responses.Role(role, perm))
+	c.responser.Render(w, http.StatusOK, responses.Role(role, &perm))
 }

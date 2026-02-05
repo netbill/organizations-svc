@@ -172,7 +172,7 @@ type roleSvc interface {
 		ctx context.Context,
 		initiator models.InitiatorData,
 		roleID uuid.UUID,
-	) (models.Role, map[models.Permission]bool, error)
+	) (models.Role, models.OrgRolePermissionLinks, error)
 
 	GetRoles(
 		ctx context.Context,
@@ -204,8 +204,8 @@ type roleSvc interface {
 		ctx context.Context,
 		initiator models.InitiatorData,
 		roleID uuid.UUID,
-		permissions map[string]bool,
-	) (models.Role, map[models.Permission]bool, error)
+		permissions models.OrgRolePermissionDict,
+	) (models.Role, models.OrgRolePermissionLinks, error)
 
 	MemberAddRole(
 		ctx context.Context,
@@ -219,7 +219,7 @@ type roleSvc interface {
 		memberID, roleID uuid.UUID,
 	) error
 
-	GetAllPermissions(ctx context.Context) ([]models.Permission, error)
+	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
 }
 
 type responser interface {

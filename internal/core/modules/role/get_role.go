@@ -24,20 +24,20 @@ func (m *Module) GetRoleWithPermissions(
 	ctx context.Context,
 	initiator models.InitiatorData,
 	roleID uuid.UUID,
-) (models.Role, map[models.Permission]bool, error) {
+) (models.Role, models.OrgRolePermissionLinks, error) {
 	role, err := m.GetRole(ctx, roleID)
 	if err != nil {
-		return models.Role{}, nil, err
+		return models.Role{}, models.OrgRolePermissionLinks{}, err
 	}
 
 	_, err = m.getInitiator(ctx, initiator, role.OrganizationID)
 	if err != nil {
-		return models.Role{}, nil, err
+		return models.Role{}, models.OrgRolePermissionLinks{}, err
 	}
 
 	permissions, err := m.repo.GetRolePermissions(ctx, roleID)
 	if err != nil {
-		return models.Role{}, nil, err
+		return models.Role{}, models.OrgRolePermissionLinks{}, err
 	}
 
 	return role, permissions, nil
