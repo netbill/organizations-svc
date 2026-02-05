@@ -28,17 +28,19 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	dict := models.OrgRolePermissionDict{}
+	permissions := models.OrgRolePermissionAccess{}
 	for _, p := range req.Data.Attributes.Permissions {
 		switch p.Code {
-		case models.RolePermissionManageOrganization:
-			dict.ManageOrganization = true
-		case models.RolePermissionManageInvites:
-			dict.ManageInvites = true
-		case models.RolePermissionManageMembers:
-			dict.ManageMembers = true
-		case models.RolePermissionManageRoles:
-			dict.ManageRoles = true
+		case models.RolePermissionOrganizationUpdate:
+			permissions.OrganizationUpdate = true
+		case models.RolePermissionInvitesManage:
+			permissions.InvitesManage = true
+		case models.RolePermissionMembersDelete:
+			permissions.MembersDelete = true
+		case models.RolePermissionMembersUpdate:
+			permissions.MembersUpdate = true
+		case models.RolePermissionRolesManage:
+			permissions.RolesManage = true
 		default:
 			c.log.Errorf("invalid permission code: %s", p)
 			c.responser.RenderErr(w, problems.BadRequest(
@@ -48,13 +50,11 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	role, perm, err := c.core.SetRolePermissions(
+	role, perm, err := c.core.permissions.SetForRole(
 		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+		initiator,
 		req.Data.Id,
-		dict,
+		permissions,
 	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to update role permissions")

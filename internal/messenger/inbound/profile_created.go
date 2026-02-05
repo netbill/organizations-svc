@@ -26,7 +26,7 @@ func (i *Inbound) ProfileCreated(
 		Username:  payload.Username,
 		CreatedAt: payload.CreatedAt,
 	}
-	if _, err := i.domain.CreateProfile(ctx, profile); err != nil {
+	if _, err := i.core.profile.Create(ctx, profile); err != nil {
 		var ae *ape.Error
 		if errors.As(err, &ae) {
 			i.log.Errorf(

@@ -9,55 +9,9 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type UpdateParams struct {
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
-	Color       *string `json:"color"`
-}
-
-func (m *Module) UpdateRole(
+func (m *Module) UpdateRanks(
 	ctx context.Context,
-	initiator models.InitiatorData,
-	roleID uuid.UUID,
-	params UpdateParams,
-) (models.Role, error) {
-	role, err := m.GetRole(ctx, roleID)
-	if err != nil {
-		return models.Role{}, err
-	}
-
-	member, err := m.getInitiator(ctx, initiator, role.OrganizationID)
-	if err != nil {
-		return models.Role{}, err
-	}
-
-	if !member.Head {
-		if err = m.checkPermissionsToManageRole(ctx, initiator, member.OrganizationID, role.Rank); err != nil {
-			return models.Role{}, err
-		}
-	}
-
-	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
-		role, err = m.repo.UpdateRole(ctx, roleID, params)
-		if err != nil {
-			return err
-		}
-
-		if err = m.messenger.WriteOrgRoleUpdated(ctx, role); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return models.Role{}, err
-	}
-
-	return role, nil
-}
-
-func (m *Module) UpdateRolesRanks(
-	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
@@ -80,14 +34,14 @@ func (m *Module) UpdateRolesRanks(
 		hasPermission, err := m.repo.CheckMemberHavePermission(
 			ctx,
 			member.AccountID,
-			models.RolePermissionManageRoles,
+			models.RolePermissionRolesManage,
 		)
 		if err != nil {
 			return err
 		}
 		if !hasPermission {
 			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("member %s does not have permission %s", initiator.AccountID, models.RolePermissionManageRoles),
+				fmt.Errorf("member %s does not have permission %s", initiator.GetAccountID(), models.RolePermissionRolesManage),
 			)
 		}
 
@@ -107,7 +61,7 @@ func (m *Module) UpdateRolesRanks(
 				return errx.ErrorNotEnoughRights.Raise(
 					fmt.Errorf(
 						"member %s with max role rank %d cannot manage role with rank %d",
-						initiator.AccountID, maxRole.Rank, role.Rank,
+						initiator.GetAccountID(), maxRole.Rank, role.Rank,
 					),
 				)
 			}
@@ -118,7 +72,7 @@ func (m *Module) UpdateRolesRanks(
 				return errx.ErrorNotEnoughRights.Raise(
 					fmt.Errorf(
 						"member %s with max role rank %d cannot manage role with rank %d",
-						initiator.AccountID, maxRole.Rank, newRank,
+						initiator.GetAccountID(), maxRole.Rank, newRank,
 					),
 				)
 			}

@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
@@ -38,11 +37,9 @@ func (c *Controller) GetOrganizationInvites(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	res, err := c.core.GetOrganizationInvites(
+	res, err := c.core.invite.GetForOrganizations(
 		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+		initiator,
 		organizationID,
 		limit, offset,
 	)

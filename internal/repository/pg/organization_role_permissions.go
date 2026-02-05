@@ -4,19 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/pgdbx"
 )
 
 const organizationPermissionTable = "organization_role_permissions"
-const organizationPermissionColumns = "code, description"
+const organizationPermissionColumns = "code, description, deprecated_at, created_at, updated_at"
 
 func scanOrganizationRolePermission(row sq.RowScanner) (p repository.OrganizationRolePermissionRow, err error) {
-	err = row.Scan(&p.Code, &p.Description)
+	err = row.Scan(
+		&p.Code,
+		&p.Description,
+		&p.DeprecatedAt,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+	)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		return repository.OrganizationRolePermissionRow{}, nil
@@ -37,6 +43,7 @@ type orgRolePermissions struct {
 
 func NewOrgRolePermissionsQ(db *pgdbx.DB) repository.OrgRolePermissionsQ {
 	b := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
 	return &orgRolePermissions{
 		db:       db,
 		selector: b.Select(organizationPermissionColumns).From(organizationPermissionTable),
@@ -53,12 +60,23 @@ func (q *orgRolePermissions) New() repository.OrgRolePermissionsQ {
 
 func (q *orgRolePermissions) Insert(
 	ctx context.Context,
-	data repository.OrganizationRolePermissionRow,
+	input repository.OrganizationRolePermissionRow,
 ) (repository.OrganizationRolePermissionRow, error) {
-	query, args, err := q.inserter.SetMap(map[string]any{
-		"code":        data.Code,
-		"description": data.Description,
-	}).Suffix("RETURNING " + organizationPermissionColumns).ToSql()
+	if input.Code == "" {
+		return repository.OrganizationRolePermissionRow{}, fmt.Errorf("missing code")
+	}
+	if input.Description == "" {
+		return repository.OrganizationRolePermissionRow{}, fmt.Errorf("missing description")
+	}
+
+	query, args, err := q.inserter.
+		SetMap(map[string]any{
+			"code":          input.Code,
+			"description":   input.Description,
+			"deprecated_at": input.DeprecatedAt,
+		}).
+		Suffix("RETURNING " + organizationPermissionColumns).
+		ToSql()
 	if err != nil {
 		return repository.OrganizationRolePermissionRow{}, fmt.Errorf("building insert query for %s: %w", organizationPermissionTable, err)
 	}
@@ -66,13 +84,61 @@ func (q *orgRolePermissions) Insert(
 	return scanOrganizationRolePermission(q.db.QueryRow(ctx, query, args...))
 }
 
-func (q *orgRolePermissions) Get(ctx context.Context) (repository.OrganizationRolePermissionRow, error) {
-	query, args, err := q.selector.Limit(1).ToSql()
+func (q *orgRolePermissions) FilterByCode(codes ...string) repository.OrgRolePermissionsQ {
+	if len(codes) == 0 {
+		return q
+	}
+	q.selector = q.selector.Where(sq.Eq{"code": codes})
+	q.counter = q.counter.Where(sq.Eq{"code": codes})
+	q.updater = q.updater.Where(sq.Eq{"code": codes})
+	q.deleter = q.deleter.Where(sq.Eq{"code": codes})
+	return q
+}
+
+func (q *orgRolePermissions) FilterByDeprecated(deprecated bool) repository.OrgRolePermissionsQ {
+	var cond sq.Sqlizer
+	if deprecated {
+		cond = sq.Expr("deprecated_at IS NOT NULL")
+	} else {
+		cond = sq.Expr("deprecated_at IS NULL")
+	}
+
+	q.selector = q.selector.Where(cond)
+	q.counter = q.counter.Where(cond)
+	q.updater = q.updater.Where(cond)
+	q.deleter = q.deleter.Where(cond)
+	return q
+}
+
+func (q *orgRolePermissions) UpdateDeprecatedAt(timestamp *time.Time) repository.OrgRolePermissionsQ {
+	q.updater = q.updater.Set("deprecated_at", timestamp)
+	q.updater = q.updater.Set("updated_at", sq.Expr("(now() AT TIME ZONE 'UTC')"))
+	return q
+}
+
+func (q *orgRolePermissions) UpdateOne(ctx context.Context) (repository.OrganizationRolePermissionRow, error) {
+	query, args, err := q.updater.
+		Suffix("RETURNING " + organizationPermissionColumns).
+		ToSql()
 	if err != nil {
-		return repository.OrganizationRolePermissionRow{}, fmt.Errorf("building select query for %s: %w", organizationPermissionTable, err)
+		return repository.OrganizationRolePermissionRow{}, fmt.Errorf("building update query for %s: %w", organizationPermissionTable, err)
 	}
 
 	return scanOrganizationRolePermission(q.db.QueryRow(ctx, query, args...))
+}
+
+func (q *orgRolePermissions) UpdateMany(ctx context.Context) (int64, error) {
+	query, args, err := q.updater.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("building update query for %s: %w", organizationPermissionTable, err)
+	}
+
+	res, err := q.db.Exec(ctx, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("executing update query for %s: %w", organizationPermissionTable, err)
+	}
+
+	return res.RowsAffected(), nil
 }
 
 func (q *orgRolePermissions) Select(ctx context.Context) ([]repository.OrganizationRolePermissionRow, error) {
@@ -102,56 +168,13 @@ func (q *orgRolePermissions) Select(ctx context.Context) ([]repository.Organizat
 	return out, nil
 }
 
-func (q *orgRolePermissions) FilterByCode(code ...string) repository.OrgRolePermissionsQ {
-	q.selector = q.selector.Where(sq.Eq{"code": code})
-	q.counter = q.counter.Where(sq.Eq{"code": code})
-	q.updater = q.updater.Where(sq.Eq{"code": code})
-	q.deleter = q.deleter.Where(sq.Eq{"code": code})
-	return q
-}
-
-func (q *orgRolePermissions) FilterByRoleID(roleID uuid.UUID) repository.OrgRolePermissionsQ {
-	q.selector = q.selector.
-		Join("organization_role_permission_links rp ON rp.permission_code = organization_role_permissions.code").
-		Where(sq.Eq{"rp.role_id": roleID}).
-		Distinct()
-
-	q.counter = q.counter.
-		Join("organization_role_permission_links rp ON rp.permission_code = organization_role_permissions.code").
-		Where(sq.Eq{"rp.role_id": roleID})
-
-	// updater/deleter тут НЕ трогаю, потому что selector стал JOIN+DISTINCT,
-	// а UPDATE/DELETE с JOIN тебе не нужен (и в PG это легко словить как невалидный SQL).
-	return q
-}
-
-func (q *orgRolePermissions) FilterLikeDescription(description string) repository.OrgRolePermissionsQ {
-	q.selector = q.selector.Where(sq.ILike{"description": "%" + description + "%"})
-	q.counter = q.counter.Where(sq.ILike{"description": "%" + description + "%"})
-	return q
-}
-
-func (q *orgRolePermissions) UpdateOne(ctx context.Context) (repository.OrganizationRolePermissionRow, error) {
-	query, args, err := q.updater.Suffix("RETURNING " + organizationPermissionColumns).ToSql()
+func (q *orgRolePermissions) Get(ctx context.Context) (repository.OrganizationRolePermissionRow, error) {
+	query, args, err := q.selector.Limit(1).ToSql()
 	if err != nil {
-		return repository.OrganizationRolePermissionRow{}, fmt.Errorf("building update query for %s: %w", organizationPermissionTable, err)
+		return repository.OrganizationRolePermissionRow{}, fmt.Errorf("building select query for %s: %w", organizationPermissionTable, err)
 	}
 
 	return scanOrganizationRolePermission(q.db.QueryRow(ctx, query, args...))
-}
-
-func (q *orgRolePermissions) UpdateMany(ctx context.Context) (int64, error) {
-	query, args, err := q.updater.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("building update query for %s: %w", organizationPermissionTable, err)
-	}
-
-	res, err := q.db.Exec(ctx, query, args...)
-	if err != nil {
-		return 0, fmt.Errorf("executing update query for %s: %w", organizationPermissionTable, err)
-	}
-
-	return res.RowsAffected(), nil
 }
 
 func (q *orgRolePermissions) Delete(ctx context.Context) error {
@@ -179,7 +202,7 @@ func (q *orgRolePermissions) Count(ctx context.Context) (uint, error) {
 	return n, nil
 }
 
-func (q *orgRolePermissions) Page(limit uint, offset uint) repository.OrgRolePermissionsQ {
+func (q *orgRolePermissions) Page(limit, offset uint) repository.OrgRolePermissionsQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }

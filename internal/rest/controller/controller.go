@@ -14,212 +14,217 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type orgSvc interface {
-	CreateOrganization(
+type organizationSvc interface {
+	Create(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		params organization.CreateParams,
 	) (models.Organization, error)
 
-	GetOrganizations(
+	GetByID(
+		ctx context.Context,
+		organizationID uuid.UUID,
+	) (models.Organization, error)
+	GetList(
 		ctx context.Context,
 		params organization.FilterParams,
 		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
-	GetOrganizationForUser(
+	GetForUser(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
-	GetOrganization(
-		ctx context.Context,
-		organizationID uuid.UUID,
-	) (models.Organization, error)
 
-	OpenUpdateOrganizationSession(
+	OpenUpdateSession(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 	) (models.Organization, models.UpdateOrganizationMedia, error)
-	UpdateOrganization(
+	UpdateWithSession(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 		params organization.UpdateParams,
 	) (models.Organization, error)
-	DeleteUpdateOrganizationIconInSession(
+	DeleteUpdateIconInSession(
 		ctx context.Context,
-		initiator models.InitiatorData, organizationID, uploadSessionID uuid.UUID,
+		initiator models.Initiator, organizationID, uploadSessionID uuid.UUID,
 	) error
-	DeleteUpdateOrganizationBannerInSession(
+	DeleteUpdateBannerInSession(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID, uploadSessionID uuid.UUID,
 	) error
 
-	ActivateOrganization(
+	Activate(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 	) (models.Organization, error)
-	DeactivateOrganization(
+	Deactivate(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 	) (models.Organization, error)
 
-	DeleteOrganization(
+	Delete(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 	) error
 }
 
 type inviteSvc interface {
-	CreateInvite(
+	Create(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		params invite.CreateParams,
 	) (models.Invite, error)
 
-	GetInviteForAccount(
+	Decline(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
+		inviteID uuid.UUID,
+	) (models.Invite, error)
+	Accept(
+		ctx context.Context,
+		initiator models.Initiator,
 		inviteID uuid.UUID,
 	) (models.Invite, error)
 
-	DeclineInvite(
+	Delete(
 		ctx context.Context,
-		initiator models.InitiatorData,
-		inviteID uuid.UUID,
-	) (models.Invite, error)
-	AcceptInvite(
-		ctx context.Context,
-		initiator models.InitiatorData,
-		inviteID uuid.UUID,
-	) (models.Invite, error)
-
-	DeleteInvite(
-		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		inviteID uuid.UUID,
 	) error
 
-	GetOrganizationInvites(
+	GetForOrganizations(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
-	GetAccountInvites(
+	GetForAccount(
 		ctx context.Context,
-		initiator models.InitiatorData,
-		limit, offset uint,
-	) (pagi.Page[[]models.Invite], error)
+		accountId uuid.UUID,
+		inviteID uuid.UUID,
+	) (models.Invite, error)
 }
 
 type memberSvc interface {
-	GetMemberByID(
+	GetByID(
 		ctx context.Context,
 		memberID uuid.UUID,
 	) (models.Member, error)
 
-	GetMemberByAccountAndOrganization(
+	GetByAccountAndOrganization(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 	) (models.Member, error)
 
-	GetInitiatorMember(
+	GetInitiator(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 	) (models.Member, error)
 
-	GetMembers(
+	GetList(
 		ctx context.Context,
 		filter member.FilterParams,
 		limit, offset uint,
 	) (pagi.Page[[]models.Member], error)
 
-	UpdateMember(
+	Update(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		memberID uuid.UUID,
 		params member.UpdateParams,
 	) (models.Member, error)
 
-	DeleteMember(
+	Delete(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		memberID uuid.UUID,
 	) error
 }
 
 type roleSvc interface {
-	CreateRole(
+	Create(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		params role.CreateParams,
 	) (models.Role, error)
 
-	GetRole(
+	GetByID(
 		ctx context.Context,
 		roleID uuid.UUID,
 	) (models.Role, error)
 
-	GetRoleWithPermissions(
+	GetWithPermissions(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		roleID uuid.UUID,
-	) (models.Role, models.OrgRolePermissionLinks, error)
+	) (models.Role, models.OrgRolePermissionDictWithDetails, error)
 
-	GetRoles(
+	GetList(
 		ctx context.Context,
 		params role.FilterParams,
 		limit, offset uint,
 	) (pagi.Page[[]models.Role], error)
 
-	UpdateRole(
+	Update(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		roleID uuid.UUID,
 		params role.UpdateParams,
 	) (models.Role, error)
 
-	UpdateRolesRanks(
+	UpdateRanks(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		organizationID uuid.UUID,
 		order map[uuid.UUID]uint,
 	) error
 
-	DeleteRole(
+	Delete(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
 		roleID uuid.UUID,
 	) error
 
-	SetRolePermissions(
+	//SetForRole(
+	//	ctx context.Context,
+	//	initiator models.Initiator,
+	//	roleID uuid.UUID,
+	//	permissions models.SetPermissionParams,
+	//) (models.Role, models.OrgRolePermissionDictWithDetails, error)
+
+	AddForMember(
 		ctx context.Context,
-		initiator models.InitiatorData,
+		initiator models.Initiator,
+		memberID, roleID uuid.UUID,
+	) error
+
+	RemoveFromMember(
+		ctx context.Context,
+		initiator models.Initiator,
+		memberID, roleID uuid.UUID,
+	) error
+
+	//GetAll(ctx context.Context) ([]models.OrgRolePermission, error)
+}
+
+type rolePermissionSvc interface {
+	GetAll(ctx context.Context) ([]models.OrgRolePermission, error)
+
+	SetForRole(
+		ctx context.Context,
+		initiator models.Initiator,
 		roleID uuid.UUID,
-		permissions models.OrgRolePermissionDict,
-	) (models.Role, models.OrgRolePermissionLinks, error)
-
-	MemberAddRole(
-		ctx context.Context,
-		initiator models.InitiatorData,
-		memberID, roleID uuid.UUID,
-	) error
-
-	MemberRemoveRole(
-		ctx context.Context,
-		initiator models.InitiatorData,
-		memberID, roleID uuid.UUID,
-	) error
-
-	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
+		permissions models.OrgRolePermissionAccess,
+	) (models.Role, models.OrgRolePermissionDictWithDetails, error)
 }
 
 type responser interface {
@@ -228,34 +233,37 @@ type responser interface {
 }
 
 type core struct {
-	orgSvc
-	inviteSvc
-	memberSvc
-	roleSvc
+	organization organizationSvc
+	member       memberSvc
+	role         roleSvc
+	permissions  rolePermissionSvc
+	invite       inviteSvc
 }
 
 type Controller struct {
-	core      core
-	responser responser
 	log       *logium.Logger
+	core      *core
+	responser responser
 }
 
 func New(
 	log *logium.Logger,
 	responser responser,
-	orgSvc orgSvc,
+	orgSvc organizationSvc,
 	memberSvc memberSvc,
 	roleSvc roleSvc,
+	permSvc rolePermissionSvc,
 	inviteSvc inviteSvc,
 ) *Controller {
 	return &Controller{
-		core: core{
-			orgSvc:    orgSvc,
-			inviteSvc: inviteSvc,
-			memberSvc: memberSvc,
-			roleSvc:   roleSvc,
+		log: log,
+		core: &core{
+			organization: orgSvc,
+			member:       memberSvc,
+			role:         roleSvc,
+			invite:       inviteSvc,
+			permissions:  permSvc,
 		},
-		log:       log,
 		responser: responser,
 	}
 }

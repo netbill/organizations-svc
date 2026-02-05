@@ -9,17 +9,17 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) DeleteOrganization(
+func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 ) error {
-	organization, err := m.GetOrganization(ctx, organizationID)
+	organization, err := m.GetByID(ctx, organizationID)
 	if err != nil {
 		return err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organization.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), organization.ID)
 	if err != nil {
 		return err
 	}

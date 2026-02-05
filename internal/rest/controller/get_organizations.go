@@ -32,7 +32,7 @@ func (c *Controller) GetOrganizations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	organizations, err := c.core.GetOrganizations(r.Context(), params, limit, offset)
+	organizations, err := c.core.organization.GetList(r.Context(), params, limit, offset)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get organizations")
 		c.responser.RenderErr(w, problems.InternalError())

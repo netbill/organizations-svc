@@ -9,7 +9,6 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/restkit/problems"
 )
@@ -40,15 +39,12 @@ func (c *Controller) DeleteUploadOrganizationIcon(w http.ResponseWriter, r *http
 		return
 	}
 
-	err = c.core.DeleteUpdateOrganizationIconInSession(
+	if err = c.core.organization.DeleteUpdateIconInSession(
 		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+		initiator,
 		organizationID,
 		uploadContentData.GetUploadSessionID(),
-	)
-	if err != nil {
+	); err != nil {
 		c.log.WithError(err).Errorf("failed to delete organization icon in upload session")
 		switch {
 		case errors.Is(err, errx.ErrorOrganizationNotFound):

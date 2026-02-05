@@ -16,6 +16,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
+	"github.com/netbill/organizations-svc/internal/core/modules/rperm"
 	"github.com/netbill/organizations-svc/internal/messenger"
 	"github.com/netbill/organizations-svc/internal/messenger/inbound"
 	"github.com/netbill/organizations-svc/internal/messenger/outbound"
@@ -116,11 +117,12 @@ func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync
 	orgSvc := organization.New(repo, kafkaOutbound, tokenManager, s3Bucket)
 	memberSvc := member.New(repo, kafkaOutbound)
 	roleSvc := role.New(repo, kafkaOutbound)
+	permSvc := rperm.New(repo, kafkaOutbound)
 	inviteSvc := invite.New(repo, kafkaOutbound)
 	profileSvc := profile.New(repo)
 
 	responser := restkit.NewResponser()
-	ctrl := controller.New(log, responser, orgSvc, memberSvc, roleSvc, inviteSvc)
+	ctrl := controller.New(log, responser, orgSvc, memberSvc, roleSvc, permSvc, inviteSvc)
 	mdll := middlewares.New(log, middlewares.Config{
 		AccountAccessSK: cfg.Auth.Account.Token.Access.SecretKey,
 		UploadFilesSK:   cfg.S3.Upload.Token.SecretKey,

@@ -10,20 +10,26 @@ import (
 )
 
 type Inbound struct {
-	log    *logium.Logger
-	domain domain
+	log  *logium.Logger
+	core *core
 }
 
-func New(log *logium.Logger, domain domain) *Inbound {
+type core struct {
+	profile profileSvc
+}
+
+func New(log *logium.Logger, profile profileSvc) *Inbound {
 	return &Inbound{
-		log:    log,
-		domain: domain,
+		log: log,
+		core: &core{
+			profile: profile,
+		},
 	}
 }
 
-type domain interface {
-	CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error)
-	UpdateProfile(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error)
+type profileSvc interface {
+	Create(ctx context.Context, profile models.Profile) (models.Profile, error)
+	Update(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error)
 
-	DeleteProfile(ctx context.Context, accountID uuid.UUID) error
+	Delete(ctx context.Context, accountID uuid.UUID) error
 }

@@ -23,10 +23,6 @@ type Organization struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (e Organization) IsNil() bool {
-	return e.ID == uuid.Nil
-}
-
 type OrganizationMedia struct {
 	Icon   *string `json:"icon,omitempty"`
 	Banner *string `json:"banner,omitempty"`

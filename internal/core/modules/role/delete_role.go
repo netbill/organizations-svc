@@ -7,12 +7,12 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) DeleteRole(
+func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	roleID uuid.UUID,
 ) error {
-	role, err := m.GetRole(ctx, roleID)
+	role, err := m.GetByID(ctx, roleID)
 	if err != nil {
 		return err
 	}

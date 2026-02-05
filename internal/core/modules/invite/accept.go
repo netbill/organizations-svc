@@ -10,19 +10,19 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) DeclineInvite(
+func (m *Module) Accept(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = m.GetInviteForAccount(ctx, initiator, inviteID)
+	invite, err = m.GetForAccount(ctx, initiator.GetAccountID(), inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	if invite.AccountID != initiator.AccountID {
+	if invite.AccountID != initiator.GetAccountID() {
 		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
-			fmt.Errorf("account has no rights to decline this invite"),
+			fmt.Errorf("account has no rights to accept this invite"),
 		)
 	}
 	if invite.Status != models.InviteStatusSent {
@@ -36,13 +36,27 @@ func (m *Module) DeclineInvite(
 		)
 	}
 
+	if _, err = m.checkOrganizationIsActiveAndExists(ctx, invite.OrganizationID); err != nil {
+		return models.Invite{}, err
+	}
+
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
-		invite, err = m.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusDeclined)
+		invite, err = m.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusAccepted)
 		if err != nil {
 			return err
 		}
 
-		err = m.messenger.WriteOrgInviteDeclined(ctx, invite)
+		err = m.messenger.WriteOrgInviteAccepted(ctx, invite)
+		if err != nil {
+			return err
+		}
+
+		mem, err := m.repo.CreateMember(ctx, initiator.GetAccountID(), invite.OrganizationID)
+		if err != nil {
+			return err
+		}
+
+		err = m.messenger.WriteOrgMemberCreated(ctx, mem)
 		if err != nil {
 			return err
 		}

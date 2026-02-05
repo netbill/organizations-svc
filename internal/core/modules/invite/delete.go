@@ -10,17 +10,17 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) DeleteInvite(
+func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	inviteID uuid.UUID,
 ) error {
-	invite, err := m.GetInviteForAccount(ctx, initiator, inviteID)
+	invite, err := m.GetForAccount(ctx, initiator.GetAccountID(), inviteID)
 	if err != nil {
 		return err
 	}
 
-	if invite.AccountID != initiator.AccountID {
+	if invite.AccountID != initiator.GetAccountID() {
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)

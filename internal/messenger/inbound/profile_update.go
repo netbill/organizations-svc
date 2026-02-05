@@ -21,7 +21,7 @@ func (i *Inbound) ProfileUpdated(
 		return inbox.EventStatusFailed
 	}
 
-	if _, err := i.domain.UpdateProfile(ctx, payload.AccountID, profile.UpdateParams{
+	if _, err := i.core.profile.Update(ctx, payload.AccountID, profile.UpdateParams{
 		Username:  payload.Username,
 		Official:  payload.Official,
 		Avatar:    payload.Avatar,

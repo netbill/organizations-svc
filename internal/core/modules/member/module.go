@@ -38,6 +38,8 @@ type repo interface {
 	) (pagi.Page[[]models.Member], error)
 	DeleteMember(ctx context.Context, memberID uuid.UUID) error
 
+	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
+
 	CheckMemberHavePermission(
 		ctx context.Context,
 		memberID uuid.UUID,
@@ -54,13 +56,13 @@ type messenger interface {
 	WriteOrgMemberDeleted(ctx context.Context, memberID uuid.UUID) error
 }
 
-func (m *Module) checkPermissionToInteractWithMember(
+func (m *Module) checkAbilityToUpdateMember(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 	memberID uuid.UUID,
 ) error {
-	member, err := m.GetInitiatorMember(ctx, initiator, organizationID)
+	member, err := m.GetInitiator(ctx, initiator, organizationID)
 	if err != nil {
 		return err
 	}
@@ -69,14 +71,14 @@ func (m *Module) checkPermissionToInteractWithMember(
 		hasPermission, err := m.repo.CheckMemberHavePermission(
 			ctx,
 			member.AccountID,
-			models.RolePermissionManageMembers,
+			models.RolePermissionMembersUpdate,
 		)
 		if err != nil {
 			return err
 		}
 		if !hasPermission {
 			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("initiator member %s has no manage members permission", member.ID),
+				fmt.Errorf("initiator member %s has no update members permission", member.ID),
 			)
 		}
 

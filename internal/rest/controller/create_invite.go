@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
@@ -29,15 +28,13 @@ func (c *Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	inv, err := c.core.CreateInvite(r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+	inv, err := c.core.invite.Create(r.Context(), initiator,
 		invite.CreateParams{
 			OrganizationID: req.Data.Attributes.OrganizationId,
 			AccountID:      req.Data.Attributes.AccountId,
 			ExpiresAt:      time.Now().UTC().Add(24 * time.Hour),
-		})
+		},
+	)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to create invite")
 		switch {

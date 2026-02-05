@@ -16,7 +16,7 @@ type UpdateParams struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (m *Module) UpdateProfile(
+func (m *Module) Update(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params UpdateParams,

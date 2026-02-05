@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/restkit/problems"
 )
@@ -27,14 +26,7 @@ func (c *Controller) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.core.DeleteInvite(
-		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
-		inviteID,
-	)
-	if err != nil {
+	if err = c.core.invite.Delete(r.Context(), initiator, inviteID); err != nil {
 		c.log.WithError(err).Errorf("failed to delete invite")
 		switch {
 		case errors.Is(err, errx.ErrorInviteNotFound):

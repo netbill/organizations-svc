@@ -6,7 +6,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) CreateProfile(
+func (m *Module) Create(
 	ctx context.Context,
 	profile models.Profile,
 ) (models.Profile, error) {

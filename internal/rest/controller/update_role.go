@@ -7,8 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
-
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
@@ -39,11 +37,9 @@ func (c *Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.core.UpdateRole(
+	res, err := c.core.role.Update(
 		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+		initiator,
 		roleID,
 		role.UpdateParams{
 			Name:        req.Data.Attributes.Name,

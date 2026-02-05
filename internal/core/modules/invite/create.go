@@ -16,9 +16,9 @@ type CreateParams struct {
 	ExpiresAt      time.Time
 }
 
-func (m *Module) CreateInvite(
+func (m *Module) Create(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	params CreateParams,
 ) (invite models.Invite, err error) {
 	exist, err := m.repo.MemberExists(ctx, params.AccountID, params.OrganizationID)

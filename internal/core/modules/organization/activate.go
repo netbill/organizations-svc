@@ -9,17 +9,17 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) ActivateOrganization(
+func (m *Module) Activate(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
-	org, err := m.GetOrganization(ctx, organizationID)
+	org, err := m.GetByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, org.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}

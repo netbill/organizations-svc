@@ -8,7 +8,7 @@ import (
 )
 
 func (c *Controller) GetAllPermissions(w http.ResponseWriter, r *http.Request) {
-	perms, err := c.core.GetAllPermissions(r.Context())
+	perms, err := c.core.permissions.GetAll(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get all permissions")
 		c.responser.RenderErr(w, problems.InternalError())

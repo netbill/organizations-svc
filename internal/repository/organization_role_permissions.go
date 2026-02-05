@@ -11,8 +11,11 @@ import (
 )
 
 type OrganizationRolePermissionRow struct {
-	Code        string `db:"code"`
-	Description string `db:"description"`
+	Code         string     `db:"code"`
+	Description  string     `db:"description"`
+	DeprecatedAt *time.Time `db:"deprecated_at"`
+	CreatedAt    time.Time  `db:"created_at"`
+	UpdatedAt    time.Time  `db:"updated_at"`
 }
 
 func (r OrganizationRolePermissionRow) IsNil() bool {
@@ -24,12 +27,13 @@ type OrgRolePermissionsQ interface {
 
 	Insert(ctx context.Context, input OrganizationRolePermissionRow) (OrganizationRolePermissionRow, error)
 
-	FilterByRoleID(roleID uuid.UUID) OrgRolePermissionsQ
 	FilterByCode(codes ...string) OrgRolePermissionsQ
-	FilterLikeDescription(description string) OrgRolePermissionsQ
+	FilterByDeprecated(deprecated bool) OrgRolePermissionsQ
 
 	UpdateOne(ctx context.Context) (OrganizationRolePermissionRow, error)
 	UpdateMany(ctx context.Context) (int64, error)
+
+	UpdateDeprecatedAt(timestamp *time.Time) OrgRolePermissionsQ
 
 	Select(ctx context.Context) ([]OrganizationRolePermissionRow, error)
 	Get(ctx context.Context) (OrganizationRolePermissionRow, error)
@@ -77,17 +81,17 @@ type OrgRolePermissionLinksQ interface {
 func (r *Repository) GetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
-) (models.OrgRolePermissionLinks, error) {
+) (models.OrgRolePermissionDictWithDetails, error) {
 	dict, err := r.orgRolePermissionsQ().Select(ctx)
 	if err != nil {
-		return models.OrgRolePermissionLinks{}, fmt.Errorf("failed to get permissions dict: %w", err)
+		return models.OrgRolePermissionDictWithDetails{}, fmt.Errorf("failed to get permissions dict: %w", err)
 	}
 
 	links, err := r.orgRolePermissionLinksQ().
 		FilterByRoleID(roleID).
 		Select(ctx)
 	if err != nil {
-		return models.OrgRolePermissionLinks{}, fmt.Errorf("failed to get role permission links: %w", err)
+		return models.OrgRolePermissionDictWithDetails{}, fmt.Errorf("failed to get role permission links: %w", err)
 	}
 
 	enabled := make(map[string]struct{}, len(links))
@@ -100,36 +104,38 @@ func (r *Repository) GetRolePermissions(
 		desc[dict[i].Code] = dict[i].Description
 	}
 
-	out := models.OrgRolePermissionLinks{
-		ManageOrganization: models.OrgRolePermissionWithFlag{
-			Code:        models.RolePermissionManageOrganization,
-			Description: desc[models.RolePermissionManageOrganization],
+	out := models.OrgRolePermissionDictWithDetails{
+		OrganizationUpdate: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionOrganizationUpdate],
 		},
-		ManageInvites: models.OrgRolePermissionWithFlag{
-			Code:        models.RolePermissionManageInvites,
-			Description: desc[models.RolePermissionManageInvites],
+		InvitesManage: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionInvitesManage],
 		},
-		ManageMembers: models.OrgRolePermissionWithFlag{
-			Code:        models.RolePermissionManageMembers,
-			Description: desc[models.RolePermissionManageMembers],
+		RolesManage: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionRolesManage],
 		},
-		ManageRoles: models.OrgRolePermissionWithFlag{
-			Code:        models.RolePermissionManageRoles,
-			Description: desc[models.RolePermissionManageRoles],
+		MembersDelete: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionMembersDelete],
+		},
+		MembersUpdate: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionMembersUpdate],
 		},
 	}
 
-	if _, ok := enabled[models.RolePermissionManageOrganization]; ok {
-		out.ManageOrganization.Enabled = true
+	if _, ok := enabled[models.RolePermissionOrganizationUpdate]; ok {
+		out.OrganizationUpdate.Enabled = true
 	}
-	if _, ok := enabled[models.RolePermissionManageInvites]; ok {
-		out.ManageInvites.Enabled = true
+	if _, ok := enabled[models.RolePermissionInvitesManage]; ok {
+		out.InvitesManage.Enabled = true
 	}
-	if _, ok := enabled[models.RolePermissionManageMembers]; ok {
-		out.ManageMembers.Enabled = true
+	if _, ok := enabled[models.RolePermissionRolesManage]; ok {
+		out.RolesManage.Enabled = true
 	}
-	if _, ok := enabled[models.RolePermissionManageRoles]; ok {
-		out.ManageRoles.Enabled = true
+	if _, ok := enabled[models.RolePermissionMembersDelete]; ok {
+		out.MembersDelete.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionMembersUpdate]; ok {
+		out.MembersUpdate.Enabled = true
 	}
 
 	return out, nil
@@ -157,26 +163,29 @@ func (r *Repository) GetAllPermissions(
 func (r *Repository) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
-	permissions models.OrgRolePermissionDict,
-) (models.OrgRolePermissionLinks, error) {
+	permissions models.OrgRolePermissionAccess,
+) (models.OrgRolePermissionDictWithDetails, error) {
 	codes := make([]string, 0, 4)
 
-	if permissions.ManageOrganization {
-		codes = append(codes, models.RolePermissionManageOrganization)
+	if permissions.OrganizationUpdate {
+		codes = append(codes, models.RolePermissionOrganizationUpdate)
 	}
-	if permissions.ManageInvites {
-		codes = append(codes, models.RolePermissionManageInvites)
+	if permissions.InvitesManage {
+		codes = append(codes, models.RolePermissionInvitesManage)
 	}
-	if permissions.ManageMembers {
-		codes = append(codes, models.RolePermissionManageMembers)
+	if permissions.MembersDelete {
+		codes = append(codes, models.RolePermissionMembersDelete)
 	}
-	if permissions.ManageRoles {
-		codes = append(codes, models.RolePermissionManageRoles)
+	if permissions.MembersUpdate {
+		codes = append(codes, models.RolePermissionMembersUpdate)
+	}
+	if permissions.RolesManage {
+		codes = append(codes, models.RolePermissionRolesManage)
 	}
 
 	rows, err := r.orgRolePermissionLinksQ().Insert(ctx, roleID, codes...)
 	if err != nil {
-		return models.OrgRolePermissionLinks{}, fmt.Errorf("set role permissions: %w", err)
+		return models.OrgRolePermissionDictWithDetails{}, fmt.Errorf("set role permissions: %w", err)
 	}
 
 	enabled := make(map[string]struct{}, len(rows))
@@ -186,7 +195,7 @@ func (r *Repository) SetRolePermissions(
 
 	dict, err := r.orgRolePermissionsQ().Select(ctx)
 	if err != nil {
-		return models.OrgRolePermissionLinks{}, fmt.Errorf("select permissions dict: %w", err)
+		return models.OrgRolePermissionDictWithDetails{}, fmt.Errorf("select permissions dict: %w", err)
 	}
 
 	desc := make(map[string]string, len(dict))
@@ -194,42 +203,39 @@ func (r *Repository) SetRolePermissions(
 		desc[dict[i].Code] = dict[i].Description
 	}
 
-	out := models.OrgRolePermissionLinks{
-		ManageOrganization: models.OrgRolePermissionWithFlag{
-			Code:        models.RolePermissionManageOrganization,
-			Description: desc[models.RolePermissionManageOrganization],
-			Enabled:     false,
+	out := models.OrgRolePermissionDictWithDetails{
+		OrganizationUpdate: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionOrganizationUpdate],
 		},
-		ManageInvites: models.OrgRolePermissionWithFlag{
-			Code:        models.RolePermissionManageInvites,
-			Description: desc[models.RolePermissionManageInvites],
-			Enabled:     false,
+		InvitesManage: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionInvitesManage],
 		},
-		ManageMembers: models.OrgRolePermissionWithFlag{
-			Code:        models.RolePermissionManageMembers,
-			Description: desc[models.RolePermissionManageMembers],
-			Enabled:     false,
+		RolesManage: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionRolesManage],
 		},
-		ManageRoles: models.OrgRolePermissionWithFlag{
-			Code:        models.RolePermissionManageRoles,
-			Description: desc[models.RolePermissionManageRoles],
-			Enabled:     false,
+		MembersDelete: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionMembersDelete],
+		},
+		MembersUpdate: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionMembersUpdate],
 		},
 	}
 
-	if _, ok := enabled[models.RolePermissionManageOrganization]; ok {
-		out.ManageOrganization.Enabled = true
+	if _, ok := enabled[models.RolePermissionOrganizationUpdate]; ok {
+		out.OrganizationUpdate.Enabled = true
 	}
-	if _, ok := enabled[models.RolePermissionManageInvites]; ok {
-		out.ManageInvites.Enabled = true
+	if _, ok := enabled[models.RolePermissionInvitesManage]; ok {
+		out.InvitesManage.Enabled = true
 	}
-	if _, ok := enabled[models.RolePermissionManageMembers]; ok {
-		out.ManageMembers.Enabled = true
+	if _, ok := enabled[models.RolePermissionRolesManage]; ok {
+		out.RolesManage.Enabled = true
 	}
-	if _, ok := enabled[models.RolePermissionManageRoles]; ok {
-		out.ManageRoles.Enabled = true
+	if _, ok := enabled[models.RolePermissionMembersDelete]; ok {
+		out.MembersDelete.Enabled = true
 	}
-
+	if _, ok := enabled[models.RolePermissionMembersUpdate]; ok {
+		out.MembersUpdate.Enabled = true
+	}
 	return out, nil
 }
 

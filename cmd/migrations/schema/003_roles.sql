@@ -22,20 +22,25 @@ CREATE TABLE organization_member_roles (
 );
 
 CREATE TABLE organization_role_permissions (
-    code        VARCHAR(255)  PRIMARY KEY UNIQUE NOT NULL,
-    description VARCHAR(1024) NOT NULL
+    code          VARCHAR(255)  PRIMARY KEY,
+    description   VARCHAR(1024) NOT NULL,
+
+    deprecated_at TIMESTAMPTZ   NULL,
+    created_at    TIMESTAMPTZ   NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    updated_at    TIMESTAMPTZ   NOT NULL DEFAULT (now() AT TIME ZONE 'UTC')
 );
 
 INSERT INTO organization_role_permissions (code, description) VALUES
     ('organization.manage', 'manage organization settings'),
-    ('invites.manage', 'manage organization invites'),
-    ('members.manage', 'manage organization members'),
-    ('roles.manage', 'manage organization roles');
+    ('invites.manage',      'manage organization invites'),
+    ('roles.manage',        'manage organization roles'),
+    ('members.delete',      'remove organization members'),
+    ('members.update',      'update organization members');
 
 CREATE TABLE organization_role_permission_links (
-    role_id         UUID NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
-    permission_code VARCHAR(255) NOT NULL REFERENCES organization_role_permissions (code) ON DELETE CASCADE,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    role_id         UUID         NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
+    permission_code VARCHAR(255) NOT NULL REFERENCES organization_role_permissions (code) ON DELETE RESTRICT,
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
 
     PRIMARY KEY (role_id, permission_code)
 );

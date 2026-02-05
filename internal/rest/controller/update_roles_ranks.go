@@ -5,8 +5,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
-
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
@@ -33,15 +31,12 @@ func (c *Controller) UpdateRolesRanks(w http.ResponseWriter, r *http.Request) {
 		dict[item.Id] = item.Rank
 	}
 
-	err = c.core.UpdateRolesRanks(
+	if err = c.core.role.UpdateRanks(
 		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+		initiator,
 		req.Data.Id,
 		dict,
-	)
-	if err != nil {
+	); err != nil {
 		c.log.WithError(err).Errorf("failed to update roles ranks")
 		switch {
 		case errors.Is(err, errx.ErrorNotEnoughRights):

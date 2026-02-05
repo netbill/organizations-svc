@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (m *Module) DeleteProfile(
+func (m *Module) Delete(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) error {

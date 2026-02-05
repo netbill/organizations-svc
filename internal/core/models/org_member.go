@@ -22,7 +22,3 @@ type Member struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
-
-func (m Member) IsNil() bool {
-	return m.ID == uuid.Nil
-}

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
@@ -28,11 +27,7 @@ func (c *Controller) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.core.CreateRole(
-		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+	res, err := c.core.role.Create(r.Context(), initiator,
 		role.CreateParams{
 			OrganizationID: req.Data.Attributes.OrganizationId,
 			Name:           req.Data.Attributes.Name,

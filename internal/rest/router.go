@@ -11,7 +11,7 @@ import (
 )
 
 type Handlers interface {
-	//Organization handlers
+	//organization handlers
 	CreateOrganization(w http.ResponseWriter, r *http.Request)
 
 	GetOrganization(w http.ResponseWriter, r *http.Request)
@@ -38,14 +38,14 @@ type Handlers interface {
 	MemberAddRole(w http.ResponseWriter, r *http.Request)
 	MemberRemoveRole(w http.ResponseWriter, r *http.Request)
 
-	//Invite handlers
+	//invite handlers
 	CreateInvite(w http.ResponseWriter, r *http.Request)
 	GetInvite(w http.ResponseWriter, r *http.Request)
 	DeleteInvite(w http.ResponseWriter, r *http.Request)
 	AcceptInvite(w http.ResponseWriter, r *http.Request)
 	DeclineInvite(w http.ResponseWriter, r *http.Request)
 
-	//Role handlers
+	//role handlers
 	CreateRole(w http.ResponseWriter, r *http.Request)
 	GetRole(w http.ResponseWriter, r *http.Request)
 	UpdateRole(w http.ResponseWriter, r *http.Request)

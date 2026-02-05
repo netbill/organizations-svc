@@ -11,7 +11,7 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func (m *Module) GetMemberByID(
+func (m *Module) GetByID(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Member, error) {
@@ -23,25 +23,12 @@ func (m *Module) GetMemberByID(
 	return row, nil
 }
 
-func (m *Module) GetMemberByAccountAndOrganization(
+func (m *Module) GetInitiator(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organizationID)
-	if err != nil {
-		return models.Member{}, err
-	}
-
-	return row, nil
-}
-
-func (m *Module) GetInitiatorMember(
-	ctx context.Context,
-	initiator models.InitiatorData,
-	organizationID uuid.UUID,
-) (models.Member, error) {
-	member, err := m.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
+	member, err := m.GetByAccountAndOrganization(ctx, initiator, organizationID)
 	if errors.Is(err, errx.ErrorMemberNotFound) {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf(
@@ -52,6 +39,19 @@ func (m *Module) GetInitiatorMember(
 	}
 
 	return member, err
+}
+
+func (m *Module) GetByAccountAndOrganization(
+	ctx context.Context,
+	initiator models.Initiator,
+	organizationID uuid.UUID,
+) (models.Member, error) {
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), organizationID)
+	if err != nil {
+		return models.Member{}, err
+	}
+
+	return row, nil
 }
 
 type FilterParams struct {
@@ -68,7 +68,7 @@ type FilterParams struct {
 	RoleRankDown   *uint
 }
 
-func (m *Module) GetMembers(
+func (m *Module) GetList(
 	ctx context.Context,
 	filter FilterParams,
 	limit, offset uint,

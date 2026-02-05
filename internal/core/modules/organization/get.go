@@ -8,7 +8,7 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func (m *Module) GetOrganization(
+func (m *Module) GetByID(
 	ctx context.Context,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
@@ -25,7 +25,7 @@ type FilterParams struct {
 	Status *string `json:"status,omitempty"`
 }
 
-func (m *Module) GetOrganizations(
+func (m *Module) GetList(
 	ctx context.Context,
 	params FilterParams,
 	limit, offset uint,
@@ -38,12 +38,12 @@ func (m *Module) GetOrganizations(
 	return res, nil
 }
 
-func (m *Module) GetOrganizationForUser(
+func (m *Module) GetForUser(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	res, err := m.repo.GetOrganizationsForUser(ctx, initiator.AccountID, limit, offset)
+	res, err := m.repo.GetOrganizationsForUser(ctx, initiator.GetAccountID(), limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, err
 	}

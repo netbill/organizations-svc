@@ -21,7 +21,7 @@ func (c *Controller) GetMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.core.GetMemberByID(r.Context(), memberId)
+	res, err := c.core.member.GetByID(r.Context(), memberId)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get member by id")
 		switch {

@@ -81,7 +81,7 @@ type messenger interface {
 
 func (m *Module) checkPermissionForManageInvites(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 ) error {
 	member, err := m.getInitiator(ctx, initiator, organizationID)
@@ -93,7 +93,7 @@ func (m *Module) checkPermissionForManageInvites(
 		access, err := m.repo.CheckMemberHavePermission(
 			ctx,
 			member.ID,
-			models.RolePermissionManageInvites,
+			models.RolePermissionInvitesManage,
 		)
 		if err != nil {
 			return err
@@ -129,16 +129,16 @@ func (m *Module) checkOrganizationIsActiveAndExists(
 
 func (m *Module) getInitiator(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organizationID)
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
 			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf(
 					"initiator with account id %s is not a member of organization %s",
-					initiator.AccountID, organizationID,
+					initiator.GetAccountID(), organizationID,
 				),
 			)
 		}

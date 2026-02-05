@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/restkit/problems"
 )
@@ -28,14 +27,7 @@ func (c *Controller) DeleteMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = c.core.DeleteMember(
-		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
-		memberId,
-	)
-	if err != nil {
+	if err = c.core.member.Delete(r.Context(), initiator, memberId); err != nil {
 		c.log.WithError(err).Errorf("failed to delete member")
 		switch {
 		case errors.Is(err, errx.ErrorMemberNotFound):

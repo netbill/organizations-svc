@@ -1,23 +1,22 @@
 package models
 
-import (
-	"time"
-
-	"github.com/google/uuid"
-)
+type OrgRolePermissionCode string
 
 const (
-	RolePermissionManageOrganization = "organization.manage"
-	RolePermissionManageInvites      = "invites.manage"
-	RolePermissionManageMembers      = "members.manage"
-	RolePermissionManageRoles        = "roles.manage"
+	RolePermissionOrganizationUpdate = "organization.update"
+	RolePermissionRolesManage        = "roles.manage"
+	RolePermissionInvitesManage      = "invites.manage"
+
+	RolePermissionMembersDelete = "members.delete"
+	RolePermissionMembersUpdate = "members.update"
 )
 
 var allRolePermissions = []string{
-	RolePermissionManageOrganization,
-	RolePermissionManageRoles,
-	RolePermissionManageInvites,
-	RolePermissionManageMembers,
+	RolePermissionOrganizationUpdate,
+	RolePermissionRolesManage,
+	RolePermissionInvitesManage,
+	RolePermissionMembersDelete,
+	RolePermissionMembersUpdate,
 }
 
 type OrgRolePermission struct {
@@ -25,36 +24,47 @@ type OrgRolePermission struct {
 	Description string `json:"description"`
 }
 
-func (p OrgRolePermission) IsNil() bool {
-	return p.Code == ""
-}
-
-type OrgRolePermissionLink struct {
-	RoleID         uuid.UUID `json:"role_id"`
-	PermissionCode string    `json:"permission_code"`
-	CreatedAt      time.Time `json:"created_at"`
-}
-
-func (r OrgRolePermissionLink) IsNil() bool {
-	return r.RoleID == uuid.Nil
-}
-
-type OrgRolePermissionWithFlag struct {
-	Code        string `json:"code"`
+type OrgRolePermissionDetails struct {
 	Description string `json:"description"`
 	Enabled     bool   `json:"enabled"`
 }
 
-type OrgRolePermissionDict struct {
-	ManageOrganization bool `json:"manage_organization,omitempty"`
-	ManageInvites      bool `json:"manage_invites,omitempty"`
-	ManageMembers      bool `json:"manage_members,omitempty"`
-	ManageRoles        bool `json:"manage_roles,omitempty"`
+type OrgRolePermissionAccess struct {
+	OrganizationUpdate bool `json:"organization.update"`
+	RolesManage        bool `json:"roles.manage"`
+	InvitesManage      bool `json:"invites.manage"`
+	MembersDelete      bool `json:"members.delete"`
+	MembersUpdate      bool `json:"members.update"`
 }
 
-type OrgRolePermissionLinks struct {
-	ManageOrganization OrgRolePermissionWithFlag
-	ManageInvites      OrgRolePermissionWithFlag
-	ManageMembers      OrgRolePermissionWithFlag
-	ManageRoles        OrgRolePermissionWithFlag
+func (p OrgRolePermissionAccess) ToMap() map[string]bool {
+	perms := make(map[string]bool)
+
+	perms[RolePermissionOrganizationUpdate] = p.OrganizationUpdate
+	perms[RolePermissionRolesManage] = p.RolesManage
+	perms[RolePermissionInvitesManage] = p.InvitesManage
+	perms[RolePermissionMembersDelete] = p.MembersDelete
+	perms[RolePermissionMembersUpdate] = p.MembersUpdate
+
+	return perms
+}
+
+type OrgRolePermissionDictWithDetails struct {
+	OrganizationUpdate OrgRolePermissionDetails `json:"organization.update"`
+	RolesManage        OrgRolePermissionDetails `json:"roles.manage"`
+	InvitesManage      OrgRolePermissionDetails `json:"invites.manage"`
+	MembersDelete      OrgRolePermissionDetails `json:"members.delete"`
+	MembersUpdate      OrgRolePermissionDetails `json:"members.update"`
+}
+
+func (p OrgRolePermissionDictWithDetails) ToMap() map[string]OrgRolePermissionDetails {
+	perms := make(map[string]OrgRolePermissionDetails)
+
+	perms[RolePermissionOrganizationUpdate] = p.OrganizationUpdate
+	perms[RolePermissionRolesManage] = p.RolesManage
+	perms[RolePermissionInvitesManage] = p.InvitesManage
+	perms[RolePermissionMembersDelete] = p.MembersDelete
+	perms[RolePermissionMembersUpdate] = p.MembersUpdate
+
+	return perms
 }

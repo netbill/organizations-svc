@@ -28,7 +28,7 @@ func (c *Controller) GetOrganizationRoles(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	roles, err := c.core.GetRoles(r.Context(), role.FilterParams{
+	roles, err := c.core.role.GetList(r.Context(), role.FilterParams{
 		OrganizationID: &organizationID,
 	}, limit, offset)
 	if err != nil {

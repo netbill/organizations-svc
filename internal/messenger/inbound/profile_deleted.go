@@ -20,7 +20,7 @@ func (i *Inbound) ProfileDeleted(
 		return inbox.EventStatusFailed
 	}
 
-	if err := i.domain.DeleteProfile(ctx, payload.AccountID); err != nil {
+	if err := i.core.profile.Delete(ctx, payload.AccountID); err != nil {
 		var ae *ape.Error
 		if errors.As(err, &ae) {
 			i.log.Errorf(

@@ -21,7 +21,7 @@ func (c *Controller) GetOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	org, err := c.core.GetOrganization(r.Context(), organizationID)
+	org, err := c.core.organization.GetByID(r.Context(), organizationID)
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get organization")
 		switch {

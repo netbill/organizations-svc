@@ -76,7 +76,7 @@ type repo interface {
 	GetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-	) (models.OrgRolePermissionLinks, error)
+	) (models.OrgRolePermissionDictWithDetails, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
@@ -144,10 +144,10 @@ type token interface {
 
 func (m *Module) chekPermissionForManageOrganization(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 ) error {
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.AccountID, organizationID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
 			return errx.ErrorNotEnoughRights.Raise(
@@ -164,7 +164,7 @@ func (m *Module) chekPermissionForManageOrganization(
 	access, err := m.repo.CheckMemberHavePermission(
 		ctx,
 		member.ID,
-		models.RolePermissionManageOrganization,
+		models.RolePermissionOrganizationUpdate,
 	)
 	if err != nil {
 		return err

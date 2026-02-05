@@ -8,12 +8,12 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) OpenUpdateOrganizationSession(
+func (m *Module) OpenUpdateSession(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 ) (models.Organization, models.UpdateOrganizationMedia, error) {
-	org, err := m.GetOrganization(ctx, organizationID)
+	org, err := m.GetByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, models.UpdateOrganizationMedia{}, err
 	}
@@ -30,7 +30,7 @@ func (m *Module) OpenUpdateOrganizationSession(
 	}
 
 	uploadToken, err := m.token.NewUploadOrganizationMediaToken(
-		initiator.AccountID,
+		initiator.GetAccountID(),
 		organizationID,
 		uploadSessionID,
 	)
@@ -78,13 +78,13 @@ func (p UpdateParams) GetUpdatedBanner() *string {
 	return p.Media.banner
 }
 
-func (m *Module) UpdateOrganization(
+func (m *Module) UpdateWithSession(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID uuid.UUID,
 	params UpdateParams,
 ) (models.Organization, error) {
-	org, err := m.GetOrganization(ctx, organizationID)
+	org, err := m.GetByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -161,9 +161,9 @@ func (m *Module) UpdateOrganization(
 	return org, nil
 }
 
-func (m *Module) DeleteUpdateOrganizationIconInSession(
+func (m *Module) DeleteUpdateIconInSession(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID, uploadSessionID uuid.UUID,
 ) error {
 	err := m.chekPermissionForManageOrganization(ctx, initiator, organizationID)
@@ -178,9 +178,9 @@ func (m *Module) DeleteUpdateOrganizationIconInSession(
 	)
 }
 
-func (m *Module) DeleteUpdateOrganizationBannerInSession(
+func (m *Module) DeleteUpdateBannerInSession(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	organizationID, uploadSessionID uuid.UUID,
 ) error {
 	err := m.chekPermissionForManageOrganization(ctx, initiator, organizationID)

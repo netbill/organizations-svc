@@ -7,8 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
-
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
@@ -39,11 +37,9 @@ func (c *Controller) UpdateMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.core.UpdateMember(
+	res, err := c.core.member.Update(
 		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+		initiator,
 		memberId,
 		member.UpdateParams{
 			Position: req.Data.Attributes.Position,

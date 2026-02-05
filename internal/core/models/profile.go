@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type InitiatorData struct {
-	AccountID uuid.UUID
+type Initiator interface {
+	GetAccountID() uuid.UUID
 }
 
 type Profile struct {

@@ -6,8 +6,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
-
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/restkit/problems"
@@ -28,11 +26,9 @@ func (c *Controller) GetRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, perm, err := c.core.GetRoleWithPermissions(
+	role, perm, err := c.core.role.GetWithPermissions(
 		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+		initiator,
 		roleID,
 	)
 	if err != nil {

@@ -8,7 +8,7 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func Role(mod models.Role, perms *models.OrgRolePermissionLinks) resources.Role {
+func Role(mod models.Role, perms *models.OrgRolePermissionDictWithDetails) resources.Role {
 	res := resources.Role{
 		Data: resources.RoleData{
 			Id:   mod.ID,
@@ -28,34 +28,19 @@ func Role(mod models.Role, perms *models.OrgRolePermissionLinks) resources.Role 
 	if perms != nil {
 		ps := make([]resources.RoleDataIncludedPermissionsInner, 0, 4)
 
-		ps = append(ps,
-			resources.RoleDataIncludedPermissionsInner{
-				Code:        perms.ManageOrganization.Code,
-				Description: perms.ManageOrganization.Description,
-				Enabled:     perms.ManageOrganization.Enabled,
-			},
-			resources.RoleDataIncludedPermissionsInner{
-				Code:        perms.ManageInvites.Code,
-				Description: perms.ManageInvites.Description,
-				Enabled:     perms.ManageInvites.Enabled,
-			},
-			resources.RoleDataIncludedPermissionsInner{
-				Code:        perms.ManageMembers.Code,
-				Description: perms.ManageMembers.Description,
-				Enabled:     perms.ManageMembers.Enabled,
-			},
-			resources.RoleDataIncludedPermissionsInner{
-				Code:        perms.ManageRoles.Code,
-				Description: perms.ManageRoles.Description,
-				Enabled:     perms.ManageRoles.Enabled,
-			},
-		)
+		for code, details := range perms.ToMap() {
+			ps = append(ps, resources.RoleDataIncludedPermissionsInner{
+				Code:        code,
+				Description: details.Description,
+				Enabled:     details.Enabled,
+			})
+		}
 
 		res.Data.Included = &resources.RoleDataIncluded{
 			Permissions: ps,
 		}
 	}
-	
+
 	return res
 }
 

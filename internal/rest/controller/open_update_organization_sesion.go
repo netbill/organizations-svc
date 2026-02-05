@@ -8,8 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
-
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
@@ -35,11 +33,9 @@ func (c *Controller) OpenUpdateOrganizationSession(w http.ResponseWriter, r *htt
 		return
 	}
 
-	organization, media, err := c.core.OpenUpdateOrganizationSession(
+	organization, media, err := c.core.organization.OpenUpdateSession(
 		r.Context(),
-		models.InitiatorData{
-			AccountID: initiator.GetAccountID(),
-		},
+		initiator,
 		organizationID,
 	)
 	if err != nil {

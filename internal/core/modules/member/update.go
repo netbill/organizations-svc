@@ -14,13 +14,13 @@ type UpdateParams struct {
 	Label    *string
 }
 
-func (m *Module) UpdateMember(
+func (m *Module) Update(
 	ctx context.Context,
-	initiator models.InitiatorData,
+	initiator models.Initiator,
 	memberID uuid.UUID,
 	params UpdateParams,
 ) (models.Member, error) {
-	member, err := m.GetMemberByID(ctx, memberID)
+	member, err := m.GetByID(ctx, memberID)
 	if err != nil {
 		return models.Member{}, err
 	}
@@ -30,7 +30,7 @@ func (m *Module) UpdateMember(
 		)
 	}
 
-	err = m.checkPermissionToInteractWithMember(ctx, initiator, member.OrganizationID, memberID)
+	err = m.checkAbilityToUpdateMember(ctx, initiator, member.OrganizationID, memberID)
 	if err != nil {
 		return models.Member{}, err
 	}
