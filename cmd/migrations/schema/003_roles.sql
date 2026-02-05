@@ -35,7 +35,10 @@ INSERT INTO organization_role_permissions (code, description) VALUES
     ('invites.manage',      'manage organization invites'),
     ('roles.manage',        'manage organization roles'),
     ('members.delete',      'remove organization members'),
-    ('members.update',      'update organization members');
+    ('members.update',      'update organization members'),
+    ('places.create',       'create places within the organization'),
+    ('places.delete',       'delete places within the organization'),
+    ('places.update',       'update places within the organization');
 
 CREATE TABLE organization_role_permission_links (
     role_id         UUID         NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,

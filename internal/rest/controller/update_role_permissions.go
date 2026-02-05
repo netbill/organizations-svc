@@ -31,8 +31,8 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 	permissions := models.OrgRolePermissionAccess{}
 	for _, p := range req.Data.Attributes.Permissions {
 		switch p.Code {
-		case models.RolePermissionOrganizationUpdate:
-			permissions.OrganizationUpdate = true
+		case models.RolePermissionOrgUpdate:
+			permissions.OrgUpdate = true
 		case models.RolePermissionInvitesManage:
 			permissions.InvitesManage = true
 		case models.RolePermissionMembersDelete:
@@ -41,6 +41,12 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 			permissions.MembersUpdate = true
 		case models.RolePermissionRolesManage:
 			permissions.RolesManage = true
+		case models.RolePermissionPlaceCreate:
+			permissions.PlaceCreate = true
+		case models.RolePermissionPlaceDelete:
+			permissions.PlaceDelete = true
+		case models.RolePermissionPlaceUpdate:
+			permissions.PlaceUpdate = true
 		default:
 			c.log.Errorf("invalid permission code: %s", p)
 			c.responser.RenderErr(w, problems.BadRequest(

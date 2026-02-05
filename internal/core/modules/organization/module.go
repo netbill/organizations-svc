@@ -164,7 +164,7 @@ func (m *Module) chekPermissionForManageOrganization(
 	access, err := m.repo.CheckMemberHavePermission(
 		ctx,
 		member.ID,
-		models.RolePermissionOrganizationUpdate,
+		models.RolePermissionOrgUpdate,
 	)
 	if err != nil {
 		return err

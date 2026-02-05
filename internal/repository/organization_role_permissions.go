@@ -106,7 +106,7 @@ func (r *Repository) GetRolePermissions(
 
 	out := models.OrgRolePermissionDictWithDetails{
 		OrganizationUpdate: models.OrgRolePermissionDetails{
-			Description: desc[models.RolePermissionOrganizationUpdate],
+			Description: desc[models.RolePermissionOrgUpdate],
 		},
 		InvitesManage: models.OrgRolePermissionDetails{
 			Description: desc[models.RolePermissionInvitesManage],
@@ -120,9 +120,18 @@ func (r *Repository) GetRolePermissions(
 		MembersUpdate: models.OrgRolePermissionDetails{
 			Description: desc[models.RolePermissionMembersUpdate],
 		},
+		PlaceCreate: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionPlaceCreate],
+		},
+		PlaceDelete: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionPlaceDelete],
+		},
+		PlaceUpdate: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionPlaceUpdate],
+		},
 	}
 
-	if _, ok := enabled[models.RolePermissionOrganizationUpdate]; ok {
+	if _, ok := enabled[models.RolePermissionOrgUpdate]; ok {
 		out.OrganizationUpdate.Enabled = true
 	}
 	if _, ok := enabled[models.RolePermissionInvitesManage]; ok {
@@ -136,6 +145,15 @@ func (r *Repository) GetRolePermissions(
 	}
 	if _, ok := enabled[models.RolePermissionMembersUpdate]; ok {
 		out.MembersUpdate.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionPlaceCreate]; ok {
+		out.PlaceCreate.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionPlaceDelete]; ok {
+		out.PlaceDelete.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionPlaceUpdate]; ok {
+		out.PlaceUpdate.Enabled = true
 	}
 
 	return out, nil
@@ -167,8 +185,8 @@ func (r *Repository) SetRolePermissions(
 ) (models.OrgRolePermissionDictWithDetails, error) {
 	codes := make([]string, 0, 4)
 
-	if permissions.OrganizationUpdate {
-		codes = append(codes, models.RolePermissionOrganizationUpdate)
+	if permissions.OrgUpdate {
+		codes = append(codes, models.RolePermissionOrgUpdate)
 	}
 	if permissions.InvitesManage {
 		codes = append(codes, models.RolePermissionInvitesManage)
@@ -181,6 +199,15 @@ func (r *Repository) SetRolePermissions(
 	}
 	if permissions.RolesManage {
 		codes = append(codes, models.RolePermissionRolesManage)
+	}
+	if permissions.PlaceCreate {
+		codes = append(codes, models.RolePermissionPlaceCreate)
+	}
+	if permissions.PlaceDelete {
+		codes = append(codes, models.RolePermissionPlaceDelete)
+	}
+	if permissions.PlaceUpdate {
+		codes = append(codes, models.RolePermissionPlaceUpdate)
 	}
 
 	rows, err := r.orgRolePermissionLinksQ().Insert(ctx, roleID, codes...)
@@ -205,7 +232,7 @@ func (r *Repository) SetRolePermissions(
 
 	out := models.OrgRolePermissionDictWithDetails{
 		OrganizationUpdate: models.OrgRolePermissionDetails{
-			Description: desc[models.RolePermissionOrganizationUpdate],
+			Description: desc[models.RolePermissionOrgUpdate],
 		},
 		InvitesManage: models.OrgRolePermissionDetails{
 			Description: desc[models.RolePermissionInvitesManage],
@@ -219,9 +246,18 @@ func (r *Repository) SetRolePermissions(
 		MembersUpdate: models.OrgRolePermissionDetails{
 			Description: desc[models.RolePermissionMembersUpdate],
 		},
+		PlaceCreate: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionPlaceCreate],
+		},
+		PlaceDelete: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionPlaceDelete],
+		},
+		PlaceUpdate: models.OrgRolePermissionDetails{
+			Description: desc[models.RolePermissionPlaceUpdate],
+		},
 	}
 
-	if _, ok := enabled[models.RolePermissionOrganizationUpdate]; ok {
+	if _, ok := enabled[models.RolePermissionOrgUpdate]; ok {
 		out.OrganizationUpdate.Enabled = true
 	}
 	if _, ok := enabled[models.RolePermissionInvitesManage]; ok {
@@ -236,6 +272,16 @@ func (r *Repository) SetRolePermissions(
 	if _, ok := enabled[models.RolePermissionMembersUpdate]; ok {
 		out.MembersUpdate.Enabled = true
 	}
+	if _, ok := enabled[models.RolePermissionPlaceCreate]; ok {
+		out.PlaceCreate.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionPlaceDelete]; ok {
+		out.PlaceDelete.Enabled = true
+	}
+	if _, ok := enabled[models.RolePermissionPlaceUpdate]; ok {
+		out.PlaceUpdate.Enabled = true
+	}
+
 	return out, nil
 }
 
