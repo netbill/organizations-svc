@@ -26,7 +26,7 @@ func Role(mod models.Role, perms *models.OrgRolePermissionDictWithDetails) resou
 	}
 
 	if perms != nil {
-		ps := make([]resources.RoleDataIncludedPermissionsInner, 0, 4)
+		ps := make([]resources.RoleDataIncludedPermissionsInner, 0, models.GetOrgRolePermissionLength())
 
 		for code, details := range perms.ToMap() {
 			ps = append(ps, resources.RoleDataIncludedPermissionsInner{

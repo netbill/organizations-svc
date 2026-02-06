@@ -53,7 +53,7 @@ func (q *orgRolePermissionLinks) New() repository.OrgRolePermissionLinksQ {
 	return NewOrgRolePermissionLinksQ(q.db)
 }
 
-func (q *orgRolePermissionLinks) Insert(
+func (q *orgRolePermissionLinks) Upsert(
 	ctx context.Context,
 	roleID uuid.UUID,
 	code ...string,

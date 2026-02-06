@@ -56,7 +56,7 @@ func (r OrganizationRolePermissionLinkRow) IsNil() bool {
 type OrgRolePermissionLinksQ interface {
 	New() OrgRolePermissionLinksQ
 
-	Insert(
+	Upsert(
 		ctx context.Context,
 		roleID uuid.UUID,
 		codes ...string,
@@ -183,7 +183,7 @@ func (r *Repository) SetRolePermissions(
 	roleID uuid.UUID,
 	permissions models.OrgRolePermissionAccess,
 ) (models.OrgRolePermissionDictWithDetails, error) {
-	codes := make([]string, 0, 4)
+	codes := make([]string, 0, models.GetOrgRolePermissionLength())
 
 	if permissions.OrgUpdate {
 		codes = append(codes, models.RolePermissionOrgUpdate)
@@ -210,7 +210,7 @@ func (r *Repository) SetRolePermissions(
 		codes = append(codes, models.RolePermissionPlaceUpdate)
 	}
 
-	rows, err := r.orgRolePermissionLinksQ().Insert(ctx, roleID, codes...)
+	rows, err := r.orgRolePermissionLinksQ().Upsert(ctx, roleID, codes...)
 	if err != nil {
 		return models.OrgRolePermissionDictWithDetails{}, fmt.Errorf("set role permissions: %w", err)
 	}
