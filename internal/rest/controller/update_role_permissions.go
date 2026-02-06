@@ -28,7 +28,7 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	permissions := models.OrgRolePermissionAccess{}
+	permissions := models.OrgRolePermissionEnable{}
 	for _, p := range req.Data.Attributes.Permissions {
 		switch p.Code {
 		case models.RolePermissionOrgUpdate:

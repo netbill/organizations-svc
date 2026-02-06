@@ -46,7 +46,6 @@ type OrgRolePermissionsQ interface {
 type OrganizationRolePermissionLinkRow struct {
 	RoleID         uuid.UUID `db:"role_id"`
 	PermissionCode string    `db:"permission_code"`
-	CreatedAt      time.Time `db:"created_at"`
 }
 
 func (r OrganizationRolePermissionLinkRow) IsNil() bool {
@@ -181,7 +180,7 @@ func (r *Repository) GetAllPermissions(
 func (r *Repository) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
-	permissions models.OrgRolePermissionAccess,
+	permissions models.OrgRolePermissionEnable,
 ) (models.OrgRolePermissionDictWithDetails, error) {
 	codes := make([]string, 0, models.GetOrgRolePermissionLength())
 

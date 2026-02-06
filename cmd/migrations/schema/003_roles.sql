@@ -43,7 +43,6 @@ INSERT INTO organization_role_permissions (code, description) VALUES
 CREATE TABLE organization_role_permission_links (
     role_id         UUID         NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
     permission_code VARCHAR(255) NOT NULL REFERENCES organization_role_permissions (code) ON DELETE RESTRICT,
-    created_at      TIMESTAMPTZ  NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
 
     PRIMARY KEY (role_id, permission_code)
 );

@@ -41,12 +41,7 @@ type OrgRolePermission struct {
 	Description string `json:"description"`
 }
 
-type OrgRolePermissionDetails struct {
-	Description string `json:"description"`
-	Enabled     bool   `json:"enabled"`
-}
-
-type OrgRolePermissionAccess struct {
+type OrgRolePermissionEnable struct {
 	OrgUpdate     bool `json:"organization.update"`
 	RolesManage   bool `json:"roles.manage"`
 	InvitesManage bool `json:"invites.manage"`
@@ -57,7 +52,7 @@ type OrgRolePermissionAccess struct {
 	PlaceUpdate   bool `json:"update.place"`
 }
 
-func (p OrgRolePermissionAccess) ToMap() map[string]bool {
+func (p OrgRolePermissionEnable) ToMap() map[string]bool {
 	perms := make(map[string]bool)
 
 	perms[RolePermissionOrgUpdate] = p.OrgUpdate
@@ -85,6 +80,11 @@ type OrgRolePermissionDictWithDetails struct {
 	PlaceCreate OrgRolePermissionDetails `json:"place.create"`
 	PlaceDelete OrgRolePermissionDetails `json:"place.delete"`
 	PlaceUpdate OrgRolePermissionDetails `json:"place.update"`
+}
+
+type OrgRolePermissionDetails struct {
+	Description string `json:"description"`
+	Enabled     bool   `json:"enabled"`
 }
 
 func (p OrgRolePermissionDictWithDetails) ToMap() map[string]OrgRolePermissionDetails {

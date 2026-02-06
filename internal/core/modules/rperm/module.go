@@ -34,7 +34,7 @@ type repo interface {
 	SetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-		perms models.OrgRolePermissionAccess,
+		perms models.OrgRolePermissionEnable,
 	) (models.OrgRolePermissionDictWithDetails, error)
 
 	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
@@ -54,7 +54,7 @@ type messenger interface {
 	WriteOrgRolePermissionsUpdated(
 		ctx context.Context,
 		role models.Role,
-		permissions models.OrgRolePermissionAccess,
+		permissions models.OrgRolePermissionEnable,
 	) error
 }
 

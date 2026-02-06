@@ -126,7 +126,7 @@ func (o *Outbound) WriteOrgRoleDeleted(
 func (o *Outbound) WriteOrgRolePermissionsUpdated(
 	ctx context.Context,
 	role models.Role,
-	permissions models.OrgRolePermissionAccess,
+	permissions models.OrgRolePermissionEnable,
 ) error {
 	payload, err := json.Marshal(contracts.OrgRolePermissionsUpdatedPayload{
 		RoleID:      role.ID,

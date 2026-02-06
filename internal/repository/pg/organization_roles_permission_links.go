@@ -14,10 +14,10 @@ import (
 )
 
 const organizationRolePermissionLinksTable = "organization_role_permission_links"
-const organizationRolePermissionLinksColumns = "role_id, permission_code, created_at"
+const organizationRolePermissionLinksColumns = "role_id, permission_code"
 
 func scanOrganizationRolePermissionLink(row sq.RowScanner) (rp repository.OrganizationRolePermissionLinkRow, err error) {
-	err = row.Scan(&rp.RoleID, &rp.PermissionCode, &rp.CreatedAt)
+	err = row.Scan(&rp.RoleID, &rp.PermissionCode)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		return repository.OrganizationRolePermissionLinkRow{}, nil
@@ -80,7 +80,7 @@ func (q *orgRolePermissionLinks) Upsert(
 		INSERT INTO organization_role_permission_links (role_id, permission_code)
 		SELECT $1, x.code
 		FROM UNNEST($2::text[]) AS x(code)
-		RETURNING role_id, permission_code, created_at
+		RETURNING role_id, permission_code
 	`
 
 	rows, err := q.db.Query(ctx, sqlq, roleID, codes)
@@ -92,7 +92,7 @@ func (q *orgRolePermissionLinks) Upsert(
 	out := make([]repository.OrganizationRolePermissionLinkRow, 0, len(codes))
 	for rows.Next() {
 		var r repository.OrganizationRolePermissionLinkRow
-		if err := rows.Scan(&r.RoleID, &r.PermissionCode, &r.CreatedAt); err != nil {
+		if err := rows.Scan(&r.RoleID, &r.PermissionCode); err != nil {
 			return nil, fmt.Errorf("scanning role permission link: %w", err)
 		}
 		out = append(out, r)

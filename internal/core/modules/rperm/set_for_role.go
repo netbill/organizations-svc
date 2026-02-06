@@ -11,7 +11,7 @@ func (m *Module) SetForRole(
 	ctx context.Context,
 	initiator models.Initiator,
 	roleID uuid.UUID,
-	permissions models.OrgRolePermissionAccess,
+	permissions models.OrgRolePermissionEnable,
 ) (role models.Role, links models.OrgRolePermissionDictWithDetails, err error) {
 	role, err = m.repo.GetRole(ctx, roleID)
 	if err != nil {

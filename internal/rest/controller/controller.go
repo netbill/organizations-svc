@@ -223,7 +223,7 @@ type rolePermissionSvc interface {
 		ctx context.Context,
 		initiator models.Initiator,
 		roleID uuid.UUID,
-		permissions models.OrgRolePermissionAccess,
+		permissions models.OrgRolePermissionEnable,
 	) (models.Role, models.OrgRolePermissionDictWithDetails, error)
 }
 

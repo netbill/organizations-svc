@@ -59,7 +59,7 @@ type repo interface {
 	SetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-		perms models.OrgRolePermissionAccess,
+		perms models.OrgRolePermissionEnable,
 	) (models.OrgRolePermissionDictWithDetails, error)
 
 	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
