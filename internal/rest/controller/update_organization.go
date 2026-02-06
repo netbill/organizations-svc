@@ -14,7 +14,7 @@ import (
 	"github.com/netbill/restkit/problems"
 )
 
-func (c *Controller) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ConfirmUpdateOrganization(w http.ResponseWriter, r *http.Request) {
 	initiator, err := contexter.AccountData(r.Context())
 	if err != nil {
 		c.log.WithError(err).Errorf("failed to get initiator account data")
