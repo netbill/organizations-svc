@@ -56,6 +56,12 @@ type organizationSvc interface {
 		initiator models.Initiator,
 		organizationID, uploadSessionID uuid.UUID,
 	) error
+	CancelUpdateSession(
+		ctx context.Context,
+		initiator models.Initiator,
+		uploadSessionID uuid.UUID,
+		organizationID uuid.UUID,
+	) error
 
 	Activate(
 		ctx context.Context,

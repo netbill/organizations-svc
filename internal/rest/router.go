@@ -22,6 +22,7 @@ type Handlers interface {
 	ConfirmUpdateOrganization(w http.ResponseWriter, r *http.Request)
 	DeleteUploadOrganizationIcon(w http.ResponseWriter, r *http.Request)
 	DeleteUploadOrganizationBanner(w http.ResponseWriter, r *http.Request)
+	CancelUpdateOrganization(w http.ResponseWriter, r *http.Request)
 
 	ActivateOrganization(w http.ResponseWriter, r *http.Request)
 	DeactivateOrganization(w http.ResponseWriter, r *http.Request)
@@ -105,8 +106,10 @@ func (rt *Router) Run(ctx context.Context, cfg Config) {
 
 				r.Route("/{organization_id}", func(r chi.Router) {
 					r.Get("/", rt.handlers.GetOrganization)
+					
 					r.With(auth).Route("/update-session", func(r chi.Router) {
 						r.Post("/", rt.handlers.OpenUpdateOrganizationSession)
+						r.With(updOrganization).Delete("/", rt.handlers.CancelUpdateOrganization)
 
 						r.With(updOrganization).Put("/confirm", rt.handlers.ConfirmUpdateOrganization)
 						r.With(updOrganization).Delete("/upload-icon", rt.handlers.DeleteUploadOrganizationIcon)

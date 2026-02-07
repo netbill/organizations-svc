@@ -112,7 +112,7 @@ func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync
 
 	kafkaOutbound := outbound.New(log, db)
 
-	tokenManager := tokenmanager.New(cfg.Service.Name, cfg.S3.Upload.Token.TTL.Organization)
+	tokenManager := tokenmanager.New(cfg.S3.Upload.Token.SecretKey, cfg.S3.Upload.Token.TTL.Organization)
 
 	orgSvc := organization.New(repo, kafkaOutbound, tokenManager, s3Bucket)
 	memberSvc := member.New(repo, kafkaOutbound)

@@ -194,3 +194,21 @@ func (m *Module) DeleteUpdateBannerInSession(
 		uploadSessionID,
 	)
 }
+
+func (m *Module) CancelUpdateSession(
+	ctx context.Context,
+	initiator models.Initiator,
+	uploadSessionID uuid.UUID,
+	organizationID uuid.UUID,
+) error {
+	err := m.chekPermissionForManageOrganization(ctx, initiator, organizationID)
+	if err != nil {
+		return err
+	}
+
+	return m.bucket.CleanOrganizationMediaSession(
+		ctx,
+		organizationID,
+		uploadSessionID,
+	)
+}
