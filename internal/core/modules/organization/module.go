@@ -144,10 +144,10 @@ type token interface {
 
 func (m *Module) chekPermissionForManageOrganization(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) error {
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), organizationID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
 			return errx.ErrorNotEnoughRights.Raise(

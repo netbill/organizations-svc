@@ -6,9 +6,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type Initiator interface {
-	GetAccountID() uuid.UUID
-}
+type AccountActor = uuid.UUID
+
+type UploadScope = uuid.UUID
 
 type Profile struct {
 	AccountID uuid.UUID `json:"account_id"`
@@ -18,8 +18,4 @@ type Profile struct {
 	Avatar    *string   `json:"avatar,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-func (p Profile) IsNil() bool {
-	return p.AccountID == uuid.Nil
 }

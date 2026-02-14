@@ -10,7 +10,6 @@ import (
 )
 
 type Inbound struct {
-	log  *logium.Logger
 	core *core
 }
 

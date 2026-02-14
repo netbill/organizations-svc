@@ -58,7 +58,7 @@ type messenger interface {
 
 func (m *Module) checkAbilityToUpdateMember(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 	memberID uuid.UUID,
 ) error {

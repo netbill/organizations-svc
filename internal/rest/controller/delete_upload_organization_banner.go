@@ -9,51 +9,43 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
+const operationDeleteUploadOrganizationBanner = "delete_upload_organization_banner"
+
 func (c *Controller) DeleteUploadOrganizationBanner(w http.ResponseWriter, r *http.Request) {
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get initiator account data")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
-		return
-	}
+	log := scope.Log(r).WithOperation(operationDeleteUploadOrganizationBanner)
 
 	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid organization id")
+		log.WithError(err).Info("invalid organization id")
 		c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
 			"query": fmt.Errorf("invalid organization id: %s", chi.URLParam(r, "organization_id")),
 		})...)
-
 		return
 	}
 
-	uploadContentData, err := contexter.UploadContentData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Error("failed to get upload session id")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get upload session id"))
+	log = log.WithField("organization_id", organizationID)
 
-		return
-	}
-
-	if err = c.core.organization.DeleteUpdateBannerInSession(
+	err = c.core.organization.DeleteUpdateBannerInSession(
 		r.Context(),
-		initiator,
+		scope.AccountActor(r),
 		organizationID,
-		uploadContentData.GetUploadSessionID(),
-	); err != nil {
-		c.log.WithError(err).Errorf("failed to delete organization banner in upload session")
-		switch {
-		case errors.Is(err, errx.ErrorOrganizationNotFound):
-			c.responser.RenderErr(w, problems.NotFound("organization does not exist"))
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
-		default:
-			c.responser.RenderErr(w, problems.InternalError())
-		}
-		return
+		scope.UploadScope(r),
+	)
+	switch {
+	case errors.Is(err, errx.ErrorOrganizationNotFound):
+		log.Info("organization does not exist")
+		c.responser.RenderErr(w, problems.NotFound("organization does not exist"))
+	case errors.Is(err, errx.ErrorNotEnoughRights):
+		log.Info("not enough rights to update organization")
+		c.responser.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
+	case err != nil:
+		log.WithError(err).Error("failed to delete organization banner in upload session")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	roleID uuid.UUID,
 ) error {
 	role, err := m.GetByID(ctx, roleID)

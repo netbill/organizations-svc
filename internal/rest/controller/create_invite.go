@@ -7,46 +7,46 @@ import (
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
+const operationCreateInvite = "create_invite"
+
 func (c *Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
+	log := scope.Log(r).WithOperation(operationCreateInvite)
+
 	req, err := request.SentInvite(r)
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid create invite request")
+		log.WithError(err).Info("invalid create invite request")
 		c.responser.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get initiator account data")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
-		return
-	}
+	log = log.WithField("organization_id", req.Data.Attributes.OrganizationId).WithField("account_id", req.Data.Attributes.AccountId)
 
-	inv, err := c.core.invite.Create(r.Context(), initiator,
+	inv, err := c.core.invite.Create(
+		r.Context(),
+		scope.AccountActor(r),
 		invite.CreateParams{
 			OrganizationID: req.Data.Attributes.OrganizationId,
 			AccountID:      req.Data.Attributes.AccountId,
 			ExpiresAt:      time.Now().UTC().Add(24 * time.Hour),
 		},
 	)
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to create invite")
-		switch {
-		case errors.Is(err, errx.ErrorAccountAlreadyMember):
-			c.responser.RenderErr(w, problems.Conflict("account is already a member of the organization"))
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			c.responser.RenderErr(w, problems.Forbidden("not enough rights to create invite"))
-		default:
-			c.responser.RenderErr(w, problems.InternalError())
-		}
-		return
+	switch {
+	case errors.Is(err, errx.ErrorAccountAlreadyMember):
+		log.Info("account is already a member of the organization")
+		c.responser.RenderErr(w, problems.Conflict("account is already a member of the organization"))
+	case errors.Is(err, errx.ErrorNotEnoughRights):
+		log.Info("not enough rights to create invite")
+		c.responser.RenderErr(w, problems.Forbidden("not enough rights to create invite"))
+	case err != nil:
+		log.WithError(err).Error("failed to create invite")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		c.responser.Render(w, http.StatusCreated, responses.Invite(inv))
 	}
-
-	c.responser.Render(w, http.StatusCreated, responses.Invite(inv))
 }

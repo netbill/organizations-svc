@@ -9,7 +9,7 @@ import (
 
 func (m *Module) SetForRole(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	roleID uuid.UUID,
 	permissions models.OrgRolePermissionEnable,
 ) (role models.Role, links models.OrgRolePermissionDictWithDetails, err error) {

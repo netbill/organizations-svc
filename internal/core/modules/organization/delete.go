@@ -11,7 +11,7 @@ import (
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) error {
 	organization, err := m.GetByID(ctx, organizationID)
@@ -19,7 +19,7 @@ func (m *Module) Delete(
 		return err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), organization.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organization.ID)
 	if err != nil {
 		return err
 	}

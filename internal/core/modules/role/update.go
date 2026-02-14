@@ -15,7 +15,7 @@ type UpdateParams struct {
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	roleID uuid.UUID,
 	params UpdateParams,
 ) (models.Role, error) {

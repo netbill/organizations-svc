@@ -17,7 +17,7 @@ type CreateParams struct {
 
 func (m *Module) Create(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	params CreateParams,
 ) (role models.Role, err error) {
 	err = m.checkPermissionsToManageRole(ctx, initiator, params.OrganizationID, params.Rank)

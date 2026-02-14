@@ -4,37 +4,33 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/pagi"
 	"github.com/netbill/restkit/problems"
 )
 
+const operationGetMyOrganizations = "get_my_organizations"
+
 func (c *Controller) GetMyOrganizations(w http.ResponseWriter, r *http.Request) {
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get initiator account data")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
-		return
-	}
+	log := scope.Log(r).WithOperation(operationGetMyOrganizations)
 
 	limit, offset := pagi.GetPagination(r)
 	if limit > 100 {
-		c.log.WithError(fmt.Errorf("invalid pagination limit %d", limit)).Errorf("invalid pagination limit")
+		log.Info("invalid pagination limit")
 		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("pagination limit must be between 1 and 100"))...)
 		return
 	}
 
-	res, err := c.core.organization.GetForUser(
-		r.Context(),
-		initiator,
-		limit, offset,
-	)
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get organizations")
-		c.responser.RenderErr(w, problems.InternalError())
-		return
-	}
+	accountID := scope.AccountActor(r)
+	log = log.WithField("account_id", accountID).WithField("limit", limit).WithField("offset", offset)
 
-	c.responser.Render(w, http.StatusOK, responses.Organizations(r, res))
+	res, err := c.core.organization.GetForUser(r.Context(), accountID, limit, offset)
+	switch {
+	case err != nil:
+		log.WithError(err).Error("failed to get organizations")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		c.responser.Render(w, http.StatusOK, responses.Organizations(r, res))
+	}
 }

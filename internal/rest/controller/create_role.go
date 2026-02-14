@@ -6,28 +6,29 @@ import (
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
+const operationCreateRole = "create_role"
+
 func (c *Controller) CreateRole(w http.ResponseWriter, r *http.Request) {
+	log := scope.Log(r).WithOperation(operationCreateRole)
+
 	req, err := request.CreateRole(r)
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid create role request")
+		log.WithError(err).Info("invalid create role request")
 		c.responser.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get initiator account data")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
-		return
-	}
+	log = log.WithField("organization_id", req.Data.Attributes.OrganizationId)
 
-	res, err := c.core.role.Create(r.Context(), initiator,
+	res, err := c.core.role.Create(
+		r.Context(),
+		scope.AccountActor(r),
 		role.CreateParams{
 			OrganizationID: req.Data.Attributes.OrganizationId,
 			Name:           req.Data.Attributes.Name,
@@ -36,16 +37,14 @@ func (c *Controller) CreateRole(w http.ResponseWriter, r *http.Request) {
 			Color:          req.Data.Attributes.Color,
 		},
 	)
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to create role")
-		switch {
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			c.responser.RenderErr(w, problems.Forbidden("not enough rights to create role"))
-		default:
-			c.responser.RenderErr(w, problems.InternalError())
-		}
-		return
+	switch {
+	case errors.Is(err, errx.ErrorNotEnoughRights):
+		log.Info("not enough rights to create role")
+		c.responser.RenderErr(w, problems.Forbidden("not enough rights to create role"))
+	case err != nil:
+		log.WithError(err).Error("failed to create role")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		c.responser.Render(w, http.StatusCreated, responses.Role(res, nil))
 	}
-
-	c.responser.Render(w, http.StatusCreated, responses.Role(res, nil))
 }

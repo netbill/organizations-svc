@@ -2,42 +2,42 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
+const operationDeleteInvite = "delete_invite"
+
 func (c *Controller) DeleteInvite(w http.ResponseWriter, r *http.Request) {
+	log := scope.Log(r).WithOperation(operationDeleteInvite)
+
 	inviteID, err := uuid.Parse(chi.URLParam(r, "invite_id"))
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid invite id")
-		http.Error(w, "invalid invite id", http.StatusBadRequest)
+		log.WithError(err).Info("invalid invite id")
+		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid invite id"))...)
 		return
 	}
 
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get initiator account data")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
-		return
-	}
+	log = log.WithField("invite_id", inviteID)
 
-	if err = c.core.invite.Delete(r.Context(), initiator, inviteID); err != nil {
-		c.log.WithError(err).Errorf("failed to delete invite")
-		switch {
-		case errors.Is(err, errx.ErrorInviteNotFound):
-			c.responser.RenderErr(w, problems.NotFound("invite not found"))
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			c.responser.RenderErr(w, problems.Forbidden("not enough rights to delete invite"))
-		default:
-			c.responser.RenderErr(w, problems.InternalError())
-		}
-		return
+	err = c.core.invite.Delete(r.Context(), scope.AccountActor(r), inviteID)
+	switch {
+	case errors.Is(err, errx.ErrorInviteNotFound):
+		log.Info("invite not found")
+		c.responser.RenderErr(w, problems.NotFound("invite not found"))
+	case errors.Is(err, errx.ErrorNotEnoughRights):
+		log.Info("not enough rights to delete invite")
+		c.responser.RenderErr(w, problems.Forbidden("not enough rights to delete invite"))
+	case err != nil:
+		log.WithError(err).Error("failed to delete invite")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		w.WriteHeader(http.StatusNoContent)
 	}
-
-	w.WriteHeader(http.StatusNoContent)
 }

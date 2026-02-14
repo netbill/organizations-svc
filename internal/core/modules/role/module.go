@@ -109,7 +109,7 @@ type messenger interface {
 
 func (m *Module) checkPermissionsToManageRole(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 	rank uint,
 ) error {
@@ -154,16 +154,16 @@ func (m *Module) checkPermissionsToManageRole(
 
 func (m *Module) getInitiator(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), organizationID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
 			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf(
 					"initiator member with account id %s and organization id %s not found: %w",
-					initiator.GetAccountID(), organizationID, err,
+					initiator, organizationID, err,
 				),
 			)
 		}

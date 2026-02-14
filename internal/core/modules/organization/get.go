@@ -40,10 +40,10 @@ func (m *Module) GetList(
 
 func (m *Module) GetForUser(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	res, err := m.repo.GetOrganizationsForUser(ctx, initiator.GetAccountID(), limit, offset)
+	res, err := m.repo.GetOrganizationsForUser(ctx, initiator, limit, offset)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, err
 	}

@@ -9,48 +9,39 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
-func (c *Controller) OpenUpdateOrganizationSession(w http.ResponseWriter, r *http.Request) {
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Error("failed to get user from context")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get user from context"))
+const operationOpenUpdateOrganizationSession = "open_update_organization_session"
 
-		return
-	}
+func (c *Controller) OpenUpdateOrganizationSession(w http.ResponseWriter, r *http.Request) {
+	log := scope.Log(r).WithOperation(operationOpenUpdateOrganizationSession)
 
 	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid organization id")
+		log.WithError(err).Info("invalid organization id")
 		c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
 			"query": fmt.Errorf("invalid organization id: %s", chi.URLParam(r, "organization_id")),
 		})...)
-
 		return
 	}
 
-	organization, media, err := c.core.organization.OpenUpdateSession(
-		r.Context(),
-		initiator,
-		organizationID,
-	)
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get preload link for update organization")
-		switch {
-		case errors.Is(err, errx.ErrorOrganizationNotFound):
-			c.responser.RenderErr(w, problems.NotFound("organization does not exist"))
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
-		default:
-			c.responser.RenderErr(w, problems.InternalError())
-		}
+	log = log.WithField("organization_id", organizationID)
 
-		return
+	org, media, err := c.core.organization.OpenUpdateSession(r.Context(), scope.AccountActor(r), organizationID)
+	switch {
+	case errors.Is(err, errx.ErrorOrganizationNotFound):
+		log.Info("organization does not exist")
+		c.responser.RenderErr(w, problems.NotFound("organization does not exist"))
+	case errors.Is(err, errx.ErrorNotEnoughRights):
+		log.Info("not enough rights to update organization")
+		c.responser.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
+	case err != nil:
+		log.WithError(err).Error("failed to open update organization session")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		c.responser.Render(w, http.StatusOK, responses.UpdateOrganizationSession(media, org))
 	}
-
-	c.responser.Render(w, 200, responses.UpdateOrganizationSession(media, organization))
 }

@@ -18,7 +18,7 @@ type CreateParams struct {
 
 func (m *Module) Create(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	params CreateParams,
 ) (invite models.Invite, err error) {
 	exist, err := m.repo.MemberExists(ctx, params.AccountID, params.OrganizationID)

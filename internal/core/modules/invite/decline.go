@@ -12,15 +12,15 @@ import (
 
 func (m *Module) Decline(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = m.GetForAccount(ctx, initiator.GetAccountID(), inviteID)
+	invite, err = m.GetForAccount(ctx, initiator, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	if invite.AccountID != initiator.GetAccountID() {
+	if invite.AccountID != initiator {
 		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
 			fmt.Errorf("account has no rights to decline this invite"),
 		)

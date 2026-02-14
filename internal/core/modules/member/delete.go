@@ -11,7 +11,7 @@ import (
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	memberID uuid.UUID,
 ) error {
 	member, err := m.GetByID(ctx, memberID)
@@ -45,7 +45,7 @@ func (m *Module) Delete(
 
 func (m *Module) checkAbilityToDeleteMember(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 	memberID uuid.UUID,
 ) error {

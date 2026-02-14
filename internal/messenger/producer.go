@@ -1,62 +1,71 @@
 package messenger
 
 import (
-	"context"
-	"sync"
-	"time"
-
-	"github.com/netbill/evebox/producer"
+	"github.com/netbill/eventbox"
+	eventpg "github.com/netbill/eventbox/pg"
 	"github.com/segmentio/kafka-go"
 )
 
-func (m *Messenger) RunProducer(ctx context.Context) {
-	wg := &sync.WaitGroup{}
+func (m *Manager) NewProducer() eventbox.Producer {
+	w := m.buildWriter()
+	return eventpg.NewProducer(w, m.db)
+}
 
-	run := func(f func()) {
-		wg.Add(1)
-		go func() {
-			f()
-			wg.Done()
-		}()
+func (m *Manager) buildWriter() *kafka.Writer {
+	cfg := m.config.Writer
+
+	w := &kafka.Writer{
+		Addr:         kafka.TCP(m.config.Brokers...),
+		RequiredAcks: parseRequiredAcks(cfg.RequiredAcks),
+		Compression:  parseCompression(cfg.Compression),
+		Balancer:     parseBalancer(cfg.Balancer),
+		BatchSize:    cfg.BatchSize,
+		BatchTimeout: cfg.BatchTimeout,
 	}
 
-	worker1 := producer.New(producer.NewProducerParams{
-		Log:             m.log,
-		DB:              m.db,
-		Name:            "outbox-worker-1",
-		KafkaAddr:       m.addr,
-		BatchLimit:      10,
-		LockTTL:         30 * time.Second,
-		EventRetryDelay: 1 * time.Minute,
-		MinSleep:        100 * time.Millisecond,
-		MaxSleep:        1 * time.Second,
-		RequiredAcks:    kafka.RequireAll,
-		Compression:     kafka.Snappy,
-		BatchTimeout:    50,
-		Balancer:        &kafka.LeastBytes{},
-	})
+	if cfg.DialTimeout > 0 || cfg.IdleTimeout > 0 {
+		w.Transport = &kafka.Transport{
+			DialTimeout: cfg.DialTimeout,
+			IdleTimeout: cfg.IdleTimeout,
+		}
+	}
 
-	worker2 := producer.New(
-		producer.NewProducerParams{
-			Log:             m.log,
-			DB:              m.db,
-			Name:            "outbox-worker-2",
-			KafkaAddr:       m.addr,
-			BatchLimit:      10,
-			LockTTL:         30 * time.Second,
-			EventRetryDelay: 1 * time.Minute,
-			MinSleep:        100 * time.Millisecond,
-			MaxSleep:        1 * time.Second,
-			RequiredAcks:    kafka.RequireAll,
-			Compression:     kafka.Snappy,
-			BatchTimeout:    50,
-			Balancer:        &kafka.LeastBytes{},
-		},
-	)
+	return w
+}
 
-	run(func() { worker1.Run(ctx) })
+func parseRequiredAcks(v string) kafka.RequiredAcks {
+	switch v {
+	case "none":
+		return kafka.RequireNone
+	case "one":
+		return kafka.RequireOne
+	default:
+		return kafka.RequireAll
+	}
+}
 
-	run(func() { worker2.Run(ctx) })
+func parseCompression(v string) kafka.Compression {
+	switch v {
+	case "gzip":
+		return kafka.Gzip
+	case "lz4":
+		return kafka.Lz4
+	case "zstd":
+		return kafka.Zstd
+	case "none":
+		return 0
+	default:
+		return kafka.Snappy
+	}
+}
 
-	wg.Wait()
+func parseBalancer(v string) kafka.Balancer {
+	switch v {
+	case "round_robin":
+		return &kafka.RoundRobin{}
+	case "hash":
+		return &kafka.Hash{}
+	default:
+		return &kafka.LeastBytes{}
+	}
 }

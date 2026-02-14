@@ -9,37 +9,36 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
+const operationUpdateRole = "update_role"
+
 func (c *Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	log := scope.Log(r).WithOperation(operationUpdateRole)
+
 	roleID, err := uuid.Parse(chi.URLParam(r, "role_id"))
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid role id")
+		log.WithError(err).Info("invalid role id")
 		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid role id"))...)
-		return
-	}
-
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get initiator account data")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
 		return
 	}
 
 	req, err := request.UpdateRole(r)
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid update role request")
+		log.WithError(err).Info("invalid update role request")
 		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid update role request"))...)
 		return
 	}
 
+	log = log.WithField("role_id", roleID)
+
 	res, err := c.core.role.Update(
 		r.Context(),
-		initiator,
+		scope.AccountActor(r),
 		roleID,
 		role.UpdateParams{
 			Name:        req.Data.Attributes.Name,
@@ -47,18 +46,17 @@ func (c *Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 			Color:       req.Data.Attributes.Color,
 		},
 	)
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to update role")
-		switch {
-		case errors.Is(err, errx.ErrorRoleNotFound):
-			c.responser.RenderErr(w, problems.NotFound("role not found"))
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update role"))
-		default:
-			c.responser.RenderErr(w, problems.InternalError())
-		}
-		return
+	switch {
+	case errors.Is(err, errx.ErrorRoleNotFound):
+		log.Info("role not found")
+		c.responser.RenderErr(w, problems.NotFound("role not found"))
+	case errors.Is(err, errx.ErrorNotEnoughRights):
+		log.Info("not enough rights to update role")
+		c.responser.RenderErr(w, problems.Forbidden("not enough rights to update role"))
+	case err != nil:
+		log.WithError(err).Error("failed to update role")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		c.responser.Render(w, http.StatusOK, responses.Role(res, nil))
 	}
-
-	c.responser.Render(w, http.StatusOK, responses.Role(res, nil))
 }

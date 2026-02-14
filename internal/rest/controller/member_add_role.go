@@ -8,51 +8,49 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
+const operationMemberAddRole = "member_add_role"
+
 func (c *Controller) MemberAddRole(w http.ResponseWriter, r *http.Request) {
+	log := scope.Log(r).WithOperation(operationMemberAddRole)
+
 	roleID, err := uuid.Parse(chi.URLParam(r, "role_id"))
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid role id")
+		log.WithError(err).Info("invalid role id")
 		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid role id: %s", chi.URLParam(r, "role_id")))...)
 		return
 	}
 
 	memberID, err := uuid.Parse(chi.URLParam(r, "member_id"))
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid member id")
+		log.WithError(err).Info("invalid member id")
 		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid member id: %s", chi.URLParam(r, "member_id")))...)
 		return
 	}
 
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get initiator account data")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
-		return
-	}
+	log = log.WithField("role_id", roleID).WithField("member_id", memberID)
 
-	if err = c.core.role.AddForMember(
-		r.Context(),
-		initiator,
-		memberID,
-		roleID,
-	); err != nil {
-		c.log.WithError(err).Errorf("failed to add role to member")
-		switch {
-		case errors.Is(err, errx.ErrorMemberNotFound):
-			c.responser.RenderErr(w, problems.NotFound("member not found"))
-		case errors.Is(err, errx.ErrorRoleNotFound):
-			c.responser.RenderErr(w, problems.NotFound("role not found"))
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			c.responser.RenderErr(w, problems.Forbidden("not enough rights to add role to member"))
-		case errors.Is(err, errx.ErrorCannotAddHeadRoleToMember):
-			c.responser.RenderErr(w, problems.Forbidden("cannot add head role to member"))
-		default:
-			c.responser.RenderErr(w, problems.InternalError())
-		}
-		return
+	err = c.core.role.AddForMember(r.Context(), scope.AccountActor(r), memberID, roleID)
+	switch {
+	case errors.Is(err, errx.ErrorMemberNotFound):
+		log.Info("member not found")
+		c.responser.RenderErr(w, problems.NotFound("member not found"))
+	case errors.Is(err, errx.ErrorRoleNotFound):
+		log.Info("role not found")
+		c.responser.RenderErr(w, problems.NotFound("role not found"))
+	case errors.Is(err, errx.ErrorNotEnoughRights):
+		log.Info("not enough rights to add role to member")
+		c.responser.RenderErr(w, problems.Forbidden("not enough rights to add role to member"))
+	case errors.Is(err, errx.ErrorCannotAddHeadRoleToMember):
+		log.Info("cannot add head role to member")
+		c.responser.RenderErr(w, problems.Forbidden("cannot add head role to member"))
+	case err != nil:
+		log.WithError(err).Error("failed to add role to member")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

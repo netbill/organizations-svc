@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/evebox/header"
+	"github.com/netbill/eventbox/headers"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/messenger/contracts"
+	"github.com/netbill/organizations-svc/internal/messenger/evtypes"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -17,7 +17,7 @@ func (o *Outbound) WriteOrgRoleCreated(
 	ctx context.Context,
 	role models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrgRoleCreatedPayload{
+	payload, err := json.Marshal(evtypes.OrgRoleCreatedPayload{
 		RoleID:         role.ID,
 		OrganizationID: role.OrganizationID,
 		Rank:           role.Rank,
@@ -30,18 +30,18 @@ func (o *Outbound) WriteOrgRoleCreated(
 		return fmt.Errorf("failed to marshal org role created payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(role.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgRoleCreatedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgRoleCreatedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -56,7 +56,7 @@ func (o *Outbound) WriteOrgRoleUpdated(
 	ctx context.Context,
 	role models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrgRoleUpdatedPayload{
+	payload, err := json.Marshal(evtypes.OrgRoleUpdatedPayload{
 		RoleID:      role.ID,
 		Name:        role.Name,
 		Description: role.Description,
@@ -67,18 +67,18 @@ func (o *Outbound) WriteOrgRoleUpdated(
 		return fmt.Errorf("failed to marshal org role updated payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(role.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgRoleUpdatedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgRoleUpdatedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -93,7 +93,7 @@ func (o *Outbound) WriteOrgRoleDeleted(
 	ctx context.Context,
 	role models.Role,
 ) error {
-	payload, err := json.Marshal(contracts.OrgRoleDeletedPayload{
+	payload, err := json.Marshal(evtypes.OrgRoleDeletedPayload{
 		RoleID:    role.ID,
 		DeletedAt: time.Now().UTC(),
 	})
@@ -101,18 +101,18 @@ func (o *Outbound) WriteOrgRoleDeleted(
 		return fmt.Errorf("failed to marshal org role deleted payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(role.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgRoleDeletedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgRoleDeletedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -128,7 +128,7 @@ func (o *Outbound) WriteOrgRolePermissionsUpdated(
 	role models.Role,
 	permissions models.OrgRolePermissionEnable,
 ) error {
-	payload, err := json.Marshal(contracts.OrgRolePermissionsUpdatedPayload{
+	payload, err := json.Marshal(evtypes.OrgRolePermissionsUpdatedPayload{
 		RoleID:      role.ID,
 		Permissions: permissions.ToMap(),
 	})
@@ -136,18 +136,18 @@ func (o *Outbound) WriteOrgRolePermissionsUpdated(
 		return fmt.Errorf("failed to marshal org role permissions updated payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(role.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgRolePermissionsUpdatedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgRolePermissionsUpdatedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -163,7 +163,7 @@ func (o *Outbound) WriteOrgRolesRanksUpdated(
 	organizationID uuid.UUID,
 	ranks map[uuid.UUID]uint,
 ) error {
-	payload, err := json.Marshal(contracts.OrgRolesRanksUpdatedPayload{
+	payload, err := json.Marshal(evtypes.OrgRolesRanksUpdatedPayload{
 		OrganizationID: organizationID,
 		Ranks:          ranks,
 	})
@@ -171,18 +171,18 @@ func (o *Outbound) WriteOrgRolesRanksUpdated(
 		return fmt.Errorf("failed to marshal org role ranks updated payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(organizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgRolesRanksUpdatedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgRolesRanksUpdatedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)

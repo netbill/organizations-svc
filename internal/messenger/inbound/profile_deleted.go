@@ -6,33 +6,22 @@ import (
 	"errors"
 
 	"github.com/netbill/ape"
-	"github.com/netbill/evebox/box/inbox"
-	"github.com/netbill/organizations-svc/internal/messenger/contracts"
+	"github.com/netbill/organizations-svc/internal/messenger/evtypes"
+	"github.com/segmentio/kafka-go"
 )
 
 func (i *Inbound) ProfileDeleted(
 	ctx context.Context,
-	event inbox.Event,
-) inbox.EventStatus {
-	var payload contracts.ProfileDeletedPayload
-	if err := json.Unmarshal(event.Payload, &payload); err != nil {
-		i.log.Errorf("bad payload for %s, key %s, id: %s, error: %v", event.Type, event.Key, event.ID, err)
-		return inbox.EventStatusFailed
+	message kafka.Message,
+) error {
+	var payload evtypes.ProfileDeletedPayload
+	if err := json.Unmarshal(message.Value, &payload); err != nil {
+		return err
 	}
 
 	if err := i.core.profile.Delete(ctx, payload.AccountID); err != nil {
-		var ae *ape.Error
-		if errors.As(err, &ae) {
-			i.log.Errorf(
-				"failed to delete profile due to internal error, key %s, id: %s, error: %v",
-				event.Key, event.ID, err,
-			)
-			return inbox.EventStatusPending
-		}
-
-		i.log.Errorf("failed to delete profile, key %s, id: %s, error: %v", event.Key, event.ID, err)
-		return inbox.EventStatusFailed
+		return err
 	}
 
-	return inbox.EventStatusProcessed
+	return nil
 }

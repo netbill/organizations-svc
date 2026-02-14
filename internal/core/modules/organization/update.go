@@ -10,7 +10,7 @@ import (
 
 func (m *Module) OpenUpdateSession(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Organization, models.UpdateOrganizationMedia, error) {
 	org, err := m.GetByID(ctx, organizationID)
@@ -30,7 +30,7 @@ func (m *Module) OpenUpdateSession(
 	}
 
 	uploadToken, err := m.token.NewUploadOrganizationMediaToken(
-		initiator.GetAccountID(),
+		initiator,
 		organizationID,
 		uploadSessionID,
 	)
@@ -80,7 +80,7 @@ func (p UpdateParams) GetUpdatedBanner() *string {
 
 func (m *Module) UpdateWithSession(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 	params UpdateParams,
 ) (models.Organization, error) {
@@ -163,7 +163,7 @@ func (m *Module) UpdateWithSession(
 
 func (m *Module) DeleteUpdateIconInSession(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID, uploadSessionID uuid.UUID,
 ) error {
 	err := m.chekPermissionForManageOrganization(ctx, initiator, organizationID)
@@ -180,7 +180,7 @@ func (m *Module) DeleteUpdateIconInSession(
 
 func (m *Module) DeleteUpdateBannerInSession(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID, uploadSessionID uuid.UUID,
 ) error {
 	err := m.chekPermissionForManageOrganization(ctx, initiator, organizationID)
@@ -197,7 +197,7 @@ func (m *Module) DeleteUpdateBannerInSession(
 
 func (m *Module) CancelUpdateSession(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	uploadSessionID uuid.UUID,
 	organizationID uuid.UUID,
 ) error {

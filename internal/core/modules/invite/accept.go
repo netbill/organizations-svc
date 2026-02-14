@@ -12,15 +12,15 @@ import (
 
 func (m *Module) Accept(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = m.GetForAccount(ctx, initiator.GetAccountID(), inviteID)
+	invite, err = m.GetForAccount(ctx, initiator, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	if invite.AccountID != initiator.GetAccountID() {
+	if invite.AccountID != initiator {
 		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
@@ -51,7 +51,7 @@ func (m *Module) Accept(
 			return err
 		}
 
-		mem, err := m.repo.CreateMember(ctx, initiator.GetAccountID(), invite.OrganizationID)
+		mem, err := m.repo.CreateMember(ctx, initiator, invite.OrganizationID)
 		if err != nil {
 			return err
 		}

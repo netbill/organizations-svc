@@ -6,52 +6,39 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/contexter"
 	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
+const operationUpdateRolesRanks = "update_roles_ranks"
+
 func (c *Controller) UpdateRolesRanks(w http.ResponseWriter, r *http.Request) {
+	log := scope.Log(r).WithOperation(operationUpdateRolesRanks)
+
 	req, err := request.UpdateRolesRanks(r)
 	if err != nil {
-		c.log.WithError(err).Errorf("invalid update roles ranks request")
+		log.WithError(err).Info("invalid update roles ranks request")
 		c.responser.RenderErr(w, problems.BadRequest(err)...)
 		return
 	}
 
-	initiator, err := contexter.AccountData(r.Context())
-	if err != nil {
-		c.log.WithError(err).Errorf("failed to get initiator account data")
-		c.responser.RenderErr(w, problems.Unauthorized("failed to get initiator account data"))
-		return
-	}
+	log = log.WithField("organization_id", req.Data.Id)
 
 	dict := make(map[uuid.UUID]uint)
 	for _, item := range req.Data.Attributes.Roles {
 		dict[item.Id] = item.Rank
 	}
 
-	if err = c.core.role.UpdateRanks(
-		r.Context(),
-		initiator,
-		req.Data.Id,
-		dict,
-	); err != nil {
-		c.log.WithError(err).Errorf("failed to update roles ranks")
-		switch {
-		case errors.Is(err, errx.ErrorNotEnoughRights):
-			c.responser.RenderErr(w, problems.Forbidden("not enough rights to update roles ranks"))
-		//case errors.Is(err, errx.ErrorCannotUpdateHeadRoleRank):
-		//	c.responser.RenderErr(w, problems.Forbidden("cannot update head role rank"))
-		//case errors.Is(err, errx.ErrorInvalidInput):
-		//	c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
-		//		"roles": fmt.Errorf(err.Error()),
-		//	})...)
-		default:
-			c.responser.RenderErr(w, problems.InternalError())
-		}
-		return
+	err = c.core.role.UpdateRanks(r.Context(), scope.AccountActor(r), req.Data.Id, dict)
+	switch {
+	case errors.Is(err, errx.ErrorNotEnoughRights):
+		log.Info("not enough rights to update roles ranks")
+		c.responser.RenderErr(w, problems.Forbidden("not enough rights to update roles ranks"))
+	case err != nil:
+		log.WithError(err).Error("failed to update roles ranks")
+		c.responser.RenderErr(w, problems.InternalError())
+	default:
+		w.WriteHeader(http.StatusOK)
 	}
-
-	w.WriteHeader(http.StatusOK)
 }

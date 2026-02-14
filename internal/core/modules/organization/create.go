@@ -13,7 +13,7 @@ type CreateParams struct {
 
 func (m *Module) Create(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	params CreateParams,
 ) (org models.Organization, err error) {
 	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -27,7 +27,7 @@ func (m *Module) Create(
 			return err
 		}
 
-		_, err = m.createMemberHead(ctx, initiator.GetAccountID(), org.ID)
+		_, err = m.createMemberHead(ctx, initiator, org.ID)
 		if err != nil {
 			return err
 		}

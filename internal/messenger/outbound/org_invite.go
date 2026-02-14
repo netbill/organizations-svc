@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/evebox/header"
+	"github.com/netbill/eventbox/headers"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/messenger/contracts"
+	"github.com/netbill/organizations-svc/internal/messenger/evtypes"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -17,7 +17,7 @@ func (o *Outbound) WriteOrgInviteCreated(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.OrgInviteCreatedPayload{
+	payload, err := json.Marshal(evtypes.OrgInviteCreatedPayload{
 		InviteID:       invite.ID,
 		OrganizationID: invite.OrganizationID,
 		AccountID:      invite.AccountID,
@@ -29,18 +29,18 @@ func (o *Outbound) WriteOrgInviteCreated(
 		return fmt.Errorf("failed to marshal org invite created payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(invite.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgInviteCreatedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgInviteCreatedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -56,7 +56,7 @@ func (o *Outbound) WriteOrgInviteAccepted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.OrgInviteAcceptedPayload{
+	payload, err := json.Marshal(evtypes.OrgInviteAcceptedPayload{
 		InviteID:   invite.ID,
 		AcceptedAt: time.Now().UTC(),
 	})
@@ -64,18 +64,18 @@ func (o *Outbound) WriteOrgInviteAccepted(
 		return fmt.Errorf("failed to marshal org invite accepted payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(invite.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgInviteAcceptedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgInviteAcceptedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -90,7 +90,7 @@ func (o *Outbound) WriteOrgInviteDeclined(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.OrgInviteDeclinedPayload{
+	payload, err := json.Marshal(evtypes.OrgInviteDeclinedPayload{
 		InviteID:   invite.ID,
 		DeclinedAt: time.Now().UTC(),
 	})
@@ -98,18 +98,18 @@ func (o *Outbound) WriteOrgInviteDeclined(
 		return fmt.Errorf("failed to marshal org invite declined payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(invite.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgInviteDeclinedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgInviteDeclinedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)
@@ -124,7 +124,7 @@ func (o *Outbound) WriteOrgInviteDeleted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(contracts.OrgInviteDeletedPayload{
+	payload, err := json.Marshal(evtypes.OrgInviteDeletedPayload{
 		InvitedID: invite.ID,
 		DeletedAt: time.Now().UTC(),
 	})
@@ -132,18 +132,18 @@ func (o *Outbound) WriteOrgInviteDeleted(
 		return fmt.Errorf("failed to marshal org invite deleted payload, cause: %w", err)
 	}
 
-	_, err = o.outbox.CreateOutboxEvent(
+	_, err = o.outbox.WriteToOutbox(
 		ctx,
 		kafka.Message{
-			Topic: contracts.OrganizationsTopicV1,
+			Topic: evtypes.OrganizationsTopicV1,
 			Key:   []byte(invite.OrganizationID.String()),
 			Value: payload,
 			Headers: []kafka.Header{
-				{Key: header.EventID, Value: []byte(uuid.New().String())},
-				{Key: header.EventType, Value: []byte(contracts.OrgInviteDeletedEvent)},
-				{Key: header.EventVersion, Value: []byte("1")},
-				{Key: header.Producer, Value: []byte(contracts.OrganizationsSvcGroup)},
-				{Key: header.ContentType, Value: []byte("application/json")},
+				{Key: headers.EventID, Value: []byte(uuid.New().String())},
+				{Key: headers.EventType, Value: []byte(evtypes.OrgInviteDeletedEvent)},
+				{Key: headers.EventVersion, Value: []byte("1")},
+				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
 	)

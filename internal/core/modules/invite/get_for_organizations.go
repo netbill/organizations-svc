@@ -10,7 +10,7 @@ import (
 
 func (m *Module) GetForOrganizations(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {

@@ -9,7 +9,7 @@ import (
 
 func (m *Module) GetWithPermissions(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	roleID uuid.UUID,
 ) (models.Role, models.OrgRolePermissionDictWithDetails, error) {
 	role, err := m.GetByID(ctx, roleID)

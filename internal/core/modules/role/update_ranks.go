@@ -11,7 +11,7 @@ import (
 
 func (m *Module) UpdateRanks(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 	order map[uuid.UUID]uint,
 ) error {
@@ -41,7 +41,7 @@ func (m *Module) UpdateRanks(
 		}
 		if !hasPermission {
 			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("member %s does not have permission %s", initiator.GetAccountID(), models.RolePermissionRolesManage),
+				fmt.Errorf("member %s does not have permission %s", initiator, models.RolePermissionRolesManage),
 			)
 		}
 
@@ -61,7 +61,7 @@ func (m *Module) UpdateRanks(
 				return errx.ErrorNotEnoughRights.Raise(
 					fmt.Errorf(
 						"member %s with max role rank %d cannot manage role with rank %d",
-						initiator.GetAccountID(), maxRole.Rank, role.Rank,
+						initiator, maxRole.Rank, role.Rank,
 					),
 				)
 			}
@@ -72,7 +72,7 @@ func (m *Module) UpdateRanks(
 				return errx.ErrorNotEnoughRights.Raise(
 					fmt.Errorf(
 						"member %s with max role rank %d cannot manage role with rank %d",
-						initiator.GetAccountID(), maxRole.Rank, newRank,
+						initiator, maxRole.Rank, newRank,
 					),
 				)
 			}

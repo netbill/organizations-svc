@@ -11,7 +11,7 @@ import (
 
 func (m *Module) RemoveFromMember(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	memberID, roleID uuid.UUID,
 ) error {
 	member, err := m.getMember(ctx, memberID)

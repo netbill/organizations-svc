@@ -11,7 +11,7 @@ import (
 
 func (m *Module) Activate(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
 	org, err := m.GetByID(ctx, organizationID)
@@ -19,7 +19,7 @@ func (m *Module) Activate(
 		return models.Organization{}, err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), org.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}

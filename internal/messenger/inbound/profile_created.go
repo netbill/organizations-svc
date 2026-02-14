@@ -8,37 +8,30 @@ import (
 	"github.com/netbill/ape"
 	"github.com/netbill/evebox/box/inbox"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/messenger/contracts"
+	"github.com/netbill/organizations-svc/internal/messenger/evtypes"
+	"github.com/segmentio/kafka-go"
 )
 
 func (i *Inbound) ProfileCreated(
 	ctx context.Context,
-	event inbox.Event,
-) inbox.EventStatus {
-	var payload contracts.ProfileCreatedPayload
-	if err := json.Unmarshal(event.Payload, &payload); err != nil {
-		i.log.Errorf("bad payload for %s, key %s, id: %s, error: %v", event.Type, event.Key, event.ID, err)
-		return inbox.EventStatusFailed
+	message kafka.Message,
+) error {
+	var payload evtypes.ProfileCreatedPayload
+	if err := json.Unmarshal(message.Value, &payload); err != nil {
+		return err
 	}
 
-	profile := models.Profile{
+	if _, err := i.core.profile.Create(ctx, models.Profile{
 		AccountID: payload.AccountID,
 		Username:  payload.Username,
+		Official:  payload.Official,
+		Avatar:    payload.Avatar,
+		Pseudonym: payload.Pseudonym,
 		CreatedAt: payload.CreatedAt,
-	}
-	if _, err := i.core.profile.Create(ctx, profile); err != nil {
-		var ae *ape.Error
-		if errors.As(err, &ae) {
-			i.log.Errorf(
-				"failed to upsert profile due to internal error, key %s, id: %s, error: %v",
-				event.Key, event.ID, err,
-			)
-			return inbox.EventStatusPending
-		}
-
-		i.log.Errorf("failed to upsert profile, key %s, id: %s, error: %v", event.Key, event.ID, err)
-		return inbox.EventStatusFailed
+	}); err != nil {
+		return err
 	}
 
-	return inbox.EventStatusProcessed
+	return nil
+
 }

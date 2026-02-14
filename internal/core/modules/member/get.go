@@ -25,7 +25,7 @@ func (m *Module) GetByID(
 
 func (m *Module) GetInitiator(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
 	member, err := m.GetByAccountAndOrganization(ctx, initiator, organizationID)
@@ -43,10 +43,10 @@ func (m *Module) GetInitiator(
 
 func (m *Module) GetByAccountAndOrganization(
 	ctx context.Context,
-	initiator models.Initiator,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator.GetAccountID(), organizationID)
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
 	if err != nil {
 		return models.Member{}, err
 	}

@@ -1,13 +1,12 @@
 .idea
+.vscode
+
 vendor
 node_modules
+docs/node_modules
 
-main
-cmd/organizations-svc/m ain
+cmd/*/main
 
-config_local.yaml
-config_docker.yaml
+config*.yaml
+!config.example.yaml
 
-.gitignore
-
-internal/domain/modules/permissions
