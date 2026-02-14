@@ -25,7 +25,7 @@ func (c *Controller) GetMyOrganizations(w http.ResponseWriter, r *http.Request) 
 	accountID := scope.AccountActor(r)
 	log = log.WithField("account_id", accountID).WithField("limit", limit).WithField("offset", offset)
 
-	res, err := c.core.organization.GetForUser(r.Context(), accountID, limit, offset)
+	res, err := c.modules.Organization.GetForUser(r.Context(), accountID, limit, offset)
 	switch {
 	case err != nil:
 		log.WithError(err).Error("failed to get organizations")

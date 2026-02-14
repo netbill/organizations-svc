@@ -26,7 +26,7 @@ func (c *Controller) DeleteRole(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("role_id", roleID)
 
-	err = c.core.role.Delete(r.Context(), scope.AccountActor(r), roleID)
+	err = c.modules.Role.Delete(r.Context(), scope.AccountActor(r), roleID)
 	switch {
 	case errors.Is(err, errx.ErrorRoleNotFound):
 		log.Info("role not found")

@@ -35,7 +35,7 @@ func (c *Controller) GetOrganizationInvites(w http.ResponseWriter, r *http.Reque
 
 	log = log.WithField("organization_id", organizationID).WithField("limit", limit).WithField("offset", offset)
 
-	res, err := c.core.invite.GetForOrganizations(
+	res, err := c.modules.Invite.GetForOrganizations(
 		r.Context(),
 		scope.AccountActor(r),
 		organizationID,

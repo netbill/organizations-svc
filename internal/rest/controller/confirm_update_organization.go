@@ -28,16 +28,16 @@ func (c *Controller) ConfirmUpdateOrganization(w http.ResponseWriter, r *http.Re
 
 	log = log.WithField("organization_id", req.Data.Id)
 
-	res, err := c.core.organization.UpdateWithSession(
+	res, err := c.modules.Organization.UpdateWithSession(
 		r.Context(),
 		scope.AccountActor(r),
+		scope.UploadScope(r),
 		req.Data.Id,
 		organization.UpdateParams{
 			Name: req.Data.Attributes.Name,
 			Media: organization.UpdateMediaParams{
-				UploadSessionID: scope.UploadScope(r).GetUploadSessionID(),
-				DeletedBanner:   req.Data.Attributes.DeleteBanner,
-				DeletedIcon:     req.Data.Attributes.DeleteIcon,
+				DeletedBanner: req.Data.Attributes.DeleteBanner,
+				DeletedIcon:   req.Data.Attributes.DeleteIcon,
 			},
 		},
 	)
@@ -48,18 +48,12 @@ func (c *Controller) ConfirmUpdateOrganization(w http.ResponseWriter, r *http.Re
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to update organization")
 		c.responser.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
-	case errors.Is(err, errx.ErrorOrganizationIconTooLarge),
-		errors.Is(err, errx.ErrorOrganizationIconContentFormatNotAllowed),
-		errors.Is(err, errx.ErrorOrganizationIconContentTypeNotAllowed),
-		errors.Is(err, errx.ErrorOrganizationIconResolutionNotAllowed):
+	case errors.Is(err, errx.ErrorOrganizationIconInvalid):
 		log.Info("organization icon is not valid")
 		c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
 			"icon": fmt.Errorf(err.Error()),
 		})...)
-	case errors.Is(err, errx.ErrorOrganizationBannerTooLarge),
-		errors.Is(err, errx.ErrorOrganizationBannerContentFormatNotAllowed),
-		errors.Is(err, errx.ErrorOrganizationBannerContentTypeNotAllowed),
-		errors.Is(err, errx.ErrorOrganizationBannerResolutionNotAllowed):
+	case errors.Is(err, errx.ErrorOrganizationBannerInvalid):
 		log.Info("organization banner is not valid")
 		c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
 			"banner": fmt.Errorf(err.Error()),

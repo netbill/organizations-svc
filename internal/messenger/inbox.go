@@ -9,15 +9,15 @@ import (
 )
 
 type handlers interface {
-	AccountCreated(
+	ProfileCreated(
 		ctx context.Context,
 		message kafka.Message,
 	) error
-	AccountDeleted(
+	ProfileDeleted(
 		ctx context.Context,
 		message kafka.Message,
 	) error
-	AccountUsernameUpdated(
+	ProfileUpdated(
 		ctx context.Context,
 		message kafka.Message,
 	) error
@@ -41,9 +41,9 @@ func (m *Manager) RunInbox(ctx context.Context, handlers handlers) {
 		}
 	}()
 
-	worker.Route(evtypes.AccountCreatedEvent, handlers.AccountCreated)
-	worker.Route(evtypes.AccountDeletedEvent, handlers.AccountDeleted)
-	worker.Route(evtypes.AccountUsernameUpdatedEvent, handlers.AccountUsernameUpdated)
+	worker.Route(evtypes.ProfileCreatedEvent, handlers.ProfileCreated)
+	worker.Route(evtypes.ProfileDeletedEvent, handlers.ProfileDeleted)
+	worker.Route(evtypes.ProfileUpdatedEvent, handlers.ProfileUpdated)
 
 	worker.Run(ctx)
 }

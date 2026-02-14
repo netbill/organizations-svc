@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 )
@@ -17,9 +16,8 @@ type core struct {
 	profile profileSvc
 }
 
-func New(log *logium.Logger, profile profileSvc) *Inbound {
+func New(profile profileSvc) *Inbound {
 	return &Inbound{
-		log: log,
 		core: &core{
 			profile: profile,
 		},

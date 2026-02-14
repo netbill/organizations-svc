@@ -53,7 +53,7 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	role, perm, err := c.core.permissions.SetForRole(
+	role, perm, err := c.modules.Permissions.SetForRole(
 		r.Context(),
 		scope.AccountActor(r),
 		req.Data.Id,

@@ -22,7 +22,7 @@ func (c *Controller) CreateOrganization(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res, err := c.core.organization.Create(
+	res, err := c.modules.Organization.Create(
 		r.Context(),
 		scope.AccountActor(r),
 		organization.CreateParams{

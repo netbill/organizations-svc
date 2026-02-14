@@ -29,7 +29,7 @@ func (c *Controller) DeleteUploadOrganizationBanner(w http.ResponseWriter, r *ht
 
 	log = log.WithField("organization_id", organizationID)
 
-	err = c.core.organization.DeleteUpdateBannerInSession(
+	err = c.modules.Organization.DeleteUpdateBannerInSession(
 		r.Context(),
 		scope.AccountActor(r),
 		organizationID,

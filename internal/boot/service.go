@@ -1,14 +1,10 @@
-package cmd
+package boot
 
 import (
 	"context"
 	"sync"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/netbill/awsx"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal/bucket"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
@@ -30,7 +26,7 @@ import (
 	"github.com/netbill/restkit"
 )
 
-func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync.WaitGroup) {
+func StartServices(ctx context.Context, log *logium.Entry, wg *sync.WaitGroup, cfg Config) {
 	run := func(f func()) {
 		wg.Add(1)
 		go func() {
@@ -45,48 +41,9 @@ func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync
 	}
 	db := pgdbx.NewDB(pool)
 
-	awsCfg := aws.Config{
-		Region: cfg.S3.AWS.Region,
-		Credentials: credentials.NewStaticCredentialsProvider(
-			cfg.S3.AWS.AccessKeyID,
-			cfg.S3.AWS.SecretAccessKey,
-			"",
-		),
-	}
+	s3 := newAws(cfg.S3.AWS)
 
-	s3Client := s3.NewFromConfig(awsCfg)
-	presignClient := s3.NewPresignClient(s3Client)
-
-	awsS3 := awsx.New(
-		cfg.S3.AWS.BucketName,
-		s3Client,
-		presignClient,
-	)
-
-	orgIconValidator := &awsx.ImgObjectValidator{
-		AllowedContentTypes: cfg.S3.Upload.Organization.Icon.AllowedContentTypes,
-		AllowedFormats:      cfg.S3.Upload.Organization.Icon.AllowedFormats,
-		MaxWidth:            cfg.S3.Upload.Organization.Icon.MaxWidth,
-		MaxHeight:           cfg.S3.Upload.Organization.Icon.MaxHeight,
-		ContentLengthMax:    cfg.S3.Upload.Organization.Icon.ContentLengthMax,
-	}
-
-	orgBannerValidator := &awsx.ImgObjectValidator{
-		AllowedContentTypes: cfg.S3.Upload.Organization.Banner.AllowedContentTypes,
-		AllowedFormats:      cfg.S3.Upload.Organization.Banner.AllowedFormats,
-		MaxWidth:            cfg.S3.Upload.Organization.Banner.MaxWidth,
-		MaxHeight:           cfg.S3.Upload.Organization.Banner.MaxHeight,
-		ContentLengthMax:    cfg.S3.Upload.Organization.Banner.ContentLengthMax,
-	}
-
-	s3Bucket := bucket.New(bucket.Config{
-		S3:                 awsS3,
-		OrgIconValidator:   orgIconValidator,
-		OrgBannerValidator: orgBannerValidator,
-		UploadTokensTTL: bucket.UploadTokensTTL{
-			Org: cfg.S3.Upload.Token.TTL.Organization,
-		},
-	})
+	s3Bucket := bucket.New(s3, cfg.S3.Media)
 
 	orgInvitesSql := pg.NewOrgInvitesQ(db)
 	orgMemberRolesSql := pg.NewOrgMemberRolesQ(db)
@@ -110,9 +67,12 @@ func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync
 		Transactioner:             transactioner,
 	}
 
-	kafkaOutbound := outbound.New(log, db)
+	msg := messenger.NewManager(log, db, cfg.Kafka)
 
-	tokenManager := tokenmanager.New(cfg.S3.Upload.Token.SecretKey, cfg.S3.Upload.Token.TTL.Organization)
+	kafkaProducer := msg.NewProducer()
+	kafkaOutbound := outbound.New(kafkaProducer)
+
+	tokenManager := tokenmanager.New(ServiceName, cfg.Auth.Tokens)
 
 	orgSvc := organization.New(repo, kafkaOutbound, tokenManager, s3Bucket)
 	memberSvc := member.New(repo, kafkaOutbound)
@@ -122,28 +82,23 @@ func StartServices(ctx context.Context, cfg Config, log *logium.Logger, wg *sync
 	profileSvc := profile.New(repo)
 
 	responser := restkit.NewResponser()
-	ctrl := controller.New(log, responser, orgSvc, memberSvc, roleSvc, permSvc, inviteSvc)
-	mdll := middlewares.New(log, middlewares.Config{
-		AccountAccessSK: cfg.Auth.Account.Token.Access.SecretKey,
-		UploadFilesSK:   cfg.S3.Upload.Token.SecretKey,
+	ctrl := controller.New(&controller.Modules{
+		Organization: orgSvc,
+		Role:         roleSvc,
+		Invite:       inviteSvc,
+		Member:       memberSvc,
+		Permissions:  permSvc,
 	}, responser)
-	router := rest.New(log, mdll, ctrl)
-
-	msgx := messenger.New(log, db, cfg.Kafka.Brokers...)
-
-	log.Infof("starting kafka brokers %s", cfg.Kafka.Brokers)
+	mdll := middlewares.New(responser, tokenManager)
+	router := rest.New(mdll, ctrl)
 
 	run(func() {
-		router.Run(ctx, rest.Config{
-			Port:              cfg.Rest.Port,
-			TimeoutRead:       cfg.Rest.Timeouts.Read,
-			TimeoutReadHeader: cfg.Rest.Timeouts.ReadHeader,
-			TimeoutWrite:      cfg.Rest.Timeouts.Write,
-			TimeoutIdle:       cfg.Rest.Timeouts.Idle,
-		})
+		router.Run(ctx, log, cfg.Rest)
 	})
 
-	run(func() { msgx.RunConsumer(ctx, inbound.New(log, profileSvc)) })
+	run(func() { msg.RunInbox(ctx, inbound.New(profileSvc)) })
 
-	run(func() { msgx.RunProducer(ctx) })
+	run(func() { msg.RunConsumer(ctx) })
+
+	run(func() { msg.RunOutbox(ctx) })
 }

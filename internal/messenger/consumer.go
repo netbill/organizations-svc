@@ -16,13 +16,13 @@ func (m *Manager) RunConsumer(ctx context.Context) {
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        m.config.Brokers,
-		Topic:          evtypes.AccountsTopicV1,
-		GroupID:        evtypes.ProfilesSvcGroup,
-		QueueCapacity:  m.config.Reader.Topics.AccountsV1.QueueCapacity,
-		MaxBytes:       m.config.Reader.Topics.AccountsV1.MaxBytes,
-		MinBytes:       m.config.Reader.Topics.AccountsV1.MinBytes,
-		MaxWait:        m.config.Reader.Topics.AccountsV1.MaxWait,
-		CommitInterval: m.config.Reader.Topics.AccountsV1.CommitInterval,
+		Topic:          evtypes.ProfilesTopicV1,
+		GroupID:        evtypes.OrganizationsSvcGroup,
+		QueueCapacity:  m.config.Reader.Topics.ProfilesV1.QueueCapacity,
+		MaxBytes:       m.config.Reader.Topics.ProfilesV1.MaxBytes,
+		MinBytes:       m.config.Reader.Topics.ProfilesV1.MinBytes,
+		MaxWait:        m.config.Reader.Topics.ProfilesV1.MaxWait,
+		CommitInterval: m.config.Reader.Topics.ProfilesV1.CommitInterval,
 	})
 
 	wg.Add(1)

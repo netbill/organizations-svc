@@ -2,9 +2,11 @@ package organization
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
@@ -24,12 +26,17 @@ func (m *Module) OpenUpdateSession(
 	}
 
 	uploadSessionID := uuid.New()
-	links, err := m.bucket.GeneratePreloadLinkForOrganizationMedia(ctx, org.ID, uploadSessionID)
+	uploadIconLink, getIconLink, err := m.bucket.GeneratePreloadLinkForOrganizationIcon(ctx, org.ID, uploadSessionID)
 	if err != nil {
 		return models.Organization{}, models.UpdateOrganizationMedia{}, err
 	}
 
-	uploadToken, err := m.token.NewUploadOrganizationMediaToken(
+	uploadBannerLink, getBannerLink, err := m.bucket.GeneratePreloadLinkForOrganizationBanner(ctx, org.ID, uploadSessionID)
+	if err != nil {
+		return models.Organization{}, models.UpdateOrganizationMedia{}, err
+	}
+
+	uploadToken, err := m.token.GenerateUploadOrganizationMediaToken(
 		initiator,
 		organizationID,
 		uploadSessionID,
@@ -40,10 +47,10 @@ func (m *Module) OpenUpdateSession(
 
 	return org, models.UpdateOrganizationMedia{
 		Links: models.OrganizationUploadMediaLinks{
-			IconUploadURL:   links.IconUploadURL,
-			IconGetURL:      links.IconGetURL,
-			BannerUploadURL: links.BannerUploadURL,
-			BannerGetURL:    links.BannerGetURL,
+			IconUploadURL:   uploadIconLink,
+			IconGetURL:      getIconLink,
+			BannerUploadURL: uploadBannerLink,
+			BannerGetURL:    getBannerLink,
 		},
 		UploadSessionID: uploadSessionID,
 		UploadToken:     uploadToken,
@@ -56,8 +63,6 @@ type UpdateParams struct {
 }
 
 type UpdateMediaParams struct {
-	UploadSessionID uuid.UUID
-
 	DeletedIcon   bool
 	icon          *string
 	DeletedBanner bool
@@ -81,6 +86,7 @@ func (p UpdateParams) GetUpdatedBanner() *string {
 func (m *Module) UpdateWithSession(
 	ctx context.Context,
 	initiator models.AccountActor,
+	scope models.UploadScope,
 	organizationID uuid.UUID,
 	params UpdateParams,
 ) (models.Organization, error) {
@@ -94,50 +100,42 @@ func (m *Module) UpdateWithSession(
 		return models.Organization{}, err
 	}
 
+	if params.Media.DeletedIcon {
+		if err := m.bucket.DeleteOrganizationIcon(ctx, org.ID); err != nil {
+			return models.Organization{}, err
+		}
+	} else {
+		key, err := m.bucket.UpdateOrganizationIcon(ctx, org.ID, scope)
+		switch {
+		case errors.Is(err, errx.ErrorNoContentUploaded):
+			params.Media.icon = org.Icon
+		case err != nil:
+			return models.Organization{}, err
+		default:
+			params.Media.banner = &key
+		}
+	}
+
+	if params.Media.DeletedBanner {
+		if err := m.bucket.DeleteOrganizationBanner(ctx, org.ID); err != nil {
+			return models.Organization{}, err
+		}
+	} else {
+		key, err := m.bucket.UpdateOrganizationBanner(ctx, org.ID, scope)
+		switch {
+		case errors.Is(err, errx.ErrorNoContentUploaded):
+			params.Media.banner = org.Banner
+		case err != nil:
+			return models.Organization{}, err
+		default:
+			params.Media.banner = &key
+		}
+	}
+
 	params.Media.icon = org.Icon
 	params.Media.banner = org.Banner
 
-	if params.Media.DeletedIcon == true {
-		if err = m.bucket.DeleteOrganizationIcon(
-			ctx,
-			organizationID,
-		); err != nil {
-			return models.Organization{}, err
-		}
-
-		params.Media.icon = nil
-	}
-
-	if params.Media.DeletedBanner == true {
-		if err = m.bucket.DeleteOrganizationBanner(
-			ctx,
-			organizationID,
-		); err != nil {
-			return models.Organization{}, err
-		}
-
-		params.Media.banner = nil
-	}
-
-	if !(params.Media.DeletedBanner == params.Media.DeletedIcon == true) {
-		links, err := m.bucket.AcceptUpdateOrganizationMedia(
-			ctx,
-			organizationID,
-			params.Media.UploadSessionID,
-		)
-		if err != nil {
-			return models.Organization{}, err
-		}
-
-		params.Media.icon = links.Icon
-		params.Media.banner = links.Banner
-	}
-
-	err = m.bucket.CleanOrganizationMediaSession(
-		ctx,
-		organizationID,
-		params.Media.UploadSessionID,
-	)
+	err = m.bucket.CleanOrganizationMediaSession(ctx, organizationID, scope)
 	if err != nil {
 		return models.Organization{}, err
 	}

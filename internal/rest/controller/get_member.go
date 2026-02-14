@@ -27,7 +27,7 @@ func (c *Controller) GetMember(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("member_id", memberID)
 
-	res, err := c.core.member.GetByID(r.Context(), memberID)
+	res, err := c.modules.Member.GetByID(r.Context(), memberID)
 	switch {
 	case errors.Is(err, errx.ErrorMemberNotFound):
 		log.Info("member not found")

@@ -17,11 +17,9 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/netbill/ape v0.1.3
 	github.com/netbill/awsx v0.3.2
-	github.com/netbill/evebox v0.5.2
 	github.com/netbill/eventbox v0.1.1
 	github.com/netbill/logium v0.2.5
 	github.com/netbill/pgdbx v0.3.1
-	github.com/netbill/profiles-svc v0.0.0-20260214071810-f95cfe5da925
 	github.com/netbill/restkit v0.2.2
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v1.8.1
@@ -45,6 +43,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/jsonapi v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

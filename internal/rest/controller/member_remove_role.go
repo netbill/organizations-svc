@@ -33,7 +33,7 @@ func (c *Controller) MemberRemoveRole(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("role_id", roleID).WithField("member_id", memberID)
 
-	err = c.core.role.RemoveFromMember(
+	err = c.modules.Role.RemoveFromMember(
 		r.Context(),
 		scope.AccountActor(r),
 		memberID,

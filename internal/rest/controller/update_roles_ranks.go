@@ -30,7 +30,7 @@ func (c *Controller) UpdateRolesRanks(w http.ResponseWriter, r *http.Request) {
 		dict[item.Id] = item.Rank
 	}
 
-	err = c.core.role.UpdateRanks(r.Context(), scope.AccountActor(r), req.Data.Id, dict)
+	err = c.modules.Role.UpdateRanks(r.Context(), scope.AccountActor(r), req.Data.Id, dict)
 	switch {
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to update roles ranks")

@@ -44,6 +44,7 @@ type organizationSvc interface {
 	UpdateWithSession(
 		ctx context.Context,
 		initiator models.AccountActor,
+		scope models.UploadScope,
 		organizationID uuid.UUID,
 		params organization.UpdateParams,
 	) (models.Organization, error)
@@ -238,38 +239,23 @@ type responser interface {
 	RenderErr(w http.ResponseWriter, errs ...error)
 }
 
-type core struct {
-	organization organizationSvc
-	member       memberSvc
-	role         roleSvc
-	permissions  rolePermissionSvc
-	invite       inviteSvc
+type Modules struct {
+	Organization organizationSvc
+	Member       memberSvc
+	Role         roleSvc
+	Permissions  rolePermissionSvc
+	Invite       inviteSvc
 }
 
 type Controller struct {
 	log       *logium.Logger
-	core      *core
+	modules   *Modules
 	responser responser
 }
 
-func New(
-	log *logium.Logger,
-	responser responser,
-	orgSvc organizationSvc,
-	memberSvc memberSvc,
-	roleSvc roleSvc,
-	permSvc rolePermissionSvc,
-	inviteSvc inviteSvc,
-) *Controller {
+func New(modules *Modules, responser responser) *Controller {
 	return &Controller{
-		log: log,
-		core: &core{
-			organization: orgSvc,
-			member:       memberSvc,
-			role:         roleSvc,
-			invite:       inviteSvc,
-			permissions:  permSvc,
-		},
+		modules:   modules,
 		responser: responser,
 	}
 }

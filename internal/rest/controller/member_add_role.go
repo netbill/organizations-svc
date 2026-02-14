@@ -33,7 +33,7 @@ func (c *Controller) MemberAddRole(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("role_id", roleID).WithField("member_id", memberID)
 
-	err = c.core.role.AddForMember(r.Context(), scope.AccountActor(r), memberID, roleID)
+	err = c.modules.Role.AddForMember(r.Context(), scope.AccountActor(r), memberID, roleID)
 	switch {
 	case errors.Is(err, errx.ErrorMemberNotFound):
 		log.Info("member not found")

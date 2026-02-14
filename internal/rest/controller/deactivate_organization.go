@@ -27,7 +27,7 @@ func (c *Controller) DeactivateOrganization(w http.ResponseWriter, r *http.Reque
 
 	log = log.WithField("organization_id", organizationID)
 
-	res, err := c.core.organization.Deactivate(r.Context(), scope.AccountActor(r), organizationID)
+	res, err := c.modules.Organization.Deactivate(r.Context(), scope.AccountActor(r), organizationID)
 	switch {
 	case errors.Is(err, errx.ErrorOrganizationNotFound):
 		log.Info("organization not found")

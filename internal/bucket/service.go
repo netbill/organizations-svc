@@ -7,51 +7,60 @@ import (
 	_ "image/png"
 	"io"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-const probeBytes = int64(128 * 1024)
+type Config struct {
+	Link struct {
+		TTL time.Duration `json:"ttl"`
+	} `json:"link"`
+	Organization struct {
+		Icon struct {
+			AllowedFormats   []string `mapstructure:"allowed_formats" required:"true"`
+			MaxWidth         int      `mapstructure:"max_width" required:"true"`
+			MaxHeight        int      `mapstructure:"max_height" required:"true"`
+			ContentLengthMax int      `mapstructure:"content_length_max" required:"true"`
+		} `mapstructure:"icon"`
+		Banner struct {
+			AllowedFormats   []string `mapstructure:"allowed_formats" required:"true"`
+			MaxWidth         int      `mapstructure:"max_width" required:"true"`
+			MaxHeight        int      `mapstructure:"max_height" required:"true"`
+			ContentLengthMax int      `mapstructure:"content_length_max" required:"true"`
+		}
+	} `mapstructure:"organization"`
+}
 
 type Bucket struct {
-	s3                 s3bucket
-	OrgIconValidator   ObjectValidator
-	OrgBannerValidator ObjectValidator
-	tokensTTL          UploadTokensTTL
+	s3     storage
+	config Config
 }
 
-type UploadTokensTTL struct {
-	Org time.Duration
-}
-
-type Config struct {
-	S3                 s3bucket
-	OrgIconValidator   ObjectValidator
-	OrgBannerValidator ObjectValidator
-	UploadTokensTTL    UploadTokensTTL
-}
-
-func New(config Config) Bucket {
+func New(s3 storage, config Config) Bucket {
 	return Bucket{
-		s3:                 config.S3,
-		OrgIconValidator:   config.OrgIconValidator,
-		OrgBannerValidator: config.OrgBannerValidator,
+		s3:     s3,
+		config: config,
 	}
 }
 
-type s3bucket interface {
+type storage interface {
 	PresignPut(
 		ctx context.Context,
 		key string,
 		ttl time.Duration,
 	) (uploadURL, getUrl string, error error)
 
-	GetObjectRange(ctx context.Context, key string, bytes int64) (io.ReadCloser, int64, error)
-	CopyObject(ctx context.Context, fromKey, toKey string) (string, error)
-	DeleteObject(ctx context.Context, key string) error
-}
+	HeadObject(
+		ctx context.Context,
+		key string,
+	) (*s3.HeadObjectOutput, error)
 
-type ObjectValidator interface {
-	ValidateImageResolution(data []byte) (bool, error)
-	ValidateImageFormat(data []byte) (bool, error)
-	ValidateImageContentType(data []byte) (bool, error)
-	ValidateImageSize(size uint) (bool, error)
+	GetObjectRange(
+		ctx context.Context,
+		key string,
+		bytes int64,
+	) (body io.ReadCloser, err error)
+
+	CopyObject(ctx context.Context, tmplKey, finalKey string) (string, error)
+	DeleteObject(ctx context.Context, key string) error
 }

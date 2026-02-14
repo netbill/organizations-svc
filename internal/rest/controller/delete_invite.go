@@ -26,7 +26,7 @@ func (c *Controller) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("invite_id", inviteID)
 
-	err = c.core.invite.Delete(r.Context(), scope.AccountActor(r), inviteID)
+	err = c.modules.Invite.Delete(r.Context(), scope.AccountActor(r), inviteID)
 	switch {
 	case errors.Is(err, errx.ErrorInviteNotFound):
 		log.Info("invite not found")

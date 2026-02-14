@@ -25,7 +25,7 @@ func (c *Controller) GetRole(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("role_id", roleID)
 
-	role, perm, err := c.core.role.GetWithPermissions(r.Context(), scope.AccountActor(r), roleID)
+	role, perm, err := c.modules.Role.GetWithPermissions(r.Context(), scope.AccountActor(r), roleID)
 	switch {
 	case err != nil:
 		log.WithError(err).Error("failed to get role")

@@ -27,7 +27,7 @@ func (c *Controller) ActivateOrganization(w http.ResponseWriter, r *http.Request
 
 	log = log.WithField("organization_id", organizationID)
 
-	res, err := c.core.organization.Activate(r.Context(), scope.AccountActor(r), organizationID)
+	res, err := c.modules.Organization.Activate(r.Context(), scope.AccountActor(r), organizationID)
 	switch {
 	case errors.Is(err, errx.ErrorOrganizationNotFound):
 		log.Info("organization not found")

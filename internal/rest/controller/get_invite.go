@@ -27,7 +27,7 @@ func (c *Controller) GetInvite(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("invite_id", inviteID)
 
-	inv, err := c.core.invite.GetForAccount(r.Context(), scope.AccountActor(r), inviteID)
+	inv, err := c.modules.Invite.GetForAccount(r.Context(), scope.AccountActor(r), inviteID)
 	switch {
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to get invite")

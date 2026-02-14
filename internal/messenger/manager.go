@@ -22,7 +22,7 @@ type Config struct {
 	}
 	Reader struct {
 		Topics struct {
-			AccountsV1 struct {
+			ProfilesV1 struct {
 				NumReaders     int           `mapstructure:"num_readers" validate:"required"`
 				MinBytes       int           `mapstructure:"min_bytes"`
 				MaxBytes       int           `mapstructure:"max_bytes"`
@@ -30,7 +30,7 @@ type Config struct {
 				CommitInterval time.Duration `mapstructure:"commit_interval"`
 				StartOffset    string        `mapstructure:"start_offset"`
 				QueueCapacity  int           `mapstructure:"queue_capacity"`
-			} `mapstructure:"accounts_v1"`
+			} `mapstructure:"profiles_v1"`
 		} `mapstructure:"topics"`
 	} `mapstructure:"reader"`
 	Inbox struct {

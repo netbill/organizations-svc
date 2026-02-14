@@ -24,7 +24,7 @@ func (c *Controller) CancelUpdateOrganization(w http.ResponseWriter, r *http.Req
 
 	log = log.WithField("organization_id", req.Data.Id)
 
-	err = c.core.organization.CancelUpdateSession(
+	err = c.modules.Organization.CancelUpdateSession(
 		r.Context(),
 		scope.AccountActor(r),
 		scope.UploadScope(r),

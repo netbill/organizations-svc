@@ -37,7 +37,7 @@ func (c *Controller) GetOrganizations(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("limit", limit).WithField("offset", offset)
 
-	organizations, err := c.core.organization.GetList(r.Context(), params, limit, offset)
+	organizations, err := c.modules.Organization.GetList(r.Context(), params, limit, offset)
 	switch {
 	case err != nil:
 		log.WithError(err).Error("failed to get organizations")

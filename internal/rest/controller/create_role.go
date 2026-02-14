@@ -26,7 +26,7 @@ func (c *Controller) CreateRole(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("organization_id", req.Data.Attributes.OrganizationId)
 
-	res, err := c.core.role.Create(
+	res, err := c.modules.Role.Create(
 		r.Context(),
 		scope.AccountActor(r),
 		role.CreateParams{

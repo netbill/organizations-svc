@@ -98,15 +98,25 @@ type messanger interface {
 }
 
 type bucket interface {
-	GeneratePreloadLinkForOrganizationMedia(
+	GeneratePreloadLinkForOrganizationIcon(
 		ctx context.Context,
 		organizationID, sessionID uuid.UUID,
-	) (models.OrganizationUploadMediaLinks, error)
+	) (string, string, error)
 
-	AcceptUpdateOrganizationMedia(
+	GeneratePreloadLinkForOrganizationBanner(
 		ctx context.Context,
 		organizationID, sessionID uuid.UUID,
-	) (models.OrganizationMedia, error)
+	) (string, string, error)
+
+	UpdateOrganizationIcon(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (string, error)
+
+	UpdateOrganizationBanner(
+		ctx context.Context,
+		organizationID, sessionID uuid.UUID,
+	) (string, error)
 
 	CancelUpdateOrganizationIcon(
 		ctx context.Context,
@@ -135,7 +145,7 @@ type bucket interface {
 }
 
 type token interface {
-	NewUploadOrganizationMediaToken(
+	GenerateUploadOrganizationMediaToken(
 		accountID uuid.UUID,
 		organizationID uuid.UUID,
 		uploadSessionID uuid.UUID,

@@ -36,7 +36,7 @@ func (c *Controller) UpdateMember(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("member_id", memberID)
 
-	res, err := c.core.member.Update(
+	res, err := c.modules.Member.Update(
 		r.Context(),
 		scope.AccountActor(r),
 		memberID,

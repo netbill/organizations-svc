@@ -27,7 +27,7 @@ func (c *Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("invite_id", inviteID)
 
-	res, err := c.core.invite.Decline(r.Context(), scope.AccountActor(r), inviteID)
+	res, err := c.modules.Invite.Decline(r.Context(), scope.AccountActor(r), inviteID)
 	switch {
 	case errors.Is(err, errx.ErrorInviteNotFound):
 		log.Info("invite not found")

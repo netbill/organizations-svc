@@ -13,7 +13,7 @@ const operationGetAllPermissions = "get_all_permissions"
 func (c *Controller) GetAllPermissions(w http.ResponseWriter, r *http.Request) {
 	log := scope.Log(r).WithOperation(operationGetAllPermissions)
 
-	perms, err := c.core.permissions.GetAll(r.Context())
+	perms, err := c.modules.Permissions.GetAll(r.Context())
 	switch {
 	case err != nil:
 		log.WithError(err).Error("failed to get all permissions")

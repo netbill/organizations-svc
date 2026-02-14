@@ -27,7 +27,7 @@ func (c *Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("organization_id", req.Data.Attributes.OrganizationId).WithField("account_id", req.Data.Attributes.AccountId)
 
-	inv, err := c.core.invite.Create(
+	inv, err := c.modules.Invite.Create(
 		r.Context(),
 		scope.AccountActor(r),
 		invite.CreateParams{

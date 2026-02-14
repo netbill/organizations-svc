@@ -77,7 +77,7 @@ func (c *Controller) GetOrganizationMembers(w http.ResponseWriter, r *http.Reque
 		params.RoleRankDown = &roleRankDown
 	}
 
-	members, err := c.core.member.GetList(r.Context(), params, limit, offset)
+	members, err := c.modules.Member.GetList(r.Context(), params, limit, offset)
 	switch {
 	case err != nil:
 		log.WithError(err).Error("failed to get organization members")

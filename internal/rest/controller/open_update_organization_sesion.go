@@ -30,7 +30,7 @@ func (c *Controller) OpenUpdateOrganizationSession(w http.ResponseWriter, r *htt
 
 	log = log.WithField("organization_id", organizationID)
 
-	org, media, err := c.core.organization.OpenUpdateSession(r.Context(), scope.AccountActor(r), organizationID)
+	org, media, err := c.modules.Organization.OpenUpdateSession(r.Context(), scope.AccountActor(r), organizationID)
 	switch {
 	case errors.Is(err, errx.ErrorOrganizationNotFound):
 		log.Info("organization does not exist")

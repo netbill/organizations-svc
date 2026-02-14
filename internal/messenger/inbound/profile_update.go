@@ -3,9 +3,7 @@ package inbound
 import (
 	"context"
 	"encoding/json"
-	"errors"
 
-	"github.com/netbill/ape"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/messenger/evtypes"
 	"github.com/segmentio/kafka-go"

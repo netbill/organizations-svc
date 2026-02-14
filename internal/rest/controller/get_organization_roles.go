@@ -34,7 +34,7 @@ func (c *Controller) GetOrganizationRoles(w http.ResponseWriter, r *http.Request
 
 	log = log.WithField("organization_id", organizationID).WithField("limit", limit).WithField("offset", offset)
 
-	roles, err := c.core.role.GetList(
+	roles, err := c.modules.Role.GetList(
 		r.Context(),
 		role.FilterParams{OrganizationID: &organizationID},
 		limit, offset,

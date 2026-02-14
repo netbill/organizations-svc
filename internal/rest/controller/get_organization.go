@@ -27,7 +27,7 @@ func (c *Controller) GetOrganization(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("organization_id", organizationID)
 
-	org, err := c.core.organization.GetByID(r.Context(), organizationID)
+	org, err := c.modules.Organization.GetByID(r.Context(), organizationID)
 	switch {
 	case errors.Is(err, errx.ErrorOrganizationNotFound):
 		log.Info("organization not found")

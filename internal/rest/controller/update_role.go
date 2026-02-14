@@ -36,7 +36,7 @@ func (c *Controller) UpdateRole(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("role_id", roleID)
 
-	res, err := c.core.role.Update(
+	res, err := c.modules.Role.Update(
 		r.Context(),
 		scope.AccountActor(r),
 		roleID,

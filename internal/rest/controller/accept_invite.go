@@ -27,7 +27,7 @@ func (c *Controller) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("invite_id", inviteID)
 
-	res, err := c.core.invite.Accept(r.Context(), scope.AccountActor(r), inviteID)
+	res, err := c.modules.Invite.Accept(r.Context(), scope.AccountActor(r), inviteID)
 	switch {
 	case errors.Is(err, errx.ErrorInviteNotFound):
 		log.Info("invite not found")

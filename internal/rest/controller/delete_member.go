@@ -26,7 +26,7 @@ func (c *Controller) DeleteMember(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("member_id", memberID)
 
-	err = c.core.member.Delete(r.Context(), scope.AccountActor(r), memberID)
+	err = c.modules.Member.Delete(r.Context(), scope.AccountActor(r), memberID)
 	switch {
 	case errors.Is(err, errx.ErrorMemberNotFound):
 		log.Info("member not found")
