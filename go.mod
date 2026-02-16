@@ -14,19 +14,20 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.8.0
-	github.com/lib/pq v1.10.9
 	github.com/netbill/ape v0.1.3
-	github.com/netbill/awsx v0.3.2
-	github.com/netbill/eventbox v0.1.1
-	github.com/netbill/logium v0.2.5
+	github.com/netbill/awsx v0.3.3
+	github.com/netbill/eventbox v0.1.2
+	github.com/netbill/logium v0.2.6
 	github.com/netbill/pgdbx v0.3.1
-	github.com/netbill/restkit v0.2.2
+	github.com/netbill/restkit v0.2.4
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v1.8.1
 	github.com/segmentio/kafka-go v0.4.50
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.21.0
 )
+
+require github.com/netbill/orgperm v0.0.0-20260216103323-137b8efab618
 
 require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect

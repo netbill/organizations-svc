@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/lib/pq" // postgres driver don`t delete
 	"github.com/netbill/organizations-svc/internal/bucket"
 	"github.com/netbill/organizations-svc/internal/messenger"
 	"github.com/netbill/organizations-svc/internal/rest"

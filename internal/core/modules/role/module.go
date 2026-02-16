@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -55,12 +56,7 @@ type repo interface {
 	GetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-	) (models.OrgRolePermissionDictWithDetails, error)
-	SetRolePermissions(
-		ctx context.Context,
-		roleID uuid.UUID,
-		perms models.OrgRolePermissionEnable,
-	) (models.OrgRolePermissionDictWithDetails, error)
+	) (models.OrgRolePermissionsWithDetailsForRole, error)
 
 	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
 
@@ -79,7 +75,7 @@ type repo interface {
 	CheckMemberHavePermission(
 		ctx context.Context,
 		memberID uuid.UUID,
-		permissionCode string,
+		permissionID uuid.UUID,
 	) (bool, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
@@ -118,17 +114,13 @@ func (m *Module) checkPermissionsToManageRole(
 		return err
 	}
 
-	hasPermission, err := m.repo.CheckMemberHavePermission(
-		ctx,
-		member.ID,
-		models.RolePermissionRolesManage,
-	)
+	hasPermission, err := m.repo.CheckMemberHavePermission(ctx, member.ID, orgperm.RolesManageID)
 	if err != nil {
 		return err
 	}
 	if !hasPermission {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member %s does not have permission %s", member.ID, models.RolePermissionRolesManage),
+			fmt.Errorf("member %s does not have permission %s", member.ID, orgperm.RolesManageID),
 		)
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -61,7 +62,7 @@ type repo interface {
 	CheckMemberHavePermission(
 		ctx context.Context,
 		memberID uuid.UUID,
-		permissionCode string,
+		permissionID uuid.UUID,
 	) (bool, error)
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
@@ -76,7 +77,7 @@ type repo interface {
 	GetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-	) (models.OrgRolePermissionDictWithDetails, error)
+	) (models.OrgRolePermissionsWithDetailsForRole, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
@@ -171,11 +172,7 @@ func (m *Module) chekPermissionForManageOrganization(
 		return nil
 	}
 
-	access, err := m.repo.CheckMemberHavePermission(
-		ctx,
-		member.ID,
-		models.RolePermissionOrgUpdate,
-	)
+	access, err := m.repo.CheckMemberHavePermission(ctx, member.ID, orgperm.OrganizationUpdateID)
 	if err != nil {
 		return err
 	}

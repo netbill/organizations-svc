@@ -1,4 +1,4 @@
-package rperm
+package perm
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/orgperm"
 )
 
 type Module struct {
@@ -30,21 +31,23 @@ type repo interface {
 	) (models.Member, error)
 
 	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
+	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
+	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
+	GetRolePermissions(
+		ctx context.Context,
+		roleID uuid.UUID,
+	) (models.OrgRolePermissionsWithDetailsForRole, error)
 	SetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-		perms models.OrgRolePermissionEnable,
-	) (models.OrgRolePermissionDictWithDetails, error)
-
-	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
-
-	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
+		params SetForRole,
+	) error
 
 	CheckMemberHavePermission(
 		ctx context.Context,
 		memberID uuid.UUID,
-		permissionCode string,
+		permissionID uuid.UUID,
 	) (bool, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
@@ -54,7 +57,7 @@ type messenger interface {
 	WriteOrgRolePermissionsUpdated(
 		ctx context.Context,
 		role models.Role,
-		permissions models.OrgRolePermissionEnable,
+		permissions SetForRole,
 	) error
 }
 
@@ -69,17 +72,13 @@ func (m *Module) checkPermissionsToManageRole(
 		return err
 	}
 
-	hasPermission, err := m.repo.CheckMemberHavePermission(
-		ctx,
-		member.ID,
-		models.RolePermissionRolesManage,
-	)
+	hasPermission, err := m.repo.CheckMemberHavePermission(ctx, member.ID, orgperm.RolesManageID)
 	if err != nil {
 		return err
 	}
 	if !hasPermission {
 		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("member %s does not have permission %s", member.ID, models.RolePermissionRolesManage),
+			fmt.Errorf("member %s does not have permission %s", member.ID, orgperm.RolesManageCode),
 		)
 	}
 

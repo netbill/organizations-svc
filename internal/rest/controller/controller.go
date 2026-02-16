@@ -10,6 +10,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
+	"github.com/netbill/organizations-svc/internal/core/modules/perm"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/restkit/pagi"
 )
@@ -173,7 +174,7 @@ type roleSvc interface {
 		ctx context.Context,
 		initiator models.AccountActor,
 		roleID uuid.UUID,
-	) (models.Role, models.OrgRolePermissionDictWithDetails, error)
+	) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error)
 
 	GetList(
 		ctx context.Context,
@@ -201,13 +202,6 @@ type roleSvc interface {
 		roleID uuid.UUID,
 	) error
 
-	//SetForRole(
-	//	ctx context.Context,
-	//	initiator models.AccountActor,
-	//	roleID uuid.UUID,
-	//	permissions models.SetPermissionParams,
-	//) (models.Role, models.OrgRolePermissionDictWithDetails, error)
-
 	AddForMember(
 		ctx context.Context,
 		initiator models.AccountActor,
@@ -219,8 +213,6 @@ type roleSvc interface {
 		initiator models.AccountActor,
 		memberID, roleID uuid.UUID,
 	) error
-
-	//GetAll(ctx context.Context) ([]models.OrgRolePermission, error)
 }
 
 type rolePermissionSvc interface {
@@ -230,8 +222,8 @@ type rolePermissionSvc interface {
 		ctx context.Context,
 		initiator models.AccountActor,
 		roleID uuid.UUID,
-		permissions models.OrgRolePermissionEnable,
-	) (models.Role, models.OrgRolePermissionDictWithDetails, error)
+		permissions perm.SetForRole,
+	) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error)
 }
 
 type responser interface {

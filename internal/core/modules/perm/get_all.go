@@ -1,4 +1,4 @@
-package rperm
+package perm
 
 import (
 	"context"

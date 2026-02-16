@@ -11,20 +11,20 @@ func (m *Module) GetWithPermissions(
 	ctx context.Context,
 	initiator models.AccountActor,
 	roleID uuid.UUID,
-) (models.Role, models.OrgRolePermissionDictWithDetails, error) {
+) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error) {
 	role, err := m.GetByID(ctx, roleID)
 	if err != nil {
-		return models.Role{}, models.OrgRolePermissionDictWithDetails{}, err
+		return models.Role{}, models.OrgRolePermissionsWithDetailsForRole{}, err
 	}
 
 	_, err = m.getInitiator(ctx, initiator, role.OrganizationID)
 	if err != nil {
-		return models.Role{}, models.OrgRolePermissionDictWithDetails{}, err
+		return models.Role{}, models.OrgRolePermissionsWithDetailsForRole{}, err
 	}
 
 	permissions, err := m.repo.GetRolePermissions(ctx, roleID)
 	if err != nil {
-		return models.Role{}, models.OrgRolePermissionDictWithDetails{}, err
+		return models.Role{}, models.OrgRolePermissionsWithDetailsForRole{}, err
 	}
 
 	return role, permissions, nil

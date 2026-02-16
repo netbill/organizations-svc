@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -55,7 +56,7 @@ type repo interface {
 	CheckMemberHavePermission(
 		ctx context.Context,
 		memberID uuid.UUID,
-		permissionCode string,
+		permissionID uuid.UUID,
 	) (bool, error)
 
 	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
@@ -90,11 +91,7 @@ func (m *Module) checkPermissionForManageInvites(
 	}
 
 	if !member.Head {
-		access, err := m.repo.CheckMemberHavePermission(
-			ctx,
-			member.ID,
-			models.RolePermissionInvitesManage,
-		)
+		access, err := m.repo.CheckMemberHavePermission(ctx, member.ID, orgperm.InvitesManageID)
 		if err != nil {
 			return err
 		}

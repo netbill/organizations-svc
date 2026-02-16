@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/orgperm"
 )
 
 func (m *Module) Delete(
@@ -55,11 +56,7 @@ func (m *Module) checkAbilityToDeleteMember(
 	}
 
 	if !member.Head {
-		hasPermission, err := m.repo.CheckMemberHavePermission(
-			ctx,
-			member.AccountID,
-			models.RolePermissionMembersDelete,
-		)
+		hasPermission, err := m.repo.CheckMemberHavePermission(ctx, member.AccountID, orgperm.MembersDeleteID)
 		if err != nil {
 			return err
 		}

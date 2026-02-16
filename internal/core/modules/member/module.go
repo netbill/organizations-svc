@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -43,7 +44,7 @@ type repo interface {
 	CheckMemberHavePermission(
 		ctx context.Context,
 		memberID uuid.UUID,
-		permissionCode string,
+		permissionID uuid.UUID,
 	) (bool, error)
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
 
@@ -68,11 +69,7 @@ func (m *Module) checkAbilityToUpdateMember(
 	}
 
 	if !member.Head {
-		hasPermission, err := m.repo.CheckMemberHavePermission(
-			ctx,
-			member.AccountID,
-			models.RolePermissionMembersUpdate,
-		)
+		hasPermission, err := m.repo.CheckMemberHavePermission(ctx, member.AccountID, orgperm.MembersUpdateID)
 		if err != nil {
 			return err
 		}

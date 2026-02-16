@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/orgperm"
 )
 
 func (m *Module) UpdateRanks(
@@ -31,17 +32,13 @@ func (m *Module) UpdateRanks(
 			rolesIDs[roleID] = struct{}{}
 		}
 
-		hasPermission, err := m.repo.CheckMemberHavePermission(
-			ctx,
-			member.AccountID,
-			models.RolePermissionRolesManage,
-		)
+		hasPermission, err := m.repo.CheckMemberHavePermission(ctx, member.AccountID, orgperm.RolesManageID)
 		if err != nil {
 			return err
 		}
 		if !hasPermission {
 			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("member %s does not have permission %s", initiator, models.RolePermissionRolesManage),
+				fmt.Errorf("member %s does not have permission %s", initiator, orgperm.RolesManageID),
 			)
 		}
 
