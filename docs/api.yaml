@@ -37,18 +37,24 @@ components:
     # responses:
     PaginationData:
       $ref: './spec/components/schemas/responses/PaginationData.yaml'
+    UploadResourcesLink:
+      $ref: './spec/components/schemas/responses/UploadResourcesLink.yaml'
 
     Organization:
       $ref: './spec/components/schemas/responses/Organization.yaml'
     OrganizationsCollection:
       $ref: './spec/components/schemas/responses/OrganizationsCollection.yaml'
-    UpdateOrganizationLinks:
-      $ref: './spec/components/schemas/responses/UpdateOrganizationLinks.yaml'
+    UploadOrgMediaLinks:
+      $ref: './spec/components/schemas/responses/UploadOrgMediaLinks.yaml'
 
     Member:
       $ref: './spec/components/schemas/responses/Member.yaml'
     MemberCollection:
       $ref: './spec/components/schemas/responses/MemberCollection.yaml'
+    DeleteUploadOrgIcon:
+      $ref: './spec/components/schemas/requests/DeleteUploadOrgIcon.yaml'
+    DeleteUploadOrgBanner:
+      $ref: './spec/components/schemas/requests/DeleteUploadOrgBanner.yaml'
 
     Invite:
       $ref: './spec/components/schemas/responses/Invite.yaml'

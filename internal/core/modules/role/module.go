@@ -53,15 +53,18 @@ type repo interface {
 		accountID, organizationID uuid.UUID,
 	) (models.Member, error)
 
+	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
 	GetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
 	) (models.OrgRolePermissionsWithDetailsForRole, error)
-
-	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
+	SetRolePermissions(
+		ctx context.Context,
+		roleID uuid.UUID,
+		params SetForRole,
+	) (models.OrgRolePermissionsWithDetailsForRole, error)
 
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
-
 	GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error)
 	RemoveMemberRole(
 		ctx context.Context,
@@ -90,6 +93,11 @@ type messenger interface {
 		ctx context.Context,
 		organizationID uuid.UUID,
 		order map[uuid.UUID]uint,
+	) error
+	WriteOrgRolePermissionsUpdated(
+		ctx context.Context,
+		role models.Role,
+		params SetForRole,
 	) error
 
 	WriteOrgMemberRoleAdd(

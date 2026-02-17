@@ -1,0 +1,56 @@
+type: object
+required:
+  - data
+  - included
+properties:
+  data:
+    type: object
+    required:
+      - id
+      - type
+      - attributes
+      - relationships
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: "organization id"
+      type:
+        type: string
+        enum: [ organization_upload_links ]
+      attributes:
+        type: object
+        required:
+          - icon
+          - banner
+        properties:
+          icon:
+            $ref: './UploadResourcesLink.yaml'
+          banner:
+            $ref: './UploadResourcesLink.yaml'
+      relationships:
+        type: object
+        properties:
+          organization:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                required:
+                  - id
+                  - type
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: "organization id"
+                  type:
+                    type: string
+                    enum: [ organization ]
+
+  included:
+    type: array
+    items:
+      $ref: './OrganizationData.yaml'

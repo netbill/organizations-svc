@@ -28,10 +28,6 @@ func Log(r *http.Request) *logium.Entry {
 	if ok {
 		log = log.WithAccountAuthClaims(authClaims)
 	}
-	contentClaims, ok := r.Context().Value(UploadContentCtxKey).(tokens.UploadContentClaims)
-	if ok {
-		log = log.WithUploadContentClaims(contentClaims)
-	}
 
 	return log
 }
@@ -43,13 +39,4 @@ func CtxAccountAuth(ctx context.Context, accountData tokens.AccountAuthClaims) c
 func AccountActor(r *http.Request) models.AccountActor {
 	claims := r.Context().Value(AccountDataCtxKey).(tokens.AccountAuthClaims)
 	return claims.GetAccountID()
-}
-
-func CtxUploadContent(ctx context.Context, content tokens.UploadContentClaims) context.Context {
-	return context.WithValue(ctx, UploadContentCtxKey, content)
-}
-
-func UploadScope(r *http.Request) models.UploadScope {
-	claims := r.Context().Value(UploadContentCtxKey).(tokens.UploadContentClaims)
-	return claims.GetSessionID()
 }

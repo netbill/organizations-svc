@@ -20,15 +20,13 @@ properties:
         type: object
         required:
           - name
-          - delete_icon
-          - delete_banner
         properties:
           name:
             type: string
             description: "The name of the organization"
-          delete_icon:
-            type: boolean
-            description: "Flag to indicate if the organization's icon should be deleted"
-          delete_banner:
-            type: boolean
-            description: "Flag to indicate if the organization's banner should be deleted"
+          icon_key:
+            type: string
+            description: "The media key for the organization's icon"
+          banner_key:
+            type: string
+            description: "The media key for the organization's banner"

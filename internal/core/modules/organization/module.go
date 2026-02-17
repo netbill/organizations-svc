@@ -15,16 +15,14 @@ import (
 type Module struct {
 	repo      repo
 	bucket    bucket
-	token     token
 	messenger messanger
 }
 
-func New(repo repo, messenger messanger, token token, bucket bucket) *Module {
+func New(repo repo, messenger messanger, bucket bucket) *Module {
 	return &Module{
 		repo:      repo,
-		messenger: messenger,
-		token:     token,
 		bucket:    bucket,
+		messenger: messenger,
 	}
 }
 
@@ -99,58 +97,65 @@ type messanger interface {
 }
 
 type bucket interface {
-	GeneratePreloadLinkForOrganizationIcon(
+	CreateOrganizationIconUploadMediaLinks(
 		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (string, string, error)
+		organizationID uuid.UUID,
+	) (models.UploadMediaLink, error)
 
-	GeneratePreloadLinkForOrganizationBanner(
+	ValidateOrganizationIcon(
 		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (string, string, error)
-
-	UpdateOrganizationIcon(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (string, error)
-
-	UpdateOrganizationBanner(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) (string, error)
-
-	CancelUpdateOrganizationIcon(
-		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
+		organizationID uuid.UUID,
+		tempKey string,
 	) error
 
-	CancelUpdateOrganizationBanner(
+	DeleteUploadOrganizationIcon(
 		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
+		organizationID uuid.UUID,
+		tempKey string,
 	) error
 
 	DeleteOrganizationIcon(
 		ctx context.Context,
 		organizationID uuid.UUID,
+		finalKey string,
+	) error
+
+	UpdateOrganizationIcon(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		oldFinalKey *string,
+		tempKey *string,
+	) (*string, error)
+
+	CreateOrganizationBannerUploadMediaLinks(
+		ctx context.Context,
+		organizationID uuid.UUID,
+	) (models.UploadMediaLink, error)
+
+	ValidateOrganizationBanner(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		tempKey string,
+	) error
+
+	DeleteUploadOrganizationBanner(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		tempKey string,
 	) error
 
 	DeleteOrganizationBanner(
 		ctx context.Context,
 		organizationID uuid.UUID,
+		finalKey string,
 	) error
 
-	CleanOrganizationMediaSession(
+	UpdateOrganizationBanner(
 		ctx context.Context,
-		organizationID, sessionID uuid.UUID,
-	) error
-}
-
-type token interface {
-	GenerateUploadOrganizationMediaToken(
-		accountID uuid.UUID,
 		organizationID uuid.UUID,
-		uploadSessionID uuid.UUID,
-	) (string, error)
+		oldFinalKey *string,
+		tempKey *string,
+	) (*string, error)
 }
 
 func (m *Module) chekPermissionForManageOrganization(

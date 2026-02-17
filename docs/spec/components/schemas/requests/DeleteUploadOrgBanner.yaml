@@ -1,0 +1,26 @@
+type: object
+required:
+  - data
+properties:
+  data:
+    type: object
+    required:
+      - id
+      - type
+      - attributes
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: "organization id"
+      type:
+        type: string
+        enum: [ delete_organization_upload_banner ]
+      attributes:
+        type: object
+        required:
+          - banner_key
+        properties:
+          banner_key:
+            type: string
+            description: "icon media key"

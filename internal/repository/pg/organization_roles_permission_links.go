@@ -8,16 +8,15 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/netbill/pgdbx"
-
 	"github.com/netbill/organizations-svc/internal/repository"
+	"github.com/netbill/pgdbx"
 )
 
 const organizationRolePermissionLinksTable = "organization_role_permission_links"
-const organizationRolePermissionLinksColumns = "role_id, permission_code"
+const organizationRolePermissionLinksColumns = "role_id, permission_id"
 
 func scanOrganizationRolePermissionLink(row sq.RowScanner) (rp repository.OrganizationRolePermissionLinkRow, err error) {
-	err = row.Scan(&rp.RoleID, &rp.PermissionCode)
+	err = row.Scan(&rp.RoleID, &rp.PermissionID)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		return repository.OrganizationRolePermissionLinkRow{}, nil
@@ -53,55 +52,58 @@ func (q *orgRolePermissionLinks) New() repository.OrgRolePermissionLinksQ {
 	return NewOrgRolePermissionLinksQ(q.db)
 }
 
+// TODO remade
 func (q *orgRolePermissionLinks) Upsert(
 	ctx context.Context,
 	roleID uuid.UUID,
-	code ...string,
+	permissions map[uuid.UUID]bool,
 ) ([]repository.OrganizationRolePermissionLinkRow, error) {
-	codes := make([]string, 0, len(code))
-	seen := make(map[string]struct{}, len(code))
+	//ids := make([]uuid.UUID, 0, len(permissionIDs))
+	//seen := make(map[uuid.UUID]struct{}, len(permissionIDs))
+	//
+	//for _, id := range permissionIDs {
+	//	if id == uuid.Nil {
+	//		continue
+	//	}
+	//	if _, ok := seen[id]; ok {
+	//		continue
+	//	}
+	//	seen[id] = struct{}{}
+	//	ids = append(ids, id)
+	//}
+	//
+	//const sqlq = `
+	//	WITH del AS (
+	//		DELETE FROM organization_role_permission_links
+	//		WHERE role_id = $1
+	//	)
+	//	INSERT INTO organization_role_permission_links (role_id, permission_id)
+	//	SELECT $1, x.id
+	//	FROM UNNEST($2::uuid[]) AS x(id)
+	//	RETURNING role_id, permission_id
+	//`
+	//
+	//rows, err := q.db.Query(ctx, sqlq, roleID, ids)
+	//if err != nil {
+	//	return nil, fmt.Errorf("upsert role permission links: %w", err)
+	//}
+	//defer rows.Close()
+	//
+	//out := make([]repository.OrganizationRolePermissionLinkRow, 0, len(ids))
+	//for rows.Next() {
+	//	var r repository.OrganizationRolePermissionLinkRow
+	//	if err := rows.Scan(&r.RoleID, &r.PermissionID); err != nil {
+	//		return nil, fmt.Errorf("scanning role permission link: %w", err)
+	//	}
+	//	out = append(out, r)
+	//}
+	//if err := rows.Err(); err != nil {
+	//	return nil, err
+	//}
+	//
+	//return out, nil
 
-	for _, c := range code {
-		if c == "" {
-			continue
-		}
-		if _, ok := seen[c]; ok {
-			continue
-		}
-		seen[c] = struct{}{}
-		codes = append(codes, c)
-	}
-
-	const sqlq = `
-		WITH del AS (
-			DELETE FROM organization_role_permission_links
-			WHERE role_id = $1
-		)
-		INSERT INTO organization_role_permission_links (role_id, permission_code)
-		SELECT $1, x.code
-		FROM UNNEST($2::text[]) AS x(code)
-		RETURNING role_id, permission_code
-	`
-
-	rows, err := q.db.Query(ctx, sqlq, roleID, codes)
-	if err != nil {
-		return nil, fmt.Errorf("upsert role permission links: %w", err)
-	}
-	defer rows.Close()
-
-	out := make([]repository.OrganizationRolePermissionLinkRow, 0, len(codes))
-	for rows.Next() {
-		var r repository.OrganizationRolePermissionLinkRow
-		if err := rows.Scan(&r.RoleID, &r.PermissionCode); err != nil {
-			return nil, fmt.Errorf("scanning role permission link: %w", err)
-		}
-		out = append(out, r)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return nil, nil
 }
 
 func (q *orgRolePermissionLinks) Get(ctx context.Context) (repository.OrganizationRolePermissionLinkRow, error) {
@@ -117,9 +119,7 @@ func (q *orgRolePermissionLinks) Get(ctx context.Context) (repository.Organizati
 	return scanOrganizationRolePermissionLink(q.db.QueryRow(ctx, query, args...))
 }
 
-func (q *orgRolePermissionLinks) Select(
-	ctx context.Context,
-) ([]repository.OrganizationRolePermissionLinkRow, error) {
+func (q *orgRolePermissionLinks) Select(ctx context.Context) ([]repository.OrganizationRolePermissionLinkRow, error) {
 	query, args, err := q.selector.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -171,7 +171,6 @@ func (q *orgRolePermissionLinks) Delete(ctx context.Context) error {
 			err,
 		)
 	}
-
 	return nil
 }
 
@@ -182,18 +181,17 @@ func (q *orgRolePermissionLinks) FilterByRoleID(roleID uuid.UUID) repository.Org
 	return q
 }
 
-func (q *orgRolePermissionLinks) FilterByPermissionCode(
-	code ...string,
-) repository.OrgRolePermissionLinksQ {
-	q.selector = q.selector.Where(sq.Eq{"permission_code": code})
-	q.deleter = q.deleter.Where(sq.Eq{"permission_code": code})
-	q.counter = q.counter.Where(sq.Eq{"permission_code": code})
+func (q *orgRolePermissionLinks) FilterByPermissionID(permissionIDs ...uuid.UUID) repository.OrgRolePermissionLinksQ {
+	if len(permissionIDs) == 0 {
+		return q
+	}
+	q.selector = q.selector.Where(sq.Eq{"permission_id": permissionIDs})
+	q.deleter = q.deleter.Where(sq.Eq{"permission_id": permissionIDs})
+	q.counter = q.counter.Where(sq.Eq{"permission_id": permissionIDs})
 	return q
 }
 
-func (q *orgRolePermissionLinks) FilterByAccountID(
-	accountID uuid.UUID,
-) repository.OrgRolePermissionLinksQ {
+func (q *orgRolePermissionLinks) FilterByAccountID(accountID uuid.UUID) repository.OrgRolePermissionLinksQ {
 	sub := sq.
 		Select("DISTINCT mr.role_id").
 		From("organization_members m").
@@ -216,9 +214,7 @@ func (q *orgRolePermissionLinks) FilterByAccountID(
 	return q
 }
 
-func (q *orgRolePermissionLinks) FilterByOrganizationID(
-	organizationID uuid.UUID,
-) repository.OrgRolePermissionLinksQ {
+func (q *orgRolePermissionLinks) FilterByOrganizationID(organizationID uuid.UUID) repository.OrgRolePermissionLinksQ {
 	sub := sq.
 		Select("r.id").
 		From("organization_roles r").
@@ -240,9 +236,7 @@ func (q *orgRolePermissionLinks) FilterByOrganizationID(
 	return q
 }
 
-func (q *orgRolePermissionLinks) FilterByMemberID(
-	memberID uuid.UUID,
-) repository.OrgRolePermissionLinksQ {
+func (q *orgRolePermissionLinks) FilterByMemberID(memberID uuid.UUID) repository.OrgRolePermissionLinksQ {
 	sub := sq.
 		Select("mr.role_id").
 		From("organization_member_roles mr").
@@ -285,9 +279,7 @@ func (q *orgRolePermissionLinks) Count(ctx context.Context) (uint, error) {
 	return n, nil
 }
 
-func (q *orgRolePermissionLinks) Page(
-	limit, offset uint,
-) repository.OrgRolePermissionLinksQ {
+func (q *orgRolePermissionLinks) Page(limit, offset uint) repository.OrgRolePermissionLinksQ {
 	q.selector = q.selector.Limit(uint64(limit)).Offset(uint64(offset))
 	return q
 }
@@ -308,6 +300,5 @@ func (q *orgRolePermissionLinks) Exists(ctx context.Context) (bool, error) {
 		}
 		return false, err
 	}
-
 	return true, nil
 }

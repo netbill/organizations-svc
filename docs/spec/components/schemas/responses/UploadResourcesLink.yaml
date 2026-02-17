@@ -1,0 +1,17 @@
+type: object
+required:
+  - key
+  - upload_url
+  - preload_url
+properties:
+  key:
+    type: string
+    description: "Key for the avatar in the storage service"
+  upload_url:
+    type: string
+    format: uri
+    description: "Pre-signed URL for uploading the avatar"
+  preload_url:
+    type: string
+    format: uri
+    description: "URL for preloading the avatar after upload"

@@ -7,16 +7,18 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/pgdbx"
 )
 
 const organizationPermissionTable = "organization_role_permissions"
-const organizationPermissionColumns = "code, description, deprecated_at, created_at, updated_at"
+const organizationPermissionColumns = "id, code, description, deprecated_at, created_at, updated_at"
 
 func scanOrganizationRolePermission(row sq.RowScanner) (p repository.OrganizationRolePermissionRow, err error) {
 	err = row.Scan(
+		&p.ID,
 		&p.Code,
 		&p.Description,
 		&p.DeprecatedAt,
@@ -62,6 +64,9 @@ func (q *orgRolePermissions) Insert(
 	ctx context.Context,
 	input repository.OrganizationRolePermissionRow,
 ) (repository.OrganizationRolePermissionRow, error) {
+	if input.ID == uuid.Nil {
+		input.ID = uuid.New()
+	}
 	if input.Code == "" {
 		return repository.OrganizationRolePermissionRow{}, fmt.Errorf("missing code")
 	}
@@ -71,6 +76,7 @@ func (q *orgRolePermissions) Insert(
 
 	query, args, err := q.inserter.
 		SetMap(map[string]any{
+			"id":            input.ID,
 			"code":          input.Code,
 			"description":   input.Description,
 			"deprecated_at": input.DeprecatedAt,
@@ -82,6 +88,17 @@ func (q *orgRolePermissions) Insert(
 	}
 
 	return scanOrganizationRolePermission(q.db.QueryRow(ctx, query, args...))
+}
+
+func (q *orgRolePermissions) FilterByID(ids ...uuid.UUID) repository.OrgRolePermissionsQ {
+	if len(ids) == 0 {
+		return q
+	}
+	q.selector = q.selector.Where(sq.Eq{"id": ids})
+	q.counter = q.counter.Where(sq.Eq{"id": ids})
+	q.updater = q.updater.Where(sq.Eq{"id": ids})
+	q.deleter = q.deleter.Where(sq.Eq{"id": ids})
+	return q
 }
 
 func (q *orgRolePermissions) FilterByCode(codes ...string) repository.OrgRolePermissionsQ {

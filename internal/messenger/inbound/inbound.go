@@ -9,22 +9,20 @@ import (
 )
 
 type Inbound struct {
-	core *core
+	modules *Modules
 }
 
-type core struct {
-	profile profileSvc
+type Modules struct {
+	Profile profileMod
 }
 
-func New(profile profileSvc) *Inbound {
+func New(modules Modules) *Inbound {
 	return &Inbound{
-		core: &core{
-			profile: profile,
-		},
+		modules: &modules,
 	}
 }
 
-type profileSvc interface {
+type profileMod interface {
 	Create(ctx context.Context, profile models.Profile) (models.Profile, error)
 	Update(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error)
 

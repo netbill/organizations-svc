@@ -4,14 +4,14 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Code** | **string** | permission code | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | permission id | 
 **Status** | **bool** | The new status of the permission for the role | 
 
 ## Methods
 
 ### NewUpdateRolePermissionsDataAttributesPermissionsInner
 
-`func NewUpdateRolePermissionsDataAttributesPermissionsInner(code string, status bool, ) *UpdateRolePermissionsDataAttributesPermissionsInner`
+`func NewUpdateRolePermissionsDataAttributesPermissionsInner(id uuid.UUID, status bool, ) *UpdateRolePermissionsDataAttributesPermissionsInner`
 
 NewUpdateRolePermissionsDataAttributesPermissionsInner instantiates a new UpdateRolePermissionsDataAttributesPermissionsInner object
 This constructor will assign default values to properties that have it defined,
@@ -26,24 +26,24 @@ NewUpdateRolePermissionsDataAttributesPermissionsInnerWithDefaults instantiates 
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetCode
+### GetId
 
-`func (o *UpdateRolePermissionsDataAttributesPermissionsInner) GetCode() string`
+`func (o *UpdateRolePermissionsDataAttributesPermissionsInner) GetId() uuid.UUID`
 
-GetCode returns the Code field if non-nil, zero value otherwise.
+GetId returns the Id field if non-nil, zero value otherwise.
 
-### GetCodeOk
+### GetIdOk
 
-`func (o *UpdateRolePermissionsDataAttributesPermissionsInner) GetCodeOk() (*string, bool)`
+`func (o *UpdateRolePermissionsDataAttributesPermissionsInner) GetIdOk() (*uuid.UUID, bool)`
 
-GetCodeOk returns a tuple with the Code field if it's non-nil, zero value otherwise
+GetIdOk returns a tuple with the Id field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetCode
+### SetId
 
-`func (o *UpdateRolePermissionsDataAttributesPermissionsInner) SetCode(v string)`
+`func (o *UpdateRolePermissionsDataAttributesPermissionsInner) SetId(v uuid.UUID)`
 
-SetCode sets Code field to given value.
+SetId sets Id field to given value.
 
 
 ### GetStatus

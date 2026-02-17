@@ -61,7 +61,7 @@ type FilterParams struct {
 	Head           *bool
 	Username       *string
 	BestMatch      *string
-	PermissionCode *string
+	PermissionID   *uuid.UUID
 	Label          *string
 	Position       *string
 	RoleRankUp     *uint

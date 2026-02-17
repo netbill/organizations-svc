@@ -5,14 +5,14 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Name** | **string** | The name of the organization | 
-**DeleteIcon** | **bool** | Flag to indicate if the organization&#39;s icon should be deleted | 
-**DeleteBanner** | **bool** | Flag to indicate if the organization&#39;s banner should be deleted | 
+**IconKey** | Pointer to **string** | The media key for the organization&#39;s icon | [optional] 
+**BannerKey** | Pointer to **string** | The media key for the organization&#39;s banner | [optional] 
 
 ## Methods
 
 ### NewUpdateOrganizationDataAttributes
 
-`func NewUpdateOrganizationDataAttributes(name string, deleteIcon bool, deleteBanner bool, ) *UpdateOrganizationDataAttributes`
+`func NewUpdateOrganizationDataAttributes(name string, ) *UpdateOrganizationDataAttributes`
 
 NewUpdateOrganizationDataAttributes instantiates a new UpdateOrganizationDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -47,45 +47,55 @@ and a boolean to check if the value has been set.
 SetName sets Name field to given value.
 
 
-### GetDeleteIcon
+### GetIconKey
 
-`func (o *UpdateOrganizationDataAttributes) GetDeleteIcon() bool`
+`func (o *UpdateOrganizationDataAttributes) GetIconKey() string`
 
-GetDeleteIcon returns the DeleteIcon field if non-nil, zero value otherwise.
+GetIconKey returns the IconKey field if non-nil, zero value otherwise.
 
-### GetDeleteIconOk
+### GetIconKeyOk
 
-`func (o *UpdateOrganizationDataAttributes) GetDeleteIconOk() (*bool, bool)`
+`func (o *UpdateOrganizationDataAttributes) GetIconKeyOk() (*string, bool)`
 
-GetDeleteIconOk returns a tuple with the DeleteIcon field if it's non-nil, zero value otherwise
+GetIconKeyOk returns a tuple with the IconKey field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetDeleteIcon
+### SetIconKey
 
-`func (o *UpdateOrganizationDataAttributes) SetDeleteIcon(v bool)`
+`func (o *UpdateOrganizationDataAttributes) SetIconKey(v string)`
 
-SetDeleteIcon sets DeleteIcon field to given value.
+SetIconKey sets IconKey field to given value.
 
+### HasIconKey
 
-### GetDeleteBanner
+`func (o *UpdateOrganizationDataAttributes) HasIconKey() bool`
 
-`func (o *UpdateOrganizationDataAttributes) GetDeleteBanner() bool`
+HasIconKey returns a boolean if a field has been set.
 
-GetDeleteBanner returns the DeleteBanner field if non-nil, zero value otherwise.
+### GetBannerKey
 
-### GetDeleteBannerOk
+`func (o *UpdateOrganizationDataAttributes) GetBannerKey() string`
 
-`func (o *UpdateOrganizationDataAttributes) GetDeleteBannerOk() (*bool, bool)`
+GetBannerKey returns the BannerKey field if non-nil, zero value otherwise.
 
-GetDeleteBannerOk returns a tuple with the DeleteBanner field if it's non-nil, zero value otherwise
+### GetBannerKeyOk
+
+`func (o *UpdateOrganizationDataAttributes) GetBannerKeyOk() (*string, bool)`
+
+GetBannerKeyOk returns a tuple with the BannerKey field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetDeleteBanner
+### SetBannerKey
 
-`func (o *UpdateOrganizationDataAttributes) SetDeleteBanner(v bool)`
+`func (o *UpdateOrganizationDataAttributes) SetBannerKey(v string)`
 
-SetDeleteBanner sets DeleteBanner field to given value.
+SetBannerKey sets BannerKey field to given value.
 
+### HasBannerKey
+
+`func (o *UpdateOrganizationDataAttributes) HasBannerKey() bool`
+
+HasBannerKey returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox/headers"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/messenger/evtypes"
+	"github.com/netbill/organizations-svc/pkg/evtypes"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -38,7 +38,7 @@ func (o *Outbound) WriteOrganizationCreated(
 				{Key: headers.EventID, Value: []byte(uuid.New().String())},
 				{Key: headers.EventType, Value: []byte(evtypes.OrganizationCreatedEvent)},
 				{Key: headers.EventVersion, Value: []byte("1")},
-				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.Producer, Value: []byte(o.groupID)},
 				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -75,7 +75,7 @@ func (o *Outbound) WriteOrganizationUpdated(
 				{Key: headers.EventID, Value: []byte(uuid.New().String())},
 				{Key: headers.EventType, Value: []byte(evtypes.OrganizationUpdatedEvent)},
 				{Key: headers.EventVersion, Value: []byte("1")},
-				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.Producer, Value: []byte(o.groupID)},
 				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -109,7 +109,7 @@ func (o *Outbound) WriteOrganizationDeleted(
 				{Key: headers.EventID, Value: []byte(uuid.New().String())},
 				{Key: headers.EventType, Value: []byte(evtypes.OrganizationDeletedEvent)},
 				{Key: headers.EventVersion, Value: []byte("1")},
-				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.Producer, Value: []byte(o.groupID)},
 				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -143,7 +143,7 @@ func (o *Outbound) WriteOrganizationActivated(
 				{Key: headers.EventID, Value: []byte(uuid.New().String())},
 				{Key: headers.EventType, Value: []byte(evtypes.OrganizationActivatedEvent)},
 				{Key: headers.EventVersion, Value: []byte("1")},
-				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.Producer, Value: []byte(o.groupID)},
 				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},
@@ -177,7 +177,7 @@ func (o *Outbound) WriteOrganizationDeactivated(
 				{Key: headers.EventID, Value: []byte(uuid.New().String())},
 				{Key: headers.EventType, Value: []byte(evtypes.OrganizationDeactivatedEvent)},
 				{Key: headers.EventVersion, Value: []byte("1")},
-				{Key: headers.Producer, Value: []byte(evtypes.OrganizationsSvcGroup)},
+				{Key: headers.Producer, Value: []byte(o.groupID)},
 				{Key: headers.ContentType, Value: []byte("application/json")},
 			},
 		},

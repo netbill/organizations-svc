@@ -25,12 +25,13 @@ properties:
             items:
               type: object
               required:
-                - code
+                - id
                 - status
               properties:
-                code:
+                id:
                   type: string
-                  description: "permission code"
+                  format: uuid
+                  description: "permission id"
                 status:
                   type: boolean
                   description: "The new status of the permission for the role"

@@ -7,7 +7,7 @@ CREATE TABLE profiles (
     username    VARCHAR(32) NOT NULL UNIQUE,
     official    BOOLEAN NOT NULL DEFAULT FALSE,
     pseudonym   VARCHAR(128),
-    avatar      TEXT,
+    avatar_key  TEXT,
 
     source_created_at  TIMESTAMPTZ NOT NULL,
     source_updated_at  TIMESTAMPTZ NOT NULL,
@@ -24,8 +24,8 @@ CREATE TABLE organizations (
     id         UUID                  PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     status     organization_status   NOT NULL DEFAULT 'active',
     name       VARCHAR(255)          NOT NULL,
-    icon       TEXT,
-    banner     TEXT,
+    icon_key   TEXT,
+    banner_key TEXT,
     max_roles  INT                   NOT NULL DEFAULT 100 CHECK ( max_roles > 0 ),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

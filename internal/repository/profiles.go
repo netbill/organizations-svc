@@ -18,7 +18,7 @@ type ProfileRow struct {
 	Official  bool      `db:"official"`
 
 	Pseudonym *string `db:"pseudonym,omitempty"`
-	Avatar    *string `db:"avatar,omitempty"`
+	AvatarKey *string `db:"avatar_key,omitempty"`
 
 	SourceCreatedAt  time.Time `db:"source_created_at"`
 	SourceUpdatedAt  time.Time `db:"source_updated_at"`
@@ -36,7 +36,7 @@ func (r ProfileRow) ToModel() models.Profile {
 		Username:  r.Username,
 		Official:  r.Official,
 		Pseudonym: r.Pseudonym,
-		Avatar:    r.Avatar,
+		AvatarKey: r.AvatarKey,
 		CreatedAt: r.SourceCreatedAt,
 		UpdatedAt: r.SourceUpdatedAt,
 	}
@@ -54,8 +54,8 @@ type ProfilesQ interface {
 
 	UpdateUsername(username string) ProfilesQ
 	UpdateOfficial(official bool) ProfilesQ
-	UpdatePseudonym(v *string) ProfilesQ
-	UpdateAvatar(avatar *string) ProfilesQ
+	UpdatePseudonym(pseudo *string) ProfilesQ
+	UpdateAvatarKey(avatar *string) ProfilesQ
 	UpdateSourceUpdatedAt(v time.Time) ProfilesQ
 
 	FilterByAccountID(accountID ...uuid.UUID) ProfilesQ
@@ -64,13 +64,16 @@ type ProfilesQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r *Repository) CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error) {
-	row, err := r.profilesQ().Insert(ctx, ProfileRow{
+func (r *Repository) CreateProfile(
+	ctx context.Context,
+	profile models.Profile,
+) (models.Profile, error) {
+	row, err := r.ProfilesSql.New().Insert(ctx, ProfileRow{
 		AccountID:       profile.AccountID,
 		Username:        profile.Username,
 		Official:        profile.Official,
 		Pseudonym:       profile.Pseudonym,
-		Avatar:          profile.Avatar,
+		AvatarKey:       profile.AvatarKey,
 		SourceUpdatedAt: profile.UpdatedAt,
 		SourceCreatedAt: profile.CreatedAt,
 	})
@@ -81,24 +84,36 @@ func (r *Repository) CreateProfile(ctx context.Context, profile models.Profile) 
 	return row.ToModel(), nil
 }
 
-func (r *Repository) UpdateProfile(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error) {
-	row, err := r.profilesQ().
+func (r *Repository) UpdateProfile(
+	ctx context.Context,
+	accountID uuid.UUID,
+	params profile.UpdateParams,
+) (models.Profile, error) {
+	row, err := r.ProfilesSql.New().
 		FilterByAccountID(accountID).
 		UpdateUsername(params.Username).
 		UpdateOfficial(params.Official).
 		UpdatePseudonym(params.Pseudonym).
-		UpdateAvatar(params.Avatar).
+		UpdateAvatarKey(params.AvatarKey).
 		UpdateSourceUpdatedAt(params.UpdatedAt).
 		UpdateOne(ctx)
 	if err != nil {
 		return models.Profile{}, fmt.Errorf("failed to update profile, cause: %w", err)
 	}
+	if row.IsNil() {
+		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
+			fmt.Errorf("profile with account ID %s not found", accountID),
+		)
+	}
 
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (models.Profile, error) {
-	row, err := r.profilesQ().FilterByAccountID(accountID).Get(ctx)
+func (r *Repository) GetProfileByAccountID(
+	ctx context.Context,
+	accountID uuid.UUID,
+) (models.Profile, error) {
+	row, err := r.ProfilesSql.New().FilterByAccountID(accountID).Get(ctx)
 	if err != nil {
 		return models.Profile{}, fmt.Errorf("failed to get profile by account ID, cause: %w", err)
 	}
@@ -111,8 +126,11 @@ func (r *Repository) GetProfileByAccountID(ctx context.Context, accountID uuid.U
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetProfileByUsername(ctx context.Context, username string) (models.Profile, error) {
-	row, err := r.profilesQ().FilterByUsername(username).Get(ctx)
+func (r *Repository) GetProfileByUsername(
+	ctx context.Context,
+	username string,
+) (models.Profile, error) {
+	row, err := r.ProfilesSql.New().FilterByUsername(username).Get(ctx)
 	if err != nil {
 		return models.Profile{}, fmt.Errorf("failed to get profile by username, cause: %w", err)
 	}
@@ -125,8 +143,11 @@ func (r *Repository) GetProfileByUsername(ctx context.Context, username string) 
 	return row.ToModel(), nil
 }
 
-func (r *Repository) DeleteProfileByAccountID(ctx context.Context, accountID uuid.UUID) error {
-	err := r.profilesQ().FilterByAccountID(accountID).Delete(ctx)
+func (r *Repository) DeleteProfileByAccountID(
+	ctx context.Context,
+	accountID uuid.UUID,
+) error {
+	err := r.ProfilesSql.New().FilterByAccountID(accountID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete profile by account ID, cause: %w", err)
 	}

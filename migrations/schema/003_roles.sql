@@ -47,10 +47,10 @@ SET code = EXCLUDED.code,
 
 -- +migrate Down
 CREATE TABLE organization_role_permission_links (
-    role_id         UUID         NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
-    permission_code VARCHAR(255) NOT NULL REFERENCES organization_role_permissions (code) ON DELETE RESTRICT,
+    role_id         UUID NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
+    permission_id   UUID NOT NULL REFERENCES organization_role_permissions (id) ON DELETE RESTRICT,
 
-    PRIMARY KEY (role_id, permission_code)
+    PRIMARY KEY (role_id, permission_id)
 );
 
 -- +migrate Down

@@ -5,62 +5,62 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"io"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	awscfg "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/netbill/awsx"
 )
 
 type Config struct {
-	Link struct {
-		TTL time.Duration `json:"ttl"`
-	} `json:"link"`
-	Organization struct {
-		Icon struct {
-			AllowedFormats   []string `mapstructure:"allowed_formats" required:"true"`
-			MaxWidth         int      `mapstructure:"max_width" required:"true"`
-			MaxHeight        int      `mapstructure:"max_height" required:"true"`
-			ContentLengthMax int      `mapstructure:"content_length_max" required:"true"`
-		} `mapstructure:"icon"`
-		Banner struct {
-			AllowedFormats   []string `mapstructure:"allowed_formats" required:"true"`
-			MaxWidth         int      `mapstructure:"max_width" required:"true"`
-			MaxHeight        int      `mapstructure:"max_height" required:"true"`
-			ContentLengthMax int      `mapstructure:"content_length_max" required:"true"`
-		}
-	} `mapstructure:"organization"`
-}
+	Aws struct {
+		BucketName      string `mapstructure:"bucket_name"`
+		Region          string `mapstructure:"region"`
+		AccessKeyID     string `mapstructure:"access_key_id"`
+		SecretAccessKey string `mapstructure:"secret_access_key"`
+		SessionToken    string `mapstructure:"session_token"`
+	} `mapstructure:"aws"`
 
-type Bucket struct {
-	s3     storage
-	config Config
-}
-
-func New(s3 storage, config Config) Bucket {
-	return Bucket{
-		s3:     s3,
-		config: config,
+	Media struct {
+		Link struct {
+			TTL time.Duration `mapstructure:"ttl"`
+		} `mapstructure:"link"`
+		Organization struct {
+			Icon   awsx.ImageValidator `mapstructure:"icon"`
+			Banner awsx.ImageValidator `mapstructure:"banner"`
+		} `mapstructure:"organization"`
 	}
 }
 
-type storage interface {
-	PresignPut(
-		ctx context.Context,
-		key string,
-		ttl time.Duration,
-	) (uploadURL, getUrl string, error error)
+type Bucket struct {
+	s3     awsx.Bucket
+	config Config
+}
 
-	HeadObject(
-		ctx context.Context,
-		key string,
-	) (*s3.HeadObjectOutput, error)
+func New(config Config) (Bucket, error) {
+	cfg, err := awscfg.LoadDefaultConfig(
+		context.Background(),
+		awscfg.WithRegion(config.Aws.Region),
+		awscfg.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(
+				config.Aws.AccessKeyID,
+				config.Aws.SecretAccessKey,
+				config.Aws.SessionToken,
+			),
+		),
+	)
+	if err != nil {
+		return Bucket{}, err
+	}
 
-	GetObjectRange(
-		ctx context.Context,
-		key string,
-		bytes int64,
-	) (body io.ReadCloser, err error)
+	bucket := awsx.New(config.Aws.BucketName, cfg)
 
-	CopyObject(ctx context.Context, tmplKey, finalKey string) (string, error)
-	DeleteObject(ctx context.Context, key string) error
+	return Bucket{
+		s3:     bucket,
+		config: config,
+	}, nil
+}
+
+func ptrStrEq(a, b *string) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
 }

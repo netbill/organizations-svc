@@ -158,17 +158,16 @@ func (q *orgMembers) FilterByRoleRankDown(rankDown uint) repository.OrgMembersQ 
 	return q
 }
 
-func (q *orgMembers) FilterByPermissionCode(code string) repository.OrgMembersQ {
+func (q *orgMembers) FilterByPermissionID(permissionID uuid.UUID) repository.OrgMembersQ {
 	expr := sq.Expr(`
 		EXISTS (
 			SELECT 1
 			FROM organization_member_roles mr
 			JOIN organization_role_permission_links rp ON rp.role_id = mr.role_id
-			JOIN organization_role_permissions perm ON perm.id = rp.permission_id
 			WHERE mr.member_id = m.id
-			  AND perm.code = ?
+			  AND rp.permission_id = ?
 		)
-	`, code)
+	`, permissionID)
 
 	q.selector = q.selector.Where(expr)
 	q.counter = q.counter.Where(expr)

@@ -2,11 +2,10 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
@@ -27,37 +26,16 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 
 	log = log.WithField("role_id", req.Data.Id)
 
-	permissions := models.OrgRolePermissionEnable{}
+	params := role.SetForRole{}
 	for _, p := range req.Data.Attributes.Permissions {
-		switch p.Code {
-		case models.RolePermissionOrgUpdate:
-			permissions.OrgUpdate = true
-		case models.RolePermissionInvitesManage:
-			permissions.InvitesManage = true
-		case models.RolePermissionMembersDelete:
-			permissions.MembersDelete = true
-		case models.RolePermissionMembersUpdate:
-			permissions.MembersUpdate = true
-		case models.RolePermissionRolesManage:
-			permissions.RolesManage = true
-		case models.RolePermissionPlaceCreate:
-			permissions.PlaceCreate = true
-		case models.RolePermissionPlaceDelete:
-			permissions.PlaceDelete = true
-		case models.RolePermissionPlaceUpdate:
-			permissions.PlaceUpdate = true
-		default:
-			log.Info("invalid permission code")
-			c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid permission code: %s", p.Code))...)
-			return
-		}
+		params[p.Id] = p.Status
 	}
 
-	role, perm, err := c.modules.Permissions.SetForRole(
+	role, perm, err := c.modules.Role.UpdatePermissions(
 		r.Context(),
 		scope.AccountActor(r),
 		req.Data.Id,
-		permissions,
+		params,
 	)
 	switch {
 	case errors.Is(err, errx.ErrorRoleNotFound):

@@ -88,6 +88,23 @@ components:
           type: string
       required:
       - self
+    UploadResourcesLink:
+      properties:
+        key:
+          description: Key for the avatar in the storage service
+          type: string
+        upload_url:
+          description: Pre-signed URL for uploading the avatar
+          format: uri
+          type: string
+        preload_url:
+          description: URL for preloading the avatar after upload
+          format: uri
+          type: string
+      required:
+      - key
+      - preload_url
+      - upload_url
     Organization:
       properties:
         data:
@@ -105,10 +122,10 @@ components:
       required:
       - data
       - links
-    UpdateOrganizationLinks:
+    UploadOrgMediaLinks:
       properties:
         data:
-          $ref: "#/components/schemas/UpdateOrganizationLinks_data"
+          $ref: "#/components/schemas/UploadOrgMediaLinks_data"
         included:
           items:
             $ref: "#/components/schemas/Organization/properties/data"
@@ -133,6 +150,18 @@ components:
       required:
       - data
       - links
+    DeleteUploadOrgIcon:
+      properties:
+        data:
+          $ref: "#/components/schemas/DeleteUploadOrgIcon_data"
+      required:
+      - data
+    DeleteUploadOrgBanner:
+      properties:
+        data:
+          $ref: "#/components/schemas/DeleteUploadOrgBanner_data"
+      required:
+      - data
     Invite:
       properties:
         data:
@@ -216,15 +245,13 @@ components:
         name:
           description: The name of the organization
           type: string
-        delete_icon:
-          description: Flag to indicate if the organization's icon should be deleted
-          type: boolean
-        delete_banner:
-          description: Flag to indicate if the organization's banner should be deleted
-          type: boolean
+        icon_key:
+          description: The media key for the organization's icon
+          type: string
+        banner_key:
+          description: The media key for the organization's banner
+          type: string
       required:
-      - delete_banner
-      - delete_icon
       - name
     UpdateOrganization_data:
       properties:
@@ -391,14 +418,15 @@ components:
       - type
     UpdateRolePermissions_data_attributes_permissions_inner:
       properties:
-        code:
-          description: permission code
+        id:
+          description: permission id
+          format: uuid
           type: string
         status:
           description: The new status of the permission for the role
           type: boolean
       required:
-      - code
+      - id
       - status
     UpdateRolePermissions_data_attributes:
       properties:
@@ -460,34 +488,16 @@ components:
       - attributes
       - id
       - type
-    UpdateOrganizationLinks_data_attributes:
+    UploadOrgMediaLinks_data_attributes:
       properties:
-        upload_token:
-          description: JWT upload session token
-          type: string
-        icon_upload_url:
-          description: Pre-signed PUT URL for icon upload
-          format: uri
-          type: string
-        icon_get_url:
-          description: Pre-signed GET URL to read uploaded icon
-          format: uri
-          type: string
-        banner_upload_url:
-          description: Pre-signed PUT URL for banner upload
-          format: uri
-          type: string
-        banner_get_url:
-          description: Pre-signed GET URL to read uploaded banner
-          format: uri
-          type: string
+        icon:
+          $ref: "#/components/schemas/UploadResourcesLink"
+        banner:
+          $ref: "#/components/schemas/UploadResourcesLink"
       required:
-      - banner_get_url
-      - banner_upload_url
-      - icon_get_url
-      - icon_upload_url
-      - upload_token
-    UpdateOrganizationLinks_data_relationships_organization_data:
+      - banner
+      - icon
+    UploadOrgMediaLinks_data_relationships_organization_data:
       properties:
         id:
           description: organization id
@@ -500,30 +510,30 @@ components:
       required:
       - id
       - type
-    UpdateOrganizationLinks_data_relationships_organization:
+    UploadOrgMediaLinks_data_relationships_organization:
       properties:
         data:
-          $ref: "#/components/schemas/UpdateOrganizationLinks_data_relationships_organization_data"
+          $ref: "#/components/schemas/UploadOrgMediaLinks_data_relationships_organization_data"
       required:
       - data
-    UpdateOrganizationLinks_data_relationships:
+    UploadOrgMediaLinks_data_relationships:
       properties:
         organization:
-          $ref: "#/components/schemas/UpdateOrganizationLinks_data_relationships_organization"
-    UpdateOrganizationLinks_data:
+          $ref: "#/components/schemas/UploadOrgMediaLinks_data_relationships_organization"
+    UploadOrgMediaLinks_data:
       properties:
         id:
-          description: Upload session id
+          description: organization id
           format: uuid
           type: string
         type:
           enum:
-          - organization_avatar_upload
+          - organization_upload_links
           type: string
         attributes:
-          $ref: "#/components/schemas/UpdateOrganizationLinks_data_attributes"
+          $ref: "#/components/schemas/UploadOrgMediaLinks_data_attributes"
         relationships:
-          $ref: "#/components/schemas/UpdateOrganizationLinks_data_relationships"
+          $ref: "#/components/schemas/UploadOrgMediaLinks_data_relationships"
       required:
       - attributes
       - id
@@ -583,6 +593,52 @@ components:
           type: string
         attributes:
           $ref: "#/components/schemas/Member_data_attributes"
+      required:
+      - attributes
+      - id
+      - type
+    DeleteUploadOrgIcon_data_attributes:
+      properties:
+        icon_key:
+          description: icon media key
+          type: string
+      required:
+      - icon_key
+    DeleteUploadOrgIcon_data:
+      properties:
+        id:
+          description: organization id
+          format: uuid
+          type: string
+        type:
+          enum:
+          - delete_organization_upload_icon
+          type: string
+        attributes:
+          $ref: "#/components/schemas/DeleteUploadOrgIcon_data_attributes"
+      required:
+      - attributes
+      - id
+      - type
+    DeleteUploadOrgBanner_data_attributes:
+      properties:
+        banner_key:
+          description: icon media key
+          type: string
+      required:
+      - banner_key
+    DeleteUploadOrgBanner_data:
+      properties:
+        id:
+          description: organization id
+          format: uuid
+          type: string
+        type:
+          enum:
+          - delete_organization_upload_banner
+          type: string
+        attributes:
+          $ref: "#/components/schemas/DeleteUploadOrgBanner_data_attributes"
       required:
       - attributes
       - id

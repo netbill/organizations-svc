@@ -10,7 +10,6 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
-	"github.com/netbill/organizations-svc/internal/core/modules/perm"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/messenger"
@@ -41,9 +40,10 @@ func StartServices(ctx context.Context, log *logium.Entry, wg *sync.WaitGroup, c
 	}
 	db := pgdbx.NewDB(pool)
 
-	s3 := newAws(cfg.S3.AWS)
-
-	s3Bucket := bucket.New(s3, cfg.S3.Media)
+	s3Bucket, err := bucket.New(cfg.S3)
+	if err != nil {
+		log.Fatal("failed to create s3 bucket", "error", err)
+	}
 
 	orgInvitesSql := pg.NewOrgInvitesQ(db)
 	orgMemberRolesSql := pg.NewOrgMemberRolesQ(db)
@@ -72,12 +72,11 @@ func StartServices(ctx context.Context, log *logium.Entry, wg *sync.WaitGroup, c
 	kafkaProducer := msg.NewProducer()
 	kafkaOutbound := outbound.New(kafkaProducer)
 
-	tokenManager := tokenmanager.New(ServiceName, cfg.Auth.Tokens)
+	tokenManager := tokenmanager.New(cfg.Auth.Tokens)
 
-	orgSvc := organization.New(repo, kafkaOutbound, tokenManager, s3Bucket)
+	orgSvc := organization.New(repo, kafkaOutbound, s3Bucket)
 	memberSvc := member.New(repo, kafkaOutbound)
 	roleSvc := role.New(repo, kafkaOutbound)
-	permSvc := perm.New(repo, kafkaOutbound)
 	inviteSvc := invite.New(repo, kafkaOutbound)
 	profileSvc := profile.New(repo)
 
@@ -87,7 +86,6 @@ func StartServices(ctx context.Context, log *logium.Entry, wg *sync.WaitGroup, c
 		Role:         roleSvc,
 		Invite:       inviteSvc,
 		Member:       memberSvc,
-		Permissions:  permSvc,
 	}, responser)
 	mdll := middlewares.New(responser, tokenManager)
 	router := rest.New(mdll, ctrl)
@@ -96,7 +94,9 @@ func StartServices(ctx context.Context, log *logium.Entry, wg *sync.WaitGroup, c
 		router.Run(ctx, log, cfg.Rest)
 	})
 
-	run(func() { msg.RunInbox(ctx, inbound.New(profileSvc)) })
+	run(func() {
+		msg.RunInbox(ctx, inbound.New(inbound.Modules{Profile: profileSvc}))
+	})
 
 	run(func() { msg.RunConsumer(ctx) })
 

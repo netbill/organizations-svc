@@ -2,38 +2,34 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/rest/request"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
 )
 
 const operationDeleteUploadOrganizationBanner = "delete_upload_organization_banner"
 
-func (c *Controller) DeleteUploadOrganizationBanner(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) DeleteOrganizationUploadBanner(w http.ResponseWriter, r *http.Request) {
 	log := scope.Log(r).WithOperation(operationDeleteUploadOrganizationBanner)
 
-	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
+	req, err := request.DeleteUploadOrgBanner(r)
 	if err != nil {
-		log.WithError(err).Info("invalid organization id")
-		c.responser.RenderErr(w, problems.BadRequest(validation.Errors{
-			"query": fmt.Errorf("invalid organization id: %s", chi.URLParam(r, "organization_id")),
-		})...)
+		log.WithError(err).Info("invalid delete upload organization banner request")
+		c.responser.RenderErr(w, problems.BadRequest(err)...)
+
 		return
 	}
 
-	log = log.WithField("organization_id", organizationID)
+	log = log.WithField("organization_id", req.Data.Id)
 
-	err = c.modules.Organization.DeleteUpdateBannerInSession(
+	err = c.modules.Organization.DeleteOrgUploadBanner(
 		r.Context(),
 		scope.AccountActor(r),
-		organizationID,
-		scope.UploadScope(r),
+		req.Data.Id,
+		req.Data.Attributes.BannerKey,
 	)
 	switch {
 	case errors.Is(err, errx.ErrorOrganizationNotFound):

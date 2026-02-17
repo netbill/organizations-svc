@@ -15,10 +15,10 @@ import (
 )
 
 const organizationsTable = "organizations"
-const organizationsColumns = "id, status, name, icon, banner, max_roles, created_at, updated_at"
+const organizationsColumns = "id, status, name, icon_key, banner, max_roles, created_at, updated_at"
 
 func scanOrganization(row sq.RowScanner) (o repository.OrganizationRow, err error) {
-	var icon pgtype.Text
+	var iconKey pgtype.Text
 	var banner pgtype.Text
 	var maxRoles int32
 
@@ -26,7 +26,7 @@ func scanOrganization(row sq.RowScanner) (o repository.OrganizationRow, err erro
 		&o.ID,
 		&o.Status,
 		&o.Name,
-		&icon,
+		&iconKey,
 		&banner,
 		&maxRoles,
 		&o.CreatedAt,
@@ -39,11 +39,11 @@ func scanOrganization(row sq.RowScanner) (o repository.OrganizationRow, err erro
 		return repository.OrganizationRow{}, fmt.Errorf("scanning organization: %w", err)
 	}
 
-	if icon.Valid {
-		o.Icon = &icon.String
+	if iconKey.Valid {
+		o.IconKey = &iconKey.String
 	}
 	if banner.Valid {
-		o.Banner = &banner.String
+		o.BannerKey = &banner.String
 	}
 
 	// max_roles в БД обычно int, в модели тебе нужен uint
@@ -82,7 +82,9 @@ func (q *organizations) New() repository.OrganizationsQ {
 
 func (q *organizations) Insert(ctx context.Context, data repository.OrganizationRow) (repository.OrganizationRow, error) {
 	query, args, err := q.inserter.SetMap(map[string]any{
-		"name": data.Name,
+		"icon_key":   data.IconKey,
+		"banner_key": data.BannerKey,
+		"name":       data.Name,
 	}).Suffix("RETURNING " + organizationsColumns).ToSql()
 	if err != nil {
 		return repository.OrganizationRow{}, fmt.Errorf("building insert query for %s: %w", organizationsTable, err)
@@ -204,23 +206,23 @@ func (q *organizations) UpdateMany(ctx context.Context) (int64, error) {
 	return res.RowsAffected(), nil
 }
 
-func (q *organizations) UpdateName(name string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("name", name)
+func (q *organizations) UpdateName(v string) repository.OrganizationsQ {
+	q.updater = q.updater.Set("name", v)
 	return q
 }
 
-func (q *organizations) UpdateStatus(status string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("status", status)
+func (q *organizations) UpdateStatus(v string) repository.OrganizationsQ {
+	q.updater = q.updater.Set("status", v)
 	return q
 }
 
-func (q *organizations) UpdateIcon(icon *string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("icon", icon)
+func (q *organizations) UpdateIconKey(v *string) repository.OrganizationsQ {
+	q.updater = q.updater.Set("icon", v)
 	return q
 }
 
-func (q *organizations) UpdateBanner(banner *string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("banner", banner)
+func (q *organizations) UpdateBannerKey(v *string) repository.OrganizationsQ {
+	q.updater = q.updater.Set("banner", v)
 	return q
 }
 

@@ -4,39 +4,39 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/resources"
+	resources2 "github.com/netbill/organizations-svc/pkg/resources"
 	"github.com/netbill/restkit/pagi"
 )
 
-func Role(mod models.Role, perms *models.OrgRolePermissionDictWithDetails) resources.Role {
-	res := resources.Role{
-		Data: resources.RoleData{
-			Id:   mod.ID,
+func Role(role models.Role, perms *models.OrgRolePermissionsWithDetailsForRole) resources2.Role {
+	res := resources2.Role{
+		Data: resources2.RoleData{
+			Id:   role.ID,
 			Type: "role",
-			Attributes: resources.RoleDataAttributes{
-				OrganizationId: mod.OrganizationID,
-				Rank:           mod.Rank,
-				Name:           mod.Name,
-				Description:    mod.Description,
-				Color:          mod.Color,
-				CreatedAt:      mod.CreatedAt,
-				UpdatedAt:      mod.UpdatedAt,
+			Attributes: resources2.RoleDataAttributes{
+				OrganizationId: role.OrganizationID,
+				Rank:           role.Rank,
+				Name:           role.Name,
+				Description:    role.Description,
+				Color:          role.Color,
+				CreatedAt:      role.CreatedAt,
+				UpdatedAt:      role.UpdatedAt,
 			},
 		},
 	}
 
 	if perms != nil {
-		ps := make([]resources.RoleDataIncludedPermissionsInner, 0, models.GetOrgRolePermissionLength())
+		ps := make([]resources2.RoleDataIncludedPermissionsInner, 0, len(*perms))
 
-		for code, details := range perms.ToMap() {
-			ps = append(ps, resources.RoleDataIncludedPermissionsInner{
-				Code:        code,
+		for _, details := range *perms {
+			ps = append(ps, resources2.RoleDataIncludedPermissionsInner{
+				Code:        details.Code,
 				Description: details.Description,
 				Enabled:     details.Enabled,
 			})
 		}
 
-		res.Data.Included = &resources.RoleDataIncluded{
+		res.Data.Included = &resources2.RoleDataIncluded{
 			Permissions: ps,
 		}
 	}
@@ -44,17 +44,17 @@ func Role(mod models.Role, perms *models.OrgRolePermissionDictWithDetails) resou
 	return res
 }
 
-func Roles(r *http.Request, mods pagi.Page[[]models.Role]) resources.RolesCollection {
-	data := make([]resources.RoleData, len(mods.Data))
+func Roles(r *http.Request, mods pagi.Page[[]models.Role]) resources2.RolesCollection {
+	data := make([]resources2.RoleData, len(mods.Data))
 	for i, mod := range mods.Data {
 		data[i] = Role(mod, nil).Data
 	}
 
 	links := pagi.BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
 
-	return resources.RolesCollection{
+	return resources2.RolesCollection{
 		Data: data,
-		Links: resources.PaginationData{
+		Links: resources2.PaginationData{
 			First: links.First,
 			Last:  links.Last,
 			Prev:  links.Prev,
@@ -64,16 +64,16 @@ func Roles(r *http.Request, mods pagi.Page[[]models.Role]) resources.RolesCollec
 	}
 }
 
-func RolePermissions(mods []models.OrgRolePermission) resources.RolePermissions {
-	result := make([]resources.RolePermissionsDataInner, len(mods))
+func RolePermissions(mods []models.OrgRolePermission) resources2.RolePermissions {
+	result := make([]resources2.RolePermissionsDataInner, len(mods))
 	for i, mod := range mods {
-		result[i] = resources.RolePermissionsDataInner{
+		result[i] = resources2.RolePermissionsDataInner{
 			Code:        mod.Code,
 			Description: mod.Description,
 		}
 	}
 
-	return resources.RolePermissions{
+	return resources2.RolePermissions{
 		Data: result,
 	}
 }

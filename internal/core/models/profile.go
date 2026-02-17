@@ -15,7 +15,7 @@ type Profile struct {
 	Username  string    `json:"username"`
 	Official  bool      `json:"official"`
 	Pseudonym *string   `json:"pseudonym,omitempty"`
-	Avatar    *string   `json:"avatar,omitempty"`
+	AvatarKey *string   `json:"avatar_key,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

@@ -4,10 +4,32 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
-	"github.com/netbill/organizations-svc/internal/messenger/evtypes"
+	"github.com/netbill/organizations-svc/pkg/evtypes"
 	"github.com/segmentio/kafka-go"
 )
+
+func (i *Inbound) ProfileCreated(
+	ctx context.Context,
+	message kafka.Message,
+) error {
+	var payload evtypes.ProfileCreatedPayload
+	if err := json.Unmarshal(message.Value, &payload); err != nil {
+		return err
+	}
+
+	if _, err := i.modules.Profile.Create(ctx, models.Profile{
+		AccountID: payload.AccountID,
+		Username:  payload.Username,
+		CreatedAt: payload.CreatedAt,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+
+}
 
 func (i *Inbound) ProfileUpdated(
 	ctx context.Context,
@@ -18,12 +40,29 @@ func (i *Inbound) ProfileUpdated(
 		return err
 	}
 
-	if _, err := i.core.profile.Update(ctx, payload.AccountID, profile.UpdateParams{
+	if _, err := i.modules.Profile.Update(ctx, payload.AccountID, profile.UpdateParams{
 		Username:  payload.Username,
-		Official:  payload.Official,
-		Avatar:    payload.Avatar,
 		Pseudonym: payload.Pseudonym,
+		AvatarKey: payload.AvatarKey,
+		Official:  payload.Official,
+		UpdatedAt: payload.UpdatedAt,
 	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (i *Inbound) ProfileDeleted(
+	ctx context.Context,
+	message kafka.Message,
+) error {
+	var payload evtypes.ProfileDeletedPayload
+	if err := json.Unmarshal(message.Value, &payload); err != nil {
+		return err
+	}
+
+	if err := i.modules.Profile.Delete(ctx, payload.AccountID); err != nil {
 		return err
 	}
 

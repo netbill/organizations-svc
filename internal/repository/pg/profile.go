@@ -16,19 +16,19 @@ import (
 
 const profilesTable = "profiles"
 
-const profilesColumns = "account_id, username, official, pseudonym, avatar, source_created_at, source_updated_at, replica_created_at, replica_updated_at"
-const profilesColumnsP = "p.account_id, p.username, p.official, p.pseudonym, p.avatar, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
+const profilesColumns = "account_id, username, official, pseudonym, avatar_key, source_created_at, source_updated_at, replica_created_at, replica_updated_at"
+const profilesColumnsP = "p.account_id, p.username, p.official, p.pseudonym, p.avatar_key, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
 
 func scanProfile(row sq.RowScanner) (p repository.ProfileRow, err error) {
 	var pseudonym pgtype.Text
-	var avatar pgtype.Text
+	var avatarKey pgtype.Text
 
 	err = row.Scan(
 		&p.AccountID,
 		&p.Username,
 		&p.Official,
 		&pseudonym,
-		&avatar,
+		&avatarKey,
 		&p.SourceCreatedAt,
 		&p.SourceUpdatedAt,
 		&p.ReplicaCreatedAt,
@@ -44,8 +44,8 @@ func scanProfile(row sq.RowScanner) (p repository.ProfileRow, err error) {
 	if pseudonym.Valid {
 		p.Pseudonym = &pseudonym.String
 	}
-	if avatar.Valid {
-		p.Avatar = &avatar.String
+	if avatarKey.Valid {
+		p.AvatarKey = &avatarKey.String
 	}
 
 	return p, nil
@@ -84,7 +84,7 @@ func (q *profiles) Insert(ctx context.Context, data repository.ProfileRow) (repo
 		"username":          data.Username,
 		"official":          data.Official,
 		"pseudonym":         data.Pseudonym,
-		"avatar":            data.Avatar,
+		"avatar_key":        data.AvatarKey,
 		"source_created_at": data.SourceCreatedAt.UTC(),
 		"source_updated_at": data.SourceUpdatedAt.UTC(),
 		// replica_* могут иметь DEFAULT в схеме, но если ты явно задаёшь — оставляем поведение
@@ -214,23 +214,23 @@ func (q *profiles) UpdateMany(ctx context.Context) (int64, error) {
 	return res.RowsAffected(), nil
 }
 
-func (q *profiles) UpdateUsername(username string) repository.ProfilesQ {
-	q.updater = q.updater.Set("username", username)
+func (q *profiles) UpdateUsername(v string) repository.ProfilesQ {
+	q.updater = q.updater.Set("username", v)
 	return q
 }
 
-func (q *profiles) UpdateOfficial(official bool) repository.ProfilesQ {
-	q.updater = q.updater.Set("official", official)
+func (q *profiles) UpdateOfficial(v bool) repository.ProfilesQ {
+	q.updater = q.updater.Set("official", v)
 	return q
 }
 
-func (q *profiles) UpdatePseudonym(pseudonym *string) repository.ProfilesQ {
-	q.updater = q.updater.Set("pseudonym", pseudonym)
+func (q *profiles) UpdatePseudonym(v *string) repository.ProfilesQ {
+	q.updater = q.updater.Set("pseudonym", v)
 	return q
 }
 
-func (q *profiles) UpdateAvatar(avatar *string) repository.ProfilesQ {
-	q.updater = q.updater.Set("avatar", avatar)
+func (q *profiles) UpdateAvatarKey(v *string) repository.ProfilesQ {
+	q.updater = q.updater.Set("avatar_key", v)
 	return q
 }
 

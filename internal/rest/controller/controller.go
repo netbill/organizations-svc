@@ -10,7 +10,6 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
-	"github.com/netbill/organizations-svc/internal/core/modules/perm"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/restkit/pagi"
 )
@@ -37,32 +36,28 @@ type organizationSvc interface {
 		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
 
-	OpenUpdateSession(
+	CreateOrgUploadMediaLinks(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
-	) (models.Organization, models.UpdateOrganizationMedia, error)
-	UpdateWithSession(
+	) (models.Organization, models.UploadOrgMediaLinks, error)
+	Update(
 		ctx context.Context,
 		initiator models.AccountActor,
-		scope models.UploadScope,
 		organizationID uuid.UUID,
 		params organization.UpdateParams,
 	) (models.Organization, error)
-	DeleteUpdateIconInSession(
+	DeleteOrgUploadIcon(
 		ctx context.Context,
-		initiator models.AccountActor, organizationID, uploadSessionID uuid.UUID,
-	) error
-	DeleteUpdateBannerInSession(
-		ctx context.Context,
-		initiator models.AccountActor,
-		organizationID, uploadSessionID uuid.UUID,
-	) error
-	CancelUpdateSession(
-		ctx context.Context,
-		initiator models.AccountActor,
-		uploadSessionID uuid.UUID,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
+		key string,
+	) error
+	DeleteOrgUploadBanner(
+		ctx context.Context,
+		actor models.AccountActor,
+		organizationID uuid.UUID,
+		key string,
 	) error
 
 	Activate(
@@ -213,21 +208,20 @@ type roleSvc interface {
 		initiator models.AccountActor,
 		memberID, roleID uuid.UUID,
 	) error
-}
 
-type rolePermissionSvc interface {
-	GetAll(ctx context.Context) ([]models.OrgRolePermission, error)
+	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
 
-	SetForRole(
+	UpdatePermissions(
 		ctx context.Context,
 		initiator models.AccountActor,
 		roleID uuid.UUID,
-		permissions perm.SetForRole,
+		permissions role.SetForRole,
 	) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error)
 }
 
 type responser interface {
-	Render(w http.ResponseWriter, status int, res ...interface{})
+	Status(w http.ResponseWriter, status int)
+	Render(w http.ResponseWriter, status int, res interface{})
 	RenderErr(w http.ResponseWriter, errs ...error)
 }
 
@@ -235,7 +229,6 @@ type Modules struct {
 	Organization organizationSvc
 	Member       memberSvc
 	Role         roleSvc
-	Permissions  rolePermissionSvc
 	Invite       inviteSvc
 }
 

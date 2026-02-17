@@ -12,31 +12,24 @@ const (
 )
 
 type Organization struct {
-	ID       uuid.UUID `json:"id"`
-	Status   string    `json:"status"`
-	Name     string    `json:"name"`
-	Icon     *string   `json:"icon,omitempty"`
-	Banner   *string   `json:"banner,omitempty"`
-	MaxRoles uint      `json:"max_roles"`
+	ID        uuid.UUID `json:"id"`
+	Status    string    `json:"status"`
+	Name      string    `json:"name"`
+	IconKey   *string   `json:"icon_key,omitempty"`
+	BannerKey *string   `json:"banner_key,omitempty"`
+	MaxRoles  uint      `json:"max_roles"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type OrganizationMedia struct {
-	Icon   *string `json:"icon,omitempty"`
-	Banner *string `json:"banner,omitempty"`
+type UploadOrgMediaLinks struct {
+	Icon   UploadMediaLink `json:"icon"`
+	Banner UploadMediaLink `json:"banner"`
 }
 
-type OrganizationUploadMediaLinks struct {
-	IconUploadURL   string `json:"icon_upload_url"`
-	IconGetURL      string `json:"icon_get_url"`
-	BannerUploadURL string `json:"banner_upload_url"`
-	BannerGetURL    string `json:"banner_get_url"`
-}
-
-type UpdateOrganizationMedia struct {
-	Links           OrganizationUploadMediaLinks `json:"links"`
-	UploadSessionID uuid.UUID                    `json:"upload_session_id"`
-	UploadToken     string                       `json:"upload_token"`
+type UploadMediaLink struct {
+	Key        string `json:"key"`
+	UploadURL  string `json:"upload_url"`
+	PreloadUrl string `json:"preload_url"`
 }

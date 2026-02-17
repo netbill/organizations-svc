@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/netbill/organizations-svc/resources"
+	"github.com/netbill/organizations-svc/pkg/resources"
 )
 
 func newDecodeError(what string, err error) error {

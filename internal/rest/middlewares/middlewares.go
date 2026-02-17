@@ -7,13 +7,13 @@ import (
 )
 
 type responser interface {
-	Render(w http.ResponseWriter, status int, res ...interface{})
+	Status(w http.ResponseWriter, status int)
+	Render(w http.ResponseWriter, status int, res interface{})
 	RenderErr(w http.ResponseWriter, errs ...error)
 }
 
 type tokenManager interface {
 	ParseAccountAuthAccessClaims(token string) (tokens.AccountAuthClaims, error)
-	ParseUploadOrganizationContentToken(token string) (tokens.UploadContentClaims, error)
 }
 
 type Provider struct {

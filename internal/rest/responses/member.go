@@ -4,16 +4,16 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/resources"
+	resources2 "github.com/netbill/organizations-svc/pkg/resources"
 	"github.com/netbill/restkit/pagi"
 )
 
-func Member(mod models.Member) resources.Member {
-	return resources.Member{
-		Data: resources.MemberData{
+func Member(mod models.Member) resources2.Member {
+	return resources2.Member{
+		Data: resources2.MemberData{
 			Id:   mod.ID,
 			Type: "member",
-			Attributes: resources.MemberDataAttributes{
+			Attributes: resources2.MemberDataAttributes{
 				OrganizationId: mod.OrganizationID,
 				AccountId:      mod.AccountID,
 				Head:           mod.Head,
@@ -28,17 +28,17 @@ func Member(mod models.Member) resources.Member {
 	}
 }
 
-func Members(r *http.Request, mods pagi.Page[[]models.Member]) resources.MemberCollection {
-	data := make([]resources.MemberData, len(mods.Data))
+func Members(r *http.Request, mods pagi.Page[[]models.Member]) resources2.MemberCollection {
+	data := make([]resources2.MemberData, len(mods.Data))
 	for i, mod := range mods.Data {
 		data[i] = Member(mod).Data
 	}
 
 	links := pagi.BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
 
-	return resources.MemberCollection{
+	return resources2.MemberCollection{
 		Data: data,
-		Links: resources.PaginationData{
+		Links: resources2.PaginationData{
 			First: links.First,
 			Last:  links.Last,
 			Prev:  links.Prev,

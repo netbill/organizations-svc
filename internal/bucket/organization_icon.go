@@ -1,116 +1,92 @@
 package bucket
 
 import (
-	"bytes"
 	"context"
+	"errors"
 	"fmt"
-	"image"
-	"io"
+	"regexp"
 
 	"github.com/google/uuid"
+	"github.com/netbill/awsx"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func CreateTempOrganizationIconKey(organizationID, sessionID uuid.UUID) string {
-	return fmt.Sprintf("organization/icon/%s/temp/%s", organizationID, sessionID)
+func CreateTempOrganizationIconKey(organizationID uuid.UUID) string {
+	return fmt.Sprintf("organization/icon/%s/temp/%s", organizationID, uuid.New())
 }
 
-func CreateOrganizationIconKey(organizationID uuid.UUID) string {
-	return fmt.Sprintf("organization/icon/%s", organizationID)
+func CreateFinalOrganizationIconKey(organizationID uuid.UUID) string {
+	return fmt.Sprintf("organization/icon/%s/%s", organizationID, uuid.New())
 }
 
-func (b Bucket) GeneratePreloadLinkForOrganizationIcon(
+func (b Bucket) CreateOrganizationIconUploadMediaLinks(
 	ctx context.Context,
-	organizationID, sessionID uuid.UUID,
-) (string, string, error) {
-	uploadIconURL, getIconURL, err := b.s3.PresignPut(
-		ctx,
-		CreateTempOrganizationIconKey(organizationID, sessionID),
-		b.config.Link.TTL,
-	)
+	organizationID uuid.UUID,
+) (models.UploadMediaLink, error) {
+	key := CreateTempOrganizationIconKey(organizationID)
+
+	uploadLink, getLink, err := b.s3.PresignPut(ctx, key, b.config.Media.Link.TTL)
 	if err != nil {
-		return "", "", fmt.Errorf("presigning put for organization icon: %w", err)
+		return models.UploadMediaLink{}, fmt.Errorf("presign put object for organization icon: %w", err)
 	}
 
-	return uploadIconURL, getIconURL, nil
+	return models.UploadMediaLink{
+		Key:        key,
+		PreloadUrl: getLink,
+		UploadURL:  uploadLink,
+	}, nil
 }
 
-func (b Bucket) UpdateOrganizationIcon(
+func (b Bucket) ValidateOrganizationIcon(
 	ctx context.Context,
-	organizationID, sessionID uuid.UUID,
-) (string, error) {
-	finalKey := CreateOrganizationIconKey(organizationID)
-	tempKey := CreateTempOrganizationIconKey(organizationID, sessionID)
-
-	head, err := b.s3.HeadObject(ctx, tempKey)
-	if err != nil {
-		return "", fmt.Errorf("failed to head object for organization icon: %w", err)
-	}
-
-	if head.ContentLength == nil || *head.ContentLength == 0 {
-		return "", errx.ErrorNoContentUploaded.Raise(
-			fmt.Errorf("no content uploaded for organization icon in session %s", sessionID),
-		)
-	}
-
-	rc, err := b.s3.GetObjectRange(ctx, tempKey, 2048)
-	if err != nil {
-		return "", fmt.Errorf("failed to get object range for organization icon: %w", err)
-	}
-	defer rc.Close()
-
-	probe, err := io.ReadAll(rc)
-	if err != nil {
-		return "", fmt.Errorf("failed to read icon probe bytes: %w", err)
-	}
-
-	config, format, err := image.DecodeConfig(bytes.NewReader(probe))
-	if err != nil {
-		return "", fmt.Errorf("decode config: %w", err)
-	}
-
-	if b.config.Organization.Icon.MaxWidth > 0 && config.Width > b.config.Organization.Icon.MaxWidth {
-		return "", errx.ErrorOrganizationIconInvalid.Raise(
-			fmt.Errorf("uploaded organization icon width %d exceeds the maximum allowed width", config.Width),
-		)
-	}
-	if b.config.Organization.Icon.MaxHeight > 0 && config.Height > b.config.Organization.Icon.MaxHeight {
-		return "", errx.ErrorOrganizationIconInvalid.Raise(
-			fmt.Errorf("uploaded organization icon height %d exceeds the maximum allowed height", config.Height),
-		)
-	}
-
-	access := func(values []string, target string) bool {
-		for _, v := range values {
-			if v == target {
-				return true
-			}
-		}
-		return false
-	}
-
-	if !access(b.config.Organization.Icon.AllowedFormats, format) {
-		return "", errx.ErrorOrganizationIconInvalid.Raise(
-			fmt.Errorf("uploaded organization icon format %s is not allowed", format),
-		)
-	}
-
-	res, err := b.s3.CopyObject(ctx, tempKey, finalKey)
-	if err != nil {
-		return "", fmt.Errorf("failed to copy object for organization icon: %w", err)
-	}
-
-	return res, nil
-}
-
-func (b Bucket) CancelUpdateOrganizationIcon(
-	ctx context.Context,
-	organizationID, sessionID uuid.UUID,
+	organizationID uuid.UUID,
+	tempKey string,
 ) error {
-	key := CreateTempOrganizationIconKey(organizationID, sessionID)
+	if err := validateTempOrganizationIconKey(organizationID, tempKey); err != nil {
+		return err
+	}
 
-	if err := b.s3.DeleteObject(ctx, key); err != nil {
-		return fmt.Errorf("deleting temp organization icon object: %w", err)
+	out, err := b.s3.GetObjectRange(ctx, tempKey, 64*1024)
+	switch {
+	case errors.Is(err, awsx.ErrNotFound):
+		return errx.ErrorNoContentUploaded.Raise(
+			fmt.Errorf("organization icon not found for key: %s", tempKey),
+		)
+	case err != nil:
+		return fmt.Errorf("get object range for organization icon: %w", err)
+	}
+	defer out.Body.Close()
+
+	if err = b.config.Media.Organization.Icon.Validate(out); err != nil {
+		switch {
+		case errors.Is(err, awsx.ErrorNoContentUploaded):
+			return errx.ErrorNoContentUploaded.Raise(err)
+		case errors.Is(err, awsx.ErrorSizeExceedsMax):
+			return errx.ErrorOrganizationIconContentIsExceedsMax.Raise(err)
+		case errors.Is(err, awsx.ErrorResolutionIsInvalid):
+			return errx.ErrorOrganizationIconResolutionIsInvalid.Raise(err)
+		case errors.Is(err, awsx.ErrorFormatNotAllowed):
+			return errx.ErrorOrganizationIconFormatIsNotAllowed.Raise(err)
+		default:
+			return fmt.Errorf("validate organization icon content: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (b Bucket) DeleteUploadOrganizationIcon(
+	ctx context.Context,
+	organizationID uuid.UUID,
+	tempKey string,
+) error {
+	if err := validateTempOrganizationIconKey(organizationID, tempKey); err != nil {
+		return err
+	}
+
+	if err := b.s3.DeleteObject(ctx, tempKey); err != nil {
+		return fmt.Errorf("delete temp organization icon: %w", err)
 	}
 
 	return nil
@@ -119,31 +95,98 @@ func (b Bucket) CancelUpdateOrganizationIcon(
 func (b Bucket) DeleteOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
+	finalKey string,
 ) error {
-	key := CreateOrganizationIconKey(organizationID)
-	if err := b.s3.DeleteObject(ctx, key); err != nil {
-		return fmt.Errorf("deleting organization icon object: %w", err)
+	if err := validateFinalOrganizationIconKey(organizationID, finalKey); err != nil {
+		return err
+	}
+
+	if err := b.s3.DeleteObject(ctx, finalKey); err != nil {
+		return fmt.Errorf("delete organization icon: %w", err)
 	}
 
 	return nil
 }
 
-func (b Bucket) CleanOrganizationMediaSession(
+func (b Bucket) UpdateOrganizationIcon(
 	ctx context.Context,
-	organizationID, sessionID uuid.UUID,
-) error {
-	err := b.s3.DeleteObject(ctx, CreateTempOrganizationIconKey(organizationID, sessionID))
-	if err != nil {
-		return fmt.Errorf(
-			"failed to delete temp object for organization icon: %w", err,
-		)
+	organizationID uuid.UUID,
+	oldFinalKey *string,
+	tempKey *string,
+) (*string, error) {
+	if ptrStrEq(oldFinalKey, tempKey) {
+		return oldFinalKey, nil
 	}
 
-	err = b.s3.DeleteObject(ctx, CreateTempOrganizationBannerKey(organizationID, sessionID))
-	if err != nil {
-		return fmt.Errorf(
-			"failed to delete temp object for organization banner: %w", err,
-		)
+	if tempKey == nil {
+		return nil, b.DeleteOrganizationIcon(ctx, organizationID, *oldFinalKey)
+	}
+
+	if err := b.ValidateOrganizationIcon(ctx, organizationID, *tempKey); err != nil {
+		return nil, err
+	}
+
+	finalKey := CreateFinalOrganizationIconKey(organizationID)
+
+	if err := b.s3.CopyObject(ctx, *tempKey, finalKey); err != nil {
+		return nil, fmt.Errorf("copy object for organization icon: %w", err)
+	}
+
+	if err := b.s3.DeleteObject(ctx, *tempKey); err != nil {
+		return nil, fmt.Errorf("delete temp organization icon: %w", err)
+	}
+
+	if oldFinalKey != nil {
+		if err := b.DeleteOrganizationIcon(ctx, organizationID, *oldFinalKey); err != nil {
+			return nil, err
+		}
+	}
+
+	return &finalKey, nil
+}
+
+var (
+	tempOrganizationIconKeyRe = regexp.MustCompile(
+		`^organization/icon/([0-9a-fA-F-]{36})/temp/([0-9a-fA-F-]{36})$`,
+	)
+	finalOrganizationIconKeyRe = regexp.MustCompile(
+		`^organization/icon/([0-9a-fA-F-]{36})/([0-9a-fA-F-]{36})$`,
+	)
+)
+
+func validateTempOrganizationIconKey(organizationID uuid.UUID, key string) error {
+	if key == "" {
+		return errx.ErrorOrganizationIconKeyIsInvalid.Raise(fmt.Errorf("empty key"))
+	}
+
+	matches := tempOrganizationIconKeyRe.FindStringSubmatch(key)
+	if matches == nil {
+		return errx.ErrorOrganizationIconKeyIsInvalid.Raise(fmt.Errorf("invalid key format"))
+	}
+
+	if matches[1] != organizationID.String() {
+		return errx.ErrorOrganizationIconKeyIsInvalid.Raise(fmt.Errorf("key does not belong to the organization"))
+	}
+
+	return nil
+}
+
+func validateFinalOrganizationIconKey(organizationID uuid.UUID, key string) error {
+	if key == "" {
+		return errx.ErrorOrganizationIconKeyIsInvalid.Raise(fmt.Errorf("empty key"))
+	}
+
+	matches := finalOrganizationIconKeyRe.FindStringSubmatch(key)
+	if matches == nil {
+		return errx.ErrorOrganizationIconKeyIsInvalid.Raise(fmt.Errorf("invalid key format"))
+	}
+
+	if matches[1] != organizationID.String() {
+		return errx.ErrorOrganizationIconKeyIsInvalid.Raise(fmt.Errorf("key does not belong to the organization"))
+	}
+
+	if tempOrganizationIconKeyRe.MatchString(key) {
+		return errx.ErrorOrganizationIconKeyIsInvalid.Raise(fmt.Errorf("final key cannot be temp key"))
 	}
 
 	return nil

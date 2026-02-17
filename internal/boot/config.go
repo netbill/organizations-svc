@@ -23,18 +23,13 @@ type AuthConfig struct {
 	Tokens tokenmanager.Config `mapstructure:"tokens"`
 }
 
-type S3Config struct {
-	AWS   AwsConfig     `mapstructure:"aws"`
-	Media bucket.Config `mapstructure:"media"`
-}
-
 type Config struct {
 	Log      LogConfig        `mapstructure:"log"`
 	Rest     rest.Config      `mapstructure:"rest"`
 	Auth     AuthConfig       `mapstructure:"auth"`
 	Kafka    messenger.Config `mapstructure:"kafka"`
 	Database DatabaseConfig   `mapstructure:"database"`
-	S3       S3Config         `mapstructure:"s3"`
+	S3       bucket.Config    `mapstructure:"s3"`
 }
 
 func LoadConfig() Config {

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	eventpg "github.com/netbill/eventbox/pg"
-	"github.com/netbill/organizations-svc/internal/messenger/evtypes"
+	"github.com/netbill/organizations-svc/pkg/evtypes"
 	"github.com/segmentio/kafka-go"
 )
 

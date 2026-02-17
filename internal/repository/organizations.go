@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/restkit/pagi"
@@ -18,8 +17,8 @@ type OrganizationRow struct {
 	Status string    `db:"status"`
 	Name   string    `db:"name"`
 
-	Icon   *string `db:"icon,omitempty"`
-	Banner *string `db:"banner,omitempty"`
+	IconKey   *string `db:"icon_key,omitempty"`
+	BannerKey *string `db:"banner_key,omitempty"`
 
 	MaxRoles uint `db:"max_roles"`
 
@@ -36,8 +35,8 @@ func (r OrganizationRow) ToModel() models.Organization {
 		ID:        r.ID,
 		Status:    r.Status,
 		Name:      r.Name,
-		Icon:      r.Icon,
-		Banner:    r.Banner,
+		IconKey:   r.IconKey,
+		BannerKey: r.BannerKey,
 		MaxRoles:  r.MaxRoles,
 		CreatedAt: r.CreatedAt,
 		UpdatedAt: r.UpdatedAt,
@@ -54,8 +53,8 @@ type OrganizationsQ interface {
 	FilterByAccountID(accountID uuid.UUID) OrganizationsQ
 
 	UpdateName(name string) OrganizationsQ
-	UpdateIcon(icon *string) OrganizationsQ
-	UpdateBanner(banner *string) OrganizationsQ
+	UpdateIconKey(icon *string) OrganizationsQ
+	UpdateBannerKey(banner *string) OrganizationsQ
 	UpdateStatus(status string) OrganizationsQ
 	UpdateMaxRoles(maxRoles uint) OrganizationsQ
 
@@ -75,7 +74,7 @@ func (r *Repository) CreateOrganization(
 	ctx context.Context,
 	params organization.CreateParams,
 ) (models.Organization, error) {
-	row, err := r.organizationsQ().Insert(ctx, OrganizationRow{
+	row, err := r.OrganizationsSql.New().Insert(ctx, OrganizationRow{
 		Name: params.Name,
 	})
 	if err != nil {
@@ -88,67 +87,13 @@ func (r *Repository) CreateOrganization(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) UpdateOrganization(
+func (r *Repository) GetOrganizationByID(
 	ctx context.Context,
 	ID uuid.UUID,
-	params organization.UpdateParams,
 ) (models.Organization, error) {
-	q := r.organizationsQ().
-		FilterByID(ID).
-		UpdateName(params.Name).
-		UpdateIcon(params.GetUpdatedIcon()).
-		UpdateBanner(params.GetUpdatedBanner())
-
-	row, err := q.UpdateOne(ctx)
+	row, err := r.OrganizationsSql.New().FilterByID(ID).Get(ctx)
 	if err != nil {
-		return models.Organization{}, fmt.Errorf(
-			"failed to update organization with ID %s: %w",
-			ID, err,
-		)
-	}
-
-	return row.ToModel(), nil
-}
-
-func (r *Repository) UpdateOrganizationStatus(
-	ctx context.Context,
-	ID uuid.UUID,
-	status string,
-) (models.Organization, error) {
-	row, err := r.organizationsQ().FilterByID(ID).UpdateStatus(status).UpdateOne(ctx)
-	if err != nil {
-		return models.Organization{}, fmt.Errorf(
-			"failed to update organization status with ID %s: %w",
-			ID, err,
-		)
-	}
-
-	return row.ToModel(), nil
-}
-
-func (r *Repository) UpdateOrganizationMaxRoles(
-	ctx context.Context,
-	ID uuid.UUID,
-	maxRoles uint,
-) (models.Organization, error) {
-	row, err := r.organizationsQ().FilterByID(ID).UpdateMaxRoles(maxRoles).UpdateOne(ctx)
-	if err != nil {
-		return models.Organization{}, fmt.Errorf(
-			"failed to update organization max roles with ID %s: %w",
-			ID, err,
-		)
-	}
-
-	return row.ToModel(), nil
-}
-
-func (r *Repository) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error) {
-	row, err := r.organizationsQ().FilterByID(ID).Get(ctx)
-	if err != nil {
-		return models.Organization{}, fmt.Errorf(
-			"failed to get organization with ID %s, cause: %w",
-			ID, err,
-		)
+		return models.Organization{}, fmt.Errorf("failed to get organization with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
 		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
@@ -157,15 +102,6 @@ func (r *Repository) GetOrganizationByID(ctx context.Context, ID uuid.UUID) (mod
 	}
 
 	return row.ToModel(), nil
-}
-
-func (r *Repository) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
-	err := r.organizationsQ().FilterByID(ID).Delete(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to delete organization with ID %s, cause: %w", ID, err)
-	}
-
-	return nil
 }
 
 func (r *Repository) GetOrganizations(
@@ -177,7 +113,7 @@ func (r *Repository) GetOrganizations(
 		limit = 10
 	}
 
-	q := r.organizationsQ()
+	q := r.OrganizationsSql.New()
 	if filter.Name != nil {
 		q = q.FilterNameLike(*filter.Name)
 	}
@@ -218,14 +154,14 @@ func (r *Repository) GetOrganizationsForUser(
 		limit = 10
 	}
 
-	row, err := r.organizationsQ().FilterByAccountID(accountID).Page(limit, offset).Select(ctx)
+	row, err := r.OrganizationsSql.New().FilterByAccountID(accountID).Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, fmt.Errorf(
 			"failed to get organizations for account ID %s, cause: %w", accountID, err,
 		)
 	}
 
-	total, err := r.organizationsQ().FilterByAccountID(accountID).Count(ctx)
+	total, err := r.OrganizationsSql.New().FilterByAccountID(accountID).Count(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, fmt.Errorf(
 			"failed to count organizations for account ID %s, cause: %w", accountID, err,
@@ -243,4 +179,79 @@ func (r *Repository) GetOrganizationsForUser(
 		Size:  uint(len(organizations)),
 		Total: total,
 	}, nil
+}
+
+func (r *Repository) UpdateOrganization(
+	ctx context.Context,
+	ID uuid.UUID,
+	params organization.UpdateParams,
+) (models.Organization, error) {
+	q := r.OrganizationsSql.New().
+		FilterByID(ID).
+		UpdateName(params.Name).
+		UpdateIconKey(params.IconKey).
+		UpdateBannerKey(params.BannerKey)
+
+	row, err := q.UpdateOne(ctx)
+	if err != nil {
+		return models.Organization{}, fmt.Errorf("failed to update organization with ID %s: %w", ID, err)
+	}
+	if row.IsNil() {
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization with ID %s not found", ID),
+		)
+	}
+
+	return row.ToModel(), nil
+}
+
+func (r *Repository) UpdateOrganizationStatus(
+	ctx context.Context,
+	ID uuid.UUID,
+	status string,
+) (models.Organization, error) {
+	row, err := r.OrganizationsSql.New().
+		FilterByID(ID).
+		UpdateStatus(status).
+		UpdateOne(ctx)
+	if err != nil {
+		return models.Organization{}, fmt.Errorf("failed to update organization status with ID %s: %w", ID, err)
+	}
+	if row.IsNil() {
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization with ID %s not found", ID),
+		)
+	}
+
+	return row.ToModel(), nil
+}
+
+func (r *Repository) UpdateOrganizationMaxRoles(
+	ctx context.Context,
+	ID uuid.UUID,
+	maxRoles uint,
+) (models.Organization, error) {
+	row, err := r.OrganizationsSql.New().
+		FilterByID(ID).
+		UpdateMaxRoles(maxRoles).
+		UpdateOne(ctx)
+	if err != nil {
+		return models.Organization{}, fmt.Errorf("failed to update organization max roles with ID %s: %w", ID, err)
+	}
+	if row.IsNil() {
+		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+			fmt.Errorf("organization with ID %s not found", ID),
+		)
+	}
+
+	return row.ToModel(), nil
+}
+
+func (r *Repository) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
+	err := r.OrganizationsSql.New().FilterByID(ID).Delete(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete organization with ID %s, cause: %w", ID, err)
+	}
+
+	return nil
 }
