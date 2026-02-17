@@ -56,17 +56,19 @@ type Config struct {
 }
 
 type Manager struct {
-	log *logium.Entry
-	db  *pgdbx.DB
+	groupID string
+	log     *logium.Entry
+	db      *pgdbx.DB
 
 	config Config
 }
 
 func NewManager(log *logium.Entry, db *pgdbx.DB, config Config) *Manager {
 	return &Manager{
-		log:    log,
-		db:     db,
-		config: config,
+		groupID: OrganizationsSvcGroup,
+		log:     log,
+		db:      db,
+		config:  config,
 	}
 }
 
