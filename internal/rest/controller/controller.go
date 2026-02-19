@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
@@ -215,7 +214,7 @@ type roleSvc interface {
 		ctx context.Context,
 		initiator models.AccountActor,
 		roleID uuid.UUID,
-		permissions role.SetForRole,
+		permissions role.SetPermissions,
 	) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error)
 }
 
@@ -233,14 +232,13 @@ type Modules struct {
 }
 
 type Controller struct {
-	log       *logium.Logger
 	modules   *Modules
 	responser responser
 }
 
-func New(modules *Modules, responser responser) *Controller {
+func New(modules Modules, responser responser) *Controller {
 	return &Controller{
-		modules:   modules,
+		modules:   &modules,
 		responser: responser,
 	}
 }

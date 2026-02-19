@@ -83,13 +83,13 @@ func New(
 }
 
 type Config struct {
-	Port     string `mapstructure:"port"`
+	Port     string
 	Timeouts struct {
-		Read       time.Duration `mapstructure:"read"`
-		ReadHeader time.Duration `mapstructure:"read_header"`
-		Write      time.Duration `mapstructure:"write"`
-		Idle       time.Duration `mapstructure:"idle"`
-	} `mapstructure:"timeouts"`
+		Read       time.Duration
+		ReadHeader time.Duration
+		Write      time.Duration
+		Idle       time.Duration
+	}
 }
 
 func (s *Server) Run(ctx context.Context, log *logium.Entry, cfg Config) {

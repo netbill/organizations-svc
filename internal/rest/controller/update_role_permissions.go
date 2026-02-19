@@ -26,7 +26,7 @@ func (c *Controller) UpdateRolePermissions(w http.ResponseWriter, r *http.Reques
 
 	log = log.WithField("role_id", req.Data.Id)
 
-	params := role.SetForRole{}
+	params := role.SetPermissions{}
 	for _, p := range req.Data.Attributes.Permissions {
 		params[p.Id] = p.Status
 	}

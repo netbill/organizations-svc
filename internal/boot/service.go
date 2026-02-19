@@ -12,9 +12,8 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/messenger"
 	"github.com/netbill/organizations-svc/internal/messenger/inbound"
-	"github.com/netbill/organizations-svc/internal/messenger/outbound"
+	"github.com/netbill/organizations-svc/internal/messenger/inbound/handlers"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/organizations-svc/internal/repository/pg"
 	"github.com/netbill/organizations-svc/internal/rest"
@@ -69,15 +68,14 @@ func StartServices(ctx context.Context, log *logium.Entry, wg *sync.WaitGroup, c
 
 	msg := messenger.NewManager(log, db, cfg.Kafka)
 
-	kafkaProducer := msg.NewProducer()
-	kafkaOutbound := outbound.New(kafkaProducer)
+	kafkaProducer := messenger.NewWriter()
 
 	tokenManager := tokenmanager.New(cfg.Auth.Tokens)
 
-	orgSvc := organization.New(repo, kafkaOutbound, s3Bucket)
-	memberSvc := member.New(repo, kafkaOutbound)
-	roleSvc := role.New(repo, kafkaOutbound)
-	inviteSvc := invite.New(repo, kafkaOutbound)
+	orgSvc := organization.New(repo, kafkaProducer, s3Bucket)
+	memberSvc := member.New(repo, kafkaProducer)
+	roleSvc := role.New(repo, kafkaProducer)
+	inviteSvc := invite.New(repo, kafkaProducer)
 	profileSvc := profile.New(repo)
 
 	responser := restkit.NewResponser()
@@ -94,8 +92,14 @@ func StartServices(ctx context.Context, log *logium.Entry, wg *sync.WaitGroup, c
 		router.Run(ctx, log, cfg.Rest)
 	})
 
+	kafkaConsumer := messenger.NewConsumer()
+
+	kafkaInbox := inbound.NewInbox()
+
+	kafkaOutbox := messenger.NewOutbox()
+
 	run(func() {
-		msg.RunInbox(ctx, inbound.New(inbound.Modules{Profile: profileSvc}))
+		msg.RunInbox(ctx, handlers.New(handlers.Modules{Profile: profileSvc}))
 	})
 
 	run(func() { msg.RunConsumer(ctx) })

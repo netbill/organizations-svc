@@ -9,9 +9,9 @@ import (
 	"github.com/netbill/orgperm"
 )
 
-type SetForRole map[uuid.UUID]bool
+type SetPermissions map[uuid.UUID]bool
 
-func (s SetForRole) Validate() error {
+func (s SetPermissions) Validate() error {
 	if len(s) != len(orgperm.GetAllPermissions()) {
 		return fmt.Errorf("permission count mismatch")
 	}
@@ -23,7 +23,7 @@ func (m *Module) UpdatePermissions(
 	ctx context.Context,
 	initiator models.AccountActor,
 	roleID uuid.UUID,
-	params SetForRole,
+	params SetPermissions,
 ) (role models.Role, links models.OrgRolePermissionsWithDetailsForRole, err error) {
 	if err = params.Validate(); err != nil {
 		return models.Role{}, models.OrgRolePermissionsWithDetailsForRole{}, err

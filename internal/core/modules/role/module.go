@@ -61,7 +61,7 @@ type repo interface {
 	SetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-		params SetForRole,
+		params SetPermissions,
 	) (models.OrgRolePermissionsWithDetailsForRole, error)
 
 	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
@@ -97,7 +97,7 @@ type messenger interface {
 	WriteOrgRolePermissionsUpdated(
 		ctx context.Context,
 		role models.Role,
-		params SetForRole,
+		params SetPermissions,
 	) error
 
 	WriteOrgMemberRoleAdd(

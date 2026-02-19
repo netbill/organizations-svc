@@ -346,7 +346,7 @@ func (r *Repository) GetAllPermissions(ctx context.Context) ([]models.OrgRolePer
 func (r *Repository) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
-	params role.SetForRole,
+	params role.SetPermissions,
 ) (models.OrgRolePermissionsWithDetailsForRole, error) {
 	dict, err := r.OrgRolePermissionsSql.New().FilterByDeprecated(false).Select(ctx)
 	if err != nil {

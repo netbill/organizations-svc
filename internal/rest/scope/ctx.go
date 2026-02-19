@@ -14,7 +14,6 @@ type ctxKey int
 const (
 	LogCtxKey ctxKey = iota
 	AccountDataCtxKey
-	UploadContentCtxKey
 )
 
 func CtxLog(ctx context.Context, log *logium.Entry) context.Context {

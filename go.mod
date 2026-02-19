@@ -72,4 +72,7 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 )
 
-replace github.com/netbill/orgperm => /home/trpdjke/go/src/github.com/netbill/orgperm
+replace (
+	github.com/netbill/eventbox => /home/trpdjke/go/src/github.com/netbill/eventbox
+	github.com/netbill/orgperm => /home/trpdjke/go/src/github.com/netbill/orgperm
+)

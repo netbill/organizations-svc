@@ -14,21 +14,20 @@ import (
 
 type Config struct {
 	Aws struct {
-		BucketName      string `mapstructure:"bucket_name"`
-		Region          string `mapstructure:"region"`
-		AccessKeyID     string `mapstructure:"access_key_id"`
-		SecretAccessKey string `mapstructure:"secret_access_key"`
-		SessionToken    string `mapstructure:"session_token"`
-	} `mapstructure:"aws"`
-
+		BucketName      string
+		Region          string
+		AccessKeyID     string
+		SecretAccessKey string
+		SessionToken    string
+	}
 	Media struct {
 		Link struct {
-			TTL time.Duration `mapstructure:"ttl"`
-		} `mapstructure:"link"`
+			TTL time.Duration
+		}
 		Organization struct {
-			Icon   awsx.ImageValidator `mapstructure:"icon"`
-			Banner awsx.ImageValidator `mapstructure:"banner"`
-		} `mapstructure:"organization"`
+			Icon   awsx.ImageValidator
+			Banner awsx.ImageValidator
+		}
 	}
 }
 

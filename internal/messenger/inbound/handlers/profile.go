@@ -1,4 +1,4 @@
-package inbound
+package handlers
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func (i *Inbound) ProfileCreated(
+func (h *Handlers) ProfileCreated(
 	ctx context.Context,
 	message kafka.Message,
 ) error {
@@ -19,7 +19,7 @@ func (i *Inbound) ProfileCreated(
 		return err
 	}
 
-	if _, err := i.modules.Profile.Create(ctx, models.Profile{
+	if _, err := h.modules.Profile.Create(ctx, models.Profile{
 		AccountID: payload.AccountID,
 		Username:  payload.Username,
 		CreatedAt: payload.CreatedAt,
@@ -31,7 +31,7 @@ func (i *Inbound) ProfileCreated(
 
 }
 
-func (i *Inbound) ProfileUpdated(
+func (h *Handlers) ProfileUpdated(
 	ctx context.Context,
 	message kafka.Message,
 ) error {
@@ -40,7 +40,7 @@ func (i *Inbound) ProfileUpdated(
 		return err
 	}
 
-	if _, err := i.modules.Profile.Update(ctx, payload.AccountID, profile.UpdateParams{
+	if _, err := h.modules.Profile.Update(ctx, payload.AccountID, profile.UpdateParams{
 		Username:  payload.Username,
 		Pseudonym: payload.Pseudonym,
 		AvatarKey: payload.AvatarKey,
@@ -53,7 +53,7 @@ func (i *Inbound) ProfileUpdated(
 	return nil
 }
 
-func (i *Inbound) ProfileDeleted(
+func (h *Handlers) ProfileDeleted(
 	ctx context.Context,
 	message kafka.Message,
 ) error {
@@ -62,7 +62,7 @@ func (i *Inbound) ProfileDeleted(
 		return err
 	}
 
-	if err := i.modules.Profile.Delete(ctx, payload.AccountID); err != nil {
+	if err := h.modules.Profile.Delete(ctx, payload.AccountID); err != nil {
 		return err
 	}
 

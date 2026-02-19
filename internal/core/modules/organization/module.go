@@ -90,10 +90,7 @@ type messanger interface {
 
 	WriteOrganizationDeleted(ctx context.Context, organization models.Organization) error
 
-	WriteOrgMemberCreated(
-		ctx context.Context,
-		member models.Member,
-	) error
+	WriteOrgMemberCreated(ctx context.Context, member models.Member) error
 }
 
 type bucket interface {
