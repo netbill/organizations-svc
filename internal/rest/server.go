@@ -83,13 +83,11 @@ func New(
 }
 
 type Config struct {
-	Port     string
-	Timeouts struct {
-		Read       time.Duration
-		ReadHeader time.Duration
-		Write      time.Duration
-		Idle       time.Duration
-	}
+	Port              string
+	ReadTimeout       time.Duration
+	ReadHeaderTimeout time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
 }
 
 func (s *Server) Run(ctx context.Context, log *logium.Entry, cfg Config) {
@@ -171,10 +169,10 @@ func (s *Server) Run(ctx context.Context, log *logium.Entry, cfg Config) {
 	srv := &http.Server{
 		Addr:              cfg.Port,
 		Handler:           r,
-		ReadTimeout:       cfg.Timeouts.Read,
-		ReadHeaderTimeout: cfg.Timeouts.ReadHeader,
-		WriteTimeout:      cfg.Timeouts.Write,
-		IdleTimeout:       cfg.Timeouts.Idle,
+		ReadTimeout:       cfg.ReadTimeout,
+		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		IdleTimeout:       cfg.IdleTimeout,
 	}
 
 	log.Infof("starting http service on %s", cfg.Port)

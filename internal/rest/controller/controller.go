@@ -236,9 +236,9 @@ type Controller struct {
 	responser responser
 }
 
-func New(modules Modules, responser responser) *Controller {
+func New(modules *Modules, responser responser) *Controller {
 	return &Controller{
-		modules:   &modules,
+		modules:   modules,
 		responser: responser,
 	}
 }

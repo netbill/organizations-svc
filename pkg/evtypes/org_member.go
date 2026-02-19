@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const OrgMemberTopicV1 = "organization.member"
+const OrgMembersTopicV1 = "organization.members.v1"
 
 const OrgMemberCreatedEvent = "member.created"
 

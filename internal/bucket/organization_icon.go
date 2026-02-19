@@ -20,13 +20,13 @@ func CreateFinalOrganizationIconKey(organizationID uuid.UUID) string {
 	return fmt.Sprintf("organization/icon/%s/%s", organizationID, uuid.New())
 }
 
-func (b Bucket) CreateOrganizationIconUploadMediaLinks(
+func (s Storage) CreateOrganizationIconUploadMediaLinks(
 	ctx context.Context,
 	organizationID uuid.UUID,
 ) (models.UploadMediaLink, error) {
 	key := CreateTempOrganizationIconKey(organizationID)
 
-	uploadLink, getLink, err := b.s3.PresignPut(ctx, key, b.config.Media.Link.TTL)
+	uploadLink, getLink, err := s.s3.PresignPut(ctx, key, s.config.LinkTTL)
 	if err != nil {
 		return models.UploadMediaLink{}, fmt.Errorf("presign put object for organization icon: %w", err)
 	}
@@ -38,7 +38,7 @@ func (b Bucket) CreateOrganizationIconUploadMediaLinks(
 	}, nil
 }
 
-func (b Bucket) ValidateOrganizationIcon(
+func (s Storage) ValidateOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	tempKey string,
@@ -47,7 +47,7 @@ func (b Bucket) ValidateOrganizationIcon(
 		return err
 	}
 
-	out, err := b.s3.GetObjectRange(ctx, tempKey, 64*1024)
+	out, err := s.s3.GetObjectRange(ctx, tempKey, 64*1024)
 	switch {
 	case errors.Is(err, awsx.ErrNotFound):
 		return errx.ErrorNoContentUploaded.Raise(
@@ -58,7 +58,7 @@ func (b Bucket) ValidateOrganizationIcon(
 	}
 	defer out.Body.Close()
 
-	if err = b.config.Media.Organization.Icon.Validate(out); err != nil {
+	if err = s.config.OrgIcon.Validate(out); err != nil {
 		switch {
 		case errors.Is(err, awsx.ErrorNoContentUploaded):
 			return errx.ErrorNoContentUploaded.Raise(err)
@@ -76,7 +76,7 @@ func (b Bucket) ValidateOrganizationIcon(
 	return nil
 }
 
-func (b Bucket) DeleteUploadOrganizationIcon(
+func (s Storage) DeleteUploadOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	tempKey string,
@@ -85,14 +85,14 @@ func (b Bucket) DeleteUploadOrganizationIcon(
 		return err
 	}
 
-	if err := b.s3.DeleteObject(ctx, tempKey); err != nil {
+	if err := s.s3.DeleteObject(ctx, tempKey); err != nil {
 		return fmt.Errorf("delete temp organization icon: %w", err)
 	}
 
 	return nil
 }
 
-func (b Bucket) DeleteOrganizationIcon(
+func (s Storage) DeleteOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	finalKey string,
@@ -101,14 +101,14 @@ func (b Bucket) DeleteOrganizationIcon(
 		return err
 	}
 
-	if err := b.s3.DeleteObject(ctx, finalKey); err != nil {
+	if err := s.s3.DeleteObject(ctx, finalKey); err != nil {
 		return fmt.Errorf("delete organization icon: %w", err)
 	}
 
 	return nil
 }
 
-func (b Bucket) UpdateOrganizationIcon(
+func (s Storage) UpdateOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	oldFinalKey *string,
@@ -119,25 +119,25 @@ func (b Bucket) UpdateOrganizationIcon(
 	}
 
 	if tempKey == nil {
-		return nil, b.DeleteOrganizationIcon(ctx, organizationID, *oldFinalKey)
+		return nil, s.DeleteOrganizationIcon(ctx, organizationID, *oldFinalKey)
 	}
 
-	if err := b.ValidateOrganizationIcon(ctx, organizationID, *tempKey); err != nil {
+	if err := s.ValidateOrganizationIcon(ctx, organizationID, *tempKey); err != nil {
 		return nil, err
 	}
 
 	finalKey := CreateFinalOrganizationIconKey(organizationID)
 
-	if err := b.s3.CopyObject(ctx, *tempKey, finalKey); err != nil {
+	if err := s.s3.CopyObject(ctx, *tempKey, finalKey); err != nil {
 		return nil, fmt.Errorf("copy object for organization icon: %w", err)
 	}
 
-	if err := b.s3.DeleteObject(ctx, *tempKey); err != nil {
+	if err := s.s3.DeleteObject(ctx, *tempKey); err != nil {
 		return nil, fmt.Errorf("delete temp organization icon: %w", err)
 	}
 
 	if oldFinalKey != nil {
-		if err := b.DeleteOrganizationIcon(ctx, organizationID, *oldFinalKey); err != nil {
+		if err := s.DeleteOrganizationIcon(ctx, organizationID, *oldFinalKey); err != nil {
 			return nil, err
 		}
 	}

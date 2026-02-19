@@ -20,13 +20,13 @@ func CreateFinalOrganizationBannerKey(organizationID uuid.UUID) string {
 	return fmt.Sprintf("organization/banner/%s/%s", organizationID, uuid.New())
 }
 
-func (b Bucket) CreateOrganizationBannerUploadMediaLinks(
+func (s Storage) CreateOrganizationBannerUploadMediaLinks(
 	ctx context.Context,
 	organizationID uuid.UUID,
 ) (models.UploadMediaLink, error) {
 	key := CreateTempOrganizationBannerKey(organizationID)
 
-	uploadLink, getLink, err := b.s3.PresignPut(ctx, key, b.config.Media.Link.TTL)
+	uploadLink, getLink, err := s.s3.PresignPut(ctx, key, s.config.LinkTTL)
 	if err != nil {
 		return models.UploadMediaLink{}, fmt.Errorf("presign put object for organization banner: %w", err)
 	}
@@ -38,7 +38,7 @@ func (b Bucket) CreateOrganizationBannerUploadMediaLinks(
 	}, nil
 }
 
-func (b Bucket) ValidateOrganizationBanner(
+func (s Storage) ValidateOrganizationBanner(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	tempKey string,
@@ -47,7 +47,7 @@ func (b Bucket) ValidateOrganizationBanner(
 		return err
 	}
 
-	out, err := b.s3.GetObjectRange(ctx, tempKey, 64*1024)
+	out, err := s.s3.GetObjectRange(ctx, tempKey, 64*1024)
 	switch {
 	case errors.Is(err, awsx.ErrNotFound):
 		return errx.ErrorNoContentUploaded.Raise(
@@ -58,7 +58,7 @@ func (b Bucket) ValidateOrganizationBanner(
 	}
 	defer out.Body.Close()
 
-	if err = b.config.Media.Organization.Banner.Validate(out); err != nil {
+	if err = s.config.OrgBanner.Validate(out); err != nil {
 		switch {
 		case errors.Is(err, awsx.ErrorNoContentUploaded):
 			return errx.ErrorNoContentUploaded.Raise(err)
@@ -76,7 +76,7 @@ func (b Bucket) ValidateOrganizationBanner(
 	return nil
 }
 
-func (b Bucket) DeleteUploadOrganizationBanner(
+func (s Storage) DeleteUploadOrganizationBanner(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	tempKey string,
@@ -85,14 +85,14 @@ func (b Bucket) DeleteUploadOrganizationBanner(
 		return err
 	}
 
-	if err := b.s3.DeleteObject(ctx, tempKey); err != nil {
+	if err := s.s3.DeleteObject(ctx, tempKey); err != nil {
 		return fmt.Errorf("delete temp organization banner: %w", err)
 	}
 
 	return nil
 }
 
-func (b Bucket) DeleteOrganizationBanner(
+func (s Storage) DeleteOrganizationBanner(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	finalKey string,
@@ -101,14 +101,14 @@ func (b Bucket) DeleteOrganizationBanner(
 		return err
 	}
 
-	if err := b.s3.DeleteObject(ctx, finalKey); err != nil {
+	if err := s.s3.DeleteObject(ctx, finalKey); err != nil {
 		return fmt.Errorf("delete organization banner: %w", err)
 	}
 
 	return nil
 }
 
-func (b Bucket) UpdateOrganizationBanner(
+func (s Storage) UpdateOrganizationBanner(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	oldFinalKey *string,
@@ -119,25 +119,25 @@ func (b Bucket) UpdateOrganizationBanner(
 	}
 
 	if tempKey == nil {
-		return nil, b.DeleteOrganizationBanner(ctx, organizationID, *oldFinalKey)
+		return nil, s.DeleteOrganizationBanner(ctx, organizationID, *oldFinalKey)
 	}
 
-	if err := b.ValidateOrganizationBanner(ctx, organizationID, *tempKey); err != nil {
+	if err := s.ValidateOrganizationBanner(ctx, organizationID, *tempKey); err != nil {
 		return nil, err
 	}
 
 	finalKey := CreateFinalOrganizationBannerKey(organizationID)
 
-	if err := b.s3.CopyObject(ctx, *tempKey, finalKey); err != nil {
+	if err := s.s3.CopyObject(ctx, *tempKey, finalKey); err != nil {
 		return nil, fmt.Errorf("copy object for organization banner: %w", err)
 	}
 
-	if err := b.s3.DeleteObject(ctx, *tempKey); err != nil {
+	if err := s.s3.DeleteObject(ctx, *tempKey); err != nil {
 		return nil, fmt.Errorf("delete temp organization banner: %w", err)
 	}
 
 	if oldFinalKey != nil {
-		if err := b.DeleteOrganizationBanner(ctx, organizationID, *oldFinalKey); err != nil {
+		if err := s.DeleteOrganizationBanner(ctx, organizationID, *oldFinalKey); err != nil {
 			return nil, err
 		}
 	}

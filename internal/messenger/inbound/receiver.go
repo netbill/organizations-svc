@@ -2,7 +2,7 @@ package inbound
 
 import (
 	"context"
-	"sync"
+	"fmt"
 	"time"
 
 	"github.com/netbill/eventbox"
@@ -29,43 +29,46 @@ type TopicReaderConfig struct {
 }
 
 type Receiver struct {
-	consumer *eventbox.Consumer
-	config   ReceiverConfig
+	log    eventbox.Logger
+	inbox  eventbox.Inbox
+	config ReceiverConfig
 }
 
-func NewReceiver(log eventbox.Logger, inbox eventbox.Inbox, config ReceiverConfig) *Receiver {
+func NewReceiver(
+	log eventbox.Logger,
+	inbox eventbox.Inbox,
+	config ReceiverConfig,
+) *Receiver {
 	return &Receiver{
-		consumer: eventbox.NewConsumer(log, inbox, eventbox.ConsumerConfig{
-			MinBackoff: config.MinBackoff,
-			MaxBackoff: config.MaxBackoff,
-		}),
+		log:    log,
+		inbox:  inbox,
 		config: config,
 	}
 }
 
 func (r *Receiver) Run(ctx context.Context) {
-	var wg sync.WaitGroup
+	consumer := eventbox.NewConsumer(r.log, r.inbox, eventbox.ConsumerConfig{
+		MinBackoff: r.config.MinBackoff,
+		MaxBackoff: r.config.MaxBackoff,
+	})
 
-	for _, cfg := range r.config.Topics {
-		cfg := cfg
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			r.consumer.Subscribe(ctx, kafka.ReaderConfig{
-				Brokers:        r.config.Brokers,
-				GroupID:        r.config.GroupID,
-				Topic:          cfg.Topic,
-				MinBytes:       cfg.MinBytes,
-				MaxBytes:       cfg.MaxBytes,
-				MaxWait:        cfg.MaxWait,
-				CommitInterval: cfg.CommitInterval,
-				StartOffset:    cfg.StartOffset,
-				QueueCapacity:  cfg.QueueCapacity,
-			}, cfg.Instances)
-		}()
+	for _, topicCfg := range r.config.Topics {
+		err := consumer.AddTopic(eventbox.TopicReaderConfig{
+			Instances: topicCfg.Instances,
+			Reader: kafka.ReaderConfig{
+				Brokers:     r.config.Brokers,
+				GroupID:     r.config.GroupID,
+				Topic:       topicCfg.Topic,
+				MinBytes:    topicCfg.MinBytes,
+				MaxBytes:    topicCfg.MaxBytes,
+				MaxWait:     topicCfg.MaxWait,
+				StartOffset: topicCfg.StartOffset,
+			},
+		})
+		if err != nil {
+			panic(fmt.Errorf("failed to add topic reader config: %v", err))
+		}
 	}
 
-	wg.Wait()
+	consumer.Run(ctx)
 }

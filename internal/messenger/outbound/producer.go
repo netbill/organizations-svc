@@ -10,11 +10,10 @@ import (
 	"github.com/netbill/eventbox"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/internal/messenger/outbound/sender"
 	"github.com/segmentio/kafka-go"
 )
 
-type Producer interface {
+type Publisher interface {
 	WriteOrganizationCreated(ctx context.Context, organization models.Organization) error
 	WriteOrganizationActivated(ctx context.Context, organization models.Organization) error
 	WriteOrganizationDeactivated(ctx context.Context, organization models.Organization) error
@@ -59,11 +58,13 @@ type Producer interface {
 }
 
 type ProducerConfig struct {
-	Addrs  []string                       `mapstructure:"addrs"`
-	Topics map[string]TopicProducerConfig `mapstructure:"topics"`
+	Brokers  []string            `mapstructure:"brokers"`
+	Identity string              `mapstructure:"identity"`
+	Topics   []WriterKafkaConfig `mapstructure:"topics"`
 }
 
-type TopicProducerConfig struct {
+type WriterKafkaConfig struct {
+	Topic        string        `mapstructure:"topic"`
 	RequiredAcks string        `mapstructure:"required_acks"`
 	Compression  string        `mapstructure:"compression"`
 	Balancer     string        `mapstructure:"balancer"`
@@ -73,97 +74,17 @@ type TopicProducerConfig struct {
 	IdleTimeout  time.Duration `mapstructure:"idle_timeout"`
 }
 
-func NewProducer(outbox eventbox.Outbox, cfg ProducerConfig) (Producer, error) {
-	id := fmt.Sprintf("producer-%d", time.Now().UnixNano())
-
-	prod := eventbox.NewProducer()
-
-	addrs := make([]string, 0, len(cfg.Addrs))
-	for _, a := range cfg.Addrs {
-		a = strings.TrimSpace(a)
-		if a != "" {
-			addrs = append(addrs, a)
-		}
-	}
-	if len(addrs) == 0 {
-		return nil, fmt.Errorf("kafka addrs are empty")
-	}
-
-	for topic, c := range cfg.Topics {
-		ra, err := parseRequiredAcks(c.RequiredAcks)
+func NewProducer(cfg ProducerConfig) *eventbox.Producer {
+	producer := eventbox.NewProducer()
+	for _, tc := range cfg.Topics {
+		w, err := buildWriter(cfg.Brokers, tc)
 		if err != nil {
-			return nil, fmt.Errorf("topic %s: %w", topic, err)
+			panic(fmt.Errorf("topic %s: %w", tc.Topic, err))
 		}
-
-		bal, err := parseBalancer(c.Balancer)
-		if err != nil {
-			return nil, fmt.Errorf("topic %s: %w", topic, err)
+		if err := producer.AddTopic(tc.Topic, w); err != nil {
+			panic(fmt.Errorf("topic %s: %w", tc.Topic, err))
 		}
-
-		comp, err := parseCompression(c.Compression)
-		if err != nil {
-			return nil, fmt.Errorf("topic %s: %w", topic, err)
-		}
-
-		w := &kafka.Writer{
-			Addr:         kafka.TCP(addrs...),
-			Topic:        topic,
-			RequiredAcks: ra,
-			Balancer:     bal,
-			BatchSize:    c.BatchSize,
-			BatchTimeout: c.BatchTimeout,
-			Compression:  comp,
-			Transport: &kafka.Transport{
-				DialTimeout: c.DialTimeout,
-				IdleTimeout: c.IdleTimeout,
-			},
-		}
-
-		prod.AddTopic(topic, w)
 	}
 
-	return sender.New(id, outbox, prod), nil
-}
-
-func parseRequiredAcks(v string) (kafka.RequiredAcks, error) {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "", "all", "-1":
-		return kafka.RequireAll, nil
-	case "none", "0":
-		return kafka.RequireNone, nil
-	case "one", "1":
-		return kafka.RequireOne, nil
-	default:
-		return 0, fmt.Errorf("invalid required_acks: %q", v)
-	}
-}
-
-func parseBalancer(v string) (kafka.Balancer, error) {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "", "hash":
-		return &kafka.Hash{}, nil
-	case "leastbytes", "least_bytes":
-		return &kafka.LeastBytes{}, nil
-	case "roundrobin", "round_robin":
-		return &kafka.RoundRobin{}, nil
-	default:
-		return nil, fmt.Errorf("invalid balancer: %q", v)
-	}
-}
-
-func parseCompression(v string) (kafka.Compression, error) {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "", "none":
-		return kafka.Snappy, nil
-	case "gzip":
-		return kafka.Gzip, nil
-	case "snappy":
-		return kafka.Snappy, nil
-	case "lz4":
-		return kafka.Lz4, nil
-	case "zstd":
-		return kafka.Zstd, nil
-	default:
-		return 0, fmt.Errorf("invalid compression: %q", v)
-	}
+	return producer
 }

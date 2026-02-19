@@ -1,10 +1,5 @@
-rest:
-  port: ":8003"
-  timeouts:
-    read: 15s #seconds
-    read_header: 15s #seconds
-    write: 15s #seconds
-    idle: 60s #seconds
+service:
+  name: "organizations-svc"
 
 log:
   level: "debug"
@@ -14,8 +9,17 @@ database:
   sql:
     url: "postgresql://postgres:postgres@localhost:7777/postgres?sslmode=disable"
 
+rest:
+  port: ":8003"
+  timeouts:
+    read: 15s #seconds
+    read_header: 15s #seconds
+    write: 15s #seconds
+    idle: 60s #seconds
+
 auth:
   tokens:
+    issuer: "organizations-svc"
     account_access:
       secret_key: "UnG06MAU2i1Mvqf8" #example
 
@@ -58,20 +62,32 @@ kafka:
   identity: "organizations-svc" # used for consumer group and client id
 
   writer:
-    required_acks: "all"     # "all" | "one" | "none"
-    compression: "snappy"    # "snappy" | "gzip" | "lz4" | "zstd" | "none"
-    balancer: "least_bytes"  # "least_bytes" | "round_robin" | "hash"
-    batch_size: 100          # sender batching (0 = default)
-    batch_timeout: 10ms      # sender batching timeout (0 = default)
-    write_timeout: 5s        # timeout for a write call (0 = default)
-    read_timeout: 5s         # broker read timeout (0 = default)
-    dial_timeout: 5s         # dial timeout (0 = default)
-    idle_timeout: 30s        # close idle connections (0 = default)
+    topics:
+      organizations_v1:          #topic name for accounts events
+        required_acks: "all"     # "all" | "one" | "none"
+        compression: "snappy"    # "snappy" | "gzip" | "lz4" | "zstd" | "none"
+        balancer: "least_bytes"  # "least_bytes" | "round_robin" | "hash"
+        batch_size: 100          # sender batching (0 = default)
+        batch_timeout: 10ms      # sender batching timeout (0 = default)
+        write_timeout: 5s        # timeout for a write call (0 = default)
+        read_timeout: 5s         # broker read timeout (0 = default)
+        dial_timeout: 5s         # dial timeout (0 = default)
+        idle_timeout: 30s        # close idle connections (0 = default)
+      organization_members_v1:
+        required_acks: "all"     # "all" | "one" | "none"
+        compression: "snappy"    # "snappy" | "gzip" | "lz4" | "zstd" | "none"
+        balancer: "least_bytes"  # "least_bytes" | "round_robin" | "hash"
+        batch_size: 100          # sender batching (0 = default)
+        batch_timeout: 10ms      # sender batching timeout (0 = default)
+        write_timeout: 5s        # timeout for a write call (0 = default)
+        read_timeout: 5s         # broker read timeout (0 = default)
+        dial_timeout: 5s         # dial timeout (0 = default)
+        idle_timeout: 30s        # close idle connections (0 = default)
 
   reader:
     topics:
       profiles_v1:             #topic name for accounts events
-        instances: 1         #number of readers for this topic which will be started in each process
+        instances: 1           #number of readers for this topic which will be started in each process
         min_bytes: 1           #minimum bytes to fetch in each request
         max_bytes: 10e6        #maximum bytes to fetch in each request
         max_wait: 1s           #maximum time to wait for messages in each request

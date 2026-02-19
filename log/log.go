@@ -143,6 +143,10 @@ func (e *Entry) WithInvite(invite models.Invite) *Entry {
 	})
 }
 
+func (e *Entry) WithTopic(topic string) *Entry {
+	return e.WithField(EventTopicField, topic)
+}
+
 func (e *Entry) WithMessage(msg *kafka.Message) *Entry {
 	res := map[string]any{
 		EventTopicField:    msg.Topic,

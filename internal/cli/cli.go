@@ -9,13 +9,13 @@ import (
 
 	"github.com/alecthomas/kingpin"
 	evcli "github.com/netbill/eventbox/pg/cli"
-	"github.com/netbill/organizations-svc/internal/boot"
+	"github.com/netbill/organizations-svc/internal/app"
 	"github.com/netbill/organizations-svc/migrations"
 )
 
 func Run(args []string) bool {
-	cfg := boot.LoadConfig()
-	log := boot.NewLogger(cfg.Log)
+	cfg := app.LoadConfig()
+	log := app.NewLogger(cfg.Log)
 
 	var (
 		service = kingpin.New("chains-auth", "")
@@ -66,7 +66,7 @@ func Run(args []string) bool {
 
 	switch command {
 	case serviceCmd.FullCommand():
-		boot.StartServices(ctx, log, &wg, cfg)
+		app.StartServices(ctx, log, &wg, cfg)
 	case migrateUpCmd.FullCommand():
 		err = migrations.MigrateUp(ctx, log, cfg.Database.SQL.URL)
 	case migrateDownCmd.FullCommand():

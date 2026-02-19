@@ -2,8 +2,6 @@ package inbound
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/netbill/eventbox"
 	"github.com/netbill/organizations-svc/pkg/evtypes"
@@ -26,41 +24,41 @@ type Handlers interface {
 }
 
 type Inbound struct {
-	worker   *eventbox.InboxWorker
+	log      eventbox.Logger
+	inbox    eventbox.Inbox
+	config   eventbox.InboxWorkerConfig
 	handlers Handlers
 }
 
-func NewInbox(
+func NewInbound(
 	log eventbox.Logger,
 	inbox eventbox.Inbox,
 	config eventbox.InboxWorkerConfig,
 	handlers Handlers,
 ) *Inbound {
-	id := buildProcessID("inbox")
-
 	return &Inbound{
-		worker:   eventbox.NewInboxWorker(id, log, inbox, config),
+		log:      log,
+		inbox:    inbox,
+		config:   config,
 		handlers: handlers,
 	}
 }
 
 func (b *Inbound) Run(ctx context.Context) {
+	worker := eventbox.NewInboxWorker(
+		"TODO",
+		b.log,
+		b.inbox,
+		b.config,
+	)
+
 	defer func() {
-		b.worker.Stop(context.Background())
+		worker.Stop(context.Background())
 	}()
 
-	b.worker.Route(evtypes.ProfileCreatedEvent, b.handlers.ProfileCreated)
-	b.worker.Route(evtypes.ProfileDeletedEvent, b.handlers.ProfileDeleted)
-	b.worker.Route(evtypes.ProfileUpdatedEvent, b.handlers.ProfileUpdated)
+	worker.Route(evtypes.ProfileCreatedEvent, b.handlers.ProfileCreated)
+	worker.Route(evtypes.ProfileDeletedEvent, b.handlers.ProfileDeleted)
+	worker.Route(evtypes.ProfileUpdatedEvent, b.handlers.ProfileUpdated)
 
-	b.worker.Run(ctx)
-}
-
-func buildProcessID(service string) string {
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = "unknown"
-	}
-
-	return fmt.Sprintf("%s-%s-%d", service, hostname, os.Getpid())
+	worker.Run(ctx)
 }
