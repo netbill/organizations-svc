@@ -7,7 +7,7 @@ require (
 	github.com/alecthomas/kingpin v2.2.6+incompatible
 	github.com/aws/aws-sdk-go-v2 v1.41.1 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.7
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.1
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
@@ -72,7 +72,10 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 )
 
+require github.com/lmittmann/tint v1.1.3 // indirect
+
 replace (
 	github.com/netbill/eventbox => /home/trpdjke/go/src/github.com/netbill/eventbox
+	github.com/netbill/logium => /home/trpdjke/go/src/github.com/netbill/logium
 	github.com/netbill/orgperm => /home/trpdjke/go/src/github.com/netbill/orgperm
 )

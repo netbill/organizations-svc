@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/netbill/logium"
+	"github.com/netbill/organizations-svc/log"
 )
 
 type Handlers interface {
@@ -63,7 +63,7 @@ type Middlewares interface {
 	AccountAuth(
 		allowedRoles ...string,
 	) func(next http.Handler) http.Handler
-	Logger(log *logium.Entry) func(next http.Handler) http.Handler
+	Logger(log *log.Logger) func(next http.Handler) http.Handler
 	CorsDocs() func(next http.Handler) http.Handler
 }
 
@@ -90,7 +90,7 @@ type Config struct {
 	IdleTimeout       time.Duration
 }
 
-func (s *Server) Run(ctx context.Context, log *logium.Entry, cfg Config) {
+func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 	auth := s.middlewares.AccountAuth()
 
 	r := chi.NewRouter()
@@ -175,7 +175,7 @@ func (s *Server) Run(ctx context.Context, log *logium.Entry, cfg Config) {
 		IdleTimeout:       cfg.IdleTimeout,
 	}
 
-	log.Infof("starting http service on %s", cfg.Port)
+	log.WithField("port", cfg.Port).Info("starting http service...")
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -188,18 +188,18 @@ func (s *Server) Run(ctx context.Context, log *logium.Entry, cfg Config) {
 
 	select {
 	case <-ctx.Done():
-		log.Warnf("shutting down http service...")
+		log.Info("shutting down http service...")
 	case err := <-errCh:
 		if err != nil {
-			log.Errorf("http server error: %v", err)
+			log.WithError(err).Error("http server error")
 		}
 	}
 
 	shCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shCtx); err != nil {
-		log.Errorf("http shutdown error: %v", err)
+		log.WithError(err).Error("failed to shutdown http server gracefully")
 	} else {
-		log.Warnf("http server stopped")
+		log.Info("http server shutdown gracefully")
 	}
 }

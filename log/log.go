@@ -1,16 +1,21 @@
 package log
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
-	"github.com/netbill/eventbox"
 	"github.com/netbill/eventbox/headers"
+	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/segmentio/kafka-go"
-	"github.com/sirupsen/logrus"
+	
+	"github.com/lmittmann/tint"
 )
 
 const (
@@ -34,155 +39,209 @@ const (
 	EventTopicField    = "event_topic"
 	EventVersionField  = "event_version"
 	EventProducerField = "event_producer"
-	EventAttemptField  = "event_attempt"
 )
 
-type Entry struct {
-	*logrus.Entry
+type Logger struct {
+	base *slog.Logger
 }
 
-func New(
-	level string,
-	format string,
-	serviceName string,
-) *Entry {
-	log := logrus.New()
+func New(level string, format string, serviceName string) *Logger {
+	lvl := parseLevel(level)
 
-	lvl, err := logrus.ParseLevel(level)
-	if err != nil {
-		lvl = logrus.InfoLevel
-		log.WithField("bad_level", level).Warn("unknown log level, fallback to info")
-	}
+	var handler slog.Handler
 
-	log.SetLevel(lvl)
+	switch strings.ToLower(strings.TrimSpace(format)) {
+	case "json":
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: lvl,
+		})
 
-	switch {
-	case format == "json":
-		log.SetFormatter(&logrus.JSONFormatter{})
 	default:
-		log.SetFormatter(&logrus.TextFormatter{
-			FullTimestamp:   true,
-			TimestampFormat: "2006-01-02 15:04:05",
+		handler = tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      lvl,
+			TimeFormat: "15:04:05",
 		})
 	}
 
-	return NewEntry(log.WithField(ServiceField, serviceName))
+	base := slog.New(handler).
+		With(slog.String(ServiceField, serviceName))
+
+	return NewEntry(base)
 }
 
-func NewEntry(entry *logrus.Entry) *Entry {
-	return &Entry{entry}
+func NewEntry(logger *slog.Logger) *Logger {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return &Logger{base: logger}
 }
 
-func (e *Entry) WithFields(fields map[string]any) *Entry {
-	return &Entry{Entry: e.Entry.WithFields(fields)}
+func (l *Logger) Base() *slog.Logger {
+	if l == nil {
+		return nil
+	}
+	return l.base
 }
 
-func (e *Entry) WithField(key string, value any) *Entry {
-	return &Entry{Entry: e.Entry.WithField(key, value)}
+func (l *Logger) With(args ...any) logium.Logger {
+	return &Logger{base: l.base.With(args...)}
 }
 
-func (e *Entry) WithError(err error) *Entry {
+func (l *Logger) WithFields(fields map[string]any) logium.Logger {
+	if len(fields) == 0 {
+		return l
+	}
+	args := make([]any, 0, len(fields))
+	for k, v := range fields {
+		args = append(args, slog.Any(k, v))
+	}
+	return &Logger{base: l.base.With(args...)}
+}
+
+func (l *Logger) WithField(key string, value any) logium.Logger {
+	return &Logger{base: l.base.With(slog.Any(key, value))}
+}
+
+func (l *Logger) WithError(err error) logium.Logger {
+	if err == nil {
+		return l
+	}
+
 	var ae *ape.Error
 	if errors.As(err, &ae) {
-		return &Entry{Entry: e.Entry.WithError(ae)}
+		return &Logger{base: l.base.With(
+			slog.String("error", ae.Error()),
+			slog.Any("ape", ae),
+		)}
 	}
-	return &Entry{Entry: e.Entry.WithError(err)}
+
+	return &Logger{base: l.base.With(slog.String("error", err.Error()))}
 }
 
-func (e *Entry) WithRequest(r *http.Request) *Entry {
-	return e.WithFields(map[string]any{
-		HTTPMethodField: r.Method,
-		HTTPPathField:   r.URL.Path,
-	})
+func (l *Logger) WithRequest(r *http.Request) logium.Logger {
+	if r == nil {
+		return l
+	}
+	return &Logger{base: l.base.With(
+		slog.String(HTTPMethodField, r.Method),
+		slog.String(HTTPPathField, r.URL.Path),
+	)}
 }
 
-func (e *Entry) WithOperation(operation string) *Entry {
-	return e.WithField(OperationField, operation)
+func (l *Logger) WithOperation(operation string) logium.Logger {
+	return &Logger{base: l.base.With(slog.String(OperationField, operation))}
 }
 
-func (e *Entry) WithComponent(component string) *Entry {
-	return e.WithField(ComponentField, component)
+func (l *Logger) WithComponent(component string) logium.Logger {
+	return &Logger{base: l.base.With(slog.String(ComponentField, component))}
 }
 
-type accountAuthClaims interface {
+func (l *Logger) Debug(msg string, args ...any) {
+	l.base.Debug(msg, args...)
+}
+
+func (l *Logger) Info(msg string, args ...any) {
+	l.base.Info(msg, args...)
+}
+
+func (l *Logger) Warn(msg string, args ...any) {
+	l.base.Warn(msg, args...)
+}
+
+func (l *Logger) Error(msg string, args ...any) {
+	l.base.Error(msg, args...)
+}
+
+func (l *Logger) DebugContext(ctx context.Context, msg string, args ...any) {
+	l.base.DebugContext(ctx, msg, args...)
+}
+func (l *Logger) InfoContext(ctx context.Context, msg string, args ...any) {
+	l.base.InfoContext(ctx, msg, args...)
+}
+func (l *Logger) WarnContext(ctx context.Context, msg string, args ...any) {
+	l.base.WarnContext(ctx, msg, args...)
+}
+func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any) {
+	l.base.ErrorContext(ctx, msg, args...)
+}
+
+// --- your domain sugar stays returning *Logger if you want ---
+
+func (l *Logger) WithAccountAuthClaims(auth interface {
 	GetAccountID() uuid.UUID
 	GetSessionID() uuid.UUID
+}) *Logger {
+	if auth == nil {
+		return l
+	}
+	return &Logger{base: l.base.With(
+		slog.String(AccountIDField, auth.GetAccountID().String()),
+		slog.String(AccountSessionIDField, auth.GetSessionID().String()),
+	)}
 }
 
-func (e *Entry) WithAccountAuthClaims(auth accountAuthClaims) *Entry {
-	return e.WithFields(map[string]any{
-		AccountIDField:        auth.GetAccountID(),
-		AccountSessionIDField: auth.GetSessionID(),
-	})
+func (l *Logger) WithOrganization(organization models.Organization) *Logger {
+	return &Logger{base: l.base.With(slog.String(OrganizationIDField, organization.ID.String()))}
 }
 
-func (e *Entry) WithOrganization(organization models.Organization) *Entry {
-	return e.WithFields(map[string]any{
-		OrganizationIDField: organization.ID,
-	})
+func (l *Logger) WithMember(member models.Member) *Logger {
+	return &Logger{base: l.base.With(
+		slog.String(OrganizationIDField, member.OrganizationID.String()),
+		slog.String(MemberIDField, member.ID.String()),
+	)}
 }
 
-func (e *Entry) WithMember(member models.Member) *Entry {
-	return e.WithFields(map[string]any{
-		OrganizationIDField: member.OrganizationID,
-		MemberIDField:       member.ID,
-	})
+func (l *Logger) WithRole(role models.Role) *Logger {
+	return &Logger{base: l.base.With(
+		slog.String(OrganizationIDField, role.OrganizationID.String()),
+		slog.String(RoleIDField, role.ID.String()),
+	)}
 }
 
-func (e *Entry) WithRole(role models.Role) *Entry {
-	return e.WithFields(map[string]any{
-		OrganizationIDField: role.OrganizationID,
-		RoleIDField:         role.ID,
-	})
+func (l *Logger) WithInvite(invite models.Invite) *Logger {
+	return &Logger{base: l.base.With(
+		slog.String(OrganizationIDField, invite.OrganizationID.String()),
+		slog.String(InviteIDField, invite.ID.String()),
+	)}
 }
 
-func (e *Entry) WithInvite(invite models.Invite) *Entry {
-	return e.WithFields(map[string]any{
-		OrganizationIDField: invite.OrganizationID,
-		InviteIDField:       invite.ID,
-	})
+func (l *Logger) WithTopic(topic string) *Logger {
+	return &Logger{base: l.base.With(slog.String(EventTopicField, topic))}
 }
 
-func (e *Entry) WithTopic(topic string) *Entry {
-	return e.WithField(EventTopicField, topic)
-}
+func (l *Logger) WithMessage(msg *kafka.Message) *Logger {
+	if msg == nil {
+		return l
+	}
 
-func (e *Entry) WithMessage(msg *kafka.Message) *Entry {
-	res := map[string]any{
-		EventTopicField:    msg.Topic,
-		EventIDField:       "unknown",
-		EventTypeField:     "unknown",
-		EventProducerField: "unknown",
+	args := []any{
+		slog.String(EventTopicField, msg.Topic),
+		slog.String(EventIDField, "unknown"),
+		slog.String(EventTypeField, "unknown"),
+		slog.String(EventProducerField, "unknown"),
 	}
 
 	hs, err := headers.ParseMessageRequiredHeaders(msg.Headers)
 	if err == nil {
-		res[EventIDField] = hs.EventID
-		res[EventVersionField] = hs.EventVersion
-		res[EventProducerField] = hs.Producer
+		args = append(args,
+			slog.String(EventIDField, hs.EventID.String()),
+			slog.Int(EventVersionField, int(hs.EventVersion)),
+			slog.String(EventProducerField, hs.Producer),
+		)
 	}
 
-	return e.WithFields(res)
+	return &Logger{base: l.base.With(args...)}
 }
 
-func (e *Entry) WithOutboxEvent(ev eventbox.OutboxEvent) *Entry {
-	return e.WithFields(map[string]any{
-		EventIDField:       ev.EventID,
-		EventTopicField:    ev.Topic,
-		EventTypeField:     ev.Type,
-		EventVersionField:  ev.Version,
-		EventProducerField: ev.Producer,
-		EventAttemptField:  ev.Attempts,
-	})
-}
-
-func (e *Entry) WithInboxEvent(ev eventbox.InboxEvent) *Entry {
-	return e.WithFields(map[string]any{
-		EventIDField:       ev.EventID,
-		EventTopicField:    ev.Topic,
-		EventTypeField:     ev.Type,
-		EventVersionField:  ev.Version,
-		EventProducerField: ev.Producer,
-		EventAttemptField:  ev.Attempts,
-	})
+func parseLevel(level string) slog.Level {
+	switch strings.ToLower(strings.TrimSpace(level)) {
+	case "debug":
+		return slog.LevelDebug
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
 }

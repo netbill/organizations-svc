@@ -8,14 +8,13 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kingpin"
-	evcli "github.com/netbill/eventbox/pg/cli"
 	"github.com/netbill/organizations-svc/internal/app"
-	"github.com/netbill/organizations-svc/migrations"
+	"github.com/netbill/organizations-svc/internal/config"
 )
 
 func Run(args []string) bool {
-	cfg := app.LoadConfig()
-	log := app.NewLogger(cfg.Log)
+	cfg := config.LoadConfig()
+	log := cfg.Logger()
 
 	var (
 		service = kingpin.New("chains-auth", "")
@@ -64,23 +63,24 @@ func Run(args []string) bool {
 		return false
 	}
 
+	application := app.New(log, cfg)
 	switch command {
 	case serviceCmd.FullCommand():
-		app.StartServices(ctx, log, &wg, cfg)
+		application.Run(ctx)
 	case migrateUpCmd.FullCommand():
-		err = migrations.MigrateUp(ctx, log, cfg.Database.SQL.URL)
+		err = application.MigrateUp(ctx)
 	case migrateDownCmd.FullCommand():
-		err = migrations.MigrateDown(ctx, log, cfg.Database.SQL.URL)
+		err = application.MigrateDown(ctx)
 	case eventsOutboxFailed.FullCommand():
-		err = evcli.CleanupOutboxFailed(ctx, log, cfg.Database.SQL.URL)
+		err = application.CleanupOutboxFailedEvents(ctx)
 	case eventsOutboxProcessing.FullCommand():
-		err = evcli.CleanupOutboxProcessing(ctx, log, cfg.Database.SQL.URL, *eventsOutboxProcessingProcessIDs...)
+		err = application.CleanupOutboxProcessingEvents(ctx, *eventsOutboxProcessingProcessIDs...)
 	case eventsInboxFailed.FullCommand():
-		err = evcli.CleanupInboxFailed(ctx, log, cfg.Database.SQL.URL)
+		err = application.CleanupInboxFailedEvents(ctx)
 	case eventsInboxProcessing.FullCommand():
-		err = evcli.CleanupInboxProcessing(ctx, log, cfg.Database.SQL.URL, *eventsInboxProcessingProcessIDs...)
+		err = application.CleanupInboxProcessingEvents(ctx, *eventsInboxProcessingProcessIDs...)
 	default:
-		log.Errorf("unknown command %s", command)
+		log.Error("unknown command %s", command)
 		return false
 	}
 	if err != nil {
@@ -96,10 +96,10 @@ func Run(args []string) bool {
 
 	select {
 	case <-ctx.Done():
-		log.Warnf("Interrupt signal received: %v", ctx.Err())
+		log.Warn("Interrupt signal received: %v", ctx.Err())
 		<-wgch
 	case <-wgch:
-		log.Warnf("All api stopped")
+		log.Warn("All api stopped")
 	}
 
 	return true

@@ -35,25 +35,26 @@ s3:
     link:
       ttl: 24h
 
-    organization:
-      icon:
-        content_size_max: 5242880 # 5 MB
-        allowed_formats:
-          - "jpeg"
-          - "jpg"
-          - "png"
-          - "gif"
-        max_width:  512
-        max_height: 512
-      banner:
-        content_size_max: 10485760 # 10 MB
-        allowed_formats:
-          - "jpeg"
-          - "jpg"
-          - "png"
-          - "gif"
-        max_width: 2048
-        max_height: 512
+    resources:
+      organization:
+        icon:
+          content_size_max: 5242880 # 5 MB
+          allowed_formats:
+            - "jpeg"
+            - "jpg"
+            - "png"
+            - "gif"
+          max_width:  512
+          max_height: 512
+        banner:
+          content_size_max: 10485760 # 10 MB
+          allowed_formats:
+            - "jpeg"
+            - "jpg"
+            - "png"
+            - "gif"
+          max_width: 2048
+          max_height: 512
 
 kafka:
   brokers:
@@ -63,7 +64,7 @@ kafka:
 
   writer:
     topics:
-      organizations_v1:          #topic name for accounts events
+      organizations_v1:
         required_acks: "all"     # "all" | "one" | "none"
         compression: "snappy"    # "snappy" | "gzip" | "lz4" | "zstd" | "none"
         balancer: "least_bytes"  # "least_bytes" | "round_robin" | "hash"
@@ -73,6 +74,7 @@ kafka:
         read_timeout: 5s         # broker read timeout (0 = default)
         dial_timeout: 5s         # dial timeout (0 = default)
         idle_timeout: 30s        # close idle connections (0 = default)
+
       organization_members_v1:
         required_acks: "all"     # "all" | "one" | "none"
         compression: "snappy"    # "snappy" | "gzip" | "lz4" | "zstd" | "none"
@@ -85,30 +87,34 @@ kafka:
         idle_timeout: 30s        # close idle connections (0 = default)
 
   reader:
+    backoff:
+      min: 100ms # minimum backoff time after an error
+      max: 10s   # maximum backoff time after an error
+
     topics:
-      profiles_v1:             #topic name for accounts events
-        instances: 1           #number of readers for this topic which will be started in each process
-        min_bytes: 1           #minimum bytes to fetch in each request
-        max_bytes: 10e6        #maximum bytes to fetch in each request
-        max_wait: 1s           #maximum time to wait for messages in each request
+      profiles_v1:
+        instances: 1           # number of readers for this topic which will be started in each process
+        min_bytes: 1           # minimum bytes to fetch in each request
+        max_bytes: 10e6        # maximum bytes to fetch in each request
+        max_wait: 1s           # maximum time to wait for messages in each request
         commit_interval: 0s    # 0s = synchronous commits (CommitMessages does commit immediately)
         start_offset: "latest" # used only if group has no committed offset: "earliest"|"latest"
-        queue_capacity: 100    #capacity of the internal queue for messages fetched from Kafka (should be >= batch_size)
+        queue_capacity: 100    # capacity of the internal queue for messages fetched from Kafka (should be >= batch_size)
 
   inbox:
-    routines: 10          #number of goroutines which can process messages in each process
-    slots: 40             #number of slots for processing messages in each process (should be >= routines)
-    sleep: 100ms          #sleep time between processing messages
-    batch_size: 100       #number of messages to process in a batch in each process
-    min_next_attempt: 1m  #minimum time to wait before retrying a failed message
-    max_next_attempt: 10m #maximum time to wait before retrying a failed message
-    max_attempts: 0       #maximum number of attempts to process a message before giving up (0 = infinite retries)
+    routines: 10          # number of goroutines which can process messages in each process
+    slots: 40             # number of slots for processing messages in each process (should be >= routines)
+    sleep: 100ms          # sleep time between processing messages
+    batch_size: 100       # number of messages to process in a batch in each process
+    min_next_attempt: 1m  # minimum time to wait before retrying a failed message
+    max_next_attempt: 10m # maximum time to wait before retrying a failed message
+    max_attempts: 0       # maximum number of attempts to process a message before giving up (0 = infinite retries)
 
   outbox:
-    routines: 10          #number of goroutines which can process messages in each process
-    slots: 40             #number of slots for processing messages in each process (should be >= routines)
-    sleep: 100ms          #sleep time between processing messages
-    batch_size: 100       #number of messages to process in a batch in each process
-    min_next_attempt: 1m  #minimum time to wait before retrying a failed message
-    max_next_attempt: 10m #maximum time to wait before retrying a failed message
-    max_attempts: 0       #maximum number of attempts to process a message before giving up (0 = infinite retries)
+    routines: 10          # number of goroutines which can process messages in each process
+    slots: 40             # number of slots for processing messages in each process (should be >= routines)
+    sleep: 100ms          # sleep time between processing messages
+    batch_size: 100       # number of messages to process in a batch in each process
+    min_next_attempt: 1m  # minimum time to wait before retrying a failed message
+    max_next_attempt: 10m # maximum time to wait before retrying a failed message
+    max_attempts: 0       # maximum number of attempts to process a message before giving up (0 = infinite retries)

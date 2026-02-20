@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/log"
 	"github.com/netbill/restkit/tokens"
 )
 
@@ -16,19 +16,19 @@ const (
 	AccountDataCtxKey
 )
 
-func CtxLog(ctx context.Context, log *logium.Entry) context.Context {
+func CtxLog(ctx context.Context, log *log.Logger) context.Context {
 	return context.WithValue(ctx, LogCtxKey, log)
 }
 
-func Log(r *http.Request) *logium.Entry {
-	log := r.Context().Value(LogCtxKey).(*logium.Entry)
+func Log(r *http.Request) *log.Logger {
+	logger := r.Context().Value(LogCtxKey).(*log.Logger)
 
 	authClaims, ok := r.Context().Value(AccountDataCtxKey).(tokens.AccountAuthClaims)
 	if ok {
-		log = log.WithAccountAuthClaims(authClaims)
+		logger = logger.WithAccountAuthClaims(authClaims)
 	}
 
-	return log
+	return logger
 }
 
 func CtxAccountAuth(ctx context.Context, accountData tokens.AccountAuthClaims) context.Context {
