@@ -1,4 +1,4 @@
-package outbound
+package publisher
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/netbill/organizations-svc/pkg/evtypes"
 )
 
-func (s *Sender) WriteOrgMemberCreated(
+func (p *Publisher) WriteOrgMemberCreated(
 	ctx context.Context,
 	member models.Member,
 ) error {
@@ -29,18 +29,15 @@ func (s *Sender) WriteOrgMemberCreated(
 		return fmt.Errorf("failed to marshal org member created payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrgMemberCreatedEvent,
-			Version:  1,
-			Topic:    evtypes.OrgMembersTopicV1,
-			Key:      member.ID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrgMemberCreatedEvent,
+		Version:  1,
+		Topic:    evtypes.OrgMembersTopicV1,
+		Key:      member.ID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org member created, cause: %w", err)
@@ -49,7 +46,7 @@ func (s *Sender) WriteOrgMemberCreated(
 	return nil
 }
 
-func (s *Sender) WriteOrgMemberUpdated(
+func (p *Publisher) WriteOrgMemberUpdated(
 	ctx context.Context,
 	member models.Member,
 ) error {
@@ -63,18 +60,15 @@ func (s *Sender) WriteOrgMemberUpdated(
 		return fmt.Errorf("failed to marshal org member updated payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrgMemberUpdatedEvent,
-			Version:  1,
-			Topic:    evtypes.OrgMembersTopicV1,
-			Key:      member.ID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrgMemberUpdatedEvent,
+		Version:  1,
+		Topic:    evtypes.OrgMembersTopicV1,
+		Key:      member.ID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org member updated, cause: %w", err)
 	}
@@ -82,7 +76,7 @@ func (s *Sender) WriteOrgMemberUpdated(
 	return nil
 }
 
-func (s *Sender) WriteOrgMemberDeleted(
+func (p *Publisher) WriteOrgMemberDeleted(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) error {
@@ -94,18 +88,15 @@ func (s *Sender) WriteOrgMemberDeleted(
 		return fmt.Errorf("failed to marshal org member deleted payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrgMemberDeletedEvent,
-			Version:  1,
-			Topic:    evtypes.OrgMembersTopicV1,
-			Key:      memberID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrgMemberDeletedEvent,
+		Version:  1,
+		Topic:    evtypes.OrgMembersTopicV1,
+		Key:      memberID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org member deleted, cause: %w", err)
 	}
@@ -113,7 +104,7 @@ func (s *Sender) WriteOrgMemberDeleted(
 	return nil
 }
 
-func (s *Sender) WriteOrgMemberRoleAdd(
+func (p *Publisher) WriteOrgMemberRoleAdd(
 	ctx context.Context,
 	link models.OrgMemberRolesLink,
 ) error {
@@ -126,18 +117,15 @@ func (s *Sender) WriteOrgMemberRoleAdd(
 		return fmt.Errorf("failed to marshal org member role added payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrgMemberRoleAddedEvent,
-			Version:  1,
-			Topic:    evtypes.OrgMembersTopicV1,
-			Key:      link.MemberID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrgMemberRoleAddedEvent,
+		Version:  1,
+		Topic:    evtypes.OrgMembersTopicV1,
+		Key:      link.MemberID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org member role added, cause: %w", err)
 	}
@@ -145,7 +133,7 @@ func (s *Sender) WriteOrgMemberRoleAdd(
 	return nil
 }
 
-func (s *Sender) WriteOrgMemberRoleRemove(
+func (p *Publisher) WriteOrgMemberRoleRemove(
 	ctx context.Context,
 	memberID uuid.UUID,
 	roleID uuid.UUID,
@@ -158,18 +146,15 @@ func (s *Sender) WriteOrgMemberRoleRemove(
 		return fmt.Errorf("failed to marshal org member role removed payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrgMemberRoleRemovedEvent,
-			Version:  1,
-			Topic:    evtypes.OrgMembersTopicV1,
-			Key:      memberID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrgMemberRoleRemovedEvent,
+		Version:  1,
+		Topic:    evtypes.OrgMembersTopicV1,
+		Key:      memberID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org member role removed, cause: %w", err)
 	}

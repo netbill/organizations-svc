@@ -96,10 +96,10 @@ func Run(args []string) bool {
 
 	select {
 	case <-ctx.Done():
-		log.Warn("Interrupt signal received: %v", ctx.Err())
+		log.Info("Interrupt signal received: %v", ctx.Err())
 		<-wgch
 	case <-wgch:
-		log.Warn("All api stopped")
+		log.Info("All api stopped")
 	}
 
 	return true

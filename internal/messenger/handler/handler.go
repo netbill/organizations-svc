@@ -1,4 +1,4 @@
-package inbound
+package handler
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 )
 
-type Handlers struct {
+type Handler struct {
 	modules *Modules
 }
 
@@ -16,8 +16,8 @@ type Modules struct {
 	Profile profileMod
 }
 
-func New(modules Modules) *Handlers {
-	return &Handlers{
+func New(modules Modules) *Handler {
+	return &Handler{
 		modules: &modules,
 	}
 }

@@ -18,8 +18,8 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/internal/messenger"
-	"github.com/netbill/organizations-svc/internal/messenger/inbound"
-	"github.com/netbill/organizations-svc/internal/messenger/outbound"
+	"github.com/netbill/organizations-svc/internal/messenger/handler"
+	"github.com/netbill/organizations-svc/internal/messenger/publisher"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/organizations-svc/internal/repository/pg"
 	"github.com/netbill/organizations-svc/internal/rest"
@@ -96,8 +96,6 @@ func (a *App) Run(ctx context.Context) {
 			Balancer:     a.config.Kafka.Writer.Topics.OrganizationV1.Balancer,
 			BatchSize:    a.config.Kafka.Writer.Topics.OrganizationV1.BatchSize,
 			BatchTimeout: a.config.Kafka.Writer.Topics.OrganizationV1.BatchTimeout,
-			DialTimeout:  a.config.Kafka.Writer.Topics.OrganizationV1.DialTimeout,
-			IdleTimeout:  a.config.Kafka.Writer.Topics.OrganizationV1.IdleTimeout,
 		},
 		OrgMembersV1: messenger.WriterKafkaConfig{
 			RequiredAcks: a.config.Kafka.Writer.Topics.OrgMemberV1.RequiredAcks,
@@ -105,13 +103,11 @@ func (a *App) Run(ctx context.Context) {
 			Balancer:     a.config.Kafka.Writer.Topics.OrgMemberV1.Balancer,
 			BatchSize:    a.config.Kafka.Writer.Topics.OrgMemberV1.BatchSize,
 			BatchTimeout: a.config.Kafka.Writer.Topics.OrgMemberV1.BatchTimeout,
-			DialTimeout:  a.config.Kafka.Writer.Topics.OrgMemberV1.DialTimeout,
-			IdleTimeout:  a.config.Kafka.Writer.Topics.OrgMemberV1.IdleTimeout,
 		},
 	})
 	defer producer.Close()
 
-	outbound := outbound.New(a.config.Kafka.Identity, outbox, producer)
+	outbound := publisher.New(a.config.Kafka.Identity, outbox, producer)
 
 	profileCore := profile.New(repo)
 	orgCore := organization.New(repo, outbound, s3)
@@ -144,7 +140,7 @@ func (a *App) Run(ctx context.Context) {
 		})
 	})
 
-	outboundWorker := messenger.NewOutbound(a.log, outbox, producer, eventbox.OutboxWorkerConfig{
+	outboxWorker := messenger.NewOutboxWorker(a.log, outbox, producer, eventbox.OutboxWorkerConfig{
 		Routines:       a.config.Kafka.Outbox.Routines,
 		Slots:          a.config.Kafka.Outbox.Slots,
 		BatchSize:      a.config.Kafka.Outbox.BatchSize,
@@ -155,14 +151,14 @@ func (a *App) Run(ctx context.Context) {
 	})
 
 	run(func() {
-		outboundWorker.RunOutbox(ctx)
+		outboxWorker.Run(ctx)
 	})
 
-	inbound := inbound.New(inbound.Modules{
+	inbound := handler.New(handler.Modules{
 		Profile: profileCore,
 	})
 
-	inboundWorker := messenger.NewInbound(a.log, inbox, *inbound, eventbox.InboxWorkerConfig{
+	inboxWorker := messenger.NewInboxWorker(a.log, inbox, eventbox.InboxWorkerConfig{
 		Routines:       a.config.Kafka.Inbox.Routines,
 		Slots:          a.config.Kafka.Inbox.Slots,
 		BatchSize:      a.config.Kafka.Inbox.BatchSize,
@@ -170,27 +166,27 @@ func (a *App) Run(ctx context.Context) {
 		MinNextAttempt: a.config.Kafka.Inbox.MinNextAttempt,
 		MaxNextAttempt: a.config.Kafka.Inbox.MaxNextAttempt,
 		MaxAttempts:    a.config.Kafka.Inbox.MaxAttempts,
-	})
+	}, *inbound)
 
 	run(func() {
-		inboundWorker.RunInbox(ctx)
+		inboxWorker.Run(ctx)
 	})
 
-	consumer := messenger.NewConsumerWorker(a.log, inbox, messenger.ConsumerConfig{
+	consumer := messenger.NewConsumer(a.log, inbox, messenger.ListenerConfig{
 		GroupID:    a.config.Kafka.Identity,
 		Brokers:    a.config.Kafka.Brokers,
 		MinBackoff: a.config.Kafka.Reader.Backoff.Min,
 		MaxBackoff: a.config.Kafka.Reader.Backoff.Max,
-		ProfilesV1: messenger.ReaderKafkaConfig{
-			Instances:      a.config.Kafka.Reader.Topics.ProfilesV1.Instances,
-			MinBytes:       a.config.Kafka.Reader.Topics.ProfilesV1.MinBytes,
-			MaxBytes:       a.config.Kafka.Reader.Topics.ProfilesV1.MaxBytes,
-			MaxWait:        a.config.Kafka.Reader.Topics.ProfilesV1.MaxWait,
-			CommitInterval: a.config.Kafka.Reader.Topics.ProfilesV1.CommitInterval,
-			StartOffset:    a.config.Kafka.Reader.Topics.ProfilesV1.StartOffset,
-			QueueCapacity:  a.config.Kafka.Reader.Topics.ProfilesV1.QueueCapacity,
+		ProfilesV1: messenger.ListenKafkaConfig{
+			Instances:     a.config.Kafka.Reader.Topics.ProfilesV1.Instances,
+			MinBytes:      a.config.Kafka.Reader.Topics.ProfilesV1.MinBytes,
+			MaxBytes:      a.config.Kafka.Reader.Topics.ProfilesV1.MaxBytes,
+			MaxWait:       a.config.Kafka.Reader.Topics.ProfilesV1.MaxWait,
+			StartOffset:   a.config.Kafka.Reader.Topics.ProfilesV1.StartOffset,
+			QueueCapacity: a.config.Kafka.Reader.Topics.ProfilesV1.QueueCapacity,
 		},
 	})
+	defer consumer.Close()
 
 	run(func() {
 		consumer.Run(ctx)

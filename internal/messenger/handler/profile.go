@@ -1,21 +1,21 @@
-package inbound
+package handler
 
 import (
 	"context"
 	"encoding/json"
 
+	"github.com/netbill/eventbox"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/pkg/evtypes"
-	"github.com/segmentio/kafka-go"
 )
 
-func (h *Handlers) ProfileCreated(
+func (h *Handler) ProfileCreated(
 	ctx context.Context,
-	message kafka.Message,
+	event eventbox.InboxEvent,
 ) error {
 	var payload evtypes.ProfileCreatedPayload
-	if err := json.Unmarshal(message.Value, &payload); err != nil {
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
 		return err
 	}
 
@@ -31,12 +31,12 @@ func (h *Handlers) ProfileCreated(
 
 }
 
-func (h *Handlers) ProfileUpdated(
+func (h *Handler) ProfileUpdated(
 	ctx context.Context,
-	message kafka.Message,
+	event eventbox.InboxEvent,
 ) error {
 	var payload evtypes.ProfileUpdatedPayload
-	if err := json.Unmarshal(message.Value, &payload); err != nil {
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
 		return err
 	}
 
@@ -53,12 +53,12 @@ func (h *Handlers) ProfileUpdated(
 	return nil
 }
 
-func (h *Handlers) ProfileDeleted(
+func (h *Handler) ProfileDeleted(
 	ctx context.Context,
-	message kafka.Message,
+	event eventbox.InboxEvent,
 ) error {
 	var payload evtypes.ProfileDeletedPayload
-	if err := json.Unmarshal(message.Value, &payload); err != nil {
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
 		return err
 	}
 

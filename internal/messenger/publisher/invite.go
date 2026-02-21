@@ -1,4 +1,4 @@
-package outbound
+package publisher
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/netbill/organizations-svc/pkg/evtypes"
 )
 
-func (s *Sender) WriteOrgInviteCreated(
+func (p *Publisher) WriteOrgInviteCreated(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -28,18 +28,15 @@ func (s *Sender) WriteOrgInviteCreated(
 		return fmt.Errorf("failed to marshal org invite created payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrgInviteCreatedEvent,
-			Version:  1,
-			Topic:    evtypes.OrganizationsTopicV1,
-			Key:      invite.OrganizationID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrgInviteCreatedEvent,
+		Version:  1,
+		Topic:    evtypes.OrganizationsTopicV1,
+		Key:      invite.OrganizationID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org invite created, cause: %w", err)
@@ -48,7 +45,7 @@ func (s *Sender) WriteOrgInviteCreated(
 	return nil
 }
 
-func (s *Sender) WriteOrgInviteAccepted(
+func (p *Publisher) WriteOrgInviteAccepted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -60,14 +57,14 @@ func (s *Sender) WriteOrgInviteAccepted(
 		return fmt.Errorf("failed to marshal org invite accepted payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(ctx, eventbox.Event{
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteAcceptedEvent,
 		Version:  1,
 		Topic:    evtypes.OrganizationsTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
-		Producer: s.identity,
+		Producer: p.identity,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org invite accepted, cause: %w", err)
@@ -76,7 +73,7 @@ func (s *Sender) WriteOrgInviteAccepted(
 	return nil
 }
 
-func (s *Sender) WriteOrgInviteDeclined(
+func (p *Publisher) WriteOrgInviteDeclined(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -88,14 +85,14 @@ func (s *Sender) WriteOrgInviteDeclined(
 		return fmt.Errorf("failed to marshal org invite declined payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(ctx, eventbox.Event{
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteDeclinedEvent,
 		Version:  1,
 		Topic:    evtypes.OrganizationsTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
-		Producer: s.identity,
+		Producer: p.identity,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org invite declined, cause: %w", err)
@@ -104,7 +101,7 @@ func (s *Sender) WriteOrgInviteDeclined(
 	return nil
 }
 
-func (s *Sender) WriteOrgInviteDeleted(
+func (p *Publisher) WriteOrgInviteDeleted(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
@@ -116,14 +113,14 @@ func (s *Sender) WriteOrgInviteDeleted(
 		return fmt.Errorf("failed to marshal org invite deleted payload, cause: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(ctx, eventbox.Event{
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteDeletedEvent,
 		Version:  1,
 		Topic:    evtypes.OrganizationsTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
-		Producer: s.identity,
+		Producer: p.identity,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org invite deleted, cause: %w", err)

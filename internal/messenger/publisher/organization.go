@@ -1,4 +1,4 @@
-package outbound
+package publisher
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/netbill/organizations-svc/pkg/evtypes"
 )
 
-func (s *Sender) WriteOrganizationCreated(
+func (p *Publisher) WriteOrganizationCreated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -27,18 +27,15 @@ func (s *Sender) WriteOrganizationCreated(
 		return fmt.Errorf("failed to marshal organization created payload: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrganizationCreatedEvent,
-			Version:  1,
-			Topic:    evtypes.OrganizationsTopicV1,
-			Key:      organization.ID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrganizationCreatedEvent,
+		Version:  1,
+		Topic:    evtypes.OrganizationsTopicV1,
+		Key:      organization.ID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for organization created: %w", err)
 	}
@@ -46,7 +43,7 @@ func (s *Sender) WriteOrganizationCreated(
 	return nil
 }
 
-func (s *Sender) WriteOrganizationUpdated(
+func (p *Publisher) WriteOrganizationUpdated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -61,18 +58,15 @@ func (s *Sender) WriteOrganizationUpdated(
 		return fmt.Errorf("failed to marshal organization updated payload: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrganizationUpdatedEvent,
-			Version:  1,
-			Topic:    evtypes.OrganizationsTopicV1,
-			Key:      organization.ID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrganizationUpdatedEvent,
+		Version:  1,
+		Topic:    evtypes.OrganizationsTopicV1,
+		Key:      organization.ID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for organization updated: %w", err)
 	}
@@ -80,7 +74,7 @@ func (s *Sender) WriteOrganizationUpdated(
 	return nil
 }
 
-func (s *Sender) WriteOrganizationDeleted(
+func (p *Publisher) WriteOrganizationDeleted(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -92,18 +86,15 @@ func (s *Sender) WriteOrganizationDeleted(
 		return fmt.Errorf("failed to marshal organization deleted payload: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrganizationDeletedEvent,
-			Version:  1,
-			Topic:    evtypes.OrganizationsTopicV1,
-			Key:      organization.ID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrganizationDeletedEvent,
+		Version:  1,
+		Topic:    evtypes.OrganizationsTopicV1,
+		Key:      organization.ID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for organization deleted: %w", err)
 	}
@@ -111,7 +102,7 @@ func (s *Sender) WriteOrganizationDeleted(
 	return nil
 }
 
-func (s *Sender) WriteOrganizationActivated(
+func (p *Publisher) WriteOrganizationActivated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -123,18 +114,15 @@ func (s *Sender) WriteOrganizationActivated(
 		return fmt.Errorf("failed to marshal organization activated payload: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrganizationActivatedEvent,
-			Version:  1,
-			Topic:    evtypes.OrganizationsTopicV1,
-			Key:      organization.ID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrganizationActivatedEvent,
+		Version:  1,
+		Topic:    evtypes.OrganizationsTopicV1,
+		Key:      organization.ID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for organization activated: %w", err)
 	}
@@ -142,7 +130,7 @@ func (s *Sender) WriteOrganizationActivated(
 	return nil
 }
 
-func (s *Sender) WriteOrganizationDeactivated(
+func (p *Publisher) WriteOrganizationDeactivated(
 	ctx context.Context,
 	organization models.Organization,
 ) error {
@@ -154,18 +142,15 @@ func (s *Sender) WriteOrganizationDeactivated(
 		return fmt.Errorf("failed to marshal organization deactivated payload: %w", err)
 	}
 
-	_, err = s.outbox.WriteOutboxEvent(
-		ctx,
-		eventbox.Event{
-			ID:       uuid.New(),
-			Type:     evtypes.OrganizationDeactivatedEvent,
-			Version:  1,
-			Topic:    evtypes.OrganizationsTopicV1,
-			Key:      organization.ID.String(),
-			Payload:  payload,
-			Producer: s.identity,
-		},
-	)
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrganizationDeactivatedEvent,
+		Version:  1,
+		Topic:    evtypes.OrganizationsTopicV1,
+		Key:      organization.ID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for organization deactivated: %w", err)
 	}

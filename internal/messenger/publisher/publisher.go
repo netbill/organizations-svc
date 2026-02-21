@@ -1,4 +1,4 @@
-package outbound
+package publisher
 
 import (
 	"time"
@@ -16,7 +16,7 @@ type WriterConfig struct {
 	IdleTimeout  time.Duration `mapstructure:"idle_timeout"`
 }
 
-type Sender struct {
+type Publisher struct {
 	identity string
 	outbox   eventbox.Outbox
 	producer *eventbox.Producer
@@ -26,14 +26,10 @@ func New(
 	identity string,
 	outbox eventbox.Outbox,
 	producer *eventbox.Producer,
-) *Sender {
-	return &Sender{
+) *Publisher {
+	return &Publisher{
 		identity: identity,
 		outbox:   outbox,
 		producer: producer,
 	}
-}
-
-func (s *Sender) Close() error {
-	return s.producer.Close()
 }
