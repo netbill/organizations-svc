@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 )
 
@@ -30,8 +30,8 @@ func (r ProfileRow) IsNil() bool {
 	return r.AccountID == uuid.Nil
 }
 
-func (r ProfileRow) ToModel() models.Profile {
-	return models.Profile{
+func (r ProfileRow) ToModel() domain.Profile {
+	return domain.Profile{
 		AccountID: r.AccountID,
 		Username:  r.Username,
 		Official:  r.Official,
@@ -66,8 +66,8 @@ type ProfilesQ interface {
 
 func (r *Repository) CreateProfile(
 	ctx context.Context,
-	profile models.Profile,
-) (models.Profile, error) {
+	profile domain.Profile,
+) (domain.Profile, error) {
 	row, err := r.ProfilesSql.New().Insert(ctx, ProfileRow{
 		AccountID:       profile.AccountID,
 		Username:        profile.Username,
@@ -78,7 +78,7 @@ func (r *Repository) CreateProfile(
 		SourceCreatedAt: profile.CreatedAt,
 	})
 	if err != nil {
-		return models.Profile{}, fmt.Errorf("failed to create profile, cause: %w", err)
+		return domain.Profile{}, fmt.Errorf("failed to create profile, cause: %w", err)
 	}
 
 	return row.ToModel(), nil
@@ -88,7 +88,7 @@ func (r *Repository) UpdateProfile(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params profile.UpdateParams,
-) (models.Profile, error) {
+) (domain.Profile, error) {
 	row, err := r.ProfilesSql.New().
 		FilterByAccountID(accountID).
 		UpdateUsername(params.Username).
@@ -98,10 +98,10 @@ func (r *Repository) UpdateProfile(
 		UpdateSourceUpdatedAt(params.UpdatedAt).
 		UpdateOne(ctx)
 	if err != nil {
-		return models.Profile{}, fmt.Errorf("failed to update profile, cause: %w", err)
+		return domain.Profile{}, fmt.Errorf("failed to update profile, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
+		return domain.Profile{}, errx.ErrorProfileNotFound.Raise(
 			fmt.Errorf("profile with account ID %s not found", accountID),
 		)
 	}
@@ -112,13 +112,13 @@ func (r *Repository) UpdateProfile(
 func (r *Repository) GetProfileByAccountID(
 	ctx context.Context,
 	accountID uuid.UUID,
-) (models.Profile, error) {
+) (domain.Profile, error) {
 	row, err := r.ProfilesSql.New().FilterByAccountID(accountID).Get(ctx)
 	if err != nil {
-		return models.Profile{}, fmt.Errorf("failed to get profile by account ID, cause: %w", err)
+		return domain.Profile{}, fmt.Errorf("failed to get profile by account ID, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
+		return domain.Profile{}, errx.ErrorProfileNotFound.Raise(
 			fmt.Errorf("profile with account ID %s not found", accountID),
 		)
 	}
@@ -129,13 +129,13 @@ func (r *Repository) GetProfileByAccountID(
 func (r *Repository) GetProfileByUsername(
 	ctx context.Context,
 	username string,
-) (models.Profile, error) {
+) (domain.Profile, error) {
 	row, err := r.ProfilesSql.New().FilterByUsername(username).Get(ctx)
 	if err != nil {
-		return models.Profile{}, fmt.Errorf("failed to get profile by username, cause: %w", err)
+		return domain.Profile{}, fmt.Errorf("failed to get profile by username, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
+		return domain.Profile{}, errx.ErrorProfileNotFound.Raise(
 			fmt.Errorf("profile with username %s not found", username),
 		)
 	}

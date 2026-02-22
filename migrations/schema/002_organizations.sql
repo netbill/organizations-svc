@@ -17,7 +17,7 @@ CREATE TABLE profiles (
 
 CREATE TYPE organization_status AS ENUM (
     'active',
-    'inactive',
+    'inactive'
 );
 
 CREATE TABLE organizations (

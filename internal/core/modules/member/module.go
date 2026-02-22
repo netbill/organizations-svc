@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
@@ -24,42 +24,42 @@ func New(repo repo, messenger messenger) *Module {
 }
 
 type repo interface {
-	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-	UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (models.Member, error)
-	GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error)
+	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (domain.Member, error)
+	UpdateMember(ctx context.Context, ID uuid.UUID, params UpdateParams) (domain.Member, error)
+	GetMember(ctx context.Context, memberID uuid.UUID) (domain.Member, error)
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
-	) (models.Member, error)
+	) (domain.Member, error)
 	GetMembers(
 		ctx context.Context,
 		filter FilterParams,
 		limit uint,
 		offset uint,
-	) (pagi.Page[[]models.Member], error)
+	) (pagi.Page[[]domain.Member], error)
 	DeleteMember(ctx context.Context, memberID uuid.UUID) error
 
-	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
+	GetRole(ctx context.Context, roleID uuid.UUID) (domain.Role, error)
 
 	CheckMemberHavePermission(
 		ctx context.Context,
 		memberID uuid.UUID,
 		permissionID uuid.UUID,
 	) (bool, error)
-	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (models.Role, error)
+	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (domain.Role, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type messenger interface {
-	WriteOrgMemberCreated(ctx context.Context, member models.Member) error
-	WriteOrgMemberUpdated(ctx context.Context, member models.Member) error
+	WriteOrgMemberCreated(ctx context.Context, member domain.Member) error
+	WriteOrgMemberUpdated(ctx context.Context, member domain.Member) error
 	WriteOrgMemberDeleted(ctx context.Context, memberID uuid.UUID) error
 }
 
 func (m *Module) checkAbilityToUpdateMember(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	organizationID uuid.UUID,
 	memberID uuid.UUID,
 ) error {

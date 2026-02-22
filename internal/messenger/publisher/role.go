@@ -8,14 +8,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/organizations-svc/pkg/evtypes"
 )
 
 func (p *Publisher) WriteOrgRoleCreated(
 	ctx context.Context,
-	role models.Role,
+	role domain.Role,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgRoleCreatedPayload{
 		RoleID:         role.ID,
@@ -48,7 +48,7 @@ func (p *Publisher) WriteOrgRoleCreated(
 
 func (p *Publisher) WriteOrgRoleUpdated(
 	ctx context.Context,
-	role models.Role,
+	role domain.Role,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgRoleUpdatedPayload{
 		RoleID:      role.ID,
@@ -79,7 +79,7 @@ func (p *Publisher) WriteOrgRoleUpdated(
 
 func (p *Publisher) WriteOrgRoleDeleted(
 	ctx context.Context,
-	role models.Role,
+	role domain.Role,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgRoleDeletedPayload{
 		RoleID:    role.ID,
@@ -107,7 +107,7 @@ func (p *Publisher) WriteOrgRoleDeleted(
 
 func (p *Publisher) WriteOrgRolePermissionsUpdated(
 	ctx context.Context,
-	role models.Role,
+	role domain.Role,
 	permissions role.SetPermissions,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgRolePermissionsUpdatedPayload{

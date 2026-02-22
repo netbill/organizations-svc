@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -19,10 +19,10 @@ func (m *Module) GetList(
 	ctx context.Context,
 	params FilterParams,
 	limit, offset uint,
-) (pagi.Page[[]models.Role], error) {
+) (pagi.Page[[]domain.Role], error) {
 	res, err := m.repo.GetRoles(ctx, params, limit, offset)
 	if err != nil {
-		return pagi.Page[[]models.Role]{}, err
+		return pagi.Page[[]domain.Role]{}, err
 	}
 
 	return res, nil

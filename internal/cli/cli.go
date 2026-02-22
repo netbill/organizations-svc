@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/alecthomas/kingpin"
@@ -12,7 +11,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/config"
 )
 
-func Run(args []string) bool {
+func Run(args []string) {
 	cfg := config.LoadConfig()
 	log := cfg.Logger()
 
@@ -55,18 +54,16 @@ func Run(args []string) bool {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	var wg sync.WaitGroup
-
 	command, err := service.Parse(args[1:])
 	if err != nil {
 		log.WithError(err).Error("failed to parse arguments")
-		return false
+		return
 	}
 
 	application := app.New(log, cfg)
 	switch command {
 	case serviceCmd.FullCommand():
-		application.Run(ctx)
+		err = application.Run(ctx)
 	case migrateUpCmd.FullCommand():
 		err = application.MigrateUp(ctx)
 	case migrateDownCmd.FullCommand():
@@ -81,26 +78,12 @@ func Run(args []string) bool {
 		err = application.CleanupInboxProcessingEvents(ctx, *eventsInboxProcessingProcessIDs...)
 	default:
 		log.Error("unknown command %s", command)
-		return false
+		return
 	}
 	if err != nil {
 		log.WithError(err).Error("failed to exec cmd")
-		return false
+		return
 	}
 
-	wgch := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(wgch)
-	}()
-
-	select {
-	case <-ctx.Done():
-		log.Info("Interrupt signal received: %v", ctx.Err())
-		<-wgch
-	case <-wgch:
-		log.Info("All api stopped")
-	}
-
-	return true
+	log.Info("all processes finished successfully")
 }

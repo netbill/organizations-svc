@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 	"github.com/netbill/organizations-svc/pkg/evtypes"
 )
@@ -19,7 +19,7 @@ func (h *Handler) ProfileCreated(
 		return err
 	}
 
-	if _, err := h.modules.Profile.Create(ctx, models.Profile{
+	if _, err := h.modules.Profile.Create(ctx, domain.Profile{
 		AccountID: payload.AccountID,
 		Username:  payload.Username,
 		CreatedAt: payload.CreatedAt,

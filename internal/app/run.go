@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 
 	awscfg "github.com/aws/aws-sdk-go-v2/config"
@@ -30,7 +29,7 @@ import (
 	"github.com/netbill/restkit"
 )
 
-func (a *App) Run(ctx context.Context) {
+func (a *App) Run(ctx context.Context) error {
 	var wg = &sync.WaitGroup{}
 
 	run := func(f func()) {
@@ -43,9 +42,9 @@ func (a *App) Run(ctx context.Context) {
 
 	pool, err := a.config.PoolDB(ctx)
 	if err != nil {
-		a.log.WithError(err).Error("failed to connect to database")
-		os.Exit(1)
+		return fmt.Errorf("connect to database: %w", err)
 	}
+	defer pool.Close()
 
 	defer pool.Close()
 	db := pgdbx.NewDB(pool)
@@ -53,6 +52,7 @@ func (a *App) Run(ctx context.Context) {
 	a.log.Info("starting application")
 
 	repo := &repository.Repository{
+		Transactioner:             pg.NewTransaction(db),
 		OrganizationsSql:          pg.NewOrganizationsQ(db),
 		OrgMembersSql:             pg.NewOrgMembersQ(db),
 		OrgMemberRolesSql:         pg.NewOrgMemberRolesQ(db),
@@ -75,7 +75,7 @@ func (a *App) Run(ctx context.Context) {
 		),
 	)
 	if err != nil {
-		panic(fmt.Sprintf("unable to load S3 config: %v", err))
+		return fmt.Errorf("load aws config: %w", err)
 	}
 
 	s3 := bucket.NewStorage(awsx.New(a.config.S3.Aws.BucketName, cfg), bucket.Config{
@@ -90,19 +90,19 @@ func (a *App) Run(ctx context.Context) {
 	producer := messenger.NewProducer(messenger.ProducerConfig{
 		Producer: a.config.Kafka.Identity,
 		Brokers:  a.config.Kafka.Brokers,
-		OrganizationV1: messenger.WriterKafkaConfig{
-			RequiredAcks: a.config.Kafka.Writer.Topics.OrganizationV1.RequiredAcks,
-			Compression:  a.config.Kafka.Writer.Topics.OrganizationV1.Compression,
-			Balancer:     a.config.Kafka.Writer.Topics.OrganizationV1.Balancer,
-			BatchSize:    a.config.Kafka.Writer.Topics.OrganizationV1.BatchSize,
-			BatchTimeout: a.config.Kafka.Writer.Topics.OrganizationV1.BatchTimeout,
+		OrganizationV1: messenger.ProduceKafkaConfig{
+			RequiredAcks: a.config.Kafka.Produce.Topics.OrganizationV1.RequiredAcks,
+			Compression:  a.config.Kafka.Produce.Topics.OrganizationV1.Compression,
+			Balancer:     a.config.Kafka.Produce.Topics.OrganizationV1.Balancer,
+			BatchSize:    a.config.Kafka.Produce.Topics.OrganizationV1.BatchSize,
+			BatchTimeout: a.config.Kafka.Produce.Topics.OrganizationV1.BatchTimeout,
 		},
-		OrgMembersV1: messenger.WriterKafkaConfig{
-			RequiredAcks: a.config.Kafka.Writer.Topics.OrgMemberV1.RequiredAcks,
-			Compression:  a.config.Kafka.Writer.Topics.OrgMemberV1.Compression,
-			Balancer:     a.config.Kafka.Writer.Topics.OrgMemberV1.Balancer,
-			BatchSize:    a.config.Kafka.Writer.Topics.OrgMemberV1.BatchSize,
-			BatchTimeout: a.config.Kafka.Writer.Topics.OrgMemberV1.BatchTimeout,
+		OrgMembersV1: messenger.ProduceKafkaConfig{
+			RequiredAcks: a.config.Kafka.Produce.Topics.OrgMemberV1.RequiredAcks,
+			Compression:  a.config.Kafka.Produce.Topics.OrgMemberV1.Compression,
+			Balancer:     a.config.Kafka.Produce.Topics.OrgMemberV1.Balancer,
+			BatchSize:    a.config.Kafka.Produce.Topics.OrgMemberV1.BatchSize,
+			BatchTimeout: a.config.Kafka.Produce.Topics.OrgMemberV1.BatchTimeout,
 		},
 	})
 	defer producer.Close()
@@ -149,6 +149,7 @@ func (a *App) Run(ctx context.Context) {
 		MaxNextAttempt: a.config.Kafka.Outbox.MaxNextAttempt,
 		MaxAttempts:    a.config.Kafka.Outbox.MaxAttempts,
 	})
+	defer outboxWorker.Clean()
 
 	run(func() {
 		outboxWorker.Run(ctx)
@@ -167,23 +168,23 @@ func (a *App) Run(ctx context.Context) {
 		MaxNextAttempt: a.config.Kafka.Inbox.MaxNextAttempt,
 		MaxAttempts:    a.config.Kafka.Inbox.MaxAttempts,
 	}, *inbound)
+	defer inboxWorker.Clean()
 
 	run(func() {
 		inboxWorker.Run(ctx)
 	})
 
-	consumer := messenger.NewConsumer(a.log, inbox, messenger.ListenerConfig{
+	consumer := messenger.NewConsumer(a.log, inbox, messenger.ConsumerConfig{
 		GroupID:    a.config.Kafka.Identity,
 		Brokers:    a.config.Kafka.Brokers,
-		MinBackoff: a.config.Kafka.Reader.Backoff.Min,
-		MaxBackoff: a.config.Kafka.Reader.Backoff.Max,
-		ProfilesV1: messenger.ListenKafkaConfig{
-			Instances:     a.config.Kafka.Reader.Topics.ProfilesV1.Instances,
-			MinBytes:      a.config.Kafka.Reader.Topics.ProfilesV1.MinBytes,
-			MaxBytes:      a.config.Kafka.Reader.Topics.ProfilesV1.MaxBytes,
-			MaxWait:       a.config.Kafka.Reader.Topics.ProfilesV1.MaxWait,
-			StartOffset:   a.config.Kafka.Reader.Topics.ProfilesV1.StartOffset,
-			QueueCapacity: a.config.Kafka.Reader.Topics.ProfilesV1.QueueCapacity,
+		MinBackoff: a.config.Kafka.Consume.Backoff.Min,
+		MaxBackoff: a.config.Kafka.Consume.Backoff.Max,
+		ProfilesV1: messenger.ConsumeKafkaConfig{
+			Instances:     a.config.Kafka.Consume.Topics.ProfilesV1.Instances,
+			MinBytes:      a.config.Kafka.Consume.Topics.ProfilesV1.MinBytes,
+			MaxBytes:      a.config.Kafka.Consume.Topics.ProfilesV1.MaxBytes,
+			MaxWait:       a.config.Kafka.Consume.Topics.ProfilesV1.MaxWait,
+			QueueCapacity: a.config.Kafka.Consume.Topics.ProfilesV1.QueueCapacity,
 		},
 	})
 	defer consumer.Close()
@@ -193,4 +194,5 @@ func (a *App) Run(ctx context.Context) {
 	})
 
 	wg.Wait()
+	return nil
 }

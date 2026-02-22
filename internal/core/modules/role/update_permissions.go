@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/orgperm"
 )
 
@@ -21,27 +21,27 @@ func (s SetPermissions) Validate() error {
 
 func (m *Module) UpdatePermissions(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	roleID uuid.UUID,
 	params SetPermissions,
-) (role models.Role, links models.OrgRolePermissionsWithDetailsForRole, err error) {
+) (role domain.Role, links domain.OrgRolePermissionsWithDetailsForRole, err error) {
 	if err = params.Validate(); err != nil {
-		return models.Role{}, models.OrgRolePermissionsWithDetailsForRole{}, err
+		return domain.Role{}, domain.OrgRolePermissionsWithDetailsForRole{}, err
 	}
 
 	role, err = m.repo.GetRole(ctx, roleID)
 	if err != nil {
-		return models.Role{}, nil, err
+		return domain.Role{}, nil, err
 	}
 
 	member, err := m.getInitiator(ctx, initiator, role.OrganizationID)
 	if err != nil {
-		return models.Role{}, nil, err
+		return domain.Role{}, nil, err
 	}
 
 	err = m.checkPermissionsToManageRole(ctx, initiator, member.OrganizationID, role.Rank)
 	if err != nil {
-		return models.Role{}, nil, err
+		return domain.Role{}, nil, err
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -58,7 +58,7 @@ func (m *Module) UpdatePermissions(
 		return nil
 	})
 	if err != nil {
-		return models.Role{}, nil, err
+		return domain.Role{}, nil, err
 	}
 
 	return role, links, nil

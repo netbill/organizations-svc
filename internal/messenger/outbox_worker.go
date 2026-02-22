@@ -3,7 +3,7 @@ package messenger
 import (
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/log"
+	"github.com/netbill/organizations-svc/pkg/log"
 )
 
 func NewOutboxWorker(

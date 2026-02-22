@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 )
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	roleID uuid.UUID,
 ) error {
 	role, err := m.GetByID(ctx, roleID)

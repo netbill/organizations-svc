@@ -6,18 +6,18 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (m *Module) GetForAccount(
 	ctx context.Context,
 	accountID uuid.UUID,
 	inviteID uuid.UUID,
-) (models.Invite, error) {
+) (domain.Invite, error) {
 	res, err := m.repo.GetInvite(ctx, inviteID)
 	if err != nil {
-		return models.Invite{}, err
+		return domain.Invite{}, err
 	}
 
 	if res.AccountID != accountID {
@@ -28,11 +28,11 @@ func (m *Module) GetForAccount(
 		)
 		if err != nil {
 			if errors.Is(err, errx.ErrorMemberNotFound) {
-				return models.Invite{}, errx.ErrorInviteNotFound.Raise(
+				return domain.Invite{}, errx.ErrorInviteNotFound.Raise(
 					fmt.Errorf("account has no rights to view this invite"),
 				)
 			}
-			return models.Invite{}, err
+			return domain.Invite{}, err
 		}
 	}
 

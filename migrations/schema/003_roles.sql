@@ -45,7 +45,6 @@ SET code = EXCLUDED.code,
     description = EXCLUDED.description,
     updated_at = (now() AT TIME ZONE 'UTC');
 
--- +migrate Down
 CREATE TABLE organization_role_permission_links (
     role_id         UUID NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
     permission_id   UUID NOT NULL REFERENCES organization_role_permissions (id) ON DELETE RESTRICT,

@@ -12,10 +12,8 @@ import (
 	"github.com/netbill/ape"
 	"github.com/netbill/eventbox/headers"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/segmentio/kafka-go"
-	
-	"github.com/lmittmann/tint"
 )
 
 const (
@@ -57,30 +55,18 @@ func New(level string, format string, serviceName string) *Logger {
 		})
 
 	default:
-		handler = tint.NewHandler(os.Stdout, &tint.Options{
+		handler = logium.NewAlignedTextHandler(os.Stdout, logium.AlignedTextOptions{
 			Level:      lvl,
-			TimeFormat: "15:04:05",
+			TimeFormat: "2006-01-02 15:04:05",
+			MsgWidth:   55,
+			Colors:     true,
 		})
 	}
 
 	base := slog.New(handler).
 		With(slog.String(ServiceField, serviceName))
 
-	return NewEntry(base)
-}
-
-func NewEntry(logger *slog.Logger) *Logger {
-	if logger == nil {
-		logger = slog.Default()
-	}
-	return &Logger{base: logger}
-}
-
-func (l *Logger) Base() *slog.Logger {
-	if l == nil {
-		return nil
-	}
-	return l.base
+	return &Logger{base: base}
 }
 
 func (l *Logger) With(args ...any) logium.Logger {
@@ -180,25 +166,25 @@ func (l *Logger) WithAccountAuthClaims(auth interface {
 	)}
 }
 
-func (l *Logger) WithOrganization(organization models.Organization) *Logger {
+func (l *Logger) WithOrganization(organization domain.Organization) *Logger {
 	return &Logger{base: l.base.With(slog.String(OrganizationIDField, organization.ID.String()))}
 }
 
-func (l *Logger) WithMember(member models.Member) *Logger {
+func (l *Logger) WithMember(member domain.Member) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, member.OrganizationID.String()),
 		slog.String(MemberIDField, member.ID.String()),
 	)}
 }
 
-func (l *Logger) WithRole(role models.Role) *Logger {
+func (l *Logger) WithRole(role domain.Role) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, role.OrganizationID.String()),
 		slog.String(RoleIDField, role.ID.String()),
 	)}
 }
 
-func (l *Logger) WithInvite(invite models.Invite) *Logger {
+func (l *Logger) WithInvite(invite domain.Invite) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, invite.OrganizationID.String()),
 		slog.String(InviteIDField, invite.ID.String()),

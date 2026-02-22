@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 )
 
 type UpdateParams struct {
@@ -15,23 +15,23 @@ type UpdateParams struct {
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	roleID uuid.UUID,
 	params UpdateParams,
-) (models.Role, error) {
+) (domain.Role, error) {
 	role, err := m.GetByID(ctx, roleID)
 	if err != nil {
-		return models.Role{}, err
+		return domain.Role{}, err
 	}
 
 	member, err := m.getInitiator(ctx, initiator, role.OrganizationID)
 	if err != nil {
-		return models.Role{}, err
+		return domain.Role{}, err
 	}
 
 	if !member.Head {
 		if err = m.checkPermissionsToManageRole(ctx, initiator, member.OrganizationID, role.Rank); err != nil {
-			return models.Role{}, err
+			return domain.Role{}, err
 		}
 	}
 
@@ -47,7 +47,7 @@ func (m *Module) Update(
 
 		return nil
 	}); err != nil {
-		return models.Role{}, err
+		return domain.Role{}, err
 	}
 
 	return role, nil

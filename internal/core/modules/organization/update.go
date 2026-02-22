@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 )
 
 type UpdateParams struct {
@@ -16,29 +16,43 @@ type UpdateParams struct {
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	organizationID uuid.UUID,
 	params UpdateParams,
-) (models.Organization, error) {
+) (domain.Organization, error) {
 	org, err := m.GetByID(ctx, organizationID)
 	if err != nil {
-		return models.Organization{}, err
+		return domain.Organization{}, err
 	}
 
 	err = m.chekPermissionForManageOrganization(ctx, initiator, org.ID)
 	if err != nil {
-		return models.Organization{}, err
+		return domain.Organization{}, err
+	}
+
+	if params.IconKey != nil {
+		err = m.bucket.ValidateOrganizationIcon(ctx, organizationID, *params.IconKey)
+		if err != nil {
+			return domain.Organization{}, fmt.Errorf("failed to validate organization icon: %w", err)
+		}
+	}
+
+	if params.BannerKey != nil {
+		err = m.bucket.ValidateOrganizationBanner(ctx, organizationID, *params.BannerKey)
+		if err != nil {
+			return domain.Organization{}, fmt.Errorf("failed to validate organization banner: %w", err)
+		}
 	}
 
 	avatarKey, err := m.bucket.UpdateOrganizationIcon(ctx, organizationID, org.IconKey, params.IconKey)
 	if err != nil {
-		return models.Organization{}, fmt.Errorf("failed to update organization icon: %w", err)
+		return domain.Organization{}, fmt.Errorf("failed to update organization icon: %w", err)
 	}
 	params.IconKey = avatarKey
 
 	bannerKey, err := m.bucket.UpdateOrganizationBanner(ctx, organizationID, org.BannerKey, params.BannerKey)
 	if err != nil {
-		return models.Organization{}, fmt.Errorf("failed to update organization banner: %w", err)
+		return domain.Organization{}, fmt.Errorf("failed to update organization banner: %w", err)
 	}
 	params.BannerKey = bannerKey
 
@@ -55,7 +69,7 @@ func (m *Module) Update(
 
 		return nil
 	}); err != nil {
-		return models.Organization{}, err
+		return domain.Organization{}, err
 	}
 
 	return org, nil

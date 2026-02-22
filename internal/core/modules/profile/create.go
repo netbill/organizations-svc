@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 )
 
 type UpdateParams struct {
@@ -20,10 +20,10 @@ func (m *Module) Update(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params UpdateParams,
-) (models.Profile, error) {
+) (domain.Profile, error) {
 	updatedProfile, err := m.repo.UpdateProfile(ctx, accountID, params)
 	if err != nil {
-		return models.Profile{}, err
+		return domain.Profile{}, err
 	}
 
 	return updatedProfile, nil

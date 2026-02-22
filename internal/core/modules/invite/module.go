@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
@@ -25,28 +25,28 @@ func New(repo repo, messenger messenger) *Module {
 }
 
 type repo interface {
-	CreateInvite(ctx context.Context, params CreateParams) (models.Invite, error)
+	CreateInvite(ctx context.Context, params CreateParams) (domain.Invite, error)
 
 	GetInvite(
 		ctx context.Context,
 		id uuid.UUID,
-	) (models.Invite, error)
+	) (domain.Invite, error)
 	GetOrganizationInvites(
 		ctx context.Context,
 		organizationID uuid.UUID,
 		limit, offset uint,
-	) (pagi.Page[[]models.Invite], error)
+	) (pagi.Page[[]domain.Invite], error)
 	GetAccountInvites(
 		ctx context.Context,
 		accountID uuid.UUID,
 		limit, offset uint,
-	) (pagi.Page[[]models.Invite], error)
+	) (pagi.Page[[]domain.Invite], error)
 
 	UpdateInviteStatus(
 		ctx context.Context,
 		id uuid.UUID,
 		status string,
-	) (models.Invite, error)
+	) (domain.Invite, error)
 
 	DeleteInvite(
 		ctx context.Context,
@@ -59,30 +59,30 @@ type repo interface {
 		permissionID uuid.UUID,
 	) (bool, error)
 
-	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
+	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (domain.Member, error)
 
-	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
+	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (domain.Organization, error)
 	MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error)
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
-	) (models.Member, error)
+	) (domain.Member, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type messenger interface {
-	WriteOrgMemberCreated(ctx context.Context, member models.Member) error
+	WriteOrgMemberCreated(ctx context.Context, member domain.Member) error
 
-	WriteOrgInviteCreated(ctx context.Context, invite models.Invite) error
-	WriteOrgInviteAccepted(ctx context.Context, invite models.Invite) error
-	WriteOrgInviteDeclined(ctx context.Context, invite models.Invite) error
-	WriteOrgInviteDeleted(ctx context.Context, invite models.Invite) error
+	WriteOrgInviteCreated(ctx context.Context, invite domain.Invite) error
+	WriteOrgInviteAccepted(ctx context.Context, invite domain.Invite) error
+	WriteOrgInviteDeclined(ctx context.Context, invite domain.Invite) error
+	WriteOrgInviteDeleted(ctx context.Context, invite domain.Invite) error
 }
 
 func (m *Module) checkPermissionForManageInvites(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	organizationID uuid.UUID,
 ) error {
 	member, err := m.getInitiator(ctx, initiator, organizationID)
@@ -109,14 +109,14 @@ func (m *Module) checkPermissionForManageInvites(
 func (m *Module) checkOrganizationIsActiveAndExists(
 	ctx context.Context,
 	organizationID uuid.UUID,
-) (models.Organization, error) {
+) (domain.Organization, error) {
 	org, err := m.repo.GetOrganizationByID(ctx, organizationID)
 	if err != nil {
-		return models.Organization{}, err
+		return domain.Organization{}, err
 	}
 
-	if org.Status != models.OrganizationStatusActive {
-		return models.Organization{}, errx.ErrorOrganizationIsNotActive.Raise(
+	if org.Status != domain.OrganizationStatusActive {
+		return domain.Organization{}, errx.ErrorOrganizationIsNotActive.Raise(
 			fmt.Errorf("organization with id %s is not active", organizationID),
 		)
 	}
@@ -126,20 +126,20 @@ func (m *Module) checkOrganizationIsActiveAndExists(
 
 func (m *Module) getInitiator(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	organizationID uuid.UUID,
-) (models.Member, error) {
+) (domain.Member, error) {
 	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorMemberNotFound) {
-			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+			return domain.Member{}, errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf(
 					"initiator with account id %s is not a member of organization %s",
 					initiator, organizationID,
 				),
 			)
 		}
-		return models.Member{}, err
+		return domain.Member{}, err
 	}
 
 	return row, nil

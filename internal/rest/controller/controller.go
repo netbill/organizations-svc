@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
@@ -16,63 +16,63 @@ import (
 type organizationSvc interface {
 	Create(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		params organization.CreateParams,
-	) (models.Organization, error)
+	) (domain.Organization, error)
 
 	GetByID(
 		ctx context.Context,
 		organizationID uuid.UUID,
-	) (models.Organization, error)
+	) (domain.Organization, error)
 	GetList(
 		ctx context.Context,
 		params organization.FilterParams,
 		limit, offset uint,
-	) (pagi.Page[[]models.Organization], error)
+	) (pagi.Page[[]domain.Organization], error)
 	GetForUser(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		limit, offset uint,
-	) (pagi.Page[[]models.Organization], error)
+	) (pagi.Page[[]domain.Organization], error)
 
 	CreateOrgUploadMediaLinks(
 		ctx context.Context,
-		actor models.AccountActor,
+		actor domain.AccountActor,
 		organizationID uuid.UUID,
-	) (models.Organization, models.UploadOrgMediaLinks, error)
+	) (domain.Organization, domain.UploadOrgMediaLinks, error)
 	Update(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		organizationID uuid.UUID,
 		params organization.UpdateParams,
-	) (models.Organization, error)
+	) (domain.Organization, error)
 	DeleteOrgUploadIcon(
 		ctx context.Context,
-		actor models.AccountActor,
+		actor domain.AccountActor,
 		organizationID uuid.UUID,
 		key string,
 	) error
 	DeleteOrgUploadBanner(
 		ctx context.Context,
-		actor models.AccountActor,
+		actor domain.AccountActor,
 		organizationID uuid.UUID,
 		key string,
 	) error
 
 	Activate(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		organizationID uuid.UUID,
-	) (models.Organization, error)
+	) (domain.Organization, error)
 	Deactivate(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		organizationID uuid.UUID,
-	) (models.Organization, error)
+	) (domain.Organization, error)
 
 	Delete(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		organizationID uuid.UUID,
 	) error
 }
@@ -80,74 +80,74 @@ type organizationSvc interface {
 type inviteSvc interface {
 	Create(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		params invite.CreateParams,
-	) (models.Invite, error)
+	) (domain.Invite, error)
 
 	Decline(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		inviteID uuid.UUID,
-	) (models.Invite, error)
+	) (domain.Invite, error)
 	Accept(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		inviteID uuid.UUID,
-	) (models.Invite, error)
+	) (domain.Invite, error)
 
 	Delete(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		inviteID uuid.UUID,
 	) error
 
 	GetForOrganizations(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		organizationID uuid.UUID,
 		limit, offset uint,
-	) (pagi.Page[[]models.Invite], error)
+	) (pagi.Page[[]domain.Invite], error)
 	GetForAccount(
 		ctx context.Context,
 		accountId uuid.UUID,
 		inviteID uuid.UUID,
-	) (models.Invite, error)
+	) (domain.Invite, error)
 }
 
 type memberSvc interface {
 	GetByID(
 		ctx context.Context,
 		memberID uuid.UUID,
-	) (models.Member, error)
+	) (domain.Member, error)
 
 	GetByAccountAndOrganization(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		organizationID uuid.UUID,
-	) (models.Member, error)
+	) (domain.Member, error)
 
 	GetInitiator(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		organizationID uuid.UUID,
-	) (models.Member, error)
+	) (domain.Member, error)
 
 	GetList(
 		ctx context.Context,
 		filter member.FilterParams,
 		limit, offset uint,
-	) (pagi.Page[[]models.Member], error)
+	) (pagi.Page[[]domain.Member], error)
 
 	Update(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		memberID uuid.UUID,
 		params member.UpdateParams,
-	) (models.Member, error)
+	) (domain.Member, error)
 
 	Delete(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		memberID uuid.UUID,
 	) error
 }
@@ -155,67 +155,67 @@ type memberSvc interface {
 type roleSvc interface {
 	Create(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		params role.CreateParams,
-	) (models.Role, error)
+	) (domain.Role, error)
 
 	GetByID(
 		ctx context.Context,
 		roleID uuid.UUID,
-	) (models.Role, error)
+	) (domain.Role, error)
 
 	GetWithPermissions(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		roleID uuid.UUID,
-	) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error)
+	) (domain.Role, domain.OrgRolePermissionsWithDetailsForRole, error)
 
 	GetList(
 		ctx context.Context,
 		params role.FilterParams,
 		limit, offset uint,
-	) (pagi.Page[[]models.Role], error)
+	) (pagi.Page[[]domain.Role], error)
 
 	Update(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		roleID uuid.UUID,
 		params role.UpdateParams,
-	) (models.Role, error)
+	) (domain.Role, error)
 
 	UpdateRanks(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		organizationID uuid.UUID,
 		order map[uuid.UUID]uint,
 	) error
 
 	Delete(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		roleID uuid.UUID,
 	) error
 
 	AddForMember(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		memberID, roleID uuid.UUID,
 	) error
 
 	RemoveFromMember(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		memberID, roleID uuid.UUID,
 	) error
 
-	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
+	GetAllPermissions(ctx context.Context) ([]domain.OrgRolePermission, error)
 
 	UpdatePermissions(
 		ctx context.Context,
-		initiator models.AccountActor,
+		initiator domain.AccountActor,
 		roleID uuid.UUID,
 		permissions role.SetPermissions,
-	) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error)
+	) (domain.Role, domain.OrgRolePermissionsWithDetailsForRole, error)
 }
 
 type responser interface {

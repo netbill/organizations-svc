@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 )
 
 type OrganizationMemberRolesRow struct {
@@ -20,8 +20,8 @@ func (r OrganizationMemberRolesRow) IsNil() bool {
 	return r.MemberID == uuid.Nil && r.RoleID == uuid.Nil
 }
 
-func (r OrganizationMemberRolesRow) ToModel() models.OrgMemberRolesLink {
-	return models.OrgMemberRolesLink{
+func (r OrganizationMemberRolesRow) ToModel() domain.OrgMemberRolesLink {
+	return domain.OrgMemberRolesLink{
 		MemberID:  r.MemberID,
 		RoleID:    r.RoleID,
 		CreatedAt: r.CreatedAt,
@@ -41,7 +41,7 @@ type OrgMemberRolesQ interface {
 	Get(ctx context.Context) (OrganizationMemberRolesRow, error)
 }
 
-func (r *Repository) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]models.Role, error) {
+func (r *Repository) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]domain.Role, error) {
 	memberRoles, err := r.OrgRolesSql.New().
 		FilterByMemberID(memberID).
 		OrderByRoleRank(true).
@@ -50,7 +50,7 @@ func (r *Repository) GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]
 		return nil, fmt.Errorf("failed to get member roles, cause: %w", err)
 	}
 
-	result := make([]models.Role, len(memberRoles))
+	result := make([]domain.Role, len(memberRoles))
 	for i, mr := range memberRoles {
 		result[i] = mr.ToModel()
 	}
@@ -73,13 +73,13 @@ func (r *Repository) RemoveMemberRole(ctx context.Context, memberID, roleID uuid
 func (r *Repository) AddMemberRole(
 	ctx context.Context,
 	memberID, roleID uuid.UUID,
-) (models.OrgMemberRolesLink, error) {
+) (domain.OrgMemberRolesLink, error) {
 	link, err := r.OrgMemberRolesSql.New().Insert(ctx, OrganizationMemberRolesRow{
 		MemberID: memberID,
 		RoleID:   roleID,
 	})
 	if err != nil {
-		return models.OrgMemberRolesLink{}, fmt.Errorf("failed to add member role, cause: %w", err)
+		return domain.OrgMemberRolesLink{}, fmt.Errorf("failed to add member role, cause: %w", err)
 	}
 
 	return link.ToModel(), nil

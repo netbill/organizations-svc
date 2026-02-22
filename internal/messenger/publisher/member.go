@@ -8,13 +8,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/pkg/evtypes"
 )
 
 func (p *Publisher) WriteOrgMemberCreated(
 	ctx context.Context,
-	member models.Member,
+	member domain.Member,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgMemberCreatedPayload{
 		MemberID:       member.ID,
@@ -48,7 +48,7 @@ func (p *Publisher) WriteOrgMemberCreated(
 
 func (p *Publisher) WriteOrgMemberUpdated(
 	ctx context.Context,
-	member models.Member,
+	member domain.Member,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgMemberUpdatedPayload{
 		MemberID:  member.ID,
@@ -106,7 +106,7 @@ func (p *Publisher) WriteOrgMemberDeleted(
 
 func (p *Publisher) WriteOrgMemberRoleAdd(
 	ctx context.Context,
-	link models.OrgMemberRolesLink,
+	link domain.OrgMemberRolesLink,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgMemberRoleAddedPayload{
 		MemberID: link.MemberID,

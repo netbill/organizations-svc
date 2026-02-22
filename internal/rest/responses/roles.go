@@ -3,12 +3,12 @@ package responses
 import (
 	"net/http"
 
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	resources2 "github.com/netbill/organizations-svc/pkg/resources"
 	"github.com/netbill/restkit/pagi"
 )
 
-func Role(role models.Role, perms *models.OrgRolePermissionsWithDetailsForRole) resources2.Role {
+func Role(role domain.Role, perms *domain.OrgRolePermissionsWithDetailsForRole) resources2.Role {
 	res := resources2.Role{
 		Data: resources2.RoleData{
 			Id:   role.ID,
@@ -44,7 +44,7 @@ func Role(role models.Role, perms *models.OrgRolePermissionsWithDetailsForRole) 
 	return res
 }
 
-func Roles(r *http.Request, mods pagi.Page[[]models.Role]) resources2.RolesCollection {
+func Roles(r *http.Request, mods pagi.Page[[]domain.Role]) resources2.RolesCollection {
 	data := make([]resources2.RoleData, len(mods.Data))
 	for i, mod := range mods.Data {
 		data[i] = Role(mod, nil).Data
@@ -64,7 +64,7 @@ func Roles(r *http.Request, mods pagi.Page[[]models.Role]) resources2.RolesColle
 	}
 }
 
-func RolePermissions(mods []models.OrgRolePermission) resources2.RolePermissions {
+func RolePermissions(mods []domain.OrgRolePermission) resources2.RolePermissions {
 	result := make([]resources2.RolePermissionsDataInner, len(mods))
 	for i, mod := range mods {
 		result[i] = resources2.RolePermissionsDataInner{

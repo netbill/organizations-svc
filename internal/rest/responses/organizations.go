@@ -3,12 +3,12 @@ package responses
 import (
 	"net/http"
 
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	resources2 "github.com/netbill/organizations-svc/pkg/resources"
 	"github.com/netbill/restkit/pagi"
 )
 
-func Organization(organization models.Organization) resources2.Organization {
+func Organization(organization domain.Organization) resources2.Organization {
 	return resources2.Organization{
 		Data: resources2.OrganizationData{
 			Id:   organization.ID,
@@ -23,7 +23,7 @@ func Organization(organization models.Organization) resources2.Organization {
 	}
 }
 
-func Organizations(r *http.Request, page pagi.Page[[]models.Organization]) resources2.OrganizationsCollection {
+func Organizations(r *http.Request, page pagi.Page[[]domain.Organization]) resources2.OrganizationsCollection {
 	data := make([]resources2.OrganizationData, len(page.Data))
 	for i, ag := range page.Data {
 		data[i] = Organization(ag).Data
@@ -43,7 +43,7 @@ func Organizations(r *http.Request, page pagi.Page[[]models.Organization]) resou
 	}
 }
 
-func UploadOrganizationMediaLinks(organization models.Organization, uploadLinks models.UploadOrgMediaLinks) resources2.UploadOrgMediaLinks {
+func UploadOrganizationMediaLinks(organization domain.Organization, uploadLinks domain.UploadOrgMediaLinks) resources2.UploadOrgMediaLinks {
 	return resources2.UploadOrgMediaLinks{
 		Data: resources2.UploadOrgMediaLinksData{
 			Id:   organization.ID,

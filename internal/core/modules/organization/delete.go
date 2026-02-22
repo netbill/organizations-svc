@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	organizationID uuid.UUID,
 ) error {
 	organization, err := m.GetByID(ctx, organizationID)

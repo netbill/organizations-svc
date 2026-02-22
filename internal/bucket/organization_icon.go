@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/awsx"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func CreateTempOrganizationIconKey(organizationID uuid.UUID) string {
@@ -23,15 +23,15 @@ func CreateFinalOrganizationIconKey(organizationID uuid.UUID) string {
 func (s Storage) CreateOrganizationIconUploadMediaLinks(
 	ctx context.Context,
 	organizationID uuid.UUID,
-) (models.UploadMediaLink, error) {
+) (domain.UploadMediaLink, error) {
 	key := CreateTempOrganizationIconKey(organizationID)
 
 	uploadLink, getLink, err := s.s3.PresignPut(ctx, key, s.config.LinkTTL)
 	if err != nil {
-		return models.UploadMediaLink{}, fmt.Errorf("presign put object for organization icon: %w", err)
+		return domain.UploadMediaLink{}, fmt.Errorf("presign put object for organization icon: %w", err)
 	}
 
-	return models.UploadMediaLink{
+	return domain.UploadMediaLink{
 		Key:        key,
 		PreloadUrl: getLink,
 		UploadURL:  uploadLink,
@@ -122,9 +122,9 @@ func (s Storage) UpdateOrganizationIcon(
 		return nil, s.DeleteOrganizationIcon(ctx, organizationID, *oldFinalKey)
 	}
 
-	if err := s.ValidateOrganizationIcon(ctx, organizationID, *tempKey); err != nil {
-		return nil, err
-	}
+	//if err := s.ValidateOrganizationIcon(ctx, organizationID, *tempKey); err != nil {
+	//	return nil, err
+	//}
 
 	finalKey := CreateFinalOrganizationIconKey(organizationID)
 

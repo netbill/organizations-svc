@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/restkit/pagi"
 )
@@ -39,8 +39,8 @@ func (r OrganizationMemberWithProfileDataRow) IsNil() bool {
 	return r.ID == uuid.Nil
 }
 
-func (r OrganizationMemberWithProfileDataRow) ToModel() models.Member {
-	return models.Member{
+func (r OrganizationMemberWithProfileDataRow) ToModel() domain.Member {
+	return domain.Member{
 		ID:             r.ID,
 		AccountID:      r.AccountID,
 		OrganizationID: r.OrganizationID,
@@ -94,13 +94,13 @@ type OrgMembersQ interface {
 func (r *Repository) CreateMember(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
-) (models.Member, error) {
+) (domain.Member, error) {
 	row, err := r.OrgMembersSql.New().Insert(ctx, OrganizationMemberRow{
 		AccountID:      accountID,
 		OrganizationID: organizationID,
 	})
 	if err != nil {
-		return models.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
+		return domain.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
 	}
 
 	return r.GetMember(ctx, row.ID)
@@ -109,14 +109,14 @@ func (r *Repository) CreateMember(
 func (r *Repository) CreateMemberHead(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
-) (models.Member, error) {
+) (domain.Member, error) {
 	row, err := r.OrgMembersSql.New().Insert(ctx, OrganizationMemberRow{
 		AccountID:      accountID,
 		OrganizationID: organizationID,
 		Head:           true,
 	})
 	if err != nil {
-		return models.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
+		return domain.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
 	}
 
 	return r.GetMember(ctx, row.ID)
@@ -126,17 +126,17 @@ func (r *Repository) UpdateMember(
 	ctx context.Context,
 	ID uuid.UUID,
 	params member.UpdateParams,
-) (models.Member, error) {
+) (domain.Member, error) {
 	row, err := r.OrgMembersSql.New().
 		FilterByID(ID).
 		UpdatePosition(params.Position).
 		UpdateLabel(params.Label).
 		UpdateOne(ctx)
 	if err != nil {
-		return models.Member{}, fmt.Errorf("failed to update member, cause: %w", err)
+		return domain.Member{}, fmt.Errorf("failed to update member, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+		return domain.Member{}, errx.ErrorMemberNotFound.Raise(
 			fmt.Errorf("member with ID %s not found", ID),
 		)
 	}
@@ -147,13 +147,13 @@ func (r *Repository) UpdateMember(
 func (r *Repository) GetMember(
 	ctx context.Context,
 	memberID uuid.UUID,
-) (models.Member, error) {
+) (domain.Member, error) {
 	row, err := r.OrgMembersSql.New().FilterByID(memberID).GetWithUserData(ctx)
 	if err != nil {
-		return models.Member{}, fmt.Errorf("failed to get member, cause: %w", err)
+		return domain.Member{}, fmt.Errorf("failed to get member, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+		return domain.Member{}, errx.ErrorMemberNotFound.Raise(
 			fmt.Errorf("member with ID %s not found", memberID),
 		)
 	}
@@ -164,16 +164,16 @@ func (r *Repository) GetMember(
 func (r *Repository) GetMemberByAccountAndOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
-) (models.Member, error) {
+) (domain.Member, error) {
 	row, err := r.OrgMembersSql.New().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		GetWithUserData(ctx)
 	if err != nil {
-		return models.Member{}, fmt.Errorf("failed to get member by account and organization, cause: %w", err)
+		return domain.Member{}, fmt.Errorf("failed to get member by account and organization, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+		return domain.Member{}, errx.ErrorMemberNotFound.Raise(
 			fmt.Errorf("member with account ID %s and organization ID %s not found", accountID, organizationID),
 		)
 	}
@@ -201,7 +201,7 @@ func (r *Repository) GetMembers(
 	filter member.FilterParams,
 	limit uint,
 	offset uint,
-) (pagi.Page[[]models.Member], error) {
+) (pagi.Page[[]domain.Member], error) {
 	q := r.OrgMembersSql.New()
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
@@ -243,20 +243,20 @@ func (r *Repository) GetMembers(
 
 	rows, err := q.Page(limit, offset).SelectWithUserData(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Member]{}, fmt.Errorf("failed to get members, cause: %w", err)
+		return pagi.Page[[]domain.Member]{}, fmt.Errorf("failed to get members, cause: %w", err)
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Member]{}, fmt.Errorf("failed to count members, cause: %w", err)
+		return pagi.Page[[]domain.Member]{}, fmt.Errorf("failed to count members, cause: %w", err)
 	}
 
-	collection := make([]models.Member, 0, len(rows))
+	collection := make([]domain.Member, 0, len(rows))
 	for _, row := range rows {
 		collection = append(collection, row.ToModel())
 	}
 
-	return pagi.Page[[]models.Member]{
+	return pagi.Page[[]domain.Member]{
 		Data:  collection,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(collection)),
@@ -291,16 +291,16 @@ func (r *Repository) DeleteMembersByAccountID(
 func (r *Repository) GetMemberMaxRole(
 	ctx context.Context,
 	memberID uuid.UUID,
-) (models.Role, error) {
+) (domain.Role, error) {
 	row, err := r.OrgRolesSql.New().
 		FilterByMemberID(memberID).
 		OrderByRoleRank(false). // DESC => max
 		Get(ctx)
 	if err != nil {
-		return models.Role{}, fmt.Errorf("failed to get member max role, cause: %w", err)
+		return domain.Role{}, fmt.Errorf("failed to get member max role, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Role{}, errx.ErrorRoleNotFound.Raise(
+		return domain.Role{}, errx.ErrorRoleNotFound.Raise(
 			fmt.Errorf("no roles found for member with ID %s", memberID),
 		)
 	}

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/role"
 	"github.com/netbill/restkit/pagi"
 )
@@ -28,8 +28,8 @@ func (r OrganizationRoleRow) IsNil() bool {
 	return r.ID == uuid.Nil
 }
 
-func (r OrganizationRoleRow) ToModel() models.Role {
-	return models.Role{
+func (r OrganizationRoleRow) ToModel() domain.Role {
+	return domain.Role{
 		ID:             r.ID,
 		OrganizationID: r.OrganizationID,
 		Rank:           r.Rank,
@@ -145,7 +145,7 @@ type OrgRolePermissionLinksQ interface {
 	Exists(ctx context.Context) (bool, error)
 }
 
-func (r *Repository) CreateRole(ctx context.Context, params role.CreateParams) (models.Role, error) {
+func (r *Repository) CreateRole(ctx context.Context, params role.CreateParams) (domain.Role, error) {
 	row, err := r.OrgRolesSql.New().Insert(ctx, OrganizationRoleRow{
 		OrganizationID: params.OrganizationID,
 		Rank:           params.Rank,
@@ -154,19 +154,19 @@ func (r *Repository) CreateRole(ctx context.Context, params role.CreateParams) (
 		Color:          params.Color,
 	})
 	if err != nil {
-		return models.Role{}, fmt.Errorf("failed to create role, cause: %w", err)
+		return domain.Role{}, fmt.Errorf("failed to create role, cause: %w", err)
 	}
 
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error) {
+func (r *Repository) GetRole(ctx context.Context, roleID uuid.UUID) (domain.Role, error) {
 	row, err := r.OrgRolesSql.New().FilterByID(roleID).Get(ctx)
 	if err != nil {
-		return models.Role{}, fmt.Errorf("failed to get role, cause: %w", err)
+		return domain.Role{}, fmt.Errorf("failed to get role, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Role{}, errx.ErrorRoleNotFound.Raise(
+		return domain.Role{}, errx.ErrorRoleNotFound.Raise(
 			fmt.Errorf("role with ID %s not found", roleID),
 		)
 	}
@@ -178,7 +178,7 @@ func (r *Repository) GetRoles(
 	ctx context.Context,
 	filter role.FilterParams,
 	limit, offset uint,
-) (pagi.Page[[]models.Role], error) {
+) (pagi.Page[[]domain.Role], error) {
 	q := r.OrgRolesSql.New()
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
@@ -199,20 +199,20 @@ func (r *Repository) GetRoles(
 
 	rows, err := q.OrderByRoleRank(false).Page(limit, offset).Select(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Role]{}, fmt.Errorf("failed to get roles, cause: %w", err)
+		return pagi.Page[[]domain.Role]{}, fmt.Errorf("failed to get roles, cause: %w", err)
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Role]{}, fmt.Errorf("failed to count roles, cause: %w", err)
+		return pagi.Page[[]domain.Role]{}, fmt.Errorf("failed to count roles, cause: %w", err)
 	}
 
-	collection := make([]models.Role, 0, len(rows))
+	collection := make([]domain.Role, 0, len(rows))
 	for _, row := range rows {
 		collection = append(collection, row.ToModel())
 	}
 
-	return pagi.Page[[]models.Role]{
+	return pagi.Page[[]domain.Role]{
 		Data:  collection,
 		Total: total,
 		Page:  uint(offset/limit) + 1,
@@ -224,7 +224,7 @@ func (r *Repository) UpdateRole(
 	ctx context.Context,
 	roleID uuid.UUID,
 	params role.UpdateParams,
-) (models.Role, error) {
+) (domain.Role, error) {
 	q := r.OrgRolesSql.New().FilterByID(roleID)
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
@@ -238,10 +238,10 @@ func (r *Repository) UpdateRole(
 
 	row, err := q.UpdateOne(ctx)
 	if err != nil {
-		return models.Role{}, fmt.Errorf("failed to update role, cause: %w", err)
+		return domain.Role{}, fmt.Errorf("failed to update role, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Role{}, errx.ErrorRoleNotFound.Raise(
+		return domain.Role{}, errx.ErrorRoleNotFound.Raise(
 			fmt.Errorf("role with ID %s not found", roleID),
 		)
 	}
@@ -253,13 +253,13 @@ func (r *Repository) UpdateRoleRank(
 	ctx context.Context,
 	roleID uuid.UUID,
 	newRank uint,
-) (models.Role, error) {
+) (domain.Role, error) {
 	row, err := r.OrgRolesSql.New().UpdateRoleRank(ctx, roleID, newRank)
 	if err != nil {
-		return models.Role{}, fmt.Errorf("failed to update role rank, cause: %w", err)
+		return domain.Role{}, fmt.Errorf("failed to update role rank, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Role{}, errx.ErrorRoleNotFound.Raise(
+		return domain.Role{}, errx.ErrorRoleNotFound.Raise(
 			fmt.Errorf("role with ID %s not found", roleID),
 		)
 	}
@@ -292,7 +292,7 @@ func (r *Repository) DeleteRole(ctx context.Context, roleID uuid.UUID) error {
 func (r *Repository) GetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
-) (models.OrgRolePermissionsWithDetailsForRole, error) {
+) (domain.OrgRolePermissionsWithDetailsForRole, error) {
 	dict, err := r.OrgRolePermissionsSql.New().Select(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get permissions dict: %w", err)
@@ -310,12 +310,12 @@ func (r *Repository) GetRolePermissions(
 		enabled[links[i].PermissionID] = struct{}{}
 	}
 
-	out := make(models.OrgRolePermissionsWithDetailsForRole, len(dict))
+	out := make(domain.OrgRolePermissionsWithDetailsForRole, len(dict))
 	for i := range dict {
 		p := dict[i]
 
 		_, ok := enabled[p.ID]
-		out[p.ID] = models.OrgRolePermissionDetails{
+		out[p.ID] = domain.OrgRolePermissionDetails{
 			Code:        p.Code,
 			Description: p.Description,
 			Enabled:     ok,
@@ -325,15 +325,15 @@ func (r *Repository) GetRolePermissions(
 	return out, nil
 }
 
-func (r *Repository) GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error) {
+func (r *Repository) GetAllPermissions(ctx context.Context) ([]domain.OrgRolePermission, error) {
 	permissions, err := r.OrgRolePermissionsSql.New().Select(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all permissions, cause: %w", err)
 	}
 
-	result := make([]models.OrgRolePermission, len(permissions))
+	result := make([]domain.OrgRolePermission, len(permissions))
 	for i, perm := range permissions {
-		result[i] = models.OrgRolePermission{
+		result[i] = domain.OrgRolePermission{
 			ID:          perm.ID,
 			Code:        perm.Code,
 			Description: perm.Description,
@@ -347,7 +347,7 @@ func (r *Repository) SetRolePermissions(
 	ctx context.Context,
 	roleID uuid.UUID,
 	params role.SetPermissions,
-) (models.OrgRolePermissionsWithDetailsForRole, error) {
+) (domain.OrgRolePermissionsWithDetailsForRole, error) {
 	dict, err := r.OrgRolePermissionsSql.New().FilterByDeprecated(false).Select(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("select params dict: %w", err)
@@ -363,11 +363,11 @@ func (r *Repository) SetRolePermissions(
 		enabled[rows[i].PermissionID] = struct{}{}
 	}
 
-	out := make(models.OrgRolePermissionsWithDetailsForRole, len(dict))
+	out := make(domain.OrgRolePermissionsWithDetailsForRole, len(dict))
 	for i := range dict {
 		p := dict[i]
 		_, ok := enabled[p.ID]
-		out[p.ID] = models.OrgRolePermissionDetails{
+		out[p.ID] = domain.OrgRolePermissionDetails{
 			Code:        p.Code,
 			Description: p.Description,
 			Enabled:     ok,

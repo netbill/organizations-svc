@@ -5,35 +5,35 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 )
 
 func (m *Module) CreateOrgUploadMediaLinks(
 	ctx context.Context,
-	actor models.AccountActor,
+	actor domain.AccountActor,
 	organizationID uuid.UUID,
-) (models.Organization, models.UploadOrgMediaLinks, error) {
+) (domain.Organization, domain.UploadOrgMediaLinks, error) {
 	org, err := m.GetByID(ctx, organizationID)
 	if err != nil {
-		return models.Organization{}, models.UploadOrgMediaLinks{}, err
+		return domain.Organization{}, domain.UploadOrgMediaLinks{}, err
 	}
 
 	err = m.chekPermissionForManageOrganization(ctx, actor, org.ID)
 	if err != nil {
-		return models.Organization{}, models.UploadOrgMediaLinks{}, err
+		return domain.Organization{}, domain.UploadOrgMediaLinks{}, err
 	}
 
 	iconLinks, err := m.bucket.CreateOrganizationIconUploadMediaLinks(ctx, organizationID)
 	if err != nil {
-		return models.Organization{}, models.UploadOrgMediaLinks{}, fmt.Errorf("failed to create upload media links: %w", err)
+		return domain.Organization{}, domain.UploadOrgMediaLinks{}, fmt.Errorf("failed to create upload media links: %w", err)
 	}
 
 	bannerLinks, err := m.bucket.CreateOrganizationBannerUploadMediaLinks(ctx, organizationID)
 	if err != nil {
-		return models.Organization{}, models.UploadOrgMediaLinks{}, fmt.Errorf("failed to create upload media links: %w", err)
+		return domain.Organization{}, domain.UploadOrgMediaLinks{}, fmt.Errorf("failed to create upload media links: %w", err)
 	}
 
-	return org, models.UploadOrgMediaLinks{
+	return org, domain.UploadOrgMediaLinks{
 		Icon:   iconLinks,
 		Banner: bannerLinks,
 	}, nil
@@ -41,7 +41,7 @@ func (m *Module) CreateOrgUploadMediaLinks(
 
 func (m *Module) DeleteOrgUploadIcon(
 	ctx context.Context,
-	actor models.AccountActor,
+	actor domain.AccountActor,
 	organizationID uuid.UUID,
 	key string,
 ) error {
@@ -60,7 +60,7 @@ func (m *Module) DeleteOrgUploadIcon(
 
 func (m *Module) DeleteOrgUploadBanner(
 	ctx context.Context,
-	actor models.AccountActor,
+	actor domain.AccountActor,
 	organizationID uuid.UUID,
 	key string,
 ) error {

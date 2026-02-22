@@ -15,11 +15,11 @@ import (
 )
 
 const organizationsTable = "organizations"
-const organizationsColumns = "id, status, name, icon_key, banner, max_roles, created_at, updated_at"
+const organizationsColumns = "id, status, name, icon_key, banner_key, max_roles, created_at, updated_at"
 
 func scanOrganization(row sq.RowScanner) (o repository.OrganizationRow, err error) {
 	var iconKey pgtype.Text
-	var banner pgtype.Text
+	var bannerKey pgtype.Text
 	var maxRoles int32
 
 	err = row.Scan(
@@ -27,7 +27,7 @@ func scanOrganization(row sq.RowScanner) (o repository.OrganizationRow, err erro
 		&o.Status,
 		&o.Name,
 		&iconKey,
-		&banner,
+		&bannerKey,
 		&maxRoles,
 		&o.CreatedAt,
 		&o.UpdatedAt,
@@ -42,8 +42,8 @@ func scanOrganization(row sq.RowScanner) (o repository.OrganizationRow, err erro
 	if iconKey.Valid {
 		o.IconKey = &iconKey.String
 	}
-	if banner.Valid {
-		o.BannerKey = &banner.String
+	if bannerKey.Valid {
+		o.BannerKey = &bannerKey.String
 	}
 
 	// max_roles в БД обычно int, в модели тебе нужен uint
@@ -217,12 +217,12 @@ func (q *organizations) UpdateStatus(v string) repository.OrganizationsQ {
 }
 
 func (q *organizations) UpdateIconKey(v *string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("icon", v)
+	q.updater = q.updater.Set("icon_key", v)
 	return q
 }
 
 func (q *organizations) UpdateBannerKey(v *string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("banner", v)
+	q.updater = q.updater.Set("banner_key", v)
 	return q
 }
 

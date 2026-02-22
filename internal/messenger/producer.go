@@ -11,11 +11,11 @@ type ProducerConfig struct {
 	Producer string   `json:"producer"`
 	Brokers  []string `json:"brokers"`
 
-	OrganizationV1 WriterKafkaConfig `json:"organizations_v1"`
-	OrgMembersV1   WriterKafkaConfig `json:"organization_members_v1"`
+	OrganizationV1 ProduceKafkaConfig `json:"organizations_v1"`
+	OrgMembersV1   ProduceKafkaConfig `json:"organization_members_v1"`
 }
 
-type WriterKafkaConfig struct {
+type ProduceKafkaConfig struct {
 	RequiredAcks string        `json:"required_acks"`
 	Compression  string        `json:"compression"`
 	Balancer     string        `json:"balancer"`

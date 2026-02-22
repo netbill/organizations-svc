@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/restkit/pagi"
 )
@@ -30,8 +30,8 @@ func (r OrganizationRow) IsNil() bool {
 	return r.ID == uuid.Nil
 }
 
-func (r OrganizationRow) ToModel() models.Organization {
-	return models.Organization{
+func (r OrganizationRow) ToModel() domain.Organization {
+	return domain.Organization{
 		ID:        r.ID,
 		Status:    r.Status,
 		Name:      r.Name,
@@ -73,12 +73,12 @@ type OrganizationsQ interface {
 func (r *Repository) CreateOrganization(
 	ctx context.Context,
 	params organization.CreateParams,
-) (models.Organization, error) {
+) (domain.Organization, error) {
 	row, err := r.OrganizationsSql.New().Insert(ctx, OrganizationRow{
 		Name: params.Name,
 	})
 	if err != nil {
-		return models.Organization{}, fmt.Errorf(
+		return domain.Organization{}, fmt.Errorf(
 			"failed to create organization with name %s: %w",
 			params.Name, err,
 		)
@@ -90,13 +90,13 @@ func (r *Repository) CreateOrganization(
 func (r *Repository) GetOrganizationByID(
 	ctx context.Context,
 	ID uuid.UUID,
-) (models.Organization, error) {
+) (domain.Organization, error) {
 	row, err := r.OrganizationsSql.New().FilterByID(ID).Get(ctx)
 	if err != nil {
-		return models.Organization{}, fmt.Errorf("failed to get organization with ID %s: %w", ID, err)
+		return domain.Organization{}, fmt.Errorf("failed to get organization with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+		return domain.Organization{}, errx.ErrorOrganizationNotFound.Raise(
 			fmt.Errorf("organization with ID %s not found", ID),
 		)
 	}
@@ -108,7 +108,7 @@ func (r *Repository) GetOrganizations(
 	ctx context.Context,
 	filter organization.FilterParams,
 	limit, offset uint,
-) (pagi.Page[[]models.Organization], error) {
+) (pagi.Page[[]domain.Organization], error) {
 	if limit == 0 {
 		limit = 10
 	}
@@ -123,20 +123,20 @@ func (r *Repository) GetOrganizations(
 
 	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, fmt.Errorf("failed to get organizations, cause: %w", err)
+		return pagi.Page[[]domain.Organization]{}, fmt.Errorf("failed to get organizations, cause: %w", err)
 	}
 
 	total, err := q.Count(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, fmt.Errorf("failed to count organizations, cause: %w", err)
+		return pagi.Page[[]domain.Organization]{}, fmt.Errorf("failed to count organizations, cause: %w", err)
 	}
 
-	organizations := make([]models.Organization, len(rows))
+	organizations := make([]domain.Organization, len(rows))
 	for i, row := range rows {
 		organizations[i] = row.ToModel()
 	}
 
-	return pagi.Page[[]models.Organization]{
+	return pagi.Page[[]domain.Organization]{
 		Data:  organizations,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(organizations)),
@@ -149,31 +149,31 @@ func (r *Repository) GetOrganizationsForUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,
-) (pagi.Page[[]models.Organization], error) {
+) (pagi.Page[[]domain.Organization], error) {
 	if limit == 0 {
 		limit = 10
 	}
 
 	row, err := r.OrganizationsSql.New().FilterByAccountID(accountID).Page(limit, offset).Select(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, fmt.Errorf(
+		return pagi.Page[[]domain.Organization]{}, fmt.Errorf(
 			"failed to get organizations for account ID %s, cause: %w", accountID, err,
 		)
 	}
 
 	total, err := r.OrganizationsSql.New().FilterByAccountID(accountID).Count(ctx)
 	if err != nil {
-		return pagi.Page[[]models.Organization]{}, fmt.Errorf(
+		return pagi.Page[[]domain.Organization]{}, fmt.Errorf(
 			"failed to count organizations for account ID %s, cause: %w", accountID, err,
 		)
 	}
 
-	organizations := make([]models.Organization, len(row))
+	organizations := make([]domain.Organization, len(row))
 	for i, org := range row {
 		organizations[i] = org.ToModel()
 	}
 
-	return pagi.Page[[]models.Organization]{
+	return pagi.Page[[]domain.Organization]{
 		Data:  organizations,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(organizations)),
@@ -185,7 +185,7 @@ func (r *Repository) UpdateOrganization(
 	ctx context.Context,
 	ID uuid.UUID,
 	params organization.UpdateParams,
-) (models.Organization, error) {
+) (domain.Organization, error) {
 	q := r.OrganizationsSql.New().
 		FilterByID(ID).
 		UpdateName(params.Name).
@@ -194,10 +194,10 @@ func (r *Repository) UpdateOrganization(
 
 	row, err := q.UpdateOne(ctx)
 	if err != nil {
-		return models.Organization{}, fmt.Errorf("failed to update organization with ID %s: %w", ID, err)
+		return domain.Organization{}, fmt.Errorf("failed to update organization with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+		return domain.Organization{}, errx.ErrorOrganizationNotFound.Raise(
 			fmt.Errorf("organization with ID %s not found", ID),
 		)
 	}
@@ -209,16 +209,16 @@ func (r *Repository) UpdateOrganizationStatus(
 	ctx context.Context,
 	ID uuid.UUID,
 	status string,
-) (models.Organization, error) {
+) (domain.Organization, error) {
 	row, err := r.OrganizationsSql.New().
 		FilterByID(ID).
 		UpdateStatus(status).
 		UpdateOne(ctx)
 	if err != nil {
-		return models.Organization{}, fmt.Errorf("failed to update organization status with ID %s: %w", ID, err)
+		return domain.Organization{}, fmt.Errorf("failed to update organization status with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+		return domain.Organization{}, errx.ErrorOrganizationNotFound.Raise(
 			fmt.Errorf("organization with ID %s not found", ID),
 		)
 	}
@@ -230,16 +230,16 @@ func (r *Repository) UpdateOrganizationMaxRoles(
 	ctx context.Context,
 	ID uuid.UUID,
 	maxRoles uint,
-) (models.Organization, error) {
+) (domain.Organization, error) {
 	row, err := r.OrganizationsSql.New().
 		FilterByID(ID).
 		UpdateMaxRoles(maxRoles).
 		UpdateOne(ctx)
 	if err != nil {
-		return models.Organization{}, fmt.Errorf("failed to update organization max roles with ID %s: %w", ID, err)
+		return domain.Organization{}, fmt.Errorf("failed to update organization max roles with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+		return domain.Organization{}, errx.ErrorOrganizationNotFound.Raise(
 			fmt.Errorf("organization with ID %s not found", ID),
 		)
 	}

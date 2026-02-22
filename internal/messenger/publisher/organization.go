@@ -8,13 +8,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/pkg/evtypes"
 )
 
 func (p *Publisher) WriteOrganizationCreated(
 	ctx context.Context,
-	organization models.Organization,
+	organization domain.Organization,
 ) error {
 	payload, err := json.Marshal(evtypes.OrganizationCreatedPayload{
 		OrganizationID: organization.ID,
@@ -45,7 +45,7 @@ func (p *Publisher) WriteOrganizationCreated(
 
 func (p *Publisher) WriteOrganizationUpdated(
 	ctx context.Context,
-	organization models.Organization,
+	organization domain.Organization,
 ) error {
 	payload, err := json.Marshal(evtypes.OrganizationUpdatedPayload{
 		OrganizationID: organization.ID,
@@ -76,7 +76,7 @@ func (p *Publisher) WriteOrganizationUpdated(
 
 func (p *Publisher) WriteOrganizationDeleted(
 	ctx context.Context,
-	organization models.Organization,
+	organization domain.Organization,
 ) error {
 	payload, err := json.Marshal(evtypes.OrganizationDeletedPayload{
 		OrganizationID: organization.ID,
@@ -104,7 +104,7 @@ func (p *Publisher) WriteOrganizationDeleted(
 
 func (p *Publisher) WriteOrganizationActivated(
 	ctx context.Context,
-	organization models.Organization,
+	organization domain.Organization,
 ) error {
 	payload, err := json.Marshal(evtypes.OrganizationActivatedPayload{
 		OrganizationID: organization.ID,
@@ -132,7 +132,7 @@ func (p *Publisher) WriteOrganizationActivated(
 
 func (p *Publisher) WriteOrganizationDeactivated(
 	ctx context.Context,
-	organization models.Organization,
+	organization domain.Organization,
 ) error {
 	payload, err := json.Marshal(evtypes.OrganizationDeactivatedPayload{
 		OrganizationID: organization.ID,

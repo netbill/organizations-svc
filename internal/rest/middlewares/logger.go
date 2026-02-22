@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/rest/scope"
-	"github.com/netbill/organizations-svc/log"
+	"github.com/netbill/organizations-svc/pkg/log"
 )
 
 func (p *Provider) Logger(log *log.Logger) func(next http.Handler) http.Handler {

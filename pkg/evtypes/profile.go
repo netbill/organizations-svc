@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const ProfilesTopicV1 = "profiles"
+const ProfilesTopicV1 = "profiles.v1"
 
 const ProfileUpdatedEvent = "profile.updated"
 

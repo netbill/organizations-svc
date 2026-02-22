@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/netbill/organizations-svc/log"
+	"github.com/netbill/organizations-svc/pkg/log"
 	"github.com/spf13/viper"
 )
 
@@ -27,7 +27,7 @@ type DatabaseConfig struct {
 }
 
 type RestConfig struct {
-	Port     string `mapstructure:"port"`
+	Port     int `mapstructure:"port"`
 	Timeouts struct {
 		Read       time.Duration `mapstructure:"read"`
 		ReadHeader time.Duration `mapstructure:"read_header"`
@@ -87,7 +87,7 @@ type KafkaConfig struct {
 	Brokers  []string `mapstructure:"brokers"`
 	Identity string   `mapstructure:"identity"`
 
-	Reader struct {
+	Consume struct {
 		Backoff struct {
 			Min time.Duration `mapstructure:"min"`
 			Max time.Duration `mapstructure:"max"`
@@ -100,13 +100,12 @@ type KafkaConfig struct {
 				MaxBytes       int           `mapstructure:"max_bytes"`
 				MaxWait        time.Duration `mapstructure:"max_wait"`
 				CommitInterval time.Duration `mapstructure:"commit_interval"`
-				StartOffset    int64         `mapstructure:"start_offset"`
 				QueueCapacity  int           `mapstructure:"queue_capacity"`
 			} `mapstructure:"profiles_v1"`
 		} `mapstructure:"topics"`
-	} `mapstructure:"readers"`
+	} `mapstructure:"consume"`
 
-	Writer struct {
+	Produce struct {
 		Topics struct {
 			OrganizationV1 struct {
 				RequiredAcks string        `mapstructure:"required_acks"`
@@ -128,7 +127,7 @@ type KafkaConfig struct {
 				IdleTimeout  time.Duration `mapstructure:"idle_timeout"`
 			} `mapstructure:"organization_members_v1"`
 		} `mapstructure:"topics"`
-	} `mapstructure:"write"`
+	} `mapstructure:"produce"`
 
 	Inbox struct {
 		Routines       int           `mapstructure:"routines"`
@@ -161,7 +160,7 @@ type Config struct {
 	Kafka    KafkaConfig    `mapstructure:"kafka"`
 }
 
-func LoadConfig() Config {
+func LoadConfig() *Config {
 	configPath := os.Getenv("KV_VIPER_FILE")
 	if configPath == "" {
 		panic(fmt.Errorf("KV_VIPER_FILE env var is not set"))
@@ -177,7 +176,7 @@ func LoadConfig() Config {
 		panic(fmt.Errorf("error unmarshalling config: %s", err))
 	}
 
-	return config
+	return &config
 }
 
 func (cfg *Config) Logger() *log.Logger {

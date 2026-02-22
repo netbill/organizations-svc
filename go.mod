@@ -23,7 +23,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v1.8.1
 	github.com/segmentio/kafka-go v0.4.50
-	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.21.0
 )
 
@@ -72,7 +71,7 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 )
 
-require github.com/lmittmann/tint v1.1.3 // indirect
+require github.com/lmittmann/tint v1.1.3
 
 replace (
 	github.com/netbill/eventbox => /home/trpdjke/go/src/github.com/netbill/eventbox

@@ -3,12 +3,12 @@ package responses
 import (
 	"net/http"
 
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	resources2 "github.com/netbill/organizations-svc/pkg/resources"
 	"github.com/netbill/restkit/pagi"
 )
 
-func Invite(mod models.Invite) resources2.Invite {
+func Invite(mod domain.Invite) resources2.Invite {
 	return resources2.Invite{
 		Data: resources2.InviteData{
 			Id:   mod.ID,
@@ -24,7 +24,7 @@ func Invite(mod models.Invite) resources2.Invite {
 	}
 }
 
-func Invites(r *http.Request, mods pagi.Page[[]models.Invite]) resources2.InvitesCollection {
+func Invites(r *http.Request, mods pagi.Page[[]domain.Invite]) resources2.InvitesCollection {
 	data := make([]resources2.InviteData, len(mods.Data))
 	for i, mod := range mods.Data {
 		data[i] = Invite(mod).Data

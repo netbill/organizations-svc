@@ -178,7 +178,7 @@ func (q *orgMembers) FilterByPermissionID(permissionID uuid.UUID) repository.Org
 
 func (q *orgMembers) GetWithUserData(ctx context.Context) (repository.OrganizationMemberWithProfileDataRow, error) {
 	q.selector = q.selector.
-		Columns("p.username", "p.official", "p.pseudonym", "p.icon").
+		Columns("p.username", "p.official", "p.pseudonym", "p.avatar_key").
 		Join("profiles p ON p.account_id = m.account_id")
 
 	query, args, err := q.selector.Limit(1).ToSql()
@@ -191,7 +191,7 @@ func (q *orgMembers) GetWithUserData(ctx context.Context) (repository.Organizati
 
 func (q *orgMembers) SelectWithUserData(ctx context.Context) ([]repository.OrganizationMemberWithProfileDataRow, error) {
 	q.selector = q.selector.
-		Columns("p.username", "p.official", "p.pseudonym", "p.icon").
+		Columns("p.username", "p.official", "p.pseudonym", "p.avatar_key").
 		Join("profiles p ON p.account_id = m.account_id")
 
 	query, args, err := q.selector.ToSql()

@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/log"
+	"github.com/netbill/organizations-svc/internal/core/domain"
+	"github.com/netbill/organizations-svc/pkg/log"
 	"github.com/netbill/restkit/tokens"
 )
 
@@ -35,7 +35,7 @@ func CtxAccountAuth(ctx context.Context, accountData tokens.AccountAuthClaims) c
 	return context.WithValue(ctx, AccountDataCtxKey, accountData)
 }
 
-func AccountActor(r *http.Request) models.AccountActor {
+func AccountActor(r *http.Request) domain.AccountActor {
 	claims := r.Context().Value(AccountDataCtxKey).(tokens.AccountAuthClaims)
 	return claims.GetAccountID()
 }

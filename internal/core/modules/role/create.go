@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 )
 
 type CreateParams struct {
@@ -17,12 +17,12 @@ type CreateParams struct {
 
 func (m *Module) Create(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	params CreateParams,
-) (role models.Role, err error) {
+) (role domain.Role, err error) {
 	err = m.checkPermissionsToManageRole(ctx, initiator, params.OrganizationID, params.Rank)
 	if err != nil {
-		return models.Role{}, err
+		return domain.Role{}, err
 	}
 
 	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -38,7 +38,7 @@ func (m *Module) Create(
 
 		return nil
 	}); err != nil {
-		return models.Role{}, err
+		return domain.Role{}, err
 	}
 
 	return role, nil

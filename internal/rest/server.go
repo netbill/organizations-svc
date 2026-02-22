@@ -3,11 +3,12 @@ package rest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/netbill/organizations-svc/log"
+	"github.com/netbill/organizations-svc/pkg/log"
 )
 
 type Handlers interface {
@@ -83,7 +84,7 @@ func New(
 }
 
 type Config struct {
-	Port              string
+	Port              int
 	ReadTimeout       time.Duration
 	ReadHeaderTimeout time.Duration
 	WriteTimeout      time.Duration
@@ -94,6 +95,10 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 	auth := s.middlewares.AccountAuth()
 
 	r := chi.NewRouter()
+	r.Use(
+		s.middlewares.Logger(log),
+		s.middlewares.CorsDocs(),
+	)
 
 	r.Route("/organizations-svc", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
@@ -167,7 +172,7 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 	})
 
 	srv := &http.Server{
-		Addr:              cfg.Port,
+		Addr:              fmt.Sprintf(":%d", cfg.Port),
 		Handler:           r,
 		ReadTimeout:       cfg.ReadTimeout,
 		ReadHeaderTimeout: cfg.ReadHeaderTimeout,

@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/orgperm"
 )
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	memberID uuid.UUID,
 ) error {
 	member, err := m.GetByID(ctx, memberID)
@@ -46,7 +46,7 @@ func (m *Module) Delete(
 
 func (m *Module) checkAbilityToDeleteMember(
 	ctx context.Context,
-	initiator models.AccountActor,
+	initiator domain.AccountActor,
 	organizationID uuid.UUID,
 	memberID uuid.UUID,
 ) error {
