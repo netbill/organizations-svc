@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/restkit/pagi"
 )
@@ -26,8 +26,8 @@ func (r OrgInviteRow) IsNil() bool {
 	return r.ID == uuid.Nil
 }
 
-func (r OrgInviteRow) ToModel() domain.Invite {
-	return domain.Invite{
+func (r OrgInviteRow) ToModel() models.Invite {
+	return models.Invite{
 		ID:             r.ID,
 		OrganizationID: r.OrganizationID,
 		AccountID:      r.AccountID,
@@ -62,14 +62,14 @@ type OrgInvitesQ interface {
 func (r *Repository) CreateInvite(
 	ctx context.Context,
 	params invite.CreateParams,
-) (domain.Invite, error) {
+) (models.Invite, error) {
 	row, err := r.OrgInvitesSql.New().Insert(ctx, OrgInviteRow{
 		OrganizationID: params.OrganizationID,
 		AccountID:      params.AccountID,
 		ExpiresAt:      params.ExpiresAt,
 	})
 	if err != nil {
-		return domain.Invite{}, fmt.Errorf(
+		return models.Invite{}, fmt.Errorf(
 			"failed to create invite for organization ID %s and account ID %s cause: %w",
 			params.OrganizationID, params.AccountID, err,
 		)
@@ -81,13 +81,13 @@ func (r *Repository) CreateInvite(
 func (r *Repository) GetInvite(
 	ctx context.Context,
 	inviteID uuid.UUID,
-) (domain.Invite, error) {
+) (models.Invite, error) {
 	row, err := r.OrgInvitesSql.New().FilterByID(inviteID).Get(ctx)
 	if err != nil {
-		return domain.Invite{}, fmt.Errorf("failed to get invite with ID %s, cause: %w", inviteID, err)
+		return models.Invite{}, fmt.Errorf("failed to get invite with ID %s, cause: %w", inviteID, err)
 	}
 	if row.IsNil() {
-		return domain.Invite{}, errx.ErrorInviteNotFound.Raise(
+		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
 			fmt.Errorf("invite with ID %s not found", inviteID),
 		)
 	}
@@ -99,13 +99,13 @@ func (r *Repository) UpdateInviteStatus(
 	ctx context.Context,
 	inviteID uuid.UUID,
 	status string,
-) (domain.Invite, error) {
+) (models.Invite, error) {
 	row, err := r.OrgInvitesSql.New().FilterByID(inviteID).UpdateStatus(status).UpdateOne(ctx)
 	if err != nil {
-		return domain.Invite{}, fmt.Errorf("failed to update invite status with ID %s, cause: %w", inviteID, err)
+		return models.Invite{}, fmt.Errorf("failed to update invite status with ID %s, cause: %w", inviteID, err)
 	}
 	if row.IsNil() {
-		return domain.Invite{}, errx.ErrorInviteNotFound.Raise(
+		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
 			fmt.Errorf("invite with ID %s not found", inviteID),
 		)
 	}
@@ -129,7 +129,7 @@ func (r *Repository) GetOrganizationInvites(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	limit, offset uint,
-) (pagi.Page[[]domain.Invite], error) {
+) (pagi.Page[[]models.Invite], error) {
 	if limit == 0 {
 		limit = 10
 	}
@@ -139,7 +139,7 @@ func (r *Repository) GetOrganizationInvites(
 		Page(limit, offset).
 		Select(ctx)
 	if err != nil {
-		return pagi.Page[[]domain.Invite]{}, fmt.Errorf(
+		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
 			"failed to get invites for organization ID %s, cause: %w", organizationID, err,
 		)
 	}
@@ -148,17 +148,17 @@ func (r *Repository) GetOrganizationInvites(
 		FilterByOrganizationID(organizationID).
 		Count(ctx)
 	if err != nil {
-		return pagi.Page[[]domain.Invite]{}, fmt.Errorf(
+		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
 			"failed to count invites for organization ID %s, cause: %w", organizationID, err,
 		)
 	}
 
-	res := make([]domain.Invite, 0, len(rows))
+	res := make([]models.Invite, 0, len(rows))
 	for _, row := range rows {
 		res = append(res, row.ToModel())
 	}
 
-	return pagi.Page[[]domain.Invite]{
+	return pagi.Page[[]models.Invite]{
 		Data:  res,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(res)),
@@ -170,7 +170,7 @@ func (r *Repository) GetAccountInvites(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,
-) (pagi.Page[[]domain.Invite], error) {
+) (pagi.Page[[]models.Invite], error) {
 	if limit == 0 {
 		limit = 10
 	}
@@ -180,7 +180,7 @@ func (r *Repository) GetAccountInvites(
 		Page(limit, offset).
 		Select(ctx)
 	if err != nil {
-		return pagi.Page[[]domain.Invite]{}, fmt.Errorf(
+		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
 			"failed to get invites for account ID %s, cause: %w", accountID, err,
 		)
 	}
@@ -189,17 +189,17 @@ func (r *Repository) GetAccountInvites(
 		FilterByAccountID(accountID).
 		Count(ctx)
 	if err != nil {
-		return pagi.Page[[]domain.Invite]{}, fmt.Errorf(
+		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
 			"failed to count invites for account ID %s, cause: %w", accountID, err,
 		)
 	}
 
-	res := make([]domain.Invite, 0, len(rows))
+	res := make([]models.Invite, 0, len(rows))
 	for _, row := range rows {
 		res = append(res, row.ToModel())
 	}
 
-	return pagi.Page[[]domain.Invite]{
+	return pagi.Page[[]models.Invite]{
 		Data:  res,
 		Page:  uint(offset/limit) + 1,
 		Size:  uint(len(res)),

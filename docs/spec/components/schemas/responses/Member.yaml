@@ -4,3 +4,11 @@ required:
 properties:
   data:
     $ref: './MemberData.yaml'
+
+  included:
+    type: array
+    description: "Included related resources (profile, organization)"
+    items:
+      oneOf:
+        - $ref: './ProfileData.yaml'
+        - $ref: './OrganizationData.yaml'

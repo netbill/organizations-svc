@@ -645,14 +645,6 @@ components:
       - type
     Invite_data_attributes:
       properties:
-        organization_id:
-          description: The ID of the organization to which the invite belongs
-          format: uuid
-          type: string
-        account_id:
-          description: The ID of the account that was invited
-          format: uuid
-          type: string
         status:
           description: The status of the invite
           enum:
@@ -669,15 +661,58 @@ components:
           format: date-time
           type: string
       required:
-      - account_id
       - created_at
       - expires_at
-      - organization_id
       - status
+    Invite_data_relationships_organization_data:
+      properties:
+        type:
+          enum:
+          - organization
+          type: string
+        id:
+          format: uuid
+          type: string
+      required:
+      - id
+      - type
+    Invite_data_relationships_organization:
+      properties:
+        data:
+          $ref: "#/components/schemas/Invite_data_relationships_organization_data"
+      required:
+      - data
+    Invite_data_relationships_invitee_data:
+      properties:
+        type:
+          enum:
+          - profile
+          type: string
+        id:
+          format: uuid
+          type: string
+      required:
+      - id
+      - type
+    Invite_data_relationships_invitee:
+      properties:
+        data:
+          $ref: "#/components/schemas/Invite_data_relationships_invitee_data"
+      required:
+      - data
+    Invite_data_relationships:
+      properties:
+        organization:
+          $ref: "#/components/schemas/Invite_data_relationships_organization"
+        invitee:
+          $ref: "#/components/schemas/Invite_data_relationships_invitee"
+      required:
+      - invitee
+      - organization
     Invite_data:
       properties:
         id:
-          description: invite ID
+          description: Invite ID
           format: uuid
           type: string
         type:
@@ -686,9 +721,12 @@ components:
           type: string
         attributes:
           $ref: "#/components/schemas/Invite_data_attributes"
+        relationships:
+          $ref: "#/components/schemas/Invite_data_relationships"
       required:
       - attributes
       - id
+      - relationships
       - type
     Role_data_attributes:
       properties:

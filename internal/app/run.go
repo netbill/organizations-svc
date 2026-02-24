@@ -46,10 +46,9 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	defer pool.Close()
 
-	defer pool.Close()
-	db := pgdbx.NewDB(pool)
-
 	a.log.Info("starting application")
+
+	db := pgdbx.NewDB(pool)
 
 	repo := &repository.Repository{
 		Transactioner:             pg.NewTransaction(db),
@@ -87,7 +86,7 @@ func (a *App) Run(ctx context.Context) error {
 	outbox := eventpg.NewOutbox(db)
 	inbox := eventpg.NewInbox(db)
 
-	producer := messenger.NewProducer(messenger.ProducerConfig{
+	producer := messenger.NewProducer(a.log, messenger.ProducerConfig{
 		Producer: a.config.Kafka.Identity,
 		Brokers:  a.config.Kafka.Brokers,
 		OrganizationV1: messenger.ProduceKafkaConfig{
@@ -167,7 +166,7 @@ func (a *App) Run(ctx context.Context) error {
 		MinNextAttempt: a.config.Kafka.Inbox.MinNextAttempt,
 		MaxNextAttempt: a.config.Kafka.Inbox.MaxNextAttempt,
 		MaxAttempts:    a.config.Kafka.Inbox.MaxAttempts,
-	}, *inbound)
+	}, inbound)
 	defer inboxWorker.Clean()
 
 	run(func() {

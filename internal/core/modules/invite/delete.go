@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	inviteID uuid.UUID,
 ) error {
 	invite, err := m.GetForAccount(ctx, initiator, inviteID)
@@ -25,7 +25,7 @@ func (m *Module) Delete(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
 	}
-	if invite.Status != domain.InviteStatusSent {
+	if invite.Status != models.InviteStatusSent {
 		return errx.ErrorInviteAlreadyAnswered.Raise(
 			fmt.Errorf("invite status is %s", invite.Status),
 		)

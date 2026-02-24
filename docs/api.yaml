@@ -40,6 +40,11 @@ components:
     UploadResourcesLink:
       $ref: './spec/components/schemas/responses/UploadResourcesLink.yaml'
 
+    ProfileData:
+      $ref: './spec/components/schemas/responses/ProfileData.yaml'
+    ProfileAttributes:
+      $ref: './spec/components/schemas/responses/ProfileAttributes.yaml'
+
     Organization:
       $ref: './spec/components/schemas/responses/Organization.yaml'
     OrganizationsCollection:

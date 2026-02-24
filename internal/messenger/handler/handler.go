@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 )
 
@@ -23,8 +23,8 @@ func New(modules Modules) *Handler {
 }
 
 type profileMod interface {
-	Create(ctx context.Context, profile domain.Profile) (domain.Profile, error)
-	Update(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (domain.Profile, error)
+	Create(ctx context.Context, profile models.Profile) (models.Profile, error)
+	Update(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error)
 
 	Delete(ctx context.Context, accountID uuid.UUID) error
 }

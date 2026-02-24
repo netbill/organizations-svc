@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 type CreateParams struct {
@@ -18,25 +18,35 @@ type CreateParams struct {
 
 func (m *Module) Create(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	params CreateParams,
-) (invite domain.Invite, err error) {
+) (invite models.Invite, err error) {
 	exist, err := m.repo.MemberExists(ctx, params.AccountID, params.OrganizationID)
 	if err != nil {
-		return domain.Invite{}, err
+		return models.Invite{}, err
 	}
 	if exist {
-		return domain.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
+		return models.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
 			fmt.Errorf("account '%s' is already a member of organization '%s'", params.AccountID, params.OrganizationID),
 		)
 	}
 
+	exist, err = m.repo.ExistsProfileByAccountID(ctx, params.AccountID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+	if !exist {
+		return models.Invite{}, errx.ErrorProfileNotFound.Raise(
+			fmt.Errorf("profile for '%s' not found", params.AccountID),
+		)
+	}
+
 	if err = m.checkPermissionForManageInvites(ctx, initiator, params.OrganizationID); err != nil {
-		return domain.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	if _, err = m.checkOrganizationIsActiveAndExists(ctx, params.OrganizationID); err != nil {
-		return domain.Invite{}, err
+		return models.Invite{}, err
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {

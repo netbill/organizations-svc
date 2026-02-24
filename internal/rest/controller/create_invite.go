@@ -40,6 +40,9 @@ func (c *Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, errx.ErrorAccountAlreadyMember):
 		log.Info("account is already a member of the organization")
 		c.responser.RenderErr(w, problems.Conflict("account is already a member of the organization"))
+	case errors.Is(err, errx.ErrorProfileNotFound):
+		log.Info("profile for account not found")
+		c.responser.RenderErr(w, problems.NotFound("profile for account not found"))
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to create invite")
 		c.responser.RenderErr(w, problems.Forbidden("not enough rights to create invite"))

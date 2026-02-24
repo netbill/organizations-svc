@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO - delete profile by account id, and cascade delete all members of the profile
 func (m *Module) Delete(
 	ctx context.Context,
 	accountID uuid.UUID,

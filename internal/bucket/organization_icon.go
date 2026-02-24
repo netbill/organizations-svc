@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/awsx"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func CreateTempOrganizationIconKey(organizationID uuid.UUID) string {
@@ -20,25 +20,25 @@ func CreateFinalOrganizationIconKey(organizationID uuid.UUID) string {
 	return fmt.Sprintf("organization/icon/%s/%s", organizationID, uuid.New())
 }
 
-func (s Storage) CreateOrganizationIconUploadMediaLinks(
+func (s *Storage) CreateOrganizationIconUploadMediaLinks(
 	ctx context.Context,
 	organizationID uuid.UUID,
-) (domain.UploadMediaLink, error) {
+) (models.UploadMediaLink, error) {
 	key := CreateTempOrganizationIconKey(organizationID)
 
 	uploadLink, getLink, err := s.s3.PresignPut(ctx, key, s.config.LinkTTL)
 	if err != nil {
-		return domain.UploadMediaLink{}, fmt.Errorf("presign put object for organization icon: %w", err)
+		return models.UploadMediaLink{}, fmt.Errorf("presign put object for organization icon: %w", err)
 	}
 
-	return domain.UploadMediaLink{
+	return models.UploadMediaLink{
 		Key:        key,
 		PreloadUrl: getLink,
 		UploadURL:  uploadLink,
 	}, nil
 }
 
-func (s Storage) ValidateOrganizationIcon(
+func (s *Storage) ValidateOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	tempKey string,
@@ -76,7 +76,7 @@ func (s Storage) ValidateOrganizationIcon(
 	return nil
 }
 
-func (s Storage) DeleteUploadOrganizationIcon(
+func (s *Storage) DeleteUploadOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	tempKey string,
@@ -92,7 +92,7 @@ func (s Storage) DeleteUploadOrganizationIcon(
 	return nil
 }
 
-func (s Storage) DeleteOrganizationIcon(
+func (s *Storage) DeleteOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	finalKey string,
@@ -108,7 +108,7 @@ func (s Storage) DeleteOrganizationIcon(
 	return nil
 }
 
-func (s Storage) UpdateOrganizationIcon(
+func (s *Storage) UpdateOrganizationIcon(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	oldFinalKey *string,

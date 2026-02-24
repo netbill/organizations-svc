@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 type UpdateParams struct {
@@ -16,23 +16,23 @@ type UpdateParams struct {
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	memberID uuid.UUID,
 	params UpdateParams,
-) (domain.Member, error) {
+) (models.Member, error) {
 	member, err := m.GetByID(ctx, memberID)
 	if err != nil {
-		return domain.Member{}, err
+		return models.Member{}, err
 	}
 	if member.Head {
-		return domain.Member{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("cannot update organization head member %s", member.ID),
 		)
 	}
 
 	err = m.checkAbilityToUpdateMember(ctx, initiator, member.OrganizationID, memberID)
 	if err != nil {
-		return domain.Member{}, err
+		return models.Member{}, err
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 type Module struct {
@@ -12,8 +12,12 @@ type Module struct {
 }
 
 type repo interface {
-	CreateProfile(ctx context.Context, profile domain.Profile) (domain.Profile, error)
-	UpdateProfile(ctx context.Context, accountID uuid.UUID, params UpdateParams) (domain.Profile, error)
+	CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error)
+	UpdateProfile(ctx context.Context, accountID uuid.UUID, params UpdateParams) (models.Profile, error)
+	GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (models.Profile, error)
+	GetProfileByUsername(ctx context.Context, username string) (models.Profile, error)
+	ExistsProfileByUsername(ctx context.Context, username string) (bool, error)
+	ExistsProfileByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
 
 	DeleteProfileByAccountID(ctx context.Context, accountID uuid.UUID) error
 	DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error

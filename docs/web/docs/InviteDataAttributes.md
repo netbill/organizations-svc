@@ -4,8 +4,6 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**OrganizationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the organization to which the invite belongs | 
-**AccountId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the account that was invited | 
 **Status** | **string** | The status of the invite | 
 **ExpiresAt** | **time.Time** | The expiration date and time of the invite | 
 **CreatedAt** | **time.Time** | The date and time when the invite was created | 
@@ -14,7 +12,7 @@ Name | Type | Description | Notes
 
 ### NewInviteDataAttributes
 
-`func NewInviteDataAttributes(organizationId uuid.UUID, accountId uuid.UUID, status string, expiresAt time.Time, createdAt time.Time, ) *InviteDataAttributes`
+`func NewInviteDataAttributes(status string, expiresAt time.Time, createdAt time.Time, ) *InviteDataAttributes`
 
 NewInviteDataAttributes instantiates a new InviteDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -28,46 +26,6 @@ will change when the set of required properties is changed
 NewInviteDataAttributesWithDefaults instantiates a new InviteDataAttributes object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
-
-### GetOrganizationId
-
-`func (o *InviteDataAttributes) GetOrganizationId() uuid.UUID`
-
-GetOrganizationId returns the OrganizationId field if non-nil, zero value otherwise.
-
-### GetOrganizationIdOk
-
-`func (o *InviteDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool)`
-
-GetOrganizationIdOk returns a tuple with the OrganizationId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetOrganizationId
-
-`func (o *InviteDataAttributes) SetOrganizationId(v uuid.UUID)`
-
-SetOrganizationId sets OrganizationId field to given value.
-
-
-### GetAccountId
-
-`func (o *InviteDataAttributes) GetAccountId() uuid.UUID`
-
-GetAccountId returns the AccountId field if non-nil, zero value otherwise.
-
-### GetAccountIdOk
-
-`func (o *InviteDataAttributes) GetAccountIdOk() (*uuid.UUID, bool)`
-
-GetAccountIdOk returns a tuple with the AccountId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetAccountId
-
-`func (o *InviteDataAttributes) SetAccountId(v uuid.UUID)`
-
-SetAccountId sets AccountId field to given value.
-
 
 ### GetStatus
 

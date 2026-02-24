@@ -12,7 +12,7 @@ import (
 	"github.com/netbill/ape"
 	"github.com/netbill/eventbox/headers"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal/core/domain"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -151,7 +151,7 @@ func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any) {
 	l.base.ErrorContext(ctx, msg, args...)
 }
 
-// --- your domain sugar stays returning *Logger if you want ---
+// --- your models sugar stays returning *Logger if you want ---
 
 func (l *Logger) WithAccountAuthClaims(auth interface {
 	GetAccountID() uuid.UUID
@@ -166,25 +166,25 @@ func (l *Logger) WithAccountAuthClaims(auth interface {
 	)}
 }
 
-func (l *Logger) WithOrganization(organization domain.Organization) *Logger {
+func (l *Logger) WithOrganization(organization models.Organization) *Logger {
 	return &Logger{base: l.base.With(slog.String(OrganizationIDField, organization.ID.String()))}
 }
 
-func (l *Logger) WithMember(member domain.Member) *Logger {
+func (l *Logger) WithMember(member models.Member) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, member.OrganizationID.String()),
 		slog.String(MemberIDField, member.ID.String()),
 	)}
 }
 
-func (l *Logger) WithRole(role domain.Role) *Logger {
+func (l *Logger) WithRole(role models.Role) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, role.OrganizationID.String()),
 		slog.String(RoleIDField, role.ID.String()),
 	)}
 }
 
-func (l *Logger) WithInvite(invite domain.Invite) *Logger {
+func (l *Logger) WithInvite(invite models.Invite) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, invite.OrganizationID.String()),
 		slog.String(InviteIDField, invite.ID.String()),

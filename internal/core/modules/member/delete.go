@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/orgperm"
 )
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	memberID uuid.UUID,
 ) error {
 	member, err := m.GetByID(ctx, memberID)
@@ -46,7 +46,7 @@ func (m *Module) Delete(
 
 func (m *Module) checkAbilityToDeleteMember(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 	memberID uuid.UUID,
 ) error {
@@ -66,24 +66,21 @@ func (m *Module) checkAbilityToDeleteMember(
 			)
 		}
 
-		firstMaxRole, err := m.repo.GetMemberMaxRole(ctx, member.ID)
+		firstMaxRank, err := m.repo.GetMemberMaxRoleRank(ctx, member.ID)
 		if err != nil {
 			return fmt.Errorf("failed to get max role for member %s: %w", member.AccountID, err)
 		}
 
-		secMaxRole, err := m.repo.GetMemberMaxRole(ctx, memberID)
+		secondMaxRank, err := m.repo.GetMemberMaxRoleRank(ctx, memberID)
 		if err != nil {
 			return fmt.Errorf("failed to get max role for member %s: %w", memberID, err)
 		}
 
-		if firstMaxRole.Rank < secMaxRole.Rank {
+		if firstMaxRank < secondMaxRank {
 			return errx.ErrorNotEnoughRights.Raise(
 				fmt.Errorf(
-					"member %s with rank %d cannot manage member %s with rank %d",
-					member.AccountID,
-					firstMaxRole.Rank,
-					memberID,
-					secMaxRole.Rank,
+					"initiator member %s has max role rank %d less than max role rank %d of member %s",
+					member.AccountID, firstMaxRank, secondMaxRank, memberID,
 				),
 			)
 		}

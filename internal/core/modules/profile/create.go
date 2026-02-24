@@ -2,29 +2,18 @@ package profile
 
 import (
 	"context"
-	"time"
 
-	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type UpdateParams struct {
-	Username  string    `json:"username"`
-	Pseudonym *string   `json:"pseudonym"`
-	AvatarKey *string   `json:"avatar"`
-	Official  bool      `json:"official"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-func (m *Module) Update(
+func (m *Module) Create(
 	ctx context.Context,
-	accountID uuid.UUID,
-	params UpdateParams,
-) (domain.Profile, error) {
-	updatedProfile, err := m.repo.UpdateProfile(ctx, accountID, params)
+	profile models.Profile,
+) (models.Profile, error) {
+	createdProfile, err := m.repo.CreateProfile(ctx, profile)
 	if err != nil {
-		return domain.Profile{}, err
+		return models.Profile{}, err
 	}
 
-	return updatedProfile, nil
+	return createdProfile, nil
 }

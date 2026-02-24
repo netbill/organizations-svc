@@ -8,23 +8,23 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/internal/core/domain"
-	"github.com/netbill/organizations-svc/internal/core/modules/role"
-	"github.com/netbill/organizations-svc/pkg/evtypes"
+	"github.com/netbill/evtypes"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (p *Publisher) WriteOrgRoleCreated(
 	ctx context.Context,
-	role domain.Role,
+	role models.Role,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgRoleCreatedPayload{
 		RoleID:         role.ID,
 		OrganizationID: role.OrganizationID,
-		Rank:           role.Rank,
-		Name:           role.Name,
-		Description:    role.Description,
-		Color:          role.Color,
-		CreatedAt:      role.CreatedAt,
+
+		Name:        role.Name,
+		Description: role.Description,
+		Color:       role.Color,
+		CreatedAt:   role.CreatedAt,
+		Version:     role.Version,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal org role created payload, cause: %w", err)
@@ -48,14 +48,16 @@ func (p *Publisher) WriteOrgRoleCreated(
 
 func (p *Publisher) WriteOrgRoleUpdated(
 	ctx context.Context,
-	role domain.Role,
+	role models.Role,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgRoleUpdatedPayload{
-		RoleID:      role.ID,
-		Name:        role.Name,
-		Description: role.Description,
-		Color:       role.Color,
-		UpdatedAt:   role.UpdatedAt,
+		RoleID:         role.ID,
+		OrganizationID: role.OrganizationID,
+		Name:           role.Name,
+		Description:    role.Description,
+		Color:          role.Color,
+		Version:        role.Version,
+		UpdatedAt:      role.UpdatedAt,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal org role updated payload, cause: %w", err)
@@ -79,11 +81,12 @@ func (p *Publisher) WriteOrgRoleUpdated(
 
 func (p *Publisher) WriteOrgRoleDeleted(
 	ctx context.Context,
-	role domain.Role,
+	role models.Role,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgRoleDeletedPayload{
-		RoleID:    role.ID,
-		DeletedAt: time.Now().UTC(),
+		RoleID:         role.ID,
+		OrganizationID: role.OrganizationID,
+		DeletedAt:      time.Now().UTC(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal org role deleted payload, cause: %w", err)
@@ -107,12 +110,16 @@ func (p *Publisher) WriteOrgRoleDeleted(
 
 func (p *Publisher) WriteOrgRolePermissionsUpdated(
 	ctx context.Context,
-	role domain.Role,
-	permissions role.SetPermissions,
+	role models.Role,
+	permissions []uuid.UUID,
+	revision models.OrgRolePermissionsLinksRevision,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgRolePermissionsUpdatedPayload{
 		RoleID:      role.ID,
 		Permissions: permissions,
+
+		PermissionsRevision:          revision.Revision,
+		PermissionsRevisionUpdatedAt: revision.UpdatedAt,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal org role permissions updated payload, cause: %w", err)
@@ -137,11 +144,22 @@ func (p *Publisher) WriteOrgRolePermissionsUpdated(
 func (p *Publisher) WriteOrgRolesRanksUpdated(
 	ctx context.Context,
 	organizationID uuid.UUID,
-	ranks map[uuid.UUID]uint,
+	ranks []models.OrgRoleRank,
+	revision models.OrgRoleRanksRevision,
 ) error {
+	items := make([]evtypes.RankSnapshotItem, len(ranks))
+	for i, r := range ranks {
+		items[i] = evtypes.RankSnapshotItem{
+			RoleID: r.RoleID,
+			Rank:   r.Rank,
+		}
+	}
+
 	payload, err := json.Marshal(evtypes.OrgRolesRanksUpdatedPayload{
-		OrganizationID: organizationID,
-		Ranks:          ranks,
+		OrganizationID:         organizationID,
+		Ranks:                  items,
+		RanksRevision:          revision.Revision,
+		RanksRevisionUpdatedAt: revision.UpdatedAt,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal org role ranks updated payload, cause: %w", err)
@@ -158,6 +176,39 @@ func (p *Publisher) WriteOrgRolesRanksUpdated(
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org roles ranks updated, cause: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Publisher) WriteOrgMemberRolesUpdated(
+	ctx context.Context,
+	memberID uuid.UUID,
+	roles []uuid.UUID,
+	revision models.OrgMemberRoleLinkRevision,
+) error {
+	payload, err := json.Marshal(evtypes.OrgMemberRolesUpdatedPayload{
+		MemberID: memberID,
+		Roles:    roles,
+
+		MemberRolesRevision:          revision.Revision,
+		MemberRolesRevisionUpdatedAt: revision.UpdatedAt,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to marshal org member role updated payload, cause: %w", err)
+	}
+
+	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
+		ID:       uuid.New(),
+		Type:     evtypes.OrgMemberRolesUpdatedEvent,
+		Version:  1,
+		Topic:    evtypes.OrgMembersTopicV1,
+		Key:      memberID.String(),
+		Payload:  payload,
+		Producer: p.identity,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create sender event for org member role updated, cause: %w", err)
 	}
 
 	return nil

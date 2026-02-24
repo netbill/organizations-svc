@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
@@ -33,27 +33,27 @@ type RepoUpdateOrganizationParams struct {
 }
 
 type repo interface {
-	CreateOrganization(ctx context.Context, params CreateParams) (domain.Organization, error)
+	CreateOrganization(ctx context.Context, params CreateParams) (models.Organization, error)
 
-	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (domain.Organization, error)
+	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
 	GetOrganizations(
 		ctx context.Context,
 		filter FilterParams,
 		limit, offset uint,
-	) (pagi.Page[[]domain.Organization], error)
+	) (pagi.Page[[]models.Organization], error)
 	GetOrganizationsForUser(
 		ctx context.Context,
 		accountID uuid.UUID,
 		limit, offset uint,
-	) (pagi.Page[[]domain.Organization], error)
+	) (pagi.Page[[]models.Organization], error)
 
 	UpdateOrganization(
 		ctx context.Context,
 		ID uuid.UUID,
 		params UpdateParams,
-	) (domain.Organization, error)
-	UpdateOrganizationStatus(ctx context.Context, ID uuid.UUID, status string) (domain.Organization, error)
-	UpdateOrganizationMaxRoles(ctx context.Context, ID uuid.UUID, maxRoles uint) (domain.Organization, error)
+	) (models.Organization, error)
+	UpdateOrganizationStatus(ctx context.Context, ID uuid.UUID, status string) (models.Organization, error)
+	UpdateOrganizationMaxRoles(ctx context.Context, ID uuid.UUID, maxRoles uint) (models.Organization, error)
 
 	DeleteOrganization(ctx context.Context, ID uuid.UUID) error
 
@@ -65,39 +65,35 @@ type repo interface {
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
-	) (domain.Member, error)
+	) (models.Member, error)
 
-	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (domain.Role, error)
-
-	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (domain.Member, error)
-	CreateMemberHead(ctx context.Context, accountID, organizationID uuid.UUID) (domain.Member, error)
+	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
+	CreateMemberHead(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 
 	GetRolePermissions(
 		ctx context.Context,
 		roleID uuid.UUID,
-	) (domain.OrgRolePermissionsWithDetailsForRole, error)
+	) (models.OrgRolePermissionsWithDetailsForRole, error)
+
+	CreateOrgRoleRankRevision(ctx context.Context, organizationID uuid.UUID) error
+	CreateMemberRolesLinksRevision(ctx context.Context, memberID uuid.UUID) error
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type messanger interface {
-	WriteOrganizationCreated(ctx context.Context, organization domain.Organization) error
+	WriteOrganizationCreated(ctx context.Context, organization models.Organization) error
+	WriteOrganizationUpdated(ctx context.Context, organization models.Organization) error
+	WriteOrganizationDeleted(ctx context.Context, organization models.Organization) error
 
-	WriteOrganizationActivated(ctx context.Context, organization domain.Organization) error
-	WriteOrganizationDeactivated(ctx context.Context, organization domain.Organization) error
-
-	WriteOrganizationUpdated(ctx context.Context, organization domain.Organization) error
-
-	WriteOrganizationDeleted(ctx context.Context, organization domain.Organization) error
-
-	WriteOrgMemberCreated(ctx context.Context, member domain.Member) error
+	WriteOrgMemberCreated(ctx context.Context, member models.Member) error
 }
 
 type bucket interface {
 	CreateOrganizationIconUploadMediaLinks(
 		ctx context.Context,
 		organizationID uuid.UUID,
-	) (domain.UploadMediaLink, error)
+	) (models.UploadMediaLink, error)
 
 	ValidateOrganizationIcon(
 		ctx context.Context,
@@ -127,7 +123,7 @@ type bucket interface {
 	CreateOrganizationBannerUploadMediaLinks(
 		ctx context.Context,
 		organizationID uuid.UUID,
-	) (domain.UploadMediaLink, error)
+	) (models.UploadMediaLink, error)
 
 	ValidateOrganizationBanner(
 		ctx context.Context,
@@ -157,7 +153,7 @@ type bucket interface {
 
 func (m *Module) chekPermissionForManageOrganization(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) error {
 	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)

@@ -1,28 +1,60 @@
 -- +migrate Up
 CREATE TABLE organization_roles (
-    id               UUID    PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    organization_id  UUID    NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    rank             INT     NOT NULL DEFAULT 0 CHECK (rank >= 0),
-    name             TEXT    NOT NULL,
-    description      TEXT    NOT NULL,
-    color            TEXT    NOT NULL,
+    id              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    name        TEXT NOT NULL,
+    description TEXT NOT NULL,
+    color       TEXT NOT NULL,
+    version     INT  NOT NULL DEFAULT 1 CHECK (version > 0),
+
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
 
     UNIQUE (organization_id, name)
 );
 
-CREATE TABLE organization_member_roles (
+CREATE TABLE organization_role_ranks (
+    organization_id UUID NOT NULL,
+    role_id         UUID NOT NULL,
+    rank            INT  NOT NULL CHECK (rank >= 0),
+
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+
+    PRIMARY KEY (role_id),
+    UNIQUE (organization_id, rank),
+
+    FOREIGN KEY (organization_id, role_id)
+        REFERENCES organization_roles (organization_id, id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE organization_role_ranks_revisions (
+    organization_id UUID PRIMARY KEY REFERENCES organizations(id) ON DELETE CASCADE,
+    revision        INT   NOT NULL DEFAULT 0,
+
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC')
+);
+
+CREATE TABLE organization_member_role_links (
     member_id  UUID NOT NULL REFERENCES organization_members(id) ON DELETE CASCADE,
     role_id    UUID NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
 
+    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
     PRIMARY KEY (member_id, role_id)
 );
 
--- +migrate Up
-CREATE TABLE organization_role_permissions (
+CREATE TABLE organization_member_role_links_revisions (
+    member_id  UUID PRIMARY KEY REFERENCES organization_members(id) ON DELETE CASCADE,
+    revision   INT NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC')
+);
+
+CREATE TABLE organization_role_permissions ( -- тут все гуд
     id          UUID          PRIMARY KEY NOT NULL,
     code        VARCHAR(255)  NOT NULL UNIQUE,
     description VARCHAR(1024) NOT NULL,
@@ -46,14 +78,30 @@ SET code = EXCLUDED.code,
     updated_at = (now() AT TIME ZONE 'UTC');
 
 CREATE TABLE organization_role_permission_links (
-    role_id         UUID NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
-    permission_id   UUID NOT NULL REFERENCES organization_role_permissions (id) ON DELETE RESTRICT,
+    role_id       UUID NOT NULL REFERENCES organization_roles (id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES organization_role_permissions (id) ON DELETE RESTRICT,
 
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
     PRIMARY KEY (role_id, permission_id)
 );
 
+CREATE TABLE organization_role_permission_links_revisions (
+    role_id    UUID PRIMARY KEY REFERENCES organization_roles(id) ON DELETE CASCADE,
+    revision   INT NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() AT TIME ZONE 'UTC')
+);
+
 -- +migrate Down
-DROP TABLE IF EXISTS organization_role_permission_links CASCADE;
-DROP TABLE IF EXISTS organization_role_permissions CASCADE;
-DROP TABLE IF EXISTS organization_member_roles CASCADE;
-DROP TABLE IF EXISTS organization_roles CASCADE;
+DROP TABLE IF EXISTS organization_role_permission_links_revisions;
+DROP TABLE IF EXISTS organization_role_permission_links;
+DROP TABLE IF EXISTS organization_role_permissions;
+
+DROP TABLE IF EXISTS organization_member_role_links_revisions;
+DROP TABLE IF EXISTS organization_member_role_links;
+
+DROP TABLE IF EXISTS organization_role_ranks_revisions;
+DROP TABLE IF EXISTS organization_role_ranks;
+
+DROP TABLE IF EXISTS organization_roles;

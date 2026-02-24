@@ -25,6 +25,7 @@ func scanOrganizationMemberWithProfileData(row sq.RowScanner) (m repository.Orga
 		&m.Head,
 		&position,
 		&label,
+		&m.Version,
 		&m.CreatedAt,
 		&m.UpdatedAt,
 		&m.Username,
@@ -109,9 +110,9 @@ func (q *orgMembers) FilterRoleID(roleID uuid.UUID) repository.OrgMembersQ {
 	expr := sq.Expr(`
 		EXISTS (
 			SELECT 1
-			FROM member_roles mr
+			FROM organization_member_role_links mr
 			WHERE mr.member_id = m.id
-				AND mr.role_id = ?
+			  AND mr.role_id = ?
 		)
 	`, roleID)
 
@@ -126,10 +127,10 @@ func (q *orgMembers) FilterByRoleRankUp(rankUp uint) repository.OrgMembersQ {
 	expr := sq.Expr(`
 		EXISTS (
 			SELECT 1
-			FROM organization_member_roles mr
-			JOIN organization_roles r ON r.id = mr.role_id
+			FROM organization_member_role_links mr
+			JOIN organization_role_ranks rr ON rr.role_id = mr.role_id
 			WHERE mr.member_id = m.id
-				AND r.rank >= ?
+			  AND rr.rank >= ?
 		)
 	`, int(rankUp))
 
@@ -144,10 +145,10 @@ func (q *orgMembers) FilterByRoleRankDown(rankDown uint) repository.OrgMembersQ 
 	expr := sq.Expr(`
 		EXISTS (
 			SELECT 1
-			FROM organization_member_roles mr
-			JOIN organization_roles r ON r.id = mr.role_id
+			FROM organization_member_role_links mr
+			JOIN organization_role_ranks rr ON rr.role_id = mr.role_id
 			WHERE mr.member_id = m.id
-				AND r.rank <= ?
+			  AND rr.rank <= ?
 		)
 	`, int(rankDown))
 
@@ -162,7 +163,7 @@ func (q *orgMembers) FilterByPermissionID(permissionID uuid.UUID) repository.Org
 	expr := sq.Expr(`
 		EXISTS (
 			SELECT 1
-			FROM organization_member_roles mr
+			FROM organization_member_role_links mr
 			JOIN organization_role_permission_links rp ON rp.role_id = mr.role_id
 			WHERE mr.member_id = m.id
 			  AND rp.permission_id = ?

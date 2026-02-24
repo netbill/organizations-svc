@@ -577,11 +577,12 @@ components:
             - id
             - type
             - attributes
+            - relationships
           properties:
             id:
               type: string
               format: uuid
-              description: invite ID
+              description: Invite ID
             type:
               type: string
               enum:
@@ -589,20 +590,10 @@ components:
             attributes:
               type: object
               required:
-                - organization_id
-                - account_id
                 - status
                 - expires_at
                 - created_at
               properties:
-                organization_id:
-                  type: string
-                  format: uuid
-                  description: The ID of the organization to which the invite belongs
-                account_id:
-                  type: string
-                  format: uuid
-                  description: The ID of the account that was invited
                 status:
                   type: string
                   enum:
@@ -618,6 +609,48 @@ components:
                   type: string
                   format: date-time
                   description: The date and time when the invite was created
+            relationships:
+              type: object
+              required:
+                - organization
+                - invitee
+              properties:
+                organization:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - type
+                        - id
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - organization
+                        id:
+                          type: string
+                          format: uuid
+                invitee:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: object
+                      required:
+                        - type
+                        - id
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - profile
+                        id:
+                          type: string
+                          format: uuid
     InvitesCollection:
       type: object
       required:

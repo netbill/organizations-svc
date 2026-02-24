@@ -2,20 +2,23 @@ package organization
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
 ) error {
 	organization, err := m.GetByID(ctx, organizationID)
-	if err != nil {
+	if errors.Is(err, errx.ErrorOrganizationNotFound) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 

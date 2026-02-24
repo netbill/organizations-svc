@@ -16,7 +16,7 @@ func Run(args []string) {
 	log := cfg.Logger()
 
 	var (
-		service = kingpin.New("chains-auth", "")
+		service = kingpin.New(cfg.Service.Name, "")
 		runCmd  = service.Command("run", "run command")
 
 		serviceCmd     = runCmd.Command("service", "run service")

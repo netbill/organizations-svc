@@ -22,10 +22,11 @@ var _ MappedNullable = &InviteData{}
 
 // InviteData struct for InviteData
 type InviteData struct {
-	// invite ID
+	// Invite ID
 	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
 	Attributes InviteDataAttributes `json:"attributes"`
+	Relationships InviteDataRelationships `json:"relationships"`
 }
 
 type _InviteData InviteData
@@ -34,11 +35,12 @@ type _InviteData InviteData
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInviteData(id uuid.UUID, type_ string, attributes InviteDataAttributes) *InviteData {
+func NewInviteData(id uuid.UUID, type_ string, attributes InviteDataAttributes, relationships InviteDataRelationships) *InviteData {
 	this := InviteData{}
 	this.Id = id
 	this.Type = type_
 	this.Attributes = attributes
+	this.Relationships = relationships
 	return &this
 }
 
@@ -122,6 +124,30 @@ func (o *InviteData) SetAttributes(v InviteDataAttributes) {
 	o.Attributes = v
 }
 
+// GetRelationships returns the Relationships field value
+func (o *InviteData) GetRelationships() InviteDataRelationships {
+	if o == nil {
+		var ret InviteDataRelationships
+		return ret
+	}
+
+	return o.Relationships
+}
+
+// GetRelationshipsOk returns a tuple with the Relationships field value
+// and a boolean to check if the value has been set.
+func (o *InviteData) GetRelationshipsOk() (*InviteDataRelationships, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Relationships, true
+}
+
+// SetRelationships sets field value
+func (o *InviteData) SetRelationships(v InviteDataRelationships) {
+	o.Relationships = v
+}
+
 func (o InviteData) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -135,6 +161,7 @@ func (o InviteData) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["type"] = o.Type
 	toSerialize["attributes"] = o.Attributes
+	toSerialize["relationships"] = o.Relationships
 	return toSerialize, nil
 }
 
@@ -146,6 +173,7 @@ func (o *InviteData) UnmarshalJSON(data []byte) (err error) {
 		"id",
 		"type",
 		"attributes",
+		"relationships",
 	}
 
 	allProperties := make(map[string]interface{})

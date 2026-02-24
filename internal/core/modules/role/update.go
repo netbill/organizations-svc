@@ -4,35 +4,24 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 type UpdateParams struct {
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
-	Color       *string `json:"color"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
 }
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	roleID uuid.UUID,
 	params UpdateParams,
-) (domain.Role, error) {
-	role, err := m.GetByID(ctx, roleID)
+) (models.Role, error) {
+	role, err := m.checkPermissionsToManageRole(ctx, initiator, roleID)
 	if err != nil {
-		return domain.Role{}, err
-	}
-
-	member, err := m.getInitiator(ctx, initiator, role.OrganizationID)
-	if err != nil {
-		return domain.Role{}, err
-	}
-
-	if !member.Head {
-		if err = m.checkPermissionsToManageRole(ctx, initiator, member.OrganizationID, role.Rank); err != nil {
-			return domain.Role{}, err
-		}
+		return models.Role{}, err
 	}
 
 	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -47,7 +36,7 @@ func (m *Module) Update(
 
 		return nil
 	}); err != nil {
-		return domain.Role{}, err
+		return models.Role{}, err
 	}
 
 	return role, nil

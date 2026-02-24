@@ -12,7 +12,6 @@ package resources
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"time"
 	"bytes"
 	"fmt"
@@ -23,10 +22,6 @@ var _ MappedNullable = &InviteDataAttributes{}
 
 // InviteDataAttributes struct for InviteDataAttributes
 type InviteDataAttributes struct {
-	// The ID of the organization to which the invite belongs
-	OrganizationId uuid.UUID `json:"organization_id"`
-	// The ID of the account that was invited
-	AccountId uuid.UUID `json:"account_id"`
 	// The status of the invite
 	Status string `json:"status"`
 	// The expiration date and time of the invite
@@ -41,10 +36,8 @@ type _InviteDataAttributes InviteDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInviteDataAttributes(organizationId uuid.UUID, accountId uuid.UUID, status string, expiresAt time.Time, createdAt time.Time) *InviteDataAttributes {
+func NewInviteDataAttributes(status string, expiresAt time.Time, createdAt time.Time) *InviteDataAttributes {
 	this := InviteDataAttributes{}
-	this.OrganizationId = organizationId
-	this.AccountId = accountId
 	this.Status = status
 	this.ExpiresAt = expiresAt
 	this.CreatedAt = createdAt
@@ -57,54 +50,6 @@ func NewInviteDataAttributes(organizationId uuid.UUID, accountId uuid.UUID, stat
 func NewInviteDataAttributesWithDefaults() *InviteDataAttributes {
 	this := InviteDataAttributes{}
 	return &this
-}
-
-// GetOrganizationId returns the OrganizationId field value
-func (o *InviteDataAttributes) GetOrganizationId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.OrganizationId
-}
-
-// GetOrganizationIdOk returns a tuple with the OrganizationId field value
-// and a boolean to check if the value has been set.
-func (o *InviteDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.OrganizationId, true
-}
-
-// SetOrganizationId sets field value
-func (o *InviteDataAttributes) SetOrganizationId(v uuid.UUID) {
-	o.OrganizationId = v
-}
-
-// GetAccountId returns the AccountId field value
-func (o *InviteDataAttributes) GetAccountId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.AccountId
-}
-
-// GetAccountIdOk returns a tuple with the AccountId field value
-// and a boolean to check if the value has been set.
-func (o *InviteDataAttributes) GetAccountIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.AccountId, true
-}
-
-// SetAccountId sets field value
-func (o *InviteDataAttributes) SetAccountId(v uuid.UUID) {
-	o.AccountId = v
 }
 
 // GetStatus returns the Status field value
@@ -189,8 +134,6 @@ func (o InviteDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o InviteDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["organization_id"] = o.OrganizationId
-	toSerialize["account_id"] = o.AccountId
 	toSerialize["status"] = o.Status
 	toSerialize["expires_at"] = o.ExpiresAt
 	toSerialize["created_at"] = o.CreatedAt
@@ -202,8 +145,6 @@ func (o *InviteDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"organization_id",
-		"account_id",
 		"status",
 		"expires_at",
 		"created_at",

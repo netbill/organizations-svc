@@ -1,18 +1,34 @@
 package messenger
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/internal/messenger/handler"
-	"github.com/netbill/organizations-svc/pkg/evtypes"
+	"github.com/netbill/evtypes"
 	"github.com/netbill/organizations-svc/pkg/log"
 )
+
+type handlers interface {
+	ProfileCreated(
+		ctx context.Context,
+		event eventbox.InboxEvent,
+	) error
+	ProfileUpdated(
+		ctx context.Context,
+		event eventbox.InboxEvent,
+	) error
+	ProfileDeleted(
+		ctx context.Context,
+		event eventbox.InboxEvent,
+	) error
+}
 
 func NewInboxWorker(
 	logger *log.Logger,
 	inbox eventbox.Inbox,
 	cfg eventbox.InboxWorkerConfig,
-	handlers handler.Handler,
+	handlers handlers,
 ) *eventbox.InboxWorker {
 	id := uuid.New().String()
 

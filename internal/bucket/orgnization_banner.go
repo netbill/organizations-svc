@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/awsx"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func CreateTempOrganizationBannerKey(organizationID uuid.UUID) string {
@@ -20,25 +20,25 @@ func CreateFinalOrganizationBannerKey(organizationID uuid.UUID) string {
 	return fmt.Sprintf("organization/banner/%s/%s", organizationID, uuid.New())
 }
 
-func (s Storage) CreateOrganizationBannerUploadMediaLinks(
+func (s *Storage) CreateOrganizationBannerUploadMediaLinks(
 	ctx context.Context,
 	organizationID uuid.UUID,
-) (domain.UploadMediaLink, error) {
+) (models.UploadMediaLink, error) {
 	key := CreateTempOrganizationBannerKey(organizationID)
 
 	uploadLink, getLink, err := s.s3.PresignPut(ctx, key, s.config.LinkTTL)
 	if err != nil {
-		return domain.UploadMediaLink{}, fmt.Errorf("presign put object for organization banner: %w", err)
+		return models.UploadMediaLink{}, fmt.Errorf("presign put object for organization banner: %w", err)
 	}
 
-	return domain.UploadMediaLink{
+	return models.UploadMediaLink{
 		Key:        key,
 		PreloadUrl: getLink,
 		UploadURL:  uploadLink,
 	}, nil
 }
 
-func (s Storage) ValidateOrganizationBanner(
+func (s *Storage) ValidateOrganizationBanner(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	tempKey string,
@@ -76,7 +76,7 @@ func (s Storage) ValidateOrganizationBanner(
 	return nil
 }
 
-func (s Storage) DeleteUploadOrganizationBanner(
+func (s *Storage) DeleteUploadOrganizationBanner(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	tempKey string,
@@ -92,7 +92,7 @@ func (s Storage) DeleteUploadOrganizationBanner(
 	return nil
 }
 
-func (s Storage) DeleteOrganizationBanner(
+func (s *Storage) DeleteOrganizationBanner(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	finalKey string,
@@ -108,7 +108,7 @@ func (s Storage) DeleteOrganizationBanner(
 	return nil
 }
 
-func (s Storage) UpdateOrganizationBanner(
+func (s *Storage) UpdateOrganizationBanner(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	oldFinalKey *string,

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/pkg/evtypes"
+	"github.com/netbill/evtypes"
 	"github.com/netbill/organizations-svc/pkg/log"
 )
 

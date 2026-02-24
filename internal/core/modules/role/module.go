@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
@@ -25,55 +25,87 @@ func New(repo repo, messenger messenger) *Module {
 }
 
 type repo interface {
-	CreateRole(ctx context.Context, params CreateParams) (domain.Role, error)
+	//Role
 
-	GetRole(ctx context.Context, roleID uuid.UUID) (domain.Role, error)
-	GetRoles(
-		ctx context.Context,
-		filter FilterParams,
-		limit, offset uint,
-	) (pagi.Page[[]domain.Role], error)
-
+	CreateRole(ctx context.Context, params CreateParams) (models.Role, error)
+	GetRole(ctx context.Context, roleID uuid.UUID) (models.Role, error)
 	UpdateRole(
 		ctx context.Context,
 		roleID uuid.UUID,
 		params UpdateParams,
-	) (domain.Role, error)
-	UpdateRolesRanks(
+	) (models.Role, error)
+	DeleteRole(
 		ctx context.Context,
-		organizationID uuid.UUID,
-		order map[uuid.UUID]uint,
+		roleID uuid.UUID,
 	) error
 
-	DeleteRole(ctx context.Context, roleID uuid.UUID) error
+	GetRoles(
+		ctx context.Context,
+		filter FilterParams,
+		limit, offset uint,
+	) (pagi.Page[[]models.Role], error)
 
-	GetMember(ctx context.Context, memberID uuid.UUID) (domain.Member, error)
+	//Ranks
+
+	GetRoleRank(ctx context.Context, roleID uuid.UUID) (models.OrgRoleRank, error)
+	GetOrgRolesRanks(ctx context.Context, organizationID uuid.UUID) ([]models.OrgRoleRank, error)
+
+	CreateRoleRank(ctx context.Context, roleID uuid.UUID, rank int32) ([]models.OrgRoleRank, error)
+	DeleteRoleRank(ctx context.Context, roleID uuid.UUID) ([]models.OrgRoleRank, error)
+	GetMemberMaxRoleRank(ctx context.Context, memberID uuid.UUID) (int32, error)
+
+	LockOrgRoleRankRevision(ctx context.Context, organizationID uuid.UUID) error
+	BumpOrgRoleRankRevision(ctx context.Context, organizationID uuid.UUID) (models.OrgRoleRanksRevision, error)
+
+	UpdateRolesRanks(ctx context.Context, organizationID uuid.UUID, ranks map[int32]uuid.UUID) ([]models.OrgRoleRank, error)
+
+	//Member roles
+
+	GetMember(ctx context.Context, memberID uuid.UUID) (models.Member, error)
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
-	) (domain.Member, error)
+	) (models.Member, error)
 
-	GetAllPermissions(ctx context.Context) ([]domain.OrgRolePermission, error)
-	GetRolePermissions(
-		ctx context.Context,
-		roleID uuid.UUID,
-	) (domain.OrgRolePermissionsWithDetailsForRole, error)
-	SetRolePermissions(
-		ctx context.Context,
-		roleID uuid.UUID,
-		params SetPermissions,
-	) (domain.OrgRolePermissionsWithDetailsForRole, error)
+	LockMemberRolesLinksRevision(ctx context.Context, memberID uuid.UUID) error
+	BumpMemberRolesLinksRevision(ctx context.Context, memberID uuid.UUID) (models.OrgMemberRoleLinkRevision, error)
 
-	GetMemberMaxRole(ctx context.Context, memberID uuid.UUID) (domain.Role, error)
-	GetMemberRoles(ctx context.Context, memberID uuid.UUID) ([]domain.Role, error)
 	RemoveMemberRole(
 		ctx context.Context,
 		memberID, roleID uuid.UUID,
-	) error
+	) ([]uuid.UUID, error)
 	AddMemberRole(
 		ctx context.Context,
 		memberID, roleID uuid.UUID,
-	) (domain.OrgMemberRolesLink, error)
+	) ([]uuid.UUID, error)
+
+	//Permissions
+
+	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
+
+	GetRolePermissions(
+		ctx context.Context,
+		roleID uuid.UUID,
+	) (models.OrgRolePermissionsWithDetailsForRole, error)
+
+	UpdateRolePermissions(
+		ctx context.Context,
+		roleID uuid.UUID,
+		permissions []uuid.UUID,
+	) ([]uuid.UUID, error)
+
+	CreateRolePermissionsRevision(
+		ctx context.Context,
+		roleID uuid.UUID,
+	) error
+	LockRolePermissionsRevision(
+		ctx context.Context,
+		roleID uuid.UUID,
+	) error
+	BumpRolePermissionsRevision(
+		ctx context.Context,
+		roleID uuid.UUID,
+	) (models.OrgRolePermissionsLinksRevision, error)
 
 	CheckMemberHavePermission(
 		ctx context.Context,
@@ -85,88 +117,108 @@ type repo interface {
 }
 
 type messenger interface {
-	WriteOrgRoleCreated(ctx context.Context, role domain.Role) error
-	WriteOrgRoleUpdated(ctx context.Context, role domain.Role) error
-	WriteOrgRoleDeleted(ctx context.Context, role domain.Role) error
+	WriteOrgRoleCreated(
+		ctx context.Context,
+		role models.Role,
+	) error
+	WriteOrgRoleUpdated(
+		ctx context.Context,
+		role models.Role,
+	) error
+	WriteOrgRoleDeleted(
+		ctx context.Context,
+		role models.Role,
+	) error
 
+	WriteOrgRolePermissionsUpdated(
+		ctx context.Context,
+		role models.Role,
+		permissions []uuid.UUID,
+		revision models.OrgRolePermissionsLinksRevision,
+	) error
 	WriteOrgRolesRanksUpdated(
 		ctx context.Context,
 		organizationID uuid.UUID,
-		order map[uuid.UUID]uint,
+		ranks []models.OrgRoleRank,
+		revision models.OrgRoleRanksRevision,
 	) error
-	WriteOrgRolePermissionsUpdated(
-		ctx context.Context,
-		role domain.Role,
-		params SetPermissions,
-	) error
-
-	WriteOrgMemberRoleAdd(
-		ctx context.Context,
-		link domain.OrgMemberRolesLink,
-	) error
-	WriteOrgMemberRoleRemove(
+	WriteOrgMemberRolesUpdated(
 		ctx context.Context,
 		memberID uuid.UUID,
-		roleID uuid.UUID,
+		roles []uuid.UUID,
+		revision models.OrgMemberRoleLinkRevision,
 	) error
 }
 
 func (m *Module) checkPermissionsToManageRole(
 	ctx context.Context,
-	initiator domain.AccountActor,
-	organizationID uuid.UUID,
-	rank uint,
-) error {
-	member, err := m.getInitiator(ctx, initiator, organizationID)
+	initiator models.AccountActor,
+	roleID uuid.UUID,
+) (models.Role, error) {
+	role, err := m.GetByID(ctx, roleID)
 	if err != nil {
-		return err
+		return models.Role{}, err
+	}
+
+	member, err := m.getInitiator(ctx, initiator, role.OrganizationID)
+	if err != nil {
+		return models.Role{}, err
+	}
+	if member.Head {
+		return role, nil
 	}
 
 	hasPermission, err := m.repo.CheckMemberHavePermission(ctx, member.ID, orgperm.RolesManageID)
 	if err != nil {
-		return err
+		return models.Role{}, err
 	}
 	if !hasPermission {
-		return errx.ErrorNotEnoughRights.Raise(
+		return models.Role{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("member %s does not have permission %s", member.ID, orgperm.RolesManageID),
 		)
 	}
 
-	maxRole, err := m.repo.GetMemberMaxRole(ctx, member.ID)
+	initiatorMaxRank, err := m.repo.GetMemberMaxRoleRank(ctx, member.ID)
 	if err != nil {
 		if errors.Is(err, errx.ErrorRoleNotFound) {
-			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("member %s has no roles assigned: %w", member.ID, err),
+			return models.Role{}, errx.ErrorNotEnoughRights.Raise(
+				fmt.Errorf("member %s has no roles and cannot manage role %s", member.ID, role.ID),
 			)
 		}
+		return models.Role{}, fmt.Errorf("failed to get max role for member %s: %w", member.AccountID, err)
 	}
 
-	if maxRole.Rank < rank {
-		return errx.ErrorNotEnoughRights.Raise(
+	roleRank, err := m.repo.GetRoleRank(ctx, role.ID)
+	if err != nil {
+		return models.Role{}, fmt.Errorf("failed to get ranks for organization %s: %w", role.OrganizationID, err)
+	}
+
+	if initiatorMaxRank < roleRank.Rank {
+		return models.Role{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("member %s with max role rank %d cannot manage role with rank %d",
-				member.ID, maxRole.Rank, rank,
+				member.ID, initiatorMaxRank, roleRank.Rank,
 			),
 		)
 	}
 
-	return nil
+	return role, nil
 }
 
 func (m *Module) getInitiator(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	initiator models.AccountActor,
 	organizationID uuid.UUID,
-) (domain.Member, error) {
+) (models.Member, error) {
 	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
-	if err != nil {
-		if errors.Is(err, errx.ErrorMemberNotFound) {
-			return domain.Member{}, errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf(
-					"initiator member with account id %s and organization id %s not found: %w",
-					initiator, organizationID, err,
-				),
-			)
-		}
+	if errors.Is(err, errx.ErrorMemberNotFound) {
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf(
+				"initiator member with account id %s and organization id %s not found: %w",
+				initiator, organizationID, err,
+			),
+		)
+	} else if err != nil {
+		return models.Member{}, err
 	}
 
 	return member, nil
@@ -175,10 +227,10 @@ func (m *Module) getInitiator(
 func (m *Module) getMember(
 	ctx context.Context,
 	memberID uuid.UUID,
-) (domain.Member, error) {
+) (models.Member, error) {
 	member, err := m.repo.GetMember(ctx, memberID)
 	if err != nil {
-		return domain.Member{}, err
+		return models.Member{}, err
 	}
 
 	return member, nil

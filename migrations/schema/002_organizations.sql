@@ -21,24 +21,26 @@ CREATE TYPE organization_status AS ENUM (
 );
 
 CREATE TABLE organizations (
-    id         UUID                  PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    status     organization_status   NOT NULL DEFAULT 'active',
-    name       VARCHAR(255)          NOT NULL,
+    id         UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    status     organization_status NOT NULL DEFAULT 'active',
+    name       VARCHAR(255) NOT NULL,
     icon_key   TEXT,
     banner_key TEXT,
-    max_roles  INT                   NOT NULL DEFAULT 100 CHECK ( max_roles > 0 ),
+    max_roles  INT  NOT NULL DEFAULT 100 CHECK ( max_roles > 0 ),
+    version    INT  NOT NULL DEFAULT 1 CHECK (version > 0),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE organization_members (
-    id               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    account_id       UUID NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
-    organization_id  UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    head             BOOLEAN NOT NULL DEFAULT FALSE,
-    position         VARCHAR(255),
-    label            VARCHAR(128),
+    id              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    account_id      UUID NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    head            BOOLEAN NOT NULL DEFAULT FALSE,
+    position        VARCHAR(255),
+    label           VARCHAR(128),
+    version         INT NOT NULL DEFAULT 1 CHECK (version > 0),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
@@ -57,13 +59,13 @@ CREATE TYPE organization_invite_status AS ENUM (
 );
 
 CREATE TABLE organization_invites (
-    id               UUID          PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    account_id       UUID          NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
-    organization_id  UUID          NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    status           organization_invite_status NOT NULL DEFAULT 'sent',
+    id              UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    account_id      UUID NOT NULL REFERENCES profiles(account_id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    status          organization_invite_status NOT NULL DEFAULT 'sent',
 
-    expires_at       TIMESTAMPTZ NOT NULL,
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
 );
 
 -- +migrate Down

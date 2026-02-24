@@ -27,7 +27,7 @@ type APIResponse struct {
 	// available, even if the embedded *http.Response is nil.
 	Method string `json:"method,omitempty"`
 	// Payload holds the contents of the response body (which may be nil or empty).
-	// This is provided here as the raw response.Body() inbound will have already
+	// This is provided here as the raw response.Body() reader will have already
 	// been drained.
 	Payload []byte `json:"-"`
 }

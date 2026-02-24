@@ -6,14 +6,14 @@ import (
 
 type Repository struct {
 	Transactioner
-	OrganizationsSql          OrganizationsQ
-	OrgMembersSql             OrgMembersQ
-	OrgMemberRolesSql         OrgMemberRolesQ
-	OrgRolesSql               OrgRolesQ
-	OrgRolePermissionLinksSql OrgRolePermissionLinksQ
-	OrgRolePermissionsSql     OrgRolePermissionsQ
-	OrgInvitesSql             OrgInvitesQ
-	ProfilesSql               ProfilesQ
+	OrganizationsSql OrganizationsQ
+	OrgMembersSql    OrgMembersQ
+
+	OrgRolesSql     OrgRolesQ
+	OrgRoleRanksSql OrgRoleRanksQ
+
+	OrgInvitesSql OrgInvitesQ
+	ProfilesSql   ProfilesQ
 }
 
 type Transactioner interface {

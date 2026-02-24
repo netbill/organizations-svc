@@ -4,15 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | [**uuid.UUID**](uuid.UUID.md) | invite ID | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | Invite ID | 
 **Type** | **string** |  | 
 **Attributes** | [**InviteDataAttributes**](InviteDataAttributes.md) |  | 
+**Relationships** | [**InviteDataRelationships**](InviteDataRelationships.md) |  | 
 
 ## Methods
 
 ### NewInviteData
 
-`func NewInviteData(id uuid.UUID, type_ string, attributes InviteDataAttributes, ) *InviteData`
+`func NewInviteData(id uuid.UUID, type_ string, attributes InviteDataAttributes, relationships InviteDataRelationships, ) *InviteData`
 
 NewInviteData instantiates a new InviteData object
 This constructor will assign default values to properties that have it defined,
@@ -85,6 +86,26 @@ and a boolean to check if the value has been set.
 `func (o *InviteData) SetAttributes(v InviteDataAttributes)`
 
 SetAttributes sets Attributes field to given value.
+
+
+### GetRelationships
+
+`func (o *InviteData) GetRelationships() InviteDataRelationships`
+
+GetRelationships returns the Relationships field if non-nil, zero value otherwise.
+
+### GetRelationshipsOk
+
+`func (o *InviteData) GetRelationshipsOk() (*InviteDataRelationships, bool)`
+
+GetRelationshipsOk returns a tuple with the Relationships field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRelationships
+
+`func (o *InviteData) SetRelationships(v InviteDataRelationships)`
+
+SetRelationships sets Relationships field to given value.
 
 
 

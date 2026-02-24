@@ -24,6 +24,11 @@ docs/DeleteUploadOrgIconDataAttributes.md
 docs/Invite.md
 docs/InviteData.md
 docs/InviteDataAttributes.md
+docs/InviteDataRelationships.md
+docs/InviteDataRelationshipsInvitee.md
+docs/InviteDataRelationshipsInviteeData.md
+docs/InviteDataRelationshipsOrganization.md
+docs/InviteDataRelationshipsOrganizationData.md
 docs/InvitesCollection.md
 docs/Member.md
 docs/MemberCollection.md
@@ -89,6 +94,11 @@ model_delete_upload_org_icon_data_attributes.go
 model_invite.go
 model_invite_data.go
 model_invite_data_attributes.go
+model_invite_data_relationships.go
+model_invite_data_relationships_invitee.go
+model_invite_data_relationships_invitee_data.go
+model_invite_data_relationships_organization.go
+model_invite_data_relationships_organization_data.go
 model_invites_collection.go
 model_member.go
 model_member_collection.go
