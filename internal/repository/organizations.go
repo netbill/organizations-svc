@@ -20,8 +20,7 @@ type OrganizationRow struct {
 	IconKey   *string `db:"icon_key,omitempty"`
 	BannerKey *string `db:"banner_key,omitempty"`
 
-	MaxRoles int32 `db:"max_roles"`
-	Version  int32 `db:"version"`
+	Version int32 `db:"version"`
 
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
@@ -38,7 +37,6 @@ func (r OrganizationRow) ToModel() models.Organization {
 		Name:      r.Name,
 		IconKey:   r.IconKey,
 		BannerKey: r.BannerKey,
-		MaxRoles:  r.MaxRoles,
 		Version:   r.Version,
 		CreatedAt: r.CreatedAt,
 		UpdatedAt: r.UpdatedAt,
@@ -58,7 +56,6 @@ type OrganizationsQ interface {
 	UpdateIconKey(icon *string) OrganizationsQ
 	UpdateBannerKey(banner *string) OrganizationsQ
 	UpdateStatus(status string) OrganizationsQ
-	UpdateMaxRoles(maxRoles uint) OrganizationsQ
 
 	Get(ctx context.Context) (OrganizationRow, error)
 	Select(ctx context.Context) ([]OrganizationRow, error)
@@ -217,27 +214,6 @@ func (r *Repository) UpdateOrganizationStatus(
 		UpdateOne(ctx)
 	if err != nil {
 		return models.Organization{}, fmt.Errorf("failed to update organization status with ID %s: %w", ID, err)
-	}
-	if row.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
-			fmt.Errorf("organization with ID %s not found", ID),
-		)
-	}
-
-	return row.ToModel(), nil
-}
-
-func (r *Repository) UpdateOrganizationMaxRoles(
-	ctx context.Context,
-	ID uuid.UUID,
-	maxRoles uint,
-) (models.Organization, error) {
-	row, err := r.OrganizationsSql.New().
-		FilterByID(ID).
-		UpdateMaxRoles(maxRoles).
-		UpdateOne(ctx)
-	if err != nil {
-		return models.Organization{}, fmt.Errorf("failed to update organization max roles with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
 		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(

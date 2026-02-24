@@ -40,30 +40,6 @@ components:
           $ref: "#/components/schemas/CreateInvite_data"
       required:
       - data
-    CreateRole:
-      properties:
-        data:
-          $ref: "#/components/schemas/CreateRole_data"
-      required:
-      - data
-    UpdateRole:
-      properties:
-        data:
-          $ref: "#/components/schemas/UpdateRole_data"
-      required:
-      - data
-    UpdateRolesRanks:
-      properties:
-        data:
-          $ref: "#/components/schemas/UpdateRolesRanks_data"
-      required:
-      - data
-    UpdateRolePermissions:
-      properties:
-        data:
-          $ref: "#/components/schemas/UpdateRolePermissions_data"
-      required:
-      - data
     PaginationData:
       properties:
         self:
@@ -105,17 +81,80 @@ components:
       - key
       - preload_url
       - upload_url
+    ProfileData:
+      properties:
+        id:
+          description: account id
+          format: uuid
+          type: string
+        type:
+          enum:
+          - profile
+          type: string
+        attributes:
+          $ref: "#/components/schemas/ProfileAttributes"
+      required:
+      - attributes
+      - id
+      - type
+    ProfileAttributes:
+      properties:
+        username:
+          description: username for this account and profile
+          type: string
+        pseudonym:
+          description: profile pseudonym
+          type: string
+        official:
+          description: official mark
+          type: boolean
+        avatar_key:
+          description: avatar key
+          type: string
+        version:
+          description: profile version
+          type: integer
+        updated_at:
+          description: updated at
+          format: date-time
+          type: string
+        created_at:
+          description: created at
+          format: date-time
+          type: string
+      required:
+      - created_at
+      - official
+      - updated_at
+      - username
+      - version
     Organization:
       properties:
         data:
-          $ref: "#/components/schemas/Organization_data"
+          $ref: "#/components/schemas/OrganizationData"
       required:
       - data
+    OrganizationData:
+      properties:
+        id:
+          description: organization ID
+          format: uuid
+          type: string
+        type:
+          enum:
+          - organization
+          type: string
+        attributes:
+          $ref: "#/components/schemas/OrganizationData_attributes"
+      required:
+      - attributes
+      - id
+      - type
     OrganizationsCollection:
       properties:
         data:
           items:
-            $ref: "#/components/schemas/Organization/properties/data"
+            $ref: "#/components/schemas/OrganizationData"
           type: array
         links:
           $ref: "#/components/schemas/PaginationData"
@@ -128,7 +167,7 @@ components:
           $ref: "#/components/schemas/UploadOrgMediaLinks_data"
         included:
           items:
-            $ref: "#/components/schemas/Organization/properties/data"
+            $ref: "#/components/schemas/OrganizationData"
           type: array
       required:
       - data
@@ -137,6 +176,11 @@ components:
       properties:
         data:
           $ref: "#/components/schemas/Member_data"
+        included:
+          description: "Included related resources (profile, organization)"
+          items:
+            $ref: "#/components/schemas/Member_included_inner"
+          type: array
       required:
       - data
     MemberCollection:
@@ -179,48 +223,24 @@ components:
       required:
       - data
       - links
-    Role:
-      properties:
-        data:
-          $ref: "#/components/schemas/Role_data"
-      required:
-      - data
-    RolesCollection:
-      properties:
-        data:
-          items:
-            $ref: "#/components/schemas/Role/properties/data"
-          type: array
-        links:
-          $ref: "#/components/schemas/PaginationData"
-      required:
-      - data
-      - links
-    RolePermissions:
-      properties:
-        data:
-          items:
-            $ref: "#/components/schemas/RolePermissions_data_inner"
-          type: array
-      required:
-      - data
     data:
       properties:
         id:
-          description: member ID
+          description: Invite ID
           format: uuid
           type: string
         type:
           enum:
-          - role
+          - invite
           type: string
         attributes:
-          $ref: "#/components/schemas/Role_data_attributes"
-        included:
-          $ref: "#/components/schemas/Role_data_included"
+          $ref: "#/components/schemas/Invite_data_attributes"
+        relationships:
+          $ref: "#/components/schemas/Member_data_relationships"
       required:
       - attributes
       - id
+      - relationships
       - type
     CreateOrganization_data_attributes:
       properties:
@@ -317,141 +337,7 @@ components:
       required:
       - attributes
       - type
-    CreateRole_data_attributes:
-      properties:
-        organization_id:
-          description: The ID of the organization this role belongs to
-          format: uuid
-          type: string
-        rank:
-          description: The rank of the role within the organization
-          format: uint
-          type: integer
-        name:
-          description: The name of the role
-          type: string
-        description:
-          description: A brief description of the role
-          type: string
-        color:
-          description: The color associated with the role in HEX format
-          type: string
-      required:
-      - color
-      - description
-      - name
-      - organization_id
-      - rank
-    CreateRole_data:
-      properties:
-        type:
-          enum:
-          - create_role
-          type: string
-        attributes:
-          $ref: "#/components/schemas/CreateRole_data_attributes"
-      required:
-      - attributes
-      - type
-    UpdateRole_data_attributes:
-      properties:
-        name:
-          description: The name of the role
-          type: string
-        description:
-          description: A brief description of the role
-          type: string
-        color:
-          description: The color associated with the role in HEX format
-          type: string
-    UpdateRole_data:
-      properties:
-        id:
-          description: role ID
-          format: uuid
-          type: string
-        type:
-          enum:
-          - update_role
-          type: string
-        attributes:
-          $ref: "#/components/schemas/UpdateRole_data_attributes"
-      required:
-      - attributes
-      - id
-      - type
-    UpdateRolesRanks_data_attributes_roles_inner:
-      properties:
-        id:
-          description: role ID
-          format: uuid
-          type: string
-        rank:
-          description: The new rank of the role in the hierarchy
-          format: uint
-          type: integer
-      required:
-      - id
-      - rank
-    UpdateRolesRanks_data_attributes:
-      properties:
-        roles:
-          description: An ordered list of role IDs representing the new roles hierarchy
-          items:
-            $ref: "#/components/schemas/UpdateRolesRanks_data_attributes_roles_inner"
-          type: array
-    UpdateRolesRanks_data:
-      properties:
-        id:
-          description: organization ID
-          format: uuid
-          type: string
-        type:
-          enum:
-          - update_roles_ranks
-          type: string
-        attributes:
-          $ref: "#/components/schemas/UpdateRolesRanks_data_attributes"
-      required:
-      - attributes
-      - id
-      - type
-    UpdateRolePermissions_data_attributes_permissions_inner:
-      properties:
-        id:
-          description: permission id
-          format: uuid
-          type: string
-        status:
-          description: The new status of the permission for the role
-          type: boolean
-      required:
-      - id
-      - status
-    UpdateRolePermissions_data_attributes:
-      properties:
-        permissions:
-          description: An ordered list of role IDs representing the new roles hierarchy
-          items:
-            $ref: "#/components/schemas/UpdateRolePermissions_data_attributes_permissions_inner"
-          type: array
-    UpdateRolePermissions_data:
-      properties:
-        id:
-          description: role ID
-          format: uuid
-          type: string
-        type:
-          enum:
-          - update_roles_permission
-          type: string
-        attributes:
-          $ref: "#/components/schemas/UpdateRolePermissions_data_attributes"
-      required:
-      - attributes
-      - id
-      - type
-    Organization_data_attributes:
+    OrganizationData_attributes:
       properties:
         status:
           description: The status of the organization
@@ -459,6 +345,16 @@ components:
         name:
           description: The name of the organization
           type: string
+        icon_key:
+          description: The media key for the organization's icon
+          type: string
+        banner_key:
+          description: The media key for the organization's banner
+          type: string
+        version:
+          description: "The version number of the organization, used for optimistic\
+            \ concurrency control"
+          type: integer
         created_at:
           description: The date and time when the organization was created
           format: date-time
@@ -472,22 +368,7 @@ components:
       - name
       - status
       - updated_at
-    Organization_data:
-      properties:
-        id:
-          description: organization ID
-          format: uuid
-          type: string
-        type:
-          enum:
-          - organization
-          type: string
-        attributes:
-          $ref: "#/components/schemas/Organization_data_attributes"
-      required:
-      - attributes
-      - id
-      - type
+      - version
     UploadOrgMediaLinks_data_attributes:
       properties:
         icon:
@@ -541,14 +422,6 @@ components:
       - type
     Member_data_attributes:
       properties:
-        account_id:
-          description: The ID of the account associated with the member
-          format: uuid
-          type: string
-        organization_id:
-          description: The ID of the organization the member belongs to
-          format: uuid
-          type: string
         head:
           description: Indicates if the member is the head of the organization
           type: boolean
@@ -558,13 +431,10 @@ components:
         label:
           description: A label or title associated with the member
           type: string
-        username:
-          description: The username of the member
-          type: string
-        official:
-          description: Indicates if the member is an official representative of the
-            organization
-          type: boolean
+        version:
+          description: "The version number of the member record, used for optimistic\
+            \ locking"
+          type: integer
         created_at:
           description: The date and time when the member was created
           format: date-time
@@ -574,13 +444,55 @@ components:
           format: date-time
           type: string
       required:
-      - account_id
       - created_at
       - head
-      - official
-      - organization_id
       - updated_at
-      - username
+      - version
+    Member_data_relationships_organization_data:
+      properties:
+        type:
+          enum:
+          - organization
+          type: string
+        id:
+          format: uuid
+          type: string
+      required:
+      - id
+      - type
+    Member_data_relationships_organization:
+      properties:
+        data:
+          $ref: "#/components/schemas/Member_data_relationships_organization_data"
+      required:
+      - data
+    Member_data_relationships_profile_data:
+      properties:
+        type:
+          enum:
+          - profile
+          type: string
+        id:
+          format: uuid
+          type: string
+      required:
+      - id
+      - type
+    Member_data_relationships_profile:
+      properties:
+        data:
+          $ref: "#/components/schemas/Member_data_relationships_profile_data"
+      required:
+      - data
+    Member_data_relationships:
+      properties:
+        organization:
+          $ref: "#/components/schemas/Member_data_relationships_organization"
+        profile:
+          $ref: "#/components/schemas/Member_data_relationships_profile"
+      required:
+      - organization
+      - profile
     Member_data:
       properties:
         id:
@@ -593,10 +505,17 @@ components:
           type: string
         attributes:
           $ref: "#/components/schemas/Member_data_attributes"
+        relationships:
+          $ref: "#/components/schemas/Member_data_relationships"
       required:
       - attributes
       - id
+      - relationships
       - type
+    Member_included_inner:
+      oneOf:
+      - $ref: "#/components/schemas/ProfileData"
+      - $ref: "#/components/schemas/OrganizationData"
     DeleteUploadOrgIcon_data_attributes:
       properties:
         icon_key:
@@ -664,51 +583,6 @@ components:
       - created_at
       - expires_at
       - status
-    Invite_data_relationships_organization_data:
-      properties:
-        type:
-          enum:
-          - organization
-          type: string
-        id:
-          format: uuid
-          type: string
-      required:
-      - id
-      - type
-    Invite_data_relationships_organization:
-      properties:
-        data:
-          $ref: "#/components/schemas/Invite_data_relationships_organization_data"
-      required:
-      - data
-    Invite_data_relationships_invitee_data:
-      properties:
-        type:
-          enum:
-          - profile
-          type: string
-        id:
-          format: uuid
-          type: string
-      required:
-      - id
-      - type
-    Invite_data_relationships_invitee:
-      properties:
-        data:
-          $ref: "#/components/schemas/Invite_data_relationships_invitee_data"
-      required:
-      - data
-    Invite_data_relationships:
-      properties:
-        organization:
-          $ref: "#/components/schemas/Invite_data_relationships_organization"
-        invitee:
-          $ref: "#/components/schemas/Invite_data_relationships_invitee"
-      required:
-      - invitee
-      - organization
     Invite_data:
       properties:
         id:
@@ -722,99 +596,9 @@ components:
         attributes:
           $ref: "#/components/schemas/Invite_data_attributes"
         relationships:
-          $ref: "#/components/schemas/Invite_data_relationships"
+          $ref: "#/components/schemas/Member_data_relationships"
       required:
       - attributes
       - id
       - relationships
       - type
-    Role_data_attributes:
-      properties:
-        organization_id:
-          description: The ID of the organization this role belongs to
-          format: uuid
-          type: string
-        rank:
-          description: The rank of the role within the organization
-          format: uint
-          type: integer
-        name:
-          description: The name of the role
-          type: string
-        description:
-          description: A brief description of the role
-          type: string
-        color:
-          description: The color associated with the role in HEX format
-          type: string
-        created_at:
-          description: Timestamp when the role was created
-          format: date-time
-          type: string
-        updated_at:
-          description: Timestamp when the role was last updated
-          format: date-time
-          type: string
-      required:
-      - color
-      - created_at
-      - description
-      - name
-      - organization_id
-      - rank
-      - updated_at
-    Role_data_included_permissions_inner:
-      properties:
-        code:
-          description: A short code representing the permission
-          example: agglmeration.manage
-          type: string
-        description:
-          description: A detailed description of what the permission allows
-          example: Allows managing organization
-          type: string
-        enabled:
-          description: Indicates if the role has this permission
-          type: boolean
-      required:
-      - code
-      - description
-      - enabled
-    Role_data_included:
-      properties:
-        permissions:
-          items:
-            $ref: "#/components/schemas/Role_data_included_permissions_inner"
-          type: array
-    Role_data:
-      properties:
-        id:
-          description: member ID
-          format: uuid
-          type: string
-        type:
-          enum:
-          - role
-          type: string
-        attributes:
-          $ref: "#/components/schemas/Role_data_attributes"
-        included:
-          $ref: "#/components/schemas/Role_data_included"
-      required:
-      - attributes
-      - id
-      - type
-    RolePermissions_data_inner:
-      properties:
-        code:
-          description: A short code representing the permission
-          example: agglmeration.manage
-          type: string
-        description:
-          description: A detailed description of what the permission allows
-          example: Allows managing organization
-          type: string
-      required:
-      - code
-      - description
-      - id

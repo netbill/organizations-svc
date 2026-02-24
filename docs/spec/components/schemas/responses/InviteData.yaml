@@ -38,7 +38,7 @@ properties:
     type: object
     required:
       - organization
-      - invitee
+      - profile
     properties:
       organization:
         type: object
@@ -58,7 +58,7 @@ properties:
                 type: string
                 format: uuid
 
-      invitee:
+      profile:
         type: object
         required:
           - data

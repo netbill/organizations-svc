@@ -7,12 +7,13 @@ Name | Type | Description | Notes
 **Id** | [**uuid.UUID**](uuid.UUID.md) | member ID | 
 **Type** | **string** |  | 
 **Attributes** | [**MemberDataAttributes**](MemberDataAttributes.md) |  | 
+**Relationships** | [**MemberDataRelationships**](MemberDataRelationships.md) |  | 
 
 ## Methods
 
 ### NewMemberData
 
-`func NewMemberData(id uuid.UUID, type_ string, attributes MemberDataAttributes, ) *MemberData`
+`func NewMemberData(id uuid.UUID, type_ string, attributes MemberDataAttributes, relationships MemberDataRelationships, ) *MemberData`
 
 NewMemberData instantiates a new MemberData object
 This constructor will assign default values to properties that have it defined,
@@ -85,6 +86,26 @@ and a boolean to check if the value has been set.
 `func (o *MemberData) SetAttributes(v MemberDataAttributes)`
 
 SetAttributes sets Attributes field to given value.
+
+
+### GetRelationships
+
+`func (o *MemberData) GetRelationships() MemberDataRelationships`
+
+GetRelationships returns the Relationships field if non-nil, zero value otherwise.
+
+### GetRelationshipsOk
+
+`func (o *MemberData) GetRelationshipsOk() (*MemberDataRelationships, bool)`
+
+GetRelationshipsOk returns a tuple with the Relationships field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRelationships
+
+`func (o *MemberData) SetRelationships(v MemberDataRelationships)`
+
+SetRelationships sets Relationships field to given value.
 
 
 

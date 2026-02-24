@@ -17,43 +17,41 @@ import (
 	"fmt"
 )
 
-// checks if the Data type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &Data{}
+// checks if the ProfileData type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &ProfileData{}
 
-// Data struct for Data
-type Data struct {
-	// Invite ID
+// ProfileData struct for ProfileData
+type ProfileData struct {
+	// account id
 	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
-	Attributes InviteDataAttributes `json:"attributes"`
-	Relationships MemberDataRelationships `json:"relationships"`
+	Attributes ProfileAttributes `json:"attributes"`
 }
 
-type _Data Data
+type _ProfileData ProfileData
 
-// NewData instantiates a new Data object
+// NewProfileData instantiates a new ProfileData object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewData(id uuid.UUID, type_ string, attributes InviteDataAttributes, relationships MemberDataRelationships) *Data {
-	this := Data{}
+func NewProfileData(id uuid.UUID, type_ string, attributes ProfileAttributes) *ProfileData {
+	this := ProfileData{}
 	this.Id = id
 	this.Type = type_
 	this.Attributes = attributes
-	this.Relationships = relationships
 	return &this
 }
 
-// NewDataWithDefaults instantiates a new Data object
+// NewProfileDataWithDefaults instantiates a new ProfileData object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewDataWithDefaults() *Data {
-	this := Data{}
+func NewProfileDataWithDefaults() *ProfileData {
+	this := ProfileData{}
 	return &this
 }
 
 // GetId returns the Id field value
-func (o *Data) GetId() uuid.UUID {
+func (o *ProfileData) GetId() uuid.UUID {
 	if o == nil {
 		var ret uuid.UUID
 		return ret
@@ -64,7 +62,7 @@ func (o *Data) GetId() uuid.UUID {
 
 // GetIdOk returns a tuple with the Id field value
 // and a boolean to check if the value has been set.
-func (o *Data) GetIdOk() (*uuid.UUID, bool) {
+func (o *ProfileData) GetIdOk() (*uuid.UUID, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -72,12 +70,12 @@ func (o *Data) GetIdOk() (*uuid.UUID, bool) {
 }
 
 // SetId sets field value
-func (o *Data) SetId(v uuid.UUID) {
+func (o *ProfileData) SetId(v uuid.UUID) {
 	o.Id = v
 }
 
 // GetType returns the Type field value
-func (o *Data) GetType() string {
+func (o *ProfileData) GetType() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -88,7 +86,7 @@ func (o *Data) GetType() string {
 
 // GetTypeOk returns a tuple with the Type field value
 // and a boolean to check if the value has been set.
-func (o *Data) GetTypeOk() (*string, bool) {
+func (o *ProfileData) GetTypeOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -96,14 +94,14 @@ func (o *Data) GetTypeOk() (*string, bool) {
 }
 
 // SetType sets field value
-func (o *Data) SetType(v string) {
+func (o *ProfileData) SetType(v string) {
 	o.Type = v
 }
 
 // GetAttributes returns the Attributes field value
-func (o *Data) GetAttributes() InviteDataAttributes {
+func (o *ProfileData) GetAttributes() ProfileAttributes {
 	if o == nil {
-		var ret InviteDataAttributes
+		var ret ProfileAttributes
 		return ret
 	}
 
@@ -112,7 +110,7 @@ func (o *Data) GetAttributes() InviteDataAttributes {
 
 // GetAttributesOk returns a tuple with the Attributes field value
 // and a boolean to check if the value has been set.
-func (o *Data) GetAttributesOk() (*InviteDataAttributes, bool) {
+func (o *ProfileData) GetAttributesOk() (*ProfileAttributes, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -120,35 +118,11 @@ func (o *Data) GetAttributesOk() (*InviteDataAttributes, bool) {
 }
 
 // SetAttributes sets field value
-func (o *Data) SetAttributes(v InviteDataAttributes) {
+func (o *ProfileData) SetAttributes(v ProfileAttributes) {
 	o.Attributes = v
 }
 
-// GetRelationships returns the Relationships field value
-func (o *Data) GetRelationships() MemberDataRelationships {
-	if o == nil {
-		var ret MemberDataRelationships
-		return ret
-	}
-
-	return o.Relationships
-}
-
-// GetRelationshipsOk returns a tuple with the Relationships field value
-// and a boolean to check if the value has been set.
-func (o *Data) GetRelationshipsOk() (*MemberDataRelationships, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Relationships, true
-}
-
-// SetRelationships sets field value
-func (o *Data) SetRelationships(v MemberDataRelationships) {
-	o.Relationships = v
-}
-
-func (o Data) MarshalJSON() ([]byte, error) {
+func (o ProfileData) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -156,16 +130,15 @@ func (o Data) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o Data) ToMap() (map[string]interface{}, error) {
+func (o ProfileData) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["type"] = o.Type
 	toSerialize["attributes"] = o.Attributes
-	toSerialize["relationships"] = o.Relationships
 	return toSerialize, nil
 }
 
-func (o *Data) UnmarshalJSON(data []byte) (err error) {
+func (o *ProfileData) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -173,7 +146,6 @@ func (o *Data) UnmarshalJSON(data []byte) (err error) {
 		"id",
 		"type",
 		"attributes",
-		"relationships",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -190,53 +162,53 @@ func (o *Data) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varData := _Data{}
+	varProfileData := _ProfileData{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varData)
+	err = decoder.Decode(&varProfileData)
 
 	if err != nil {
 		return err
 	}
 
-	*o = Data(varData)
+	*o = ProfileData(varProfileData)
 
 	return err
 }
 
-type NullableData struct {
-	value *Data
+type NullableProfileData struct {
+	value *ProfileData
 	isSet bool
 }
 
-func (v NullableData) Get() *Data {
+func (v NullableProfileData) Get() *ProfileData {
 	return v.value
 }
 
-func (v *NullableData) Set(val *Data) {
+func (v *NullableProfileData) Set(val *ProfileData) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableData) IsSet() bool {
+func (v NullableProfileData) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableData) Unset() {
+func (v *NullableProfileData) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableData(val *Data) *NullableData {
-	return &NullableData{value: val, isSet: true}
+func NewNullableProfileData(val *ProfileData) *NullableProfileData {
+	return &NullableProfileData{value: val, isSet: true}
 }
 
-func (v NullableData) MarshalJSON() ([]byte, error) {
+func (v NullableProfileData) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableData) UnmarshalJSON(src []byte) error {
+func (v *NullableProfileData) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

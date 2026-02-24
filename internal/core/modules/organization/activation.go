@@ -11,7 +11,7 @@ import (
 
 func (m *Module) Activate(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
 	org, err := m.GetByID(ctx, organizationID)
@@ -19,11 +19,10 @@ func (m *Module) Activate(
 		return models.Organization{}, err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, org.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}
-
 	if !member.Head {
 		return models.Organization{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
@@ -56,7 +55,7 @@ func (m *Module) Activate(
 
 func (m *Module) Deactivate(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
 	org, err := m.GetByID(ctx, organizationID)
@@ -64,11 +63,10 @@ func (m *Module) Deactivate(
 		return models.Organization{}, err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, org.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, org.ID)
 	if err != nil {
 		return models.Organization{}, err
 	}
-
 	if !member.Head {
 		return models.Organization{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
@@ -16,7 +17,7 @@ type UpdateParams struct {
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 	params UpdateParams,
 ) (models.Organization, error) {
@@ -25,9 +26,18 @@ func (m *Module) Update(
 		return models.Organization{}, err
 	}
 
-	err = m.chekPermissionForManageOrganization(ctx, initiator, org.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, org.ID)
 	if err != nil {
 		return models.Organization{}, err
+	}
+	if !member.Head {
+		return models.Organization{}, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
+		)
+	}
+
+	if org.Status == models.OrganizationStatusInactive {
+		return org, nil
 	}
 
 	if params.IconKey != nil {

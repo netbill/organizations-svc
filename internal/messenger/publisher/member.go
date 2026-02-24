@@ -23,6 +23,7 @@ func (p *Publisher) WriteOrgMemberCreated(
 		Head:           member.Head,
 		Position:       member.Position,
 		Label:          member.Label,
+		Version:        member.Version,
 		CreatedAt:      member.CreatedAt,
 	})
 	if err != nil {
@@ -54,6 +55,7 @@ func (p *Publisher) WriteOrgMemberUpdated(
 		MemberID:  member.ID,
 		Position:  member.Position,
 		Label:     member.Label,
+		Version:   member.Version,
 		UpdatedAt: member.UpdatedAt,
 	})
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
@@ -18,9 +19,14 @@ func (m *Module) CreateOrgUploadMediaLinks(
 		return models.Organization{}, models.UploadOrgMediaLinks{}, err
 	}
 
-	err = m.chekPermissionForManageOrganization(ctx, actor, org.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, org.ID)
 	if err != nil {
 		return models.Organization{}, models.UploadOrgMediaLinks{}, err
+	}
+	if !member.Head {
+		return models.Organization{}, models.UploadOrgMediaLinks{}, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
+		)
 	}
 
 	iconLinks, err := m.bucket.CreateOrganizationIconUploadMediaLinks(ctx, organizationID)
@@ -45,9 +51,14 @@ func (m *Module) DeleteOrgUploadIcon(
 	organizationID uuid.UUID,
 	key string,
 ) error {
-	err := m.chekPermissionForManageOrganization(ctx, actor, organizationID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
 	if err != nil {
 		return err
+	}
+	if !member.Head {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
+		)
 	}
 
 	err = m.bucket.DeleteUploadOrganizationIcon(ctx, organizationID, key)
@@ -64,9 +75,14 @@ func (m *Module) DeleteOrgUploadBanner(
 	organizationID uuid.UUID,
 	key string,
 ) error {
-	err := m.chekPermissionForManageOrganization(ctx, actor, organizationID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
 	if err != nil {
 		return err
+	}
+	if !member.Head {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
+		)
 	}
 
 	err = m.bucket.DeleteUploadOrganizationBanner(ctx, organizationID, key)

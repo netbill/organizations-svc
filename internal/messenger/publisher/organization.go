@@ -20,7 +20,9 @@ func (p *Publisher) WriteOrganizationCreated(
 		OrganizationID: organization.ID,
 		Status:         organization.Status,
 		Name:           organization.Name,
-		MaxRoles:       organization.MaxRoles,
+		IconKey:        organization.IconKey,
+		BannerKey:      organization.BannerKey,
+		Version:        organization.Version,
 		CreatedAt:      organization.CreatedAt,
 	})
 	if err != nil {
@@ -51,7 +53,9 @@ func (p *Publisher) WriteOrganizationUpdated(
 		OrganizationID: organization.ID,
 		Status:         organization.Status,
 		Name:           organization.Name,
-		MaxRoles:       organization.MaxRoles,
+		IconKey:        organization.IconKey,
+		BannerKey:      organization.BannerKey,
+		Version:        organization.Version,
 		UpdatedAt:      organization.UpdatedAt,
 	})
 	if err != nil {

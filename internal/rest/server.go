@@ -33,15 +33,11 @@ type Handlers interface {
 
 	GetOrganizationInvites(w http.ResponseWriter, r *http.Request)
 	GetOrganizationMembers(w http.ResponseWriter, r *http.Request)
-	GetOrganizationRoles(w http.ResponseWriter, r *http.Request)
 
 	//OrganizationMember handlers
 	GetMember(w http.ResponseWriter, r *http.Request)
 	UpdateMember(w http.ResponseWriter, r *http.Request)
 	DeleteMember(w http.ResponseWriter, r *http.Request)
-
-	MemberAddRole(w http.ResponseWriter, r *http.Request)
-	MemberRemoveRole(w http.ResponseWriter, r *http.Request)
 
 	//invite handlers
 	CreateInvite(w http.ResponseWriter, r *http.Request)
@@ -49,17 +45,6 @@ type Handlers interface {
 	DeleteInvite(w http.ResponseWriter, r *http.Request)
 	AcceptInvite(w http.ResponseWriter, r *http.Request)
 	DeclineInvite(w http.ResponseWriter, r *http.Request)
-
-	//role handlers
-	CreateRole(w http.ResponseWriter, r *http.Request)
-	GetRole(w http.ResponseWriter, r *http.Request)
-	UpdateRole(w http.ResponseWriter, r *http.Request)
-	DeleteRole(w http.ResponseWriter, r *http.Request)
-
-	UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
-
-	UpdateRolePermissions(w http.ResponseWriter, r *http.Request)
-	GetAllPermissions(w http.ResponseWriter, r *http.Request)
 }
 
 type Middlewares interface {
@@ -128,11 +113,6 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 
 					r.Get("/members", s.handlers.GetOrganizationMembers)
 					r.With(auth).Get("/invites", s.handlers.GetOrganizationInvites)
-
-					r.With(auth).Route("/roles", func(r chi.Router) {
-						r.Get("/", s.handlers.GetOrganizationRoles)
-						r.Put("/ranks", s.handlers.UpdateRolesRanks)
-					})
 				})
 
 				r.With(auth).Get("/me", s.handlers.GetMyOrganizations)
@@ -143,11 +123,6 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 					r.Get("/", s.handlers.GetMember)
 					r.With(auth).Put("/", s.handlers.UpdateMember)
 					r.With(auth).Delete("/", s.handlers.DeleteMember)
-
-					r.With(auth).Route("/roles/{role_id}", func(r chi.Router) {
-						r.Post("/", s.handlers.MemberAddRole)
-						r.Delete("/", s.handlers.MemberRemoveRole)
-					})
 				})
 
 				//r.Get("/me", s.handlers.GetMyMembers)
@@ -163,19 +138,6 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 				})
 
 				//r.Get("/me", s.handlers.GetMyInvites)
-			})
-
-			r.With(auth).Route("/roles", func(r chi.Router) {
-				r.Post("/", s.handlers.CreateRole)
-				r.Get("/permissions", s.handlers.GetAllPermissions)
-
-				r.Route("/{role_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetRole)
-					r.Put("/", s.handlers.UpdateRole)
-					r.Delete("/", s.handlers.DeleteRole)
-
-					r.Put("/permissions", s.handlers.UpdateRolePermissions)
-				})
 			})
 		})
 	})

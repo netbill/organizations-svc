@@ -1,111 +1,90 @@
-# Data
+# ProfileData
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | [**uuid.UUID**](uuid.UUID.md) | Invite ID | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | account id | 
 **Type** | **string** |  | 
-**Attributes** | [**InviteDataAttributes**](InviteDataAttributes.md) |  | 
-**Relationships** | [**MemberDataRelationships**](MemberDataRelationships.md) |  | 
+**Attributes** | [**ProfileAttributes**](ProfileAttributes.md) |  | 
 
 ## Methods
 
-### NewData
+### NewProfileData
 
-`func NewData(id uuid.UUID, type_ string, attributes InviteDataAttributes, relationships MemberDataRelationships, ) *Data`
+`func NewProfileData(id uuid.UUID, type_ string, attributes ProfileAttributes, ) *ProfileData`
 
-NewData instantiates a new Data object
+NewProfileData instantiates a new ProfileData object
 This constructor will assign default values to properties that have it defined,
 and makes sure properties required by API are set, but the set of arguments
 will change when the set of required properties is changed
 
-### NewDataWithDefaults
+### NewProfileDataWithDefaults
 
-`func NewDataWithDefaults() *Data`
+`func NewProfileDataWithDefaults() *ProfileData`
 
-NewDataWithDefaults instantiates a new Data object
+NewProfileDataWithDefaults instantiates a new ProfileData object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
 ### GetId
 
-`func (o *Data) GetId() uuid.UUID`
+`func (o *ProfileData) GetId() uuid.UUID`
 
 GetId returns the Id field if non-nil, zero value otherwise.
 
 ### GetIdOk
 
-`func (o *Data) GetIdOk() (*uuid.UUID, bool)`
+`func (o *ProfileData) GetIdOk() (*uuid.UUID, bool)`
 
 GetIdOk returns a tuple with the Id field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetId
 
-`func (o *Data) SetId(v uuid.UUID)`
+`func (o *ProfileData) SetId(v uuid.UUID)`
 
 SetId sets Id field to given value.
 
 
 ### GetType
 
-`func (o *Data) GetType() string`
+`func (o *ProfileData) GetType() string`
 
 GetType returns the Type field if non-nil, zero value otherwise.
 
 ### GetTypeOk
 
-`func (o *Data) GetTypeOk() (*string, bool)`
+`func (o *ProfileData) GetTypeOk() (*string, bool)`
 
 GetTypeOk returns a tuple with the Type field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetType
 
-`func (o *Data) SetType(v string)`
+`func (o *ProfileData) SetType(v string)`
 
 SetType sets Type field to given value.
 
 
 ### GetAttributes
 
-`func (o *Data) GetAttributes() InviteDataAttributes`
+`func (o *ProfileData) GetAttributes() ProfileAttributes`
 
 GetAttributes returns the Attributes field if non-nil, zero value otherwise.
 
 ### GetAttributesOk
 
-`func (o *Data) GetAttributesOk() (*InviteDataAttributes, bool)`
+`func (o *ProfileData) GetAttributesOk() (*ProfileAttributes, bool)`
 
 GetAttributesOk returns a tuple with the Attributes field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAttributes
 
-`func (o *Data) SetAttributes(v InviteDataAttributes)`
+`func (o *ProfileData) SetAttributes(v ProfileAttributes)`
 
 SetAttributes sets Attributes field to given value.
-
-
-### GetRelationships
-
-`func (o *Data) GetRelationships() MemberDataRelationships`
-
-GetRelationships returns the Relationships field if non-nil, zero value otherwise.
-
-### GetRelationshipsOk
-
-`func (o *Data) GetRelationshipsOk() (*MemberDataRelationships, bool)`
-
-GetRelationshipsOk returns a tuple with the Relationships field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetRelationships
-
-`func (o *Data) SetRelationships(v MemberDataRelationships)`
-
-SetRelationships sets Relationships field to given value.
 
 
 

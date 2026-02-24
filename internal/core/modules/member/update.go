@@ -16,23 +16,18 @@ type UpdateParams struct {
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	memberID uuid.UUID,
 	params UpdateParams,
 ) (models.Member, error) {
-	member, err := m.GetByID(ctx, memberID)
+	member, err := m.GetByID(ctx, actor)
 	if err != nil {
 		return models.Member{}, err
 	}
-	if member.Head {
+	if !member.Head {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("cannot update organization head member %s", member.ID),
+			fmt.Errorf("account has no rights to update member %s", memberID),
 		)
-	}
-
-	err = m.checkAbilityToUpdateMember(ctx, initiator, member.OrganizationID, memberID)
-	if err != nil {
-		return models.Member{}, err
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {

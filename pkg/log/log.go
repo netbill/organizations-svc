@@ -177,13 +177,6 @@ func (l *Logger) WithMember(member models.Member) *Logger {
 	)}
 }
 
-func (l *Logger) WithRole(role models.Role) *Logger {
-	return &Logger{base: l.base.With(
-		slog.String(OrganizationIDField, role.OrganizationID.String()),
-		slog.String(RoleIDField, role.ID.String()),
-	)}
-}
-
 func (l *Logger) WithInvite(invite models.Invite) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, invite.OrganizationID.String()),

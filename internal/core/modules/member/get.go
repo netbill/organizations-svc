@@ -25,10 +25,10 @@ func (m *Module) GetByID(
 
 func (m *Module) GetInitiator(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	member, err := m.GetByAccountAndOrganization(ctx, initiator, organizationID)
+	member, err := m.GetByAccountAndOrganization(ctx, actor, organizationID)
 	if errors.Is(err, errx.ErrorMemberNotFound) {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf(
@@ -43,10 +43,10 @@ func (m *Module) GetInitiator(
 
 func (m *Module) GetByAccountAndOrganization(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
@@ -57,15 +57,11 @@ func (m *Module) GetByAccountAndOrganization(
 type FilterParams struct {
 	OrganizationID *uuid.UUID
 	AccountID      *uuid.UUID
-	RoleID         *uuid.UUID
 	Head           *bool
 	Username       *string
 	BestMatch      *string
-	PermissionID   *uuid.UUID
 	Label          *string
 	Position       *string
-	RoleRankUp     *uint
-	RoleRankDown   *uint
 }
 
 func (m *Module) GetList(

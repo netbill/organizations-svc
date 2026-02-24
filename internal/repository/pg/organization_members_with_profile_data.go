@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/netbill/organizations-svc/internal/repository"
@@ -103,77 +102,6 @@ func (q *orgMembers) FilterBestMatch(term string) repository.OrgMembersQ {
 	))
 
 	q.selector = q.selector.OrderBy("p.username ASC", "m.id ASC")
-	return q
-}
-
-func (q *orgMembers) FilterRoleID(roleID uuid.UUID) repository.OrgMembersQ {
-	expr := sq.Expr(`
-		EXISTS (
-			SELECT 1
-			FROM organization_member_role_links mr
-			WHERE mr.member_id = m.id
-			  AND mr.role_id = ?
-		)
-	`, roleID)
-
-	q.selector = q.selector.Where(expr)
-	q.counter = q.counter.Where(expr)
-	q.updater = q.updater.Where(expr)
-	q.deleter = q.deleter.Where(expr)
-	return q
-}
-
-func (q *orgMembers) FilterByRoleRankUp(rankUp uint) repository.OrgMembersQ {
-	expr := sq.Expr(`
-		EXISTS (
-			SELECT 1
-			FROM organization_member_role_links mr
-			JOIN organization_role_ranks rr ON rr.role_id = mr.role_id
-			WHERE mr.member_id = m.id
-			  AND rr.rank >= ?
-		)
-	`, int(rankUp))
-
-	q.selector = q.selector.Where(expr)
-	q.counter = q.counter.Where(expr)
-	q.updater = q.updater.Where(expr)
-	q.deleter = q.deleter.Where(expr)
-	return q
-}
-
-func (q *orgMembers) FilterByRoleRankDown(rankDown uint) repository.OrgMembersQ {
-	expr := sq.Expr(`
-		EXISTS (
-			SELECT 1
-			FROM organization_member_role_links mr
-			JOIN organization_role_ranks rr ON rr.role_id = mr.role_id
-			WHERE mr.member_id = m.id
-			  AND rr.rank <= ?
-		)
-	`, int(rankDown))
-
-	q.selector = q.selector.Where(expr)
-	q.counter = q.counter.Where(expr)
-	q.updater = q.updater.Where(expr)
-	q.deleter = q.deleter.Where(expr)
-	return q
-}
-
-func (q *orgMembers) FilterByPermissionID(permissionID uuid.UUID) repository.OrgMembersQ {
-	expr := sq.Expr(`
-		EXISTS (
-			SELECT 1
-			FROM organization_member_role_links mr
-			JOIN organization_role_permission_links rp ON rp.role_id = mr.role_id
-			WHERE mr.member_id = m.id
-			  AND rp.permission_id = ?
-		)
-	`, permissionID)
-
-	q.selector = q.selector.Where(expr)
-	q.counter = q.counter.Where(expr)
-	q.updater = q.updater.Where(expr)
-	q.deleter = q.deleter.Where(expr)
 	return q
 }
 

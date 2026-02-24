@@ -11,13 +11,32 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func (m *Module) GetForOrganizations(
+func (m *Module) GetListForOrganization(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	_, err := m.getInitiator(ctx, initiator, organizationID)
+	_, err := m.getInitiator(ctx, actor, organizationID)
+	if err != nil {
+		return pagi.Page[[]models.Invite]{}, err
+	}
+
+	res, err := m.repo.GetOrganizationInvites(ctx, organizationID, limit, offset)
+	if err != nil {
+		return pagi.Page[[]models.Invite]{}, err
+	}
+
+	return res, nil
+}
+
+func (m *Module) GetListForAccount(
+	ctx context.Context,
+	actor models.AccountActor,
+	organizationID uuid.UUID,
+	limit, offset uint,
+) (pagi.Page[[]models.Invite], error) {
+	_, err := m.getInitiator(ctx, actor, organizationID)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, err
 	}
@@ -41,17 +60,12 @@ func (m *Module) GetForAccount(
 	}
 
 	if res.AccountID != accountID {
-		_, err = m.repo.GetMemberByAccountAndOrganization(
-			ctx,
-			accountID,
-			res.OrganizationID,
-		)
-		if err != nil {
-			if errors.Is(err, errx.ErrorMemberNotFound) {
-				return models.Invite{}, errx.ErrorInviteNotFound.Raise(
-					fmt.Errorf("account has no rights to view this invite"),
-				)
-			}
+		_, err = m.repo.GetMemberByAccountAndOrganization(ctx, accountID, res.OrganizationID)
+		if errors.Is(err, errx.ErrorMemberNotFound) {
+			return models.Invite{}, errx.ErrorInviteNotFound.Raise(
+				fmt.Errorf("account has no rights to view this invite"),
+			)
+		} else if err != nil {
 			return models.Invite{}, err
 		}
 	}

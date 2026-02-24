@@ -4,13 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**AccountId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the account associated with the member | 
-**OrganizationId** | [**uuid.UUID**](uuid.UUID.md) | The ID of the organization the member belongs to | 
 **Head** | **bool** | Indicates if the member is the head of the organization | 
 **Position** | Pointer to **string** | The position or role of the member within the organization | [optional] 
 **Label** | Pointer to **string** | A label or title associated with the member | [optional] 
-**Username** | **string** | The username of the member | 
-**Official** | **bool** | Indicates if the member is an official representative of the organization | 
+**Version** | **int32** | The version number of the member record, used for optimistic locking | 
 **CreatedAt** | **time.Time** | The date and time when the member was created | 
 **UpdatedAt** | **time.Time** | The date and time when the member was last updated | 
 
@@ -18,7 +15,7 @@ Name | Type | Description | Notes
 
 ### NewMemberDataAttributes
 
-`func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, head bool, username string, official bool, createdAt time.Time, updatedAt time.Time, ) *MemberDataAttributes`
+`func NewMemberDataAttributes(head bool, version int32, createdAt time.Time, updatedAt time.Time, ) *MemberDataAttributes`
 
 NewMemberDataAttributes instantiates a new MemberDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -32,46 +29,6 @@ will change when the set of required properties is changed
 NewMemberDataAttributesWithDefaults instantiates a new MemberDataAttributes object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
-
-### GetAccountId
-
-`func (o *MemberDataAttributes) GetAccountId() uuid.UUID`
-
-GetAccountId returns the AccountId field if non-nil, zero value otherwise.
-
-### GetAccountIdOk
-
-`func (o *MemberDataAttributes) GetAccountIdOk() (*uuid.UUID, bool)`
-
-GetAccountIdOk returns a tuple with the AccountId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetAccountId
-
-`func (o *MemberDataAttributes) SetAccountId(v uuid.UUID)`
-
-SetAccountId sets AccountId field to given value.
-
-
-### GetOrganizationId
-
-`func (o *MemberDataAttributes) GetOrganizationId() uuid.UUID`
-
-GetOrganizationId returns the OrganizationId field if non-nil, zero value otherwise.
-
-### GetOrganizationIdOk
-
-`func (o *MemberDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool)`
-
-GetOrganizationIdOk returns a tuple with the OrganizationId field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetOrganizationId
-
-`func (o *MemberDataAttributes) SetOrganizationId(v uuid.UUID)`
-
-SetOrganizationId sets OrganizationId field to given value.
-
 
 ### GetHead
 
@@ -143,44 +100,24 @@ SetLabel sets Label field to given value.
 
 HasLabel returns a boolean if a field has been set.
 
-### GetUsername
+### GetVersion
 
-`func (o *MemberDataAttributes) GetUsername() string`
+`func (o *MemberDataAttributes) GetVersion() int32`
 
-GetUsername returns the Username field if non-nil, zero value otherwise.
+GetVersion returns the Version field if non-nil, zero value otherwise.
 
-### GetUsernameOk
+### GetVersionOk
 
-`func (o *MemberDataAttributes) GetUsernameOk() (*string, bool)`
+`func (o *MemberDataAttributes) GetVersionOk() (*int32, bool)`
 
-GetUsernameOk returns a tuple with the Username field if it's non-nil, zero value otherwise
+GetVersionOk returns a tuple with the Version field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetUsername
+### SetVersion
 
-`func (o *MemberDataAttributes) SetUsername(v string)`
+`func (o *MemberDataAttributes) SetVersion(v int32)`
 
-SetUsername sets Username field to given value.
-
-
-### GetOfficial
-
-`func (o *MemberDataAttributes) GetOfficial() bool`
-
-GetOfficial returns the Official field if non-nil, zero value otherwise.
-
-### GetOfficialOk
-
-`func (o *MemberDataAttributes) GetOfficialOk() (*bool, bool)`
-
-GetOfficialOk returns a tuple with the Official field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetOfficial
-
-`func (o *MemberDataAttributes) SetOfficial(v bool)`
-
-SetOfficial sets Official field to given value.
+SetVersion sets Version field to given value.
 
 
 ### GetCreatedAt

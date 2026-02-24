@@ -20,6 +20,7 @@ properties:
       - head
       - created_at
       - updated_at
+      - version
     properties:
       head:
         type: boolean
@@ -30,6 +31,9 @@ properties:
       label:
         type: string
         description: "A label or title associated with the member"
+      version:
+        type: integer
+        description: "The version number of the member record, used for optimistic locking"
       created_at:
         type: string
         format: date-time

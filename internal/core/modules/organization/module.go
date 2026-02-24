@@ -2,23 +2,19 @@ package organization
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
 
 type Module struct {
 	repo      repo
 	bucket    bucket
-	messenger messanger
+	messenger messenger
 }
 
-func New(repo repo, messenger messanger, bucket bucket) *Module {
+func New(repo repo, messenger messenger, bucket bucket) *Module {
 	return &Module{
 		repo:      repo,
 		bucket:    bucket,
@@ -52,16 +48,14 @@ type repo interface {
 		ID uuid.UUID,
 		params UpdateParams,
 	) (models.Organization, error)
-	UpdateOrganizationStatus(ctx context.Context, ID uuid.UUID, status string) (models.Organization, error)
-	UpdateOrganizationMaxRoles(ctx context.Context, ID uuid.UUID, maxRoles uint) (models.Organization, error)
+	UpdateOrganizationStatus(
+		ctx context.Context,
+		ID uuid.UUID,
+		status string,
+	) (models.Organization, error)
 
 	DeleteOrganization(ctx context.Context, ID uuid.UUID) error
 
-	CheckMemberHavePermission(
-		ctx context.Context,
-		memberID uuid.UUID,
-		permissionID uuid.UUID,
-	) (bool, error)
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
@@ -70,18 +64,10 @@ type repo interface {
 	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 	CreateMemberHead(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 
-	GetRolePermissions(
-		ctx context.Context,
-		roleID uuid.UUID,
-	) (models.OrgRolePermissionsWithDetailsForRole, error)
-
-	CreateOrgRoleRankRevision(ctx context.Context, organizationID uuid.UUID) error
-	CreateMemberRolesLinksRevision(ctx context.Context, memberID uuid.UUID) error
-
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
-type messanger interface {
+type messenger interface {
 	WriteOrganizationCreated(ctx context.Context, organization models.Organization) error
 	WriteOrganizationUpdated(ctx context.Context, organization models.Organization) error
 	WriteOrganizationDeleted(ctx context.Context, organization models.Organization) error
@@ -149,36 +135,4 @@ type bucket interface {
 		oldFinalKey *string,
 		tempKey *string,
 	) (*string, error)
-}
-
-func (m *Module) chekPermissionForManageOrganization(
-	ctx context.Context,
-	initiator models.AccountActor,
-	organizationID uuid.UUID,
-) error {
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
-	if err != nil {
-		if errors.Is(err, errx.ErrorMemberNotFound) {
-			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("account is not a member of the organization"),
-			)
-		}
-		return err
-	}
-
-	if member.Head {
-		return nil
-	}
-
-	access, err := m.repo.CheckMemberHavePermission(ctx, member.ID, orgperm.OrganizationUpdateID)
-	if err != nil {
-		return err
-	}
-	if !access {
-		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("initiator has no access to activate organization"),
-		)
-	}
-
-	return nil
 }

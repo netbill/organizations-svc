@@ -17,7 +17,6 @@ type Organization struct {
 	Name      string    `json:"name"`
 	IconKey   *string   `json:"icon_key,omitempty"`
 	BannerKey *string   `json:"banner_key,omitempty"`
-	MaxRoles  int32     `json:"max_roles"`
 
 	Version   int32     `json:"version"`
 	CreatedAt time.Time `json:"created_at"`

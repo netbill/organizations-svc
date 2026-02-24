@@ -9,9 +9,6 @@ type Repository struct {
 	OrganizationsSql OrganizationsQ
 	OrgMembersSql    OrgMembersQ
 
-	OrgRolesSql     OrgRolesQ
-	OrgRoleRanksSql OrgRoleRanksQ
-
 	OrgInvitesSql OrgInvitesQ
 	ProfilesSql   ProfilesQ
 }

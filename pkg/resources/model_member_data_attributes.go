@@ -12,7 +12,6 @@ package resources
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"time"
 	"bytes"
 	"fmt"
@@ -23,20 +22,14 @@ var _ MappedNullable = &MemberDataAttributes{}
 
 // MemberDataAttributes struct for MemberDataAttributes
 type MemberDataAttributes struct {
-	// The ID of the account associated with the member
-	AccountId uuid.UUID `json:"account_id"`
-	// The ID of the organization the member belongs to
-	OrganizationId uuid.UUID `json:"organization_id"`
 	// Indicates if the member is the head of the organization
 	Head bool `json:"head"`
 	// The position or role of the member within the organization
 	Position *string `json:"position,omitempty"`
 	// A label or title associated with the member
 	Label *string `json:"label,omitempty"`
-	// The username of the member
-	Username string `json:"username"`
-	// Indicates if the member is an official representative of the organization
-	Official bool `json:"official"`
+	// The version number of the member record, used for optimistic locking
+	Version int32 `json:"version"`
 	// The date and time when the member was created
 	CreatedAt time.Time `json:"created_at"`
 	// The date and time when the member was last updated
@@ -49,13 +42,10 @@ type _MemberDataAttributes MemberDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, head bool, username string, official bool, createdAt time.Time, updatedAt time.Time) *MemberDataAttributes {
+func NewMemberDataAttributes(head bool, version int32, createdAt time.Time, updatedAt time.Time) *MemberDataAttributes {
 	this := MemberDataAttributes{}
-	this.AccountId = accountId
-	this.OrganizationId = organizationId
 	this.Head = head
-	this.Username = username
-	this.Official = official
+	this.Version = version
 	this.CreatedAt = createdAt
 	this.UpdatedAt = updatedAt
 	return &this
@@ -67,54 +57,6 @@ func NewMemberDataAttributes(accountId uuid.UUID, organizationId uuid.UUID, head
 func NewMemberDataAttributesWithDefaults() *MemberDataAttributes {
 	this := MemberDataAttributes{}
 	return &this
-}
-
-// GetAccountId returns the AccountId field value
-func (o *MemberDataAttributes) GetAccountId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.AccountId
-}
-
-// GetAccountIdOk returns a tuple with the AccountId field value
-// and a boolean to check if the value has been set.
-func (o *MemberDataAttributes) GetAccountIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.AccountId, true
-}
-
-// SetAccountId sets field value
-func (o *MemberDataAttributes) SetAccountId(v uuid.UUID) {
-	o.AccountId = v
-}
-
-// GetOrganizationId returns the OrganizationId field value
-func (o *MemberDataAttributes) GetOrganizationId() uuid.UUID {
-	if o == nil {
-		var ret uuid.UUID
-		return ret
-	}
-
-	return o.OrganizationId
-}
-
-// GetOrganizationIdOk returns a tuple with the OrganizationId field value
-// and a boolean to check if the value has been set.
-func (o *MemberDataAttributes) GetOrganizationIdOk() (*uuid.UUID, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.OrganizationId, true
-}
-
-// SetOrganizationId sets field value
-func (o *MemberDataAttributes) SetOrganizationId(v uuid.UUID) {
-	o.OrganizationId = v
 }
 
 // GetHead returns the Head field value
@@ -205,52 +147,28 @@ func (o *MemberDataAttributes) SetLabel(v string) {
 	o.Label = &v
 }
 
-// GetUsername returns the Username field value
-func (o *MemberDataAttributes) GetUsername() string {
+// GetVersion returns the Version field value
+func (o *MemberDataAttributes) GetVersion() int32 {
 	if o == nil {
-		var ret string
+		var ret int32
 		return ret
 	}
 
-	return o.Username
+	return o.Version
 }
 
-// GetUsernameOk returns a tuple with the Username field value
+// GetVersionOk returns a tuple with the Version field value
 // and a boolean to check if the value has been set.
-func (o *MemberDataAttributes) GetUsernameOk() (*string, bool) {
+func (o *MemberDataAttributes) GetVersionOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Username, true
+	return &o.Version, true
 }
 
-// SetUsername sets field value
-func (o *MemberDataAttributes) SetUsername(v string) {
-	o.Username = v
-}
-
-// GetOfficial returns the Official field value
-func (o *MemberDataAttributes) GetOfficial() bool {
-	if o == nil {
-		var ret bool
-		return ret
-	}
-
-	return o.Official
-}
-
-// GetOfficialOk returns a tuple with the Official field value
-// and a boolean to check if the value has been set.
-func (o *MemberDataAttributes) GetOfficialOk() (*bool, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Official, true
-}
-
-// SetOfficial sets field value
-func (o *MemberDataAttributes) SetOfficial(v bool) {
-	o.Official = v
+// SetVersion sets field value
+func (o *MemberDataAttributes) SetVersion(v int32) {
+	o.Version = v
 }
 
 // GetCreatedAt returns the CreatedAt field value
@@ -311,8 +229,6 @@ func (o MemberDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o MemberDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["account_id"] = o.AccountId
-	toSerialize["organization_id"] = o.OrganizationId
 	toSerialize["head"] = o.Head
 	if !IsNil(o.Position) {
 		toSerialize["position"] = o.Position
@@ -320,8 +236,7 @@ func (o MemberDataAttributes) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Label) {
 		toSerialize["label"] = o.Label
 	}
-	toSerialize["username"] = o.Username
-	toSerialize["official"] = o.Official
+	toSerialize["version"] = o.Version
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["updated_at"] = o.UpdatedAt
 	return toSerialize, nil
@@ -332,11 +247,8 @@ func (o *MemberDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"account_id",
-		"organization_id",
 		"head",
-		"username",
-		"official",
+		"version",
 		"created_at",
 		"updated_at",
 	}

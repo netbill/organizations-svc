@@ -15,7 +15,7 @@ properties:
   official:
     type: boolean
     description: "official mark"
-  avatar:
+  avatar_key:
     type: string
     description: "avatar key"
   version:

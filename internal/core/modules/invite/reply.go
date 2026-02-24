@@ -12,18 +12,21 @@ import (
 
 func (m *Module) Accept(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = m.GetForAccount(ctx, initiator, inviteID)
+	invite, err = m.repo.GetInvite(ctx, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	if invite.AccountID != initiator {
+	if invite.AccountID != actor {
 		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
+	}
+	if invite.Status == models.InviteStatusAccepted {
+		return invite, nil
 	}
 	if invite.Status != models.InviteStatusSent {
 		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
@@ -36,8 +39,14 @@ func (m *Module) Accept(
 		)
 	}
 
-	if _, err = m.checkOrganizationIsActiveAndExists(ctx, invite.OrganizationID); err != nil {
+	org, err := m.repo.GetOrganizationByID(ctx, invite.OrganizationID)
+	if err != nil {
 		return models.Invite{}, err
+	}
+	if org.Status != models.OrganizationStatusActive {
+		return models.Invite{}, errx.ErrorOrganizationIsNotActive.Raise(
+			fmt.Errorf("organization with id %s is not active", invite.OrganizationID),
+		)
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -46,17 +55,12 @@ func (m *Module) Accept(
 			return err
 		}
 
+		mem, err := m.repo.CreateMember(ctx, actor, invite.OrganizationID)
+		if err != nil {
+			return err
+		}
+
 		err = m.messenger.WriteOrgInviteAccepted(ctx, invite)
-		if err != nil {
-			return err
-		}
-
-		mem, err := m.repo.CreateMember(ctx, initiator, invite.OrganizationID)
-		if err != nil {
-			return err
-		}
-
-		err = m.repo.CreateMemberRolesLinksRevision(ctx, mem.ID)
 		if err != nil {
 			return err
 		}
@@ -74,18 +78,21 @@ func (m *Module) Accept(
 
 func (m *Module) Decline(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	inviteID uuid.UUID,
 ) (invite models.Invite, err error) {
-	invite, err = m.GetForAccount(ctx, initiator, inviteID)
+	invite, err = m.repo.GetInvite(ctx, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	if invite.AccountID != initiator {
+	if invite.AccountID != actor {
 		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
 			fmt.Errorf("account has no rights to decline this invite"),
 		)
+	}
+	if invite.Status == models.InviteStatusDeclined {
+		return invite, nil
 	}
 	if invite.Status != models.InviteStatusSent {
 		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
@@ -95,6 +102,16 @@ func (m *Module) Decline(
 	if invite.ExpiresAt.Before(time.Now().UTC()) {
 		return models.Invite{}, errx.ErrorInviteExpired.Raise(
 			fmt.Errorf("invite expired at %s", invite.ExpiresAt),
+		)
+	}
+
+	org, err := m.repo.GetOrganizationByID(ctx, invite.OrganizationID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+	if org.Status != models.OrganizationStatusActive {
+		return models.Invite{}, errx.ErrorOrganizationIsNotActive.Raise(
+			fmt.Errorf("organization with id %s is not active", invite.OrganizationID),
 		)
 	}
 

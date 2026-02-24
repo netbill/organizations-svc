@@ -51,7 +51,7 @@ func (r OrganizationMemberWithProfileDataRow) ToModel() models.Member {
 		Username:       r.Username,
 		Official:       r.Official,
 		Pseudonym:      r.Pseudonym,
-		Icon:           r.Icon,
+		AvatarKey:      r.Icon,
 		Version:        r.Version,
 		CreatedAt:      r.CreatedAt,
 		UpdatedAt:      r.UpdatedAt,
@@ -80,11 +80,6 @@ type OrgMembersQ interface {
 	FilterByAccountID(accountID uuid.UUID) OrgMembersQ
 	FilterByOrganizationID(organizationID uuid.UUID) OrgMembersQ
 	FilterByUsername(username string) OrgMembersQ
-
-	FilterRoleID(roleID uuid.UUID) OrgMembersQ
-	FilterByPermissionID(permissionID uuid.UUID) OrgMembersQ
-	FilterByRoleRankUp(rank uint) OrgMembersQ
-	FilterByRoleRankDown(rank uint) OrgMembersQ
 
 	FilterBestMatch(term string) OrgMembersQ
 	FilterLikePseudonym(pseudonym string) OrgMembersQ
@@ -221,18 +216,6 @@ func (r *Repository) GetMembers(
 	if filter.BestMatch != nil {
 		q = q.FilterBestMatch(*filter.BestMatch)
 	}
-	if filter.RoleID != nil {
-		q = q.FilterRoleID(*filter.RoleID)
-	}
-	if filter.PermissionID != nil {
-		q = q.FilterByPermissionID(*filter.PermissionID)
-	}
-	if filter.RoleRankUp != nil {
-		q = q.FilterByRoleRankUp(*filter.RoleRankUp)
-	}
-	if filter.RoleRankDown != nil {
-		q = q.FilterByRoleRankDown(*filter.RoleRankDown)
-	}
 	if filter.Label != nil {
 		q = q.FilterLikeLabel(*filter.Label)
 	}
@@ -292,20 +275,4 @@ func (r *Repository) DeleteMembersByAccountID(
 	}
 
 	return nil
-}
-
-func (r *Repository) CheckMemberHavePermission(
-	ctx context.Context,
-	memberID uuid.UUID,
-	permissionID uuid.UUID,
-) (bool, error) {
-	have, err := r.OrgMembersSql.New().
-		FilterByID(memberID).
-		FilterByPermissionID(permissionID).
-		Exists(ctx)
-	if err != nil {
-		return false, fmt.Errorf("checking member permission: %w", err)
-	}
-
-	return have, nil
 }

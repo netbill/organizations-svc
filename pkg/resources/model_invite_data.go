@@ -26,7 +26,7 @@ type InviteData struct {
 	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
 	Attributes InviteDataAttributes `json:"attributes"`
-	Relationships InviteDataRelationships `json:"relationships"`
+	Relationships MemberDataRelationships `json:"relationships"`
 }
 
 type _InviteData InviteData
@@ -35,7 +35,7 @@ type _InviteData InviteData
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInviteData(id uuid.UUID, type_ string, attributes InviteDataAttributes, relationships InviteDataRelationships) *InviteData {
+func NewInviteData(id uuid.UUID, type_ string, attributes InviteDataAttributes, relationships MemberDataRelationships) *InviteData {
 	this := InviteData{}
 	this.Id = id
 	this.Type = type_
@@ -125,9 +125,9 @@ func (o *InviteData) SetAttributes(v InviteDataAttributes) {
 }
 
 // GetRelationships returns the Relationships field value
-func (o *InviteData) GetRelationships() InviteDataRelationships {
+func (o *InviteData) GetRelationships() MemberDataRelationships {
 	if o == nil {
-		var ret InviteDataRelationships
+		var ret MemberDataRelationships
 		return ret
 	}
 
@@ -136,7 +136,7 @@ func (o *InviteData) GetRelationships() InviteDataRelationships {
 
 // GetRelationshipsOk returns a tuple with the Relationships field value
 // and a boolean to check if the value has been set.
-func (o *InviteData) GetRelationshipsOk() (*InviteDataRelationships, bool) {
+func (o *InviteData) GetRelationshipsOk() (*MemberDataRelationships, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -144,7 +144,7 @@ func (o *InviteData) GetRelationshipsOk() (*InviteDataRelationships, bool) {
 }
 
 // SetRelationships sets field value
-func (o *InviteData) SetRelationships(v InviteDataRelationships) {
+func (o *InviteData) SetRelationships(v MemberDataRelationships) {
 	o.Relationships = v
 }
 

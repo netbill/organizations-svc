@@ -25,14 +25,6 @@ components:
       $ref: './spec/components/schemas/requests/UpdateMember.yaml'
     CreateInvite:
       $ref: './spec/components/schemas/requests/CreateInvite.yaml'
-    CreateRole:
-      $ref: './spec/components/schemas/requests/CreateRole.yaml'
-    UpdateRole:
-      $ref: './spec/components/schemas/requests/UpdateRole.yaml'
-    UpdateRolesRanks:
-      $ref: './spec/components/schemas/requests/UpdateRolesRanks.yaml'
-    UpdateRolePermissions:
-      $ref: './spec/components/schemas/requests/UpdateRolePermissions.yaml'
 
     # responses:
     PaginationData:
@@ -47,6 +39,8 @@ components:
 
     Organization:
       $ref: './spec/components/schemas/responses/Organization.yaml'
+    OrganizationData:
+      $ref: './spec/components/schemas/responses/OrganizationData.yaml'
     OrganizationsCollection:
       $ref: './spec/components/schemas/responses/OrganizationsCollection.yaml'
     UploadOrgMediaLinks:
@@ -65,10 +59,3 @@ components:
       $ref: './spec/components/schemas/responses/Invite.yaml'
     InvitesCollection:
       $ref: './spec/components/schemas/responses/InvitesCollection.yaml'
-
-    Role:
-      $ref: './spec/components/schemas/responses/Role.yaml'
-    RolesCollection:
-      $ref: './spec/components/schemas/responses/RolesCollection.yaml'
-    RolePermissions:
-      $ref: './spec/components/schemas/responses/RolePermissions.yaml'

@@ -15,8 +15,8 @@ import (
 )
 
 const organizationsTable = "organizations"
-const organizationsColumns = "id, status, name, icon_key, banner_key, max_roles, version, created_at, updated_at"
-const organizationsColumnsO = "o.id, o.status, o.name, o.icon_key, o.banner_key, o.max_roles, o.version, o.created_at, o.updated_at"
+const organizationsColumns = "id, status, name, icon_key, banner_key, version, created_at, updated_at"
+const organizationsColumnsO = "o.id, o.status, o.name, o.icon_key, o.banner_key, o.version, o.created_at, o.updated_at"
 
 func scanOrganization(row sq.RowScanner) (res repository.OrganizationRow, err error) {
 	var iconKey pgtype.Text
@@ -28,7 +28,6 @@ func scanOrganization(row sq.RowScanner) (res repository.OrganizationRow, err er
 		&res.Name,
 		&iconKey,
 		&bannerKey,
-		&res.MaxRoles,
 		&res.Version,
 		&res.CreatedAt,
 		&res.UpdatedAt,
@@ -202,11 +201,6 @@ func (q *organizations) UpdateIconKey(v *string) repository.OrganizationsQ {
 
 func (q *organizations) UpdateBannerKey(v *string) repository.OrganizationsQ {
 	q.updater = q.updater.Set("banner_key", v)
-	return q
-}
-
-func (q *organizations) UpdateMaxRoles(maxRoles uint) repository.OrganizationsQ {
-	q.updater = q.updater.Set("max_roles", int32(maxRoles))
 	return q
 }
 

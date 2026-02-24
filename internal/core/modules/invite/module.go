@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/orgperm"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -27,7 +26,10 @@ func New(repo repo, messenger messenger) *Module {
 type repo interface {
 	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
 
-	CreateInvite(ctx context.Context, params CreateParams) (models.Invite, error)
+	CreateInvite(
+		ctx context.Context,
+		params CreateParams,
+	) (models.Invite, error)
 	GetInvite(
 		ctx context.Context,
 		id uuid.UUID,
@@ -53,19 +55,18 @@ type repo interface {
 		id uuid.UUID,
 	) error
 
-	CreateMemberRolesLinksRevision(ctx context.Context, memberID uuid.UUID) error
-
-	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
+	CreateMember(
+		ctx context.Context,
+		accountID, organizationID uuid.UUID,
+	) (models.Member, error)
 	GetMemberByAccountAndOrganization(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
 	) (models.Member, error)
-	CheckMemberHavePermission(
+	MemberExists(
 		ctx context.Context,
-		memberID uuid.UUID,
-		permissionID uuid.UUID,
+		accountID, organizationID uuid.UUID,
 	) (bool, error)
-	MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error)
 
 	ExistsProfileByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
 
@@ -81,65 +82,17 @@ type messenger interface {
 	WriteOrgInviteDeleted(ctx context.Context, invite models.Invite) error
 }
 
-func (m *Module) checkPermissionForManageInvites(
-	ctx context.Context,
-	initiator models.AccountActor,
-	organizationID uuid.UUID,
-) error {
-	member, err := m.getInitiator(ctx, initiator, organizationID)
-	if err != nil {
-		return err
-	}
-
-	if !member.Head {
-		access, err := m.repo.CheckMemberHavePermission(ctx, member.ID, orgperm.InvitesManageID)
-		if err != nil {
-			return err
-		}
-
-		if !access {
-			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("initiator has no access to activate organization"),
-			)
-		}
-	}
-
-	return nil
-}
-
-func (m *Module) checkOrganizationIsActiveAndExists(
-	ctx context.Context,
-	organizationID uuid.UUID,
-) (models.Organization, error) {
-	org, err := m.repo.GetOrganizationByID(ctx, organizationID)
-	if err != nil {
-		return models.Organization{}, err
-	}
-
-	if org.Status != models.OrganizationStatusActive {
-		return models.Organization{}, errx.ErrorOrganizationIsNotActive.Raise(
-			fmt.Errorf("organization with id %s is not active", organizationID),
-		)
-	}
-
-	return org, nil
-}
-
 func (m *Module) getInitiator(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
-	if err != nil {
-		if errors.Is(err, errx.ErrorMemberNotFound) {
-			return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf(
-					"initiator with account id %s is not a member of organization %s",
-					initiator, organizationID,
-				),
-			)
-		}
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
+	if errors.Is(err, errx.ErrorMemberNotFound) {
+		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("initiator with account id %s is not a member of organization %s", actor, organizationID),
+		)
+	} else if err != nil {
 		return models.Member{}, err
 	}
 

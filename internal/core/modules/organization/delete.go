@@ -12,7 +12,7 @@ import (
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) error {
 	organization, err := m.GetByID(ctx, organizationID)
@@ -22,11 +22,10 @@ func (m *Module) Delete(
 		return err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organization.ID)
+	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organization.ID)
 	if err != nil {
 		return err
 	}
-
 	if !member.Head {
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("initiator member %s is not head of organization %s", member.ID, organization.ID),

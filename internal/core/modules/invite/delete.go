@@ -2,6 +2,7 @@ package invite
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,15 +13,17 @@ import (
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	inviteID uuid.UUID,
 ) error {
-	invite, err := m.GetForAccount(ctx, initiator, inviteID)
-	if err != nil {
-		return err
+	invite, err := m.repo.GetInvite(ctx, inviteID)
+	if errors.Is(err, errx.ErrorInviteNotFound) {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to get invite with id %s: %w", inviteID, err)
 	}
 
-	if invite.AccountID != initiator {
+	if invite.AccountID != actor {
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("account has no rights to accept this invite"),
 		)
@@ -36,12 +39,14 @@ func (m *Module) Delete(
 		)
 	}
 
-	if err = m.checkPermissionForManageInvites(
-		ctx,
-		initiator,
-		invite.OrganizationID,
-	); err != nil {
+	initiator, err := m.getInitiator(ctx, actor, invite.OrganizationID)
+	if err != nil {
 		return err
+	}
+	if !initiator.Head {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("account has no rights to create invite for this organization"),
+		)
 	}
 
 	return m.repo.Transaction(ctx, func(ctx context.Context) error {

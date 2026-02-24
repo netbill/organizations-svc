@@ -18,20 +18,20 @@ type CreateParams struct {
 
 func (m *Module) Create(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	params CreateParams,
 ) (invite models.Invite, err error) {
-	exist, err := m.repo.MemberExists(ctx, params.AccountID, params.OrganizationID)
+	initiator, err := m.getInitiator(ctx, actor, params.OrganizationID)
 	if err != nil {
 		return models.Invite{}, err
 	}
-	if exist {
-		return models.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
-			fmt.Errorf("account '%s' is already a member of organization '%s'", params.AccountID, params.OrganizationID),
+	if !initiator.Head {
+		return models.Invite{}, errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("account has no rights to create invite for this organization"),
 		)
 	}
 
-	exist, err = m.repo.ExistsProfileByAccountID(ctx, params.AccountID)
+	exist, err := m.repo.ExistsProfileByAccountID(ctx, params.AccountID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -41,12 +41,14 @@ func (m *Module) Create(
 		)
 	}
 
-	if err = m.checkPermissionForManageInvites(ctx, initiator, params.OrganizationID); err != nil {
+	org, err := m.repo.GetOrganizationByID(ctx, params.OrganizationID)
+	if err != nil {
 		return models.Invite{}, err
 	}
-
-	if _, err = m.checkOrganizationIsActiveAndExists(ctx, params.OrganizationID); err != nil {
-		return models.Invite{}, err
+	if org.Status != models.OrganizationStatusActive {
+		return models.Invite{}, errx.ErrorOrganizationIsNotActive.Raise(
+			fmt.Errorf("organization with id %s is not active", params.OrganizationID),
+		)
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {

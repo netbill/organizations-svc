@@ -15,7 +15,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
-	"github.com/netbill/organizations-svc/internal/core/modules/role"
+
 	"github.com/netbill/organizations-svc/internal/messenger"
 	"github.com/netbill/organizations-svc/internal/messenger/handler"
 	"github.com/netbill/organizations-svc/internal/messenger/publisher"
@@ -51,15 +51,11 @@ func (a *App) Run(ctx context.Context) error {
 	db := pgdbx.NewDB(pool)
 
 	repo := &repository.Repository{
-		Transactioner:             pg.NewTransaction(db),
-		OrganizationsSql:          pg.NewOrganizationsQ(db),
-		OrgMembersSql:             pg.NewOrgMembersQ(db),
-		OrgMemberRolesSql:         pg.NewOrgMemberRolesQ(db),
-		OrgRolesSql:               pg.NewOrgRolesQ(db),
-		OrgRolePermissionLinksSql: pg.NewOrgRolePermissionLinksQ(db),
-		OrgRolePermissionsSql:     pg.NewOrgRolePermissionsQ(db),
-		OrgInvitesSql:             pg.NewOrgInvitesQ(db),
-		ProfilesSql:               pg.NewProfilesQ(db),
+		Transactioner:    pg.NewTransaction(db),
+		OrganizationsSql: pg.NewOrganizationsQ(db),
+		OrgMembersSql:    pg.NewOrgMembersQ(db),
+		OrgInvitesSql:    pg.NewOrgInvitesQ(db),
+		ProfilesSql:      pg.NewProfilesQ(db),
 	}
 
 	cfg, err := awscfg.LoadDefaultConfig(
@@ -111,7 +107,6 @@ func (a *App) Run(ctx context.Context) error {
 	profileCore := profile.New(repo)
 	orgCore := organization.New(repo, outbound, s3)
 	orgMemberCore := member.New(repo, outbound)
-	orgRoleCore := role.New(repo, outbound)
 	orgInviteCore := invite.New(repo, outbound)
 
 	tokenManager := tokenmanager.New(tokenmanager.Config{
@@ -123,7 +118,6 @@ func (a *App) Run(ctx context.Context) error {
 	ctrl := controller.New(&controller.Modules{
 		Organization: orgCore,
 		Member:       orgMemberCore,
-		Role:         orgRoleCore,
 		Invite:       orgInviteCore,
 	}, responser)
 	mdll := middlewares.New(responser, tokenManager)

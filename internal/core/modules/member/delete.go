@@ -7,15 +7,20 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/orgperm"
 )
 
 func (m *Module) Delete(
 	ctx context.Context,
-	initiator models.AccountActor,
+	actor models.AccountActor,
 	memberID uuid.UUID,
 ) error {
-	member, err := m.GetByID(ctx, memberID)
+	if actor == memberID {
+		return errx.ErrorCannotDeleteSelf.Raise(
+			fmt.Errorf("member %s cannot delete itself", actor),
+		)
+	}
+
+	member, err := m.GetByID(ctx, actor)
 	if err != nil {
 		return err
 	}
@@ -25,9 +30,14 @@ func (m *Module) Delete(
 		)
 	}
 
-	err = m.checkAbilityToDeleteMember(ctx, initiator, member.OrganizationID, memberID)
+	initiator, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, member.OrganizationID)
 	if err != nil {
 		return err
+	}
+	if !initiator.Head {
+		return errx.ErrorNotEnoughRights.Raise(
+			fmt.Errorf("account has no rights to delete member %s", memberID),
+		)
 	}
 
 	return m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -36,55 +46,10 @@ func (m *Module) Delete(
 			return fmt.Errorf("failed to delete member %s: %w", memberID, err)
 		}
 
-		if err = m.messenger.WriteOrgMemberDeleted(ctx, member.ID); err != nil {
+		if err = m.messenger.WriteOrgMemberDeleted(ctx, memberID); err != nil {
 			return fmt.Errorf("failed to send member deleted message for member %s: %w", memberID, err)
 		}
 
 		return nil
 	})
-}
-
-func (m *Module) checkAbilityToDeleteMember(
-	ctx context.Context,
-	initiator models.AccountActor,
-	organizationID uuid.UUID,
-	memberID uuid.UUID,
-) error {
-	member, err := m.GetInitiator(ctx, initiator, organizationID)
-	if err != nil {
-		return err
-	}
-
-	if !member.Head {
-		hasPermission, err := m.repo.CheckMemberHavePermission(ctx, member.AccountID, orgperm.MembersDeleteID)
-		if err != nil {
-			return err
-		}
-		if !hasPermission {
-			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf("initiator member %s has no delete members permission", member.ID),
-			)
-		}
-
-		firstMaxRank, err := m.repo.GetMemberMaxRoleRank(ctx, member.ID)
-		if err != nil {
-			return fmt.Errorf("failed to get max role for member %s: %w", member.AccountID, err)
-		}
-
-		secondMaxRank, err := m.repo.GetMemberMaxRoleRank(ctx, memberID)
-		if err != nil {
-			return fmt.Errorf("failed to get max role for member %s: %w", memberID, err)
-		}
-
-		if firstMaxRank < secondMaxRank {
-			return errx.ErrorNotEnoughRights.Raise(
-				fmt.Errorf(
-					"initiator member %s has max role rank %d less than max role rank %d of member %s",
-					member.AccountID, firstMaxRank, secondMaxRank, memberID,
-				),
-			)
-		}
-	}
-
-	return nil
 }

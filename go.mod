@@ -17,8 +17,8 @@ require (
 	github.com/netbill/ape v0.1.3
 	github.com/netbill/awsx v0.3.3
 	github.com/netbill/eventbox v0.1.6
-	github.com/netbill/logium v0.3.0
 	github.com/netbill/evtypes v0.1.0
+	github.com/netbill/logium v0.3.0
 	github.com/netbill/pgdbx v0.3.1
 	github.com/netbill/restkit v0.2.4
 	github.com/pkg/errors v0.9.1
@@ -71,7 +71,7 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 )
 
-require github.com/netbill/orgperm v0.0.0-20260217105130-1747a6a7b6c7
+require gopkg.in/validator.v2 v2.0.1
 
 replace (
 	github.com/netbill/eventbox => /home/trpdjke/go/src/github.com/netbill/eventbox

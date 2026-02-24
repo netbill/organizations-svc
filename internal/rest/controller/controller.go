@@ -9,14 +9,14 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
-	"github.com/netbill/organizations-svc/internal/core/modules/role"
+
 	"github.com/netbill/restkit/pagi"
 )
 
 type organizationSvc interface {
 	Create(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		params organization.CreateParams,
 	) (models.Organization, error)
 
@@ -31,7 +31,7 @@ type organizationSvc interface {
 	) (pagi.Page[[]models.Organization], error)
 	GetForUser(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
 
@@ -42,7 +42,7 @@ type organizationSvc interface {
 	) (models.Organization, models.UploadOrgMediaLinks, error)
 	Update(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
 		params organization.UpdateParams,
 	) (models.Organization, error)
@@ -61,18 +61,18 @@ type organizationSvc interface {
 
 	Activate(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
 	) (models.Organization, error)
 	Deactivate(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
 	) (models.Organization, error)
 
 	Delete(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
 	) error
 }
@@ -80,30 +80,30 @@ type organizationSvc interface {
 type inviteSvc interface {
 	Create(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		params invite.CreateParams,
 	) (models.Invite, error)
 
 	Decline(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		inviteID uuid.UUID,
 	) (models.Invite, error)
 	Accept(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		inviteID uuid.UUID,
 	) (models.Invite, error)
 
 	Delete(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		inviteID uuid.UUID,
 	) error
 
-	GetForOrganizations(
+	GetListForOrganization(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
@@ -122,13 +122,13 @@ type memberSvc interface {
 
 	GetByAccountAndOrganization(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
 	) (models.Member, error)
 
 	GetInitiator(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		organizationID uuid.UUID,
 	) (models.Member, error)
 
@@ -140,82 +140,16 @@ type memberSvc interface {
 
 	Update(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		memberID uuid.UUID,
 		params member.UpdateParams,
 	) (models.Member, error)
 
 	Delete(
 		ctx context.Context,
-		initiator models.AccountActor,
+		actor models.AccountActor,
 		memberID uuid.UUID,
 	) error
-}
-
-type roleSvc interface {
-	Create(
-		ctx context.Context,
-		initiator models.AccountActor,
-		params role.CreateParams,
-	) (models.Role, error)
-
-	GetByID(
-		ctx context.Context,
-		roleID uuid.UUID,
-	) (models.Role, error)
-
-	GetWithPermissions(
-		ctx context.Context,
-		initiator models.AccountActor,
-		roleID uuid.UUID,
-	) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error)
-
-	GetList(
-		ctx context.Context,
-		params role.FilterParams,
-		limit, offset uint,
-	) (pagi.Page[[]models.Role], error)
-
-	Update(
-		ctx context.Context,
-		initiator models.AccountActor,
-		roleID uuid.UUID,
-		params role.UpdateParams,
-	) (models.Role, error)
-
-	UpdateRanks(
-		ctx context.Context,
-		initiator models.AccountActor,
-		organizationID uuid.UUID,
-		order map[uuid.UUID]uint,
-	) error
-
-	Delete(
-		ctx context.Context,
-		initiator models.AccountActor,
-		roleID uuid.UUID,
-	) error
-
-	AddForMember(
-		ctx context.Context,
-		initiator models.AccountActor,
-		memberID, roleID uuid.UUID,
-	) error
-
-	RemoveFromMember(
-		ctx context.Context,
-		initiator models.AccountActor,
-		memberID, roleID uuid.UUID,
-	) error
-
-	GetAllPermissions(ctx context.Context) ([]models.OrgRolePermission, error)
-
-	UpdatePermissions(
-		ctx context.Context,
-		initiator models.AccountActor,
-		roleID uuid.UUID,
-		permissions role.SetPermissions,
-	) (models.Role, models.OrgRolePermissionsWithDetailsForRole, error)
 }
 
 type responser interface {
@@ -227,7 +161,6 @@ type responser interface {
 type Modules struct {
 	Organization organizationSvc
 	Member       memberSvc
-	Role         roleSvc
 	Invite       inviteSvc
 }
 
