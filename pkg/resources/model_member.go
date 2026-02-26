@@ -22,7 +22,6 @@ var _ MappedNullable = &Member{}
 // Member struct for Member
 type Member struct {
 	Data MemberData `json:"data"`
-	// Included related resources (profile, organization)
 	Included []MemberIncludedInner `json:"included,omitempty"`
 }
 

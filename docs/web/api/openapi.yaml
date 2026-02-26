@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.1.1
 info:
   description: API documentation for organizations-svc
   title: organizations-svc API
@@ -38,6 +38,18 @@ components:
       properties:
         data:
           $ref: "#/components/schemas/CreateInvite_data"
+      required:
+      - data
+    DeleteUploadOrgIcon:
+      properties:
+        data:
+          $ref: "#/components/schemas/DeleteUploadOrgIcon_data"
+      required:
+      - data
+    DeleteUploadOrgBanner:
+      properties:
+        data:
+          $ref: "#/components/schemas/DeleteUploadOrgBanner_data"
       required:
       - data
     PaginationData:
@@ -177,9 +189,8 @@ components:
         data:
           $ref: "#/components/schemas/Member_data"
         included:
-          description: "Included related resources (profile, organization)"
           items:
-            $ref: "#/components/schemas/Member_included_inner"
+            $ref: "#/components/schemas/MemberIncluded_inner"
           type: array
       required:
       - data
@@ -189,27 +200,27 @@ components:
           items:
             $ref: "#/components/schemas/Member/properties/data"
           type: array
+        included:
+          items:
+            $ref: "#/components/schemas/MemberIncluded_inner"
+          type: array
         links:
           $ref: "#/components/schemas/PaginationData"
       required:
       - data
       - links
-    DeleteUploadOrgIcon:
-      properties:
-        data:
-          $ref: "#/components/schemas/DeleteUploadOrgIcon_data"
-      required:
-      - data
-    DeleteUploadOrgBanner:
-      properties:
-        data:
-          $ref: "#/components/schemas/DeleteUploadOrgBanner_data"
-      required:
-      - data
+    MemberIncluded:
+      items:
+        $ref: "#/components/schemas/MemberIncluded_inner"
+      type: array
     Invite:
       properties:
         data:
           $ref: "#/components/schemas/Invite_data"
+        included:
+          items:
+            $ref: "#/components/schemas/InviteIncluded_inner"
+          type: array
       required:
       - data
     InvitesCollection:
@@ -218,11 +229,19 @@ components:
           items:
             $ref: "#/components/schemas/Invite/properties/data"
           type: array
+        included:
+          items:
+            $ref: "#/components/schemas/InviteIncluded_inner"
+          type: array
         links:
           $ref: "#/components/schemas/PaginationData"
       required:
       - data
       - links
+    InviteIncluded:
+      items:
+        $ref: "#/components/schemas/InviteIncluded_inner"
+      type: array
     data:
       properties:
         id:
@@ -305,7 +324,7 @@ components:
           type: string
         type:
           enum:
-          - update_member
+          - organization_member
           type: string
         attributes:
           $ref: "#/components/schemas/UpdateMember_data_attributes"
@@ -330,12 +349,58 @@ components:
       properties:
         type:
           enum:
-          - create_invite
+          - invite
           type: string
         attributes:
           $ref: "#/components/schemas/CreateInvite_data_attributes"
       required:
       - attributes
+      - type
+    DeleteUploadOrgIcon_data_attributes:
+      properties:
+        icon_key:
+          description: icon media key
+          type: string
+      required:
+      - icon_key
+    DeleteUploadOrgIcon_data:
+      properties:
+        id:
+          description: organization id
+          format: uuid
+          type: string
+        type:
+          enum:
+          - organization
+          type: string
+        attributes:
+          $ref: "#/components/schemas/DeleteUploadOrgIcon_data_attributes"
+      required:
+      - attributes
+      - id
+      - type
+    DeleteUploadOrgBanner_data_attributes:
+      properties:
+        banner_key:
+          description: icon media key
+          type: string
+      required:
+      - banner_key
+    DeleteUploadOrgBanner_data:
+      properties:
+        id:
+          description: organization id
+          format: uuid
+          type: string
+        type:
+          enum:
+          - organization
+          type: string
+        attributes:
+          $ref: "#/components/schemas/DeleteUploadOrgBanner_data_attributes"
+      required:
+      - attributes
+      - id
       - type
     OrganizationData_attributes:
       properties:
@@ -512,56 +577,11 @@ components:
       - id
       - relationships
       - type
-    Member_included_inner:
+    MemberIncluded_inner:
+      description: "Included related resources for members (e.g., organization)"
       oneOf:
       - $ref: "#/components/schemas/ProfileData"
       - $ref: "#/components/schemas/OrganizationData"
-    DeleteUploadOrgIcon_data_attributes:
-      properties:
-        icon_key:
-          description: icon media key
-          type: string
-      required:
-      - icon_key
-    DeleteUploadOrgIcon_data:
-      properties:
-        id:
-          description: organization id
-          format: uuid
-          type: string
-        type:
-          enum:
-          - delete_organization_upload_icon
-          type: string
-        attributes:
-          $ref: "#/components/schemas/DeleteUploadOrgIcon_data_attributes"
-      required:
-      - attributes
-      - id
-      - type
-    DeleteUploadOrgBanner_data_attributes:
-      properties:
-        banner_key:
-          description: icon media key
-          type: string
-      required:
-      - banner_key
-    DeleteUploadOrgBanner_data:
-      properties:
-        id:
-          description: organization id
-          format: uuid
-          type: string
-        type:
-          enum:
-          - delete_organization_upload_banner
-          type: string
-        attributes:
-          $ref: "#/components/schemas/DeleteUploadOrgBanner_data_attributes"
-      required:
-      - attributes
-      - id
-      - type
     Invite_data_attributes:
       properties:
         status:
@@ -602,3 +622,8 @@ components:
       - id
       - relationships
       - type
+    InviteIncluded_inner:
+      description: "Included related resources  for invites (e.g., organization, profile)"
+      oneOf:
+      - $ref: "#/components/schemas/ProfileData"
+      - $ref: "#/components/schemas/OrganizationData"

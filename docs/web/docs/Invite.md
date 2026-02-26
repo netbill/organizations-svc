@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Data** | [**InviteData**](InviteData.md) |  | 
+**Included** | Pointer to [**[]InviteIncludedInner**](InviteIncludedInner.md) |  | [optional] 
 
 ## Methods
 
@@ -44,6 +45,31 @@ and a boolean to check if the value has been set.
 
 SetData sets Data field to given value.
 
+
+### GetIncluded
+
+`func (o *Invite) GetIncluded() []InviteIncludedInner`
+
+GetIncluded returns the Included field if non-nil, zero value otherwise.
+
+### GetIncludedOk
+
+`func (o *Invite) GetIncludedOk() (*[]InviteIncludedInner, bool)`
+
+GetIncludedOk returns a tuple with the Included field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIncluded
+
+`func (o *Invite) SetIncluded(v []InviteIncludedInner)`
+
+SetIncluded sets Included field to given value.
+
+### HasIncluded
+
+`func (o *Invite) HasIncluded() bool`
+
+HasIncluded returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

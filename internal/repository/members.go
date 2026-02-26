@@ -28,19 +28,7 @@ func (r OrganizationMemberRow) IsNil() bool {
 	return r.ID == uuid.Nil
 }
 
-type OrganizationMemberWithProfileDataRow struct {
-	OrganizationMemberRow
-	Username  string  `db:"username"`
-	Official  bool    `db:"official"`
-	Pseudonym *string `db:"pseudonym,omitempty"`
-	Icon      *string `db:"icon,omitempty"`
-}
-
-func (r OrganizationMemberWithProfileDataRow) IsNil() bool {
-	return r.ID == uuid.Nil
-}
-
-func (r OrganizationMemberWithProfileDataRow) ToModel() models.Member {
+func (r OrganizationMemberRow) ToModel() models.Member {
 	return models.Member{
 		ID:             r.ID,
 		AccountID:      r.AccountID,
@@ -48,10 +36,6 @@ func (r OrganizationMemberWithProfileDataRow) ToModel() models.Member {
 		Head:           r.Head,
 		Position:       r.Position,
 		Label:          r.Label,
-		Username:       r.Username,
-		Official:       r.Official,
-		Pseudonym:      r.Pseudonym,
-		AvatarKey:      r.Icon,
 		Version:        r.Version,
 		CreatedAt:      r.CreatedAt,
 		UpdatedAt:      r.UpdatedAt,
@@ -64,9 +48,7 @@ type OrgMembersQ interface {
 	Insert(ctx context.Context, params OrganizationMemberRow) (OrganizationMemberRow, error)
 
 	Get(ctx context.Context) (OrganizationMemberRow, error)
-	GetWithUserData(ctx context.Context) (OrganizationMemberWithProfileDataRow, error)
 	Select(ctx context.Context) ([]OrganizationMemberRow, error)
-	SelectWithUserData(ctx context.Context) ([]OrganizationMemberWithProfileDataRow, error)
 	Exists(ctx context.Context) (bool, error)
 
 	UpdateOne(ctx context.Context) (OrganizationMemberRow, error)
@@ -149,7 +131,7 @@ func (r *Repository) GetMember(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Member, error) {
-	row, err := r.OrgMembersSql.New().FilterByID(memberID).GetWithUserData(ctx)
+	row, err := r.OrgMembersSql.New().FilterByID(memberID).Get(ctx)
 	if err != nil {
 		return models.Member{}, fmt.Errorf("failed to get member, cause: %w", err)
 	}
@@ -169,7 +151,7 @@ func (r *Repository) GetMemberByAccountAndOrganization(
 	row, err := r.OrgMembersSql.New().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
-		GetWithUserData(ctx)
+		Get(ctx)
 	if err != nil {
 		return models.Member{}, fmt.Errorf("failed to get member by account and organization, cause: %w", err)
 	}
@@ -203,6 +185,13 @@ func (r *Repository) GetMembers(
 	limit uint,
 	offset uint,
 ) (pagi.Page[[]models.Member], error) {
+	if limit == 0 {
+		limit = 20
+	}
+	if limit > 1000 {
+		limit = 1000
+	}
+
 	q := r.OrgMembersSql.New()
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
@@ -230,7 +219,7 @@ func (r *Repository) GetMembers(
 		limit = 10
 	}
 
-	rows, err := q.Page(limit, offset).SelectWithUserData(ctx)
+	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Member]{}, fmt.Errorf("failed to get members, cause: %w", err)
 	}

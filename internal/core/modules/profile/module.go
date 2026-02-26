@@ -15,6 +15,7 @@ type repo interface {
 	CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error)
 	UpdateProfile(ctx context.Context, accountID uuid.UUID, params UpdateParams) (models.Profile, error)
 	GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (models.Profile, error)
+	GetProfilesByAccountIDs(ctx context.Context, accountIDs []uuid.UUID) ([]models.Profile, error)
 	GetProfileByUsername(ctx context.Context, username string) (models.Profile, error)
 	ExistsProfileByUsername(ctx context.Context, username string) (bool, error)
 	ExistsProfileByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)

@@ -32,6 +32,16 @@ func (m *Module) Delete(
 		)
 	}
 
+	places, err := m.repo.GetPlaceExistsForOrganization(ctx, organization.ID)
+	if err != nil {
+		return fmt.Errorf("failed to get places for organization: %w", err)
+	}
+	if places {
+		return errx.ErrorOrganizationHavePlace.Raise(
+			fmt.Errorf("organization %s has places, cannot be deleted", organization.ID),
+		)
+	}
+
 	return m.repo.Transaction(ctx, func(ctx context.Context) error {
 		err = m.repo.DeleteOrganization(ctx, organizationID)
 		if err != nil {

@@ -11,6 +11,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
+	"github.com/netbill/restkit/render"
 )
 
 const operationDeclineInvite = "decline_invite"
@@ -21,7 +22,7 @@ func (c *Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
 	inviteID, err := uuid.Parse(chi.URLParam(r, "invite_id"))
 	if err != nil {
 		log.WithError(err).Info("invalid invite id")
-		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid invite id"))...)
+		render.ResponseError(w, problems.BadRequest(fmt.Errorf("invalid invite id"))...)
 		return
 	}
 
@@ -31,20 +32,20 @@ func (c *Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, errx.ErrorInviteNotFound):
 		log.Info("invite not found")
-		c.responser.RenderErr(w, problems.NotFound("invite not found"))
+		render.ResponseError(w, problems.NotFound("invite not found"))
 	case errors.Is(err, errx.ErrorInviteNotForInitiator):
 		log.Info("invite not for this account")
-		c.responser.RenderErr(w, problems.Forbidden("invite not for this account"))
+		render.ResponseError(w, problems.Forbidden("invite not for this account"))
 	case errors.Is(err, errx.ErrorInviteAlreadyAnswered):
 		log.Info("invite already answered")
-		c.responser.RenderErr(w, problems.Conflict("invite already answered"))
+		render.ResponseError(w, problems.Conflict("invite already answered"))
 	case errors.Is(err, errx.ErrorInviteExpired):
 		log.Info("invite has expired")
-		c.responser.RenderErr(w, problems.Forbidden("invite has expired"))
+		render.ResponseError(w, problems.Forbidden("invite has expired"))
 	case err != nil:
 		log.WithError(err).Error("failed to decline invite")
-		c.responser.RenderErr(w, problems.InternalError())
+		render.ResponseError(w, problems.InternalError())
 	default:
-		c.responser.Render(w, http.StatusOK, responses.Invite(res))
+		render.Response(w, http.StatusOK, responses.Invite(res))
 	}
 }

@@ -20,6 +20,7 @@ type ProfileRow struct {
 	Pseudonym *string `db:"pseudonym,omitempty"`
 	AvatarKey *string `db:"avatar_key,omitempty"`
 
+	Version          int32     `db:"version"`
 	SourceCreatedAt  time.Time `db:"source_created_at"`
 	SourceUpdatedAt  time.Time `db:"source_updated_at"`
 	ReplicaCreatedAt time.Time `db:"replica_created_at"`
@@ -49,13 +50,13 @@ type ProfilesQ interface {
 	Get(ctx context.Context) (ProfileRow, error)
 	Select(ctx context.Context) ([]ProfileRow, error)
 
-	UpdateMany(ctx context.Context) (int64, error)
 	UpdateOne(ctx context.Context) (ProfileRow, error)
 
 	UpdateUsername(username string) ProfilesQ
 	UpdateOfficial(official bool) ProfilesQ
 	UpdatePseudonym(pseudo *string) ProfilesQ
 	UpdateAvatarKey(avatar *string) ProfilesQ
+	UpdateVersion(v int32) ProfilesQ
 	UpdateSourceUpdatedAt(v time.Time) ProfilesQ
 
 	FilterByAccountID(accountID ...uuid.UUID) ProfilesQ
@@ -74,6 +75,7 @@ func (r *Repository) CreateProfile(
 		Official:        profile.Official,
 		Pseudonym:       profile.Pseudonym,
 		AvatarKey:       profile.AvatarKey,
+		Version:         profile.Version,
 		SourceUpdatedAt: profile.UpdatedAt,
 		SourceCreatedAt: profile.CreatedAt,
 	})
@@ -95,6 +97,7 @@ func (r *Repository) UpdateProfile(
 		UpdateOfficial(params.Official).
 		UpdatePseudonym(params.Pseudonym).
 		UpdateAvatarKey(params.AvatarKey).
+		UpdateVersion(params.Version).
 		UpdateSourceUpdatedAt(params.UpdatedAt).
 		UpdateOne(ctx)
 	if err != nil {
@@ -124,6 +127,23 @@ func (r *Repository) GetProfileByAccountID(
 	}
 
 	return row.ToModel(), nil
+}
+
+func (r *Repository) GetProfilesByAccountIDs(
+	ctx context.Context,
+	accountIDs []uuid.UUID,
+) ([]models.Profile, error) {
+	rows, err := r.ProfilesSql.New().FilterByAccountID(accountIDs...).Select(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get profiles by account IDs, cause: %w", err)
+	}
+
+	profiles := make([]models.Profile, 0, len(rows))
+	for _, row := range rows {
+		profiles = append(profiles, row.ToModel())
+	}
+
+	return profiles, nil
 }
 
 func (r *Repository) GetProfileByUsername(

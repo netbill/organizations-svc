@@ -64,6 +64,8 @@ type repo interface {
 	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 	CreateMemberHead(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
 
+	GetPlaceExistsForOrganization(ctx context.Context, organizationID uuid.UUID) (bool, error)
+
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 

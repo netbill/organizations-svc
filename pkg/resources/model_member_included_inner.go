@@ -16,7 +16,7 @@ import (
 	"gopkg.in/validator.v2"
 )
 
-// MemberIncludedInner - struct for MemberIncludedInner
+// MemberIncludedInner - Included related resources for members (e.g., organization)
 type MemberIncludedInner struct {
 	OrganizationData *OrganizationData
 	ProfileData *ProfileData

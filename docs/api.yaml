@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.1.1
 info:
   title: organizations-svc API
   description: API documentation for organizations-svc
@@ -25,6 +25,10 @@ components:
       $ref: './spec/components/schemas/requests/UpdateMember.yaml'
     CreateInvite:
       $ref: './spec/components/schemas/requests/CreateInvite.yaml'
+    DeleteUploadOrgIcon:
+      $ref: './spec/components/schemas/requests/DeleteUploadOrgIcon.yaml'
+    DeleteUploadOrgBanner:
+      $ref: './spec/components/schemas/requests/DeleteUploadOrgBanner.yaml'
 
     # responses:
     PaginationData:
@@ -50,12 +54,12 @@ components:
       $ref: './spec/components/schemas/responses/Member.yaml'
     MemberCollection:
       $ref: './spec/components/schemas/responses/MemberCollection.yaml'
-    DeleteUploadOrgIcon:
-      $ref: './spec/components/schemas/requests/DeleteUploadOrgIcon.yaml'
-    DeleteUploadOrgBanner:
-      $ref: './spec/components/schemas/requests/DeleteUploadOrgBanner.yaml'
+    MemberIncluded:
+      $ref: './spec/components/schemas/responses/MemberIncluded.yaml'
 
     Invite:
       $ref: './spec/components/schemas/responses/Invite.yaml'
     InvitesCollection:
       $ref: './spec/components/schemas/responses/InvitesCollection.yaml'
+    InviteIncluded:
+      $ref: './spec/components/schemas/responses/InviteIncluded.yaml'

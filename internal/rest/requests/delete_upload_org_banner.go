@@ -1,4 +1,4 @@
-package request
+package requests
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ func DeleteUploadOrgBanner(r *http.Request) (req resources.DeleteUploadOrgBanner
 
 	errs := validation.Errors{
 		"data/id":         validation.Validate(req.Data.Id, validation.Required),
-		"data/type":       validation.Validate(req.Data.Type, validation.Required, validation.In("delete_organization_upload_banner")),
+		"data/type":       validation.Validate(req.Data.Type, validation.Required, validation.In("organization")),
 		"data/attributes": validation.Validate(req.Data.Attributes, validation.Required),
 	}
 

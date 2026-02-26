@@ -1,0 +1,6 @@
+type: array
+items:
+  description: "Included related resources  for invites (e.g., organization, profile)"
+  oneOf:
+    - $ref: './ProfileData.yaml'
+    - $ref: './OrganizationData.yaml'

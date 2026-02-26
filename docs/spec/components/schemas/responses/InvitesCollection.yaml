@@ -7,5 +7,7 @@ properties:
     type: array
     items:
       $ref: './InviteData.yaml'
+  included:
+    $ref: './InviteIncluded.yaml'
   links:
     $ref: './PaginationData.yaml'

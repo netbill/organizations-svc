@@ -10,15 +10,22 @@ import (
 
 func Organization(organization models.Organization) resources.Organization {
 	return resources.Organization{
-		Data: resources.OrganizationData{
-			Id:   organization.ID,
-			Type: "organization",
-			Attributes: resources.OrganizationDataAttributes{
-				Status:    organization.Status,
-				Name:      organization.Name,
-				CreatedAt: organization.CreatedAt,
-				UpdatedAt: organization.UpdatedAt,
-			},
+		Data: organizationData(organization),
+	}
+}
+
+func organizationData(organization models.Organization) resources.OrganizationData {
+	return resources.OrganizationData{
+		Id:   organization.ID,
+		Type: "organization",
+		Attributes: resources.OrganizationDataAttributes{
+			Status:    organization.Status,
+			Name:      organization.Name,
+			IconKey:   organization.IconKey,
+			BannerKey: organization.BannerKey,
+			Version:   organization.Version,
+			CreatedAt: organization.CreatedAt,
+			UpdatedAt: organization.UpdatedAt,
 		},
 	}
 }
@@ -43,7 +50,10 @@ func Organizations(r *http.Request, page pagi.Page[[]models.Organization]) resou
 	}
 }
 
-func UploadOrganizationMediaLinks(organization models.Organization, uploadLinks models.UploadOrgMediaLinks) resources.UploadOrgMediaLinks {
+func UploadOrganizationMediaLinks(
+	organization models.Organization,
+	uploadLinks models.UploadOrgMediaLinks,
+) resources.UploadOrgMediaLinks {
 	return resources.UploadOrgMediaLinks{
 		Data: resources.UploadOrgMediaLinksData{
 			Id:   organization.ID,
@@ -70,7 +80,7 @@ func UploadOrganizationMediaLinks(organization models.Organization, uploadLinks 
 			},
 		},
 		Included: []resources.OrganizationData{
-			Organization(organization).Data,
+			organizationData(organization),
 		},
 	}
 }

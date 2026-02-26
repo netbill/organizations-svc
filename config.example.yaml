@@ -94,11 +94,17 @@ kafka:
     topics:
       profiles_v1:
         instances: 4           # number of readers for this topic which will be started in each process
-        min_bytes: 1           # minimum bytes to fetch in each request
-        max_bytes: 10e6        # maximum bytes to fetch in each request
-        max_wait: 1s           # maximum time to wait for messages in each request
+        min_bytes: 1           # minimum bytes to fetch in each requests
+        max_bytes: 10e6        # maximum bytes to fetch in each requests
+        max_wait: 1s           # maximum time to wait for messages in each requests
         queue_capacity: 10     # capacity of the internal queue for messages fetched from Kafka
 
+      places_v1:
+        instances: 4           # number of readers for this topic which will be started in each process
+        min_bytes: 1           # minimum bytes to fetch in each requests
+        max_bytes: 10e6        # maximum bytes to fetch in each requests
+        max_wait: 1s           # maximum time to wait for messages in each requests
+        queue_capacity: 10     # capacity of the internal queue for messages fetched from Kafka
 
   inbox:
     routines: 10          # number of goroutines which can process messages in each process

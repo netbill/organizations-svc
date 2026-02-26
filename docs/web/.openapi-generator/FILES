@@ -21,6 +21,7 @@ docs/DeleteUploadOrgIconDataAttributes.md
 docs/Invite.md
 docs/InviteData.md
 docs/InviteDataAttributes.md
+docs/InviteIncludedInner.md
 docs/InvitesCollection.md
 docs/Member.md
 docs/MemberCollection.md
@@ -72,6 +73,7 @@ model_delete_upload_org_icon_data_attributes.go
 model_invite.go
 model_invite_data.go
 model_invite_data_attributes.go
+model_invite_included_inner.go
 model_invites_collection.go
 model_member.go
 model_member_collection.go

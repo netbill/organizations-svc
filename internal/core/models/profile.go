@@ -8,8 +8,6 @@ import (
 
 type AccountActor = uuid.UUID
 
-type UploadScope = uuid.UUID
-
 type Profile struct {
 	AccountID uuid.UUID `json:"account_id"`
 	Username  string    `json:"username"`

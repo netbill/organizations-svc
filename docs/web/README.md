@@ -99,6 +99,7 @@ Class | Method | HTTP request | Description
  - [Invite](docs/Invite.md)
  - [InviteData](docs/InviteData.md)
  - [InviteDataAttributes](docs/InviteDataAttributes.md)
+ - [InviteIncludedInner](docs/InviteIncludedInner.md)
  - [InvitesCollection](docs/InvitesCollection.md)
  - [Member](docs/Member.md)
  - [MemberCollection](docs/MemberCollection.md)

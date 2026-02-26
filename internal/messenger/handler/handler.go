@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/modules/place"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 )
 
@@ -14,6 +15,7 @@ type Handler struct {
 
 type Modules struct {
 	Profile profileMod
+	Place   placeMod
 }
 
 func New(modules Modules) *Handler {
@@ -27,4 +29,10 @@ type profileMod interface {
 	Update(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error)
 
 	Delete(ctx context.Context, accountID uuid.UUID) error
+}
+
+type placeMod interface {
+	Create(ctx context.Context, params place.CreateParams) error
+	Update(ctx context.Context, id uuid.UUID, params place.UpdateParams) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
+	"github.com/netbill/restkit/render"
 )
 
 const operationDeactivateOrganization = "deactivate_organization"
@@ -21,7 +22,7 @@ func (c *Controller) DeactivateOrganization(w http.ResponseWriter, r *http.Reque
 	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
 		log.WithError(err).Info("invalid organization id")
-		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("invalid organization id"))...)
+		render.ResponseError(w, problems.BadRequest(fmt.Errorf("invalid organization id"))...)
 		return
 	}
 
@@ -31,14 +32,14 @@ func (c *Controller) DeactivateOrganization(w http.ResponseWriter, r *http.Reque
 	switch {
 	case errors.Is(err, errx.ErrorOrganizationNotFound):
 		log.Info("organization not found")
-		c.responser.RenderErr(w, problems.NotFound("organization not found"))
+		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to update organization")
-		c.responser.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
+		render.ResponseError(w, problems.Forbidden("not enough rights to update organization"))
 	case err != nil:
 		log.WithError(err).Error("failed to deactivate organization")
-		c.responser.RenderErr(w, problems.InternalError())
+		render.ResponseError(w, problems.InternalError())
 	default:
-		c.responser.Render(w, http.StatusOK, responses.Organization(res))
+		render.Response(w, http.StatusOK, responses.Organization(res))
 	}
 }

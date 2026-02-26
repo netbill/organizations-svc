@@ -198,6 +198,56 @@ func (q *orgMembers) FilterByHead(head bool) repository.OrgMembersQ {
 	return q
 }
 
+func (q *orgMembers) FilterByUsername(username string) repository.OrgMembersQ {
+	q.selector = q.selector.Where(sq.Eq{"p.username": username})
+	q.counter = q.counter.Where(sq.Eq{"p.username": username})
+	return q
+}
+
+func (q *orgMembers) FilterLikeUsername(username string) repository.OrgMembersQ {
+	q.selector = q.selector.Where(sq.ILike{"p.username": "%" + username + "%"})
+	q.counter = q.counter.Where(sq.ILike{"p.username": "%" + username + "%"})
+	return q
+}
+
+func (q *orgMembers) FilterLikePseudonym(pseudonym string) repository.OrgMembersQ {
+	q.selector = q.selector.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
+	q.counter = q.counter.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
+	return q
+}
+
+func (q *orgMembers) FilterBestMatch(term string) repository.OrgMembersQ {
+	like := "%" + term + "%"
+	prefix := term + "%"
+
+	q.selector = q.selector.Where(sq.Or{
+		sq.ILike{"p.username": like},
+		sq.ILike{"p.pseudonym": like},
+	})
+	q.counter = q.counter.Where(sq.Or{
+		sq.ILike{"p.username": like},
+		sq.ILike{"p.pseudonym": like},
+	})
+
+	q.selector = q.selector.OrderByClause(sq.Expr(
+		`CASE
+			WHEN lower(p.username) = lower(?) THEN 0
+			WHEN lower(p.pseudonym) = lower(?) THEN 1
+			WHEN lower(p.username) LIKE lower(?) THEN 2
+			WHEN lower(p.pseudonym) LIKE lower(?) THEN 3
+			WHEN lower(p.username) LIKE lower(?) THEN 4
+			WHEN lower(p.pseudonym) LIKE lower(?) THEN 5
+			ELSE 6
+		END`,
+		term, term,
+		prefix, prefix,
+		like, like,
+	))
+
+	q.selector = q.selector.OrderBy("p.username ASC", "m.id ASC")
+	return q
+}
+
 func (q *orgMembers) UpdateOne(ctx context.Context) (repository.OrganizationMemberRow, error) {
 	q.updater = q.updater.
 		Set("updated_at", time.Now().UTC()).

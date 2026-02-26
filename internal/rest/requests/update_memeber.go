@@ -1,4 +1,4 @@
-package request
+package requests
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ func UpdateMember(r *http.Request) (params resources.UpdateMember, err error) {
 
 	errs := validation.Errors{
 		"data/id":         validation.Validate(params.Data.Id, validation.Required),
-		"data/type":       validation.Validate(params.Data.Type, validation.Required, validation.In("update_member")),
+		"data/type":       validation.Validate(params.Data.Type, validation.Required, validation.In("member")),
 		"data/attributes": validation.Validate(params.Data.Attributes, validation.Required),
 	}
 

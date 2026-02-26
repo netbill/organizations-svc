@@ -4,10 +4,11 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
-	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/requests"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
+	"github.com/netbill/restkit/render"
 )
 
 const operationCreateOrganization = "create_organization"
@@ -15,10 +16,10 @@ const operationCreateOrganization = "create_organization"
 func (c *Controller) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 	log := scope.Log(r).WithOperation(operationCreateOrganization)
 
-	req, err := request.CreateOrganization(r)
+	req, err := requests.CreateOrganization(r)
 	if err != nil {
-		log.WithError(err).Info("invalid create organization request")
-		c.responser.RenderErr(w, problems.BadRequest(err)...)
+		log.WithError(err).Info("invalid create organization requests")
+		render.ResponseError(w, problems.BadRequest(err)...)
 		return
 	}
 
@@ -32,8 +33,8 @@ func (c *Controller) CreateOrganization(w http.ResponseWriter, r *http.Request) 
 	switch {
 	case err != nil:
 		log.WithError(err).Error("failed to create organization")
-		c.responser.RenderErr(w, problems.InternalError())
+		render.ResponseError(w, problems.InternalError())
 	default:
-		c.responser.Render(w, http.StatusCreated, responses.Organization(res))
+		render.Response(w, http.StatusCreated, responses.Organization(res))
 	}
 }

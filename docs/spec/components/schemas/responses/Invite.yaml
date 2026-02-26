@@ -4,3 +4,6 @@ required:
 properties:
   data:
     $ref: './InviteData.yaml'
+
+  included:
+    $ref: './InviteIncluded.yaml'

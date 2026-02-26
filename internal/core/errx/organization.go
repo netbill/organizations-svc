@@ -9,10 +9,10 @@ var (
 
 	ErrorNoContentUploaded = ape.DeclareError("NO_CONTENT_UPLOADED")
 
-	ErrorOrganizationIconKeyIsInvalid        = ape.DeclareError("ORGANIZATION_AVATAR_KEY_IS_INVALID")
-	ErrorOrganizationIconContentIsExceedsMax = ape.DeclareError("ORGANIZATION_AVATAR_CONTENT_EXCEEDS_MAX")
-	ErrorOrganizationIconResolutionIsInvalid = ape.DeclareError("ORGANIZATION_AVATAR_RESOLUTION_IS_INVALID")
-	ErrorOrganizationIconFormatIsNotAllowed  = ape.DeclareError("ORGANIZATION_AVATAR_FORMAT_IS_NOT_ALLOWED")
+	ErrorOrganizationIconKeyIsInvalid        = ape.DeclareError("ORGANIZATION_ICON_KEY_IS_INVALID")
+	ErrorOrganizationIconContentIsExceedsMax = ape.DeclareError("ORGANIZATION_ICON_CONTENT_EXCEEDS_MAX")
+	ErrorOrganizationIconResolutionIsInvalid = ape.DeclareError("ORGANIZATION_ICON_RESOLUTION_IS_INVALID")
+	ErrorOrganizationIconFormatIsNotAllowed  = ape.DeclareError("ORGANIZATION_ICON_FORMAT_IS_NOT_ALLOWED")
 
 	ErrorOrganizationBannerKeyIsInvalid        = ape.DeclareError("ORGANIZATION_BANNER_KEY_IS_INVALID")
 	ErrorOrganizationBannerContentIsExceedsMax = ape.DeclareError("ORGANIZATION_BANNER_CONTENT_EXCEEDS_MAX")

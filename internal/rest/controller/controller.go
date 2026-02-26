@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/models"
@@ -152,26 +151,31 @@ type memberSvc interface {
 	) error
 }
 
-type responser interface {
-	Status(w http.ResponseWriter, status int)
-	Render(w http.ResponseWriter, status int, res interface{})
-	RenderErr(w http.ResponseWriter, errs ...error)
+type profileSvc interface {
+	GetByID(
+		ctx context.Context,
+		accountID uuid.UUID,
+	) (models.Profile, error)
+
+	GetByIDs(
+		ctx context.Context,
+		accountIDs []uuid.UUID,
+	) ([]models.Profile, error)
 }
 
 type Modules struct {
 	Organization organizationSvc
 	Member       memberSvc
 	Invite       inviteSvc
+	Profile      profileSvc
 }
 
 type Controller struct {
-	modules   *Modules
-	responser responser
+	modules *Modules
 }
 
-func New(modules *Modules, responser responser) *Controller {
+func New(modules *Modules) *Controller {
 	return &Controller{
-		modules:   modules,
-		responser: responser,
+		modules: modules,
 	}
 }

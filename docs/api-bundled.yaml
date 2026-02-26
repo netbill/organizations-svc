@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.1.1
 info:
   title: organizations-svc API
   description: API documentation for organizations-svc
@@ -90,7 +90,7 @@ components:
             type:
               type: string
               enum:
-                - update_member
+                - organization_member
             attributes:
               type: object
               properties:
@@ -114,7 +114,7 @@ components:
             type:
               type: string
               enum:
-                - create_invite
+                - invite
             attributes:
               type: object
               required:
@@ -129,6 +129,62 @@ components:
                   type: string
                   format: uuid
                   description: The ID of the account that was invited
+    DeleteUploadOrgIcon:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: organization id
+            type:
+              type: string
+              enum:
+                - organization
+            attributes:
+              type: object
+              required:
+                - icon_key
+              properties:
+                icon_key:
+                  type: string
+                  description: icon media key
+    DeleteUploadOrgBanner:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: organization id
+            type:
+              type: string
+              enum:
+                - organization
+            attributes:
+              type: object
+              required:
+                - banner_key
+              properties:
+                banner_key:
+                  type: string
+                  description: icon media key
     PaginationData:
       type: object
       required:
@@ -437,12 +493,7 @@ components:
                           type: string
                           format: uuid
         included:
-          type: array
-          description: 'Included related resources (profile, organization)'
-          items:
-            oneOf:
-              - $ref: '#/components/schemas/ProfileData'
-              - $ref: '#/components/schemas/OrganizationData'
+          $ref: '#/components/schemas/MemberIncluded'
     MemberCollection:
       type: object
       required:
@@ -453,64 +504,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Member/properties/data'
+        included:
+          $ref: '#/components/schemas/MemberIncluded'
         links:
           $ref: '#/components/schemas/PaginationData'
-    DeleteUploadOrgIcon:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: organization id
-            type:
-              type: string
-              enum:
-                - delete_organization_upload_icon
-            attributes:
-              type: object
-              required:
-                - icon_key
-              properties:
-                icon_key:
-                  type: string
-                  description: icon media key
-    DeleteUploadOrgBanner:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: organization id
-            type:
-              type: string
-              enum:
-                - delete_organization_upload_banner
-            attributes:
-              type: object
-              required:
-                - banner_key
-              properties:
-                banner_key:
-                  type: string
-                  description: icon media key
+    MemberIncluded:
+      type: array
+      items:
+        description: 'Included related resources for members (e.g., organization)'
+        oneOf:
+          - $ref: '#/components/schemas/ProfileData'
+          - $ref: '#/components/schemas/OrganizationData'
     Invite:
       type: object
       required:
@@ -596,6 +600,8 @@ components:
                         id:
                           type: string
                           format: uuid
+        included:
+          $ref: '#/components/schemas/InviteIncluded'
     InvitesCollection:
       type: object
       required:
@@ -606,5 +612,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Invite/properties/data'
+        included:
+          $ref: '#/components/schemas/InviteIncluded'
         links:
           $ref: '#/components/schemas/PaginationData'
+    InviteIncluded:
+      type: array
+      items:
+        description: 'Included related resources  for invites (e.g., organization, profile)'
+        oneOf:
+          - $ref: '#/components/schemas/ProfileData'
+          - $ref: '#/components/schemas/OrganizationData'

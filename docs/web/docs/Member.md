@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Data** | [**MemberData**](MemberData.md) |  | 
-**Included** | Pointer to [**[]MemberIncludedInner**](MemberIncludedInner.md) | Included related resources (profile, organization) | [optional] 
+**Included** | Pointer to [**[]MemberIncludedInner**](MemberIncludedInner.md) |  | [optional] 
 
 ## Methods
 

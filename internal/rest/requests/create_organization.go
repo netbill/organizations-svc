@@ -1,4 +1,4 @@
-package request
+package requests
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 
 func newDecodeError(what string, err error) error {
 	return validation.Errors{
-		what: fmt.Errorf("decode request %s: %w", what, err),
+		what: fmt.Errorf("decode requests %s: %w", what, err),
 	}
 }
 
@@ -22,7 +22,7 @@ func CreateOrganization(r *http.Request) (req resources.CreateOrganization, err 
 	}
 
 	errs := validation.Errors{
-		"data/type":       validation.Validate(req.Data.Type, validation.Required, validation.In("create_organization")),
+		"data/type":       validation.Validate(req.Data.Type, validation.Required, validation.In("organization")),
 		"data/attributes": validation.Validate(req.Data.Attributes, validation.Required),
 	}
 

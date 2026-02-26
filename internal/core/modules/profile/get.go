@@ -7,7 +7,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) GetByAccountID(
+func (m *Module) GetByID(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) (models.Profile, error) {
@@ -17,6 +17,18 @@ func (m *Module) GetByAccountID(
 	}
 
 	return profile, nil
+}
+
+func (m *Module) GetByIDs(
+	ctx context.Context,
+	accountIDs []uuid.UUID,
+) ([]models.Profile, error) {
+	profiles, err := m.repo.GetProfilesByAccountIDs(ctx, accountIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
 }
 
 func (m *Module) GetByUsername(

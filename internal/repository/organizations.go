@@ -108,7 +108,10 @@ func (r *Repository) GetOrganizations(
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
 	if limit == 0 {
-		limit = 10
+		limit = 20
+	}
+	if limit > 1000 {
+		limit = 1000
 	}
 
 	q := r.OrganizationsSql.New()

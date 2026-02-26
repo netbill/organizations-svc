@@ -10,6 +10,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/pagi"
 	"github.com/netbill/restkit/problems"
+	"github.com/netbill/restkit/render"
 )
 
 const operationGetOrganizations = "get_organizations"
@@ -31,7 +32,7 @@ func (c *Controller) GetOrganizations(w http.ResponseWriter, r *http.Request) {
 	limit, offset := pagi.GetPagination(r)
 	if limit < 1 || limit > 100 {
 		log.Info("invalid pagination limit")
-		c.responser.RenderErr(w, problems.BadRequest(fmt.Errorf("pagination limit must be between 1 and 100"))...)
+		render.ResponseError(w, problems.BadRequest(fmt.Errorf("pagination limit must be between 1 and 100"))...)
 		return
 	}
 
@@ -41,8 +42,8 @@ func (c *Controller) GetOrganizations(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err != nil:
 		log.WithError(err).Error("failed to get organizations")
-		c.responser.RenderErr(w, problems.InternalError())
+		render.ResponseError(w, problems.InternalError())
 	default:
-		c.responser.Render(w, http.StatusOK, responses.Organizations(r, organizations))
+		render.Response(w, http.StatusOK, responses.Organizations(r, organizations))
 	}
 }

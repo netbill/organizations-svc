@@ -22,7 +22,6 @@ func (p *Publisher) WriteOrganizationCreated(
 		Name:           organization.Name,
 		IconKey:        organization.IconKey,
 		BannerKey:      organization.BannerKey,
-		Version:        organization.Version,
 		CreatedAt:      organization.CreatedAt,
 	})
 	if err != nil {

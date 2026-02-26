@@ -1,4 +1,4 @@
-package request
+package requests
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ func SentInvite(r *http.Request) (params resources.CreateInvite, err error) {
 	}
 
 	errs := validation.Errors{
-		"data/type":       validation.Validate(params.Data.Type, validation.Required, validation.In("create_invite")),
+		"data/type":       validation.Validate(params.Data.Type, validation.Required, validation.In("invite")),
 		"data/attributes": validation.Validate(params.Data.Attributes, validation.Required),
 	}
 

@@ -1,4 +1,4 @@
-package request
+package requests
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ func UpdateOrganization(r *http.Request) (req resources.UpdateOrganization, err 
 
 	errs := validation.Errors{
 		"data/id":         validation.Validate(req.Data.Id, validation.Required),
-		"data/type":       validation.Validate(req.Data.Type, validation.Required, validation.In("update_organization")),
+		"data/type":       validation.Validate(req.Data.Type, validation.Required, validation.In("organization")),
 		"data/attributes": validation.Validate(req.Data.Attributes, validation.Required),
 	}
 

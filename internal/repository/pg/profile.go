@@ -16,8 +16,8 @@ import (
 
 const profilesTable = "profiles"
 
-const profilesColumns = "account_id, username, official, pseudonym, avatar_key, source_created_at, source_updated_at, replica_created_at, replica_updated_at"
-const profilesColumnsP = "p.account_id, p.username, p.official, p.pseudonym, p.avatar_key, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
+const profilesColumns = "account_id, username, official, pseudonym, avatar_key, source_created_at, version, source_updated_at, replica_created_at, replica_updated_at"
+const profilesColumnsP = "p.account_id, p.username, p.official, p.pseudonym, p.avatar_key, p.version, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
 
 func scanProfile(row sq.RowScanner) (p repository.ProfileRow, err error) {
 	var pseudonym pgtype.Text
@@ -29,6 +29,7 @@ func scanProfile(row sq.RowScanner) (p repository.ProfileRow, err error) {
 		&p.Official,
 		&pseudonym,
 		&avatarKey,
+		&p.Version,
 		&p.SourceCreatedAt,
 		&p.SourceUpdatedAt,
 		&p.ReplicaCreatedAt,
@@ -77,19 +78,15 @@ func (q *profiles) New() repository.ProfilesQ {
 }
 
 func (q *profiles) Insert(ctx context.Context, data repository.ProfileRow) (repository.ProfileRow, error) {
-	now := time.Now().UTC()
-
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"account_id":        data.AccountID,
 		"username":          data.Username,
 		"official":          data.Official,
 		"pseudonym":         data.Pseudonym,
 		"avatar_key":        data.AvatarKey,
+		"version":           data.Version,
 		"source_created_at": data.SourceCreatedAt.UTC(),
 		"source_updated_at": data.SourceUpdatedAt.UTC(),
-		// replica_* могут иметь DEFAULT в схеме, но если ты явно задаёшь — оставляем поведение
-		"replica_created_at": now,
-		"replica_updated_at": now,
 	}).Suffix("RETURNING " + profilesColumns).ToSql()
 	if err != nil {
 		return repository.ProfileRow{}, fmt.Errorf("building insert query for %s: %w", profilesTable, err)
@@ -188,7 +185,7 @@ func (q *profiles) FilterLikePseudonym(pseudonym string) repository.ProfilesQ {
 }
 
 func (q *profiles) UpdateOne(ctx context.Context) (repository.ProfileRow, error) {
-	q.updater = q.updater.Set("replica_updated_at", time.Now().UTC())
+	q.updater = q.updater.Set("updated_at", time.Now().UTC())
 
 	query, args, err := q.updater.Suffix("RETURNING " + profilesColumns).ToSql()
 	if err != nil {
@@ -196,22 +193,6 @@ func (q *profiles) UpdateOne(ctx context.Context) (repository.ProfileRow, error)
 	}
 
 	return scanProfile(q.db.QueryRow(ctx, query, args...))
-}
-
-func (q *profiles) UpdateMany(ctx context.Context) (int64, error) {
-	q.updater = q.updater.Set("replica_updated_at", time.Now().UTC())
-
-	query, args, err := q.updater.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("building update query for %s: %w", profilesTable, err)
-	}
-
-	res, err := q.db.Exec(ctx, query, args...)
-	if err != nil {
-		return 0, fmt.Errorf("executing update query for %s: %w", profilesTable, err)
-	}
-
-	return res.RowsAffected(), nil
 }
 
 func (q *profiles) UpdateUsername(v string) repository.ProfilesQ {
@@ -231,6 +212,11 @@ func (q *profiles) UpdatePseudonym(v *string) repository.ProfilesQ {
 
 func (q *profiles) UpdateAvatarKey(v *string) repository.ProfilesQ {
 	q.updater = q.updater.Set("avatar_key", v)
+	return q
+}
+
+func (q *profiles) UpdateVersion(v int32) repository.ProfilesQ {
+	q.updater = q.updater.Set("version", v)
 	return q
 }
 

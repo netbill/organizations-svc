@@ -131,7 +131,10 @@ func (r *Repository) GetOrganizationInvites(
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
 	if limit == 0 {
-		limit = 10
+		limit = 20
+	}
+	if limit > 1000 {
+		limit = 1000
 	}
 
 	rows, err := r.OrgInvitesSql.New().

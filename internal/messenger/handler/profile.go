@@ -45,6 +45,7 @@ func (h *Handler) ProfileUpdated(
 		Pseudonym: payload.Pseudonym,
 		AvatarKey: payload.AvatarKey,
 		Official:  payload.Official,
+		Version:   payload.Version,
 		UpdatedAt: payload.UpdatedAt,
 	}); err != nil {
 		return err

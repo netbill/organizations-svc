@@ -26,7 +26,6 @@ import (
 	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/tokenmanager"
 	"github.com/netbill/pgdbx"
-	"github.com/netbill/restkit"
 )
 
 func (a *App) Run(ctx context.Context) error {
@@ -51,11 +50,12 @@ func (a *App) Run(ctx context.Context) error {
 	db := pgdbx.NewDB(pool)
 
 	repo := &repository.Repository{
-		Transactioner:    pg.NewTransaction(db),
+		TransactionSql:   pg.NewTransaction(db),
 		OrganizationsSql: pg.NewOrganizationsQ(db),
 		OrgMembersSql:    pg.NewOrgMembersQ(db),
 		OrgInvitesSql:    pg.NewOrgInvitesQ(db),
 		ProfilesSql:      pg.NewProfilesQ(db),
+		PlacesSql:        pg.NewPlacesQ(db),
 	}
 
 	cfg, err := awscfg.LoadDefaultConfig(
@@ -114,13 +114,12 @@ func (a *App) Run(ctx context.Context) error {
 		AccessSK: a.config.Auth.Tokens.AccountAccess.SecretKey,
 	})
 
-	responser := restkit.NewResponser()
 	ctrl := controller.New(&controller.Modules{
 		Organization: orgCore,
 		Member:       orgMemberCore,
 		Invite:       orgInviteCore,
-	}, responser)
-	mdll := middlewares.New(responser, tokenManager)
+	})
+	mdll := middlewares.New(tokenManager)
 	router := rest.New(mdll, ctrl)
 
 	run(func() {
@@ -178,6 +177,13 @@ func (a *App) Run(ctx context.Context) error {
 			MaxBytes:      a.config.Kafka.Consume.Topics.ProfilesV1.MaxBytes,
 			MaxWait:       a.config.Kafka.Consume.Topics.ProfilesV1.MaxWait,
 			QueueCapacity: a.config.Kafka.Consume.Topics.ProfilesV1.QueueCapacity,
+		},
+		PlacesV1: messenger.ConsumeKafkaConfig{
+			Instances:     a.config.Kafka.Consume.Topics.PlacesV1.Instances,
+			MinBytes:      a.config.Kafka.Consume.Topics.PlacesV1.MinBytes,
+			MaxBytes:      a.config.Kafka.Consume.Topics.PlacesV1.MaxBytes,
+			MaxWait:       a.config.Kafka.Consume.Topics.PlacesV1.MaxWait,
+			QueueCapacity: a.config.Kafka.Consume.Topics.PlacesV1.QueueCapacity,
 		},
 	})
 	defer consumer.Close()
