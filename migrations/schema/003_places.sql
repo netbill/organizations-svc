@@ -8,7 +8,7 @@ CREATE TYPE place_statuses AS ENUM (
 
 CREATE TABLE places (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    class_id        UUID NOT NULL REFERENCES place_classes(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    class_id        UUID NOT NULL,
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
 
     status   place_statuses         NOT NULL DEFAULT 'inactive',
@@ -29,3 +29,8 @@ CREATE TABLE places (
     replica_created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
     replica_updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
 );
+
+-- +migrate Down
+DROP TABLE places;
+
+DROP TYPE place_statuses;

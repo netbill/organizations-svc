@@ -68,6 +68,11 @@ type organizationSvc interface {
 		actor models.AccountActor,
 		organizationID uuid.UUID,
 	) (models.Organization, error)
+	Suspend(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		value bool,
+	) (models.Organization, error)
 
 	Delete(
 		ctx context.Context,
@@ -106,6 +111,11 @@ type inviteSvc interface {
 		organizationID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
+	GetListForAccount(
+		ctx context.Context,
+		actor models.AccountActor,
+		limit, offset uint,
+	) (pagi.Page[[]models.Invite], error)
 	GetForAccount(
 		ctx context.Context,
 		accountId uuid.UUID,
@@ -125,11 +135,11 @@ type memberSvc interface {
 		organizationID uuid.UUID,
 	) (models.Member, error)
 
-	GetInitiator(
+	GetByAccountAndOrgs(
 		ctx context.Context,
 		actor models.AccountActor,
-		organizationID uuid.UUID,
-	) (models.Member, error)
+		organizationIDs []uuid.UUID,
+	) ([]models.Member, error)
 
 	GetList(
 		ctx context.Context,

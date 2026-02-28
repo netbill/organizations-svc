@@ -30,13 +30,35 @@ func organizationData(organization models.Organization) resources.OrganizationDa
 	}
 }
 
-func Organizations(r *http.Request, page pagi.Page[[]models.Organization]) resources.OrganizationsCollection {
+type organizationResponse struct {
+	data     []resources.OrganizationData
+	included []resources.MemberData
+}
+
+type OrgCollectionOption func(*organizationResponse)
+
+func WithOrganizationMembers(members []models.Member) OrgCollectionOption {
+	return func(r *organizationResponse) {
+		for _, member := range members {
+			r.included = append(r.included, memberData(member))
+		}
+	}
+}
+
+func Organizations(r *http.Request, page pagi.Page[[]models.Organization], opts ...OrgCollectionOption) resources.OrganizationsCollection {
 	data := make([]resources.OrganizationData, len(page.Data))
 	for i, ag := range page.Data {
 		data[i] = Organization(ag).Data
 	}
 
 	links := pagi.BuildPageLinks(r, page.Page, page.Size, page.Total)
+
+	resp := &organizationResponse{
+		data: data,
+	}
+	for _, opt := range opts {
+		opt(resp)
+	}
 
 	return resources.OrganizationsCollection{
 		Data: data,
@@ -57,7 +79,7 @@ func UploadOrganizationMediaLinks(
 	return resources.UploadOrgMediaLinks{
 		Data: resources.UploadOrgMediaLinksData{
 			Id:   organization.ID,
-			Type: "update_organization_session",
+			Type: "organization_upload_links",
 			Attributes: resources.UploadOrgMediaLinksDataAttributes{
 				Icon: resources.UploadResourcesLink{
 					Key:        uploadLinks.Icon.Key,

@@ -2,11 +2,8 @@ package member
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/restkit/pagi"
 )
@@ -15,30 +12,20 @@ func (m *Module) GetByID(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Member, error) {
-	row, err := m.repo.GetMember(ctx, memberID)
-	if err != nil {
-		return models.Member{}, err
-	}
-
-	return row, nil
+	return m.repo.GetMember(ctx, memberID)
 }
 
-func (m *Module) GetInitiator(
+func (m *Module) GetByAccountAndOrgs(
 	ctx context.Context,
 	actor models.AccountActor,
-	organizationID uuid.UUID,
-) (models.Member, error) {
-	member, err := m.GetByAccountAndOrganization(ctx, actor, organizationID)
-	if errors.Is(err, errx.ErrorMemberNotFound) {
-		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf(
-				"initiator member with account id %s and organization id %s not found: %w",
-				member.AccountID, organizationID, err,
-			),
-		)
+	organizationIDs []uuid.UUID,
+) ([]models.Member, error) {
+	rows, err := m.repo.GetMembersByAccountAndOrgs(ctx, actor, organizationIDs)
+	if err != nil {
+		return nil, err
 	}
 
-	return member, err
+	return rows, nil
 }
 
 func (m *Module) GetByAccountAndOrganization(

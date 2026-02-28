@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	OrganizationStatusActive   = "active"
-	OrganizationStatusInactive = "inactive"
+	OrganizationStatusActive    = "active"
+	OrganizationStatusInactive  = "inactive"
+	OrganizationStatusSuspended = "suspended"
 )
 
 type Organization struct {

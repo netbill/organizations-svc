@@ -17,18 +17,33 @@ func (m *Module) Delete(
 ) error {
 	organization, err := m.GetByID(ctx, organizationID)
 	if errors.Is(err, errx.ErrorOrganizationNotFound) {
-		return nil
-	} else if err != nil {
+		buried, err := m.repo.OrganizationIsBuried(ctx, organizationID)
+		if err != nil {
+			return err
+		}
+		if buried {
+			return errx.ErrorOrganizationDeleted.Raise(
+				fmt.Errorf("organization with id %s is already deleted", organizationID),
+			)
+		}
+	}
+	if err != nil {
 		return err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organization.ID)
+	member, err := m.getInitiator(ctx, actor, organization.ID)
 	if err != nil {
 		return err
 	}
 	if !member.Head {
 		return errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("initiator member %s is not head of organization %s", member.ID, organization.ID),
+		)
+	}
+
+	if organization.Status == models.OrganizationStatusSuspended {
+		return errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization %s is suspended", organization.ID),
 		)
 	}
 
@@ -43,6 +58,11 @@ func (m *Module) Delete(
 	}
 
 	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = m.repo.BuryOrganization(ctx, organizationID)
+		if err != nil {
+			return fmt.Errorf("failed to bury organization: %w", err)
+		}
+
 		err = m.repo.DeleteOrganization(ctx, organizationID)
 		if err != nil {
 			return fmt.Errorf("failed to delete organization: %w", err)

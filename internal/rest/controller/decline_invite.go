@@ -42,6 +42,12 @@ func (c *Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, errx.ErrorInviteExpired):
 		log.Info("invite has expired")
 		render.ResponseError(w, problems.Forbidden("invite has expired"))
+	case errors.Is(err, errx.ErrorOrganizationNotFound):
+		log.Info("organization not found for invite")
+		render.ResponseError(w, problems.NotFound("organization not found for invite"))
+	case errors.Is(err, errx.ErrorOrganizationIsNotActive):
+		log.Info("organization is not active")
+		render.ResponseError(w, problems.Forbidden("organization is not active"))
 	case err != nil:
 		log.WithError(err).Error("failed to decline invite")
 		render.ResponseError(w, problems.InternalError())

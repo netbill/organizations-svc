@@ -14,12 +14,7 @@ func (m *Module) Activate(
 	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
-	org, err := m.GetByID(ctx, organizationID)
-	if err != nil {
-		return models.Organization{}, err
-	}
-
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, org.ID)
+	member, err := m.getInitiator(ctx, actor, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -29,8 +24,17 @@ func (m *Module) Activate(
 		)
 	}
 
+	org, err := m.GetByID(ctx, organizationID)
+	if err != nil {
+		return models.Organization{}, err
+	}
 	if org.Status == models.OrganizationStatusActive {
 		return org, nil
+	}
+	if org.Status == models.OrganizationStatusSuspended {
+		return models.Organization{}, errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization %s is suspended", org.ID),
+		)
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -39,12 +43,7 @@ func (m *Module) Activate(
 			return err
 		}
 
-		err = m.messenger.WriteOrganizationUpdated(ctx, org)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return m.messenger.WriteOrganizationUpdated(ctx, org)
 	})
 	if err != nil {
 		return models.Organization{}, err
@@ -58,12 +57,7 @@ func (m *Module) Deactivate(
 	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
-	org, err := m.GetByID(ctx, organizationID)
-	if err != nil {
-		return models.Organization{}, err
-	}
-
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, org.ID)
+	member, err := m.getInitiator(ctx, actor, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -73,8 +67,17 @@ func (m *Module) Deactivate(
 		)
 	}
 
+	org, err := m.GetByID(ctx, organizationID)
+	if err != nil {
+		return models.Organization{}, err
+	}
 	if org.Status == models.OrganizationStatusInactive {
 		return org, nil
+	}
+	if org.Status == models.OrganizationStatusSuspended {
+		return models.Organization{}, errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization %s is suspended", org.ID),
+		)
 	}
 
 	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
@@ -83,12 +86,7 @@ func (m *Module) Deactivate(
 			return err
 		}
 
-		err = m.messenger.WriteOrganizationUpdated(ctx, org)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return m.messenger.WriteOrganizationUpdated(ctx, org)
 	}); err != nil {
 		return models.Organization{}, err
 	}

@@ -7,5 +7,10 @@ properties:
     type: array
     items:
       $ref: './OrganizationData.yaml'
+  included:
+    type: array
+    items:
+      oneOf:
+        - $ref: './MemberData.yaml'
   links:
     $ref: './PaginationData.yaml'

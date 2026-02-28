@@ -51,6 +51,16 @@ func (m *Module) Create(
 		)
 	}
 
+	member, err := m.repo.MemberExists(ctx, params.AccountID, params.OrganizationID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+	if member {
+		return models.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
+			fmt.Errorf("account with id %s is already a member of organization %s", params.AccountID, params.OrganizationID),
+		)
+	}
+
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {
 		invite, err = m.repo.CreateInvite(ctx, params)
 		if err != nil {

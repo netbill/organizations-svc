@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/netbill/organizations-svc/pkg/log"
+	"github.com/netbill/restkit/tokens"
 )
 
 type Handlers interface {
@@ -30,6 +31,8 @@ type Handlers interface {
 
 	ActivateOrganization(w http.ResponseWriter, r *http.Request)
 	DeactivateOrganization(w http.ResponseWriter, r *http.Request)
+	SuspendOrganization(w http.ResponseWriter, r *http.Request)
+	UnsuspendOrganization(w http.ResponseWriter, r *http.Request)
 
 	GetOrganizationInvites(w http.ResponseWriter, r *http.Request)
 	GetOrganizationMembers(w http.ResponseWriter, r *http.Request)
@@ -80,6 +83,7 @@ type Config struct {
 
 func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 	auth := s.middlewares.AccountAuth()
+	sysadmin := s.middlewares.AccountAuth(tokens.RoleSystemAdmin)
 
 	r := chi.NewRouter()
 	r.Use(
@@ -110,6 +114,9 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 
 					r.With(auth).Post("/activate", s.handlers.ActivateOrganization)
 					r.With(auth).Post("/deactivate", s.handlers.DeactivateOrganization)
+					
+					r.With(sysadmin).Post("/suspend", s.handlers.SuspendOrganization)
+					r.With(sysadmin).Post("/unsuspend", s.handlers.UnsuspendOrganization)
 
 					r.Get("/members", s.handlers.GetOrganizationMembers)
 					r.With(auth).Get("/invites", s.handlers.GetOrganizationInvites)

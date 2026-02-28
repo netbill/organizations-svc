@@ -70,6 +70,9 @@ type repo interface {
 
 	ExistsProfileByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
 
+	BuryInvite(ctx context.Context, inviteID uuid.UUID) error
+	InviteIsBuried(ctx context.Context, inviteID uuid.UUID) (bool, error)
+
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
@@ -89,12 +92,10 @@ func (m *Module) getInitiator(
 ) (models.Member, error) {
 	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
 	if errors.Is(err, errx.ErrorMemberNotFound) {
-		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Member{}, errx.ErrorInitiatorNotMemberOfOrganization.Raise(
 			fmt.Errorf("initiator with account id %s is not a member of organization %s", actor, organizationID),
 		)
-	} else if err != nil {
-		return models.Member{}, err
 	}
 
-	return row, nil
+	return row, err
 }

@@ -3,9 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/netbill/eventbox"
 	"github.com/netbill/evtypes"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 )
@@ -19,16 +21,26 @@ func (h *Handler) ProfileCreated(
 		return err
 	}
 
-	if _, err := h.modules.Profile.Create(ctx, models.Profile{
+	log := h.log.WithInboxEvent(event).With("account_id", payload.AccountID)
+
+	_, err := h.modules.Profile.Create(ctx, models.Profile{
 		AccountID: payload.AccountID,
 		Username:  payload.Username,
 		CreatedAt: payload.CreatedAt,
-	}); err != nil {
+	})
+	switch {
+	case errors.Is(err, errx.ErrorProfileAlreadyExists):
+		log.Debug("received profile created event for already existing profile")
+		return nil
+	case errors.Is(err, errx.ErrorProfileDeleted):
+		log.Debug("received profile created event for deleted profile")
+		return nil
+	case err != nil:
 		return err
+	default:
+		log.Debug("profile created successfully")
+		return nil
 	}
-
-	return nil
-
 }
 
 func (h *Handler) ProfileUpdated(
@@ -40,18 +52,26 @@ func (h *Handler) ProfileUpdated(
 		return err
 	}
 
-	if _, err := h.modules.Profile.Update(ctx, payload.AccountID, profile.UpdateParams{
+	log := h.log.WithInboxEvent(event).With("account_id", payload.AccountID)
+
+	_, err := h.modules.Profile.Update(ctx, payload.AccountID, profile.UpdateParams{
 		Username:  payload.Username,
 		Pseudonym: payload.Pseudonym,
 		AvatarKey: payload.AvatarKey,
 		Official:  payload.Official,
 		Version:   payload.Version,
 		UpdatedAt: payload.UpdatedAt,
-	}); err != nil {
+	})
+	switch {
+	case errors.Is(err, errx.ErrorProfileDeleted):
+		log.Debug("received profile updated event for deleted profile")
+		return nil
+	case err != nil:
 		return err
+	default:
+		log.Debug("profile updated successfully")
+		return nil
 	}
-
-	return nil
 }
 
 func (h *Handler) ProfileDeleted(
@@ -63,9 +83,17 @@ func (h *Handler) ProfileDeleted(
 		return err
 	}
 
-	if err := h.modules.Profile.Delete(ctx, payload.AccountID); err != nil {
-		return err
-	}
+	log := h.log.WithInboxEvent(event).With("account_id", payload.AccountID)
 
-	return nil
+	err := h.modules.Profile.Delete(ctx, payload.AccountID)
+	switch {
+	case errors.Is(err, errx.ErrorProfileDeleted):
+		log.Debug("received profile deleted event for already deleted profile")
+		return nil
+	case err != nil:
+		return err
+	default:
+		log.Debug("profile deleted successfully")
+		return nil
+	}
 }

@@ -32,6 +32,15 @@ func (c *Controller) DeleteOrganization(w http.ResponseWriter, r *http.Request) 
 	case errors.Is(err, errx.ErrorOrganizationNotFound):
 		log.Info("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
+	case errors.Is(err, errx.ErrorOrganizationDeleted):
+		log.Info("organization already deleted")
+		render.Response(w, http.StatusNoContent, nil)
+	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
+		log.Info("organization is suspended")
+		render.ResponseError(w, problems.Forbidden("organization is suspended"))
+	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
+		log.Info("membership in organization not found")
+		render.ResponseError(w, problems.Forbidden("not a member of the organization"))
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to delete organization")
 		render.ResponseError(w, problems.Forbidden("not enough rights to delete organization"))
@@ -42,6 +51,7 @@ func (c *Controller) DeleteOrganization(w http.ResponseWriter, r *http.Request) 
 		log.WithError(err).Error("failed to delete organization")
 		render.ResponseError(w, problems.InternalError())
 	default:
-		w.WriteHeader(http.StatusNoContent)
+		log.Info("organization deleted")
+		render.Response(w, http.StatusNoContent, nil)
 	}
 }

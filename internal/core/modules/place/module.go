@@ -24,7 +24,13 @@ type repo interface {
 
 	GetPlaceByID(ctx context.Context, id uuid.UUID) (models.Place, error)
 	GetPlacesByIDs(ctx context.Context, ids []uuid.UUID) ([]models.Place, error)
+	PlaceExists(ctx context.Context, id uuid.UUID) (bool, error)
 
 	UpdatePlaceByID(ctx context.Context, id uuid.UUID, params UpdateParams) error
 	DeletePlaceByID(ctx context.Context, id uuid.UUID) error
+
+	BuryPlace(ctx context.Context, id uuid.UUID) error
+	PlaceIsBuried(ctx context.Context, id uuid.UUID) (bool, error)
+
+	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }

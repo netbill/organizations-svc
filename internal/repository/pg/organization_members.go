@@ -166,7 +166,7 @@ func (q *orgMembers) FilterByAccountID(accountID uuid.UUID) repository.OrgMember
 	return q
 }
 
-func (q *orgMembers) FilterByOrganizationID(organizationID uuid.UUID) repository.OrgMembersQ {
+func (q *orgMembers) FilterByOrganizationID(organizationID ...uuid.UUID) repository.OrgMembersQ {
 	q.selector = q.selector.Where(sq.Eq{"m.organization_id": organizationID})
 	q.counter = q.counter.Where(sq.Eq{"m.organization_id": organizationID})
 	q.updater = q.updater.Where(sq.Eq{"m.organization_id": organizationID})

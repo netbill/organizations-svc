@@ -168,6 +168,10 @@ components:
           items:
             $ref: "#/components/schemas/OrganizationData"
           type: array
+        included:
+          items:
+            $ref: "#/components/schemas/Member/properties/data"
+          type: array
         links:
           $ref: "#/components/schemas/PaginationData"
       required:

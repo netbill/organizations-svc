@@ -29,12 +29,27 @@ func (c *Controller) DeleteMember(w http.ResponseWriter, r *http.Request) {
 
 	err = c.modules.Member.Delete(r.Context(), scope.AccountActor(r), memberID)
 	switch {
+	case errors.Is(err, errx.ErrorCannotDeleteSelf):
+		log.Info("cannot delete self")
+		render.ResponseError(w, problems.Forbidden("cannot delete self"))
 	case errors.Is(err, errx.ErrorMemberNotFound):
 		log.Info("member not found")
 		render.ResponseError(w, problems.NotFound("member not found"))
+	case errors.Is(err, errx.ErrorMemberDeleted):
+		log.Info("member already deleted")
+		render.Response(w, http.StatusNoContent, nil)
+	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
+		log.Info("membership in organization not found")
+		render.ResponseError(w, problems.Forbidden("not a member of the organization"))
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to delete member")
 		render.ResponseError(w, problems.Forbidden("not enough rights to delete member"))
+	case errors.Is(err, errx.ErrorOrganizationNotFound):
+		log.Info("organization not found")
+		render.ResponseError(w, problems.NotFound("organization not found"))
+	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
+		log.Info("organization is suspended")
+		render.ResponseError(w, problems.Forbidden("organization is suspended"))
 	case errors.Is(err, errx.ErrorCannotDeleteOrganizationHeadMember):
 		log.Info("cannot delete organization head member")
 		render.ResponseError(w, problems.Forbidden("cannot delete organization head member"))
@@ -42,6 +57,7 @@ func (c *Controller) DeleteMember(w http.ResponseWriter, r *http.Request) {
 		log.WithError(err).Error("failed to delete member")
 		render.ResponseError(w, problems.InternalError())
 	default:
-		w.WriteHeader(http.StatusNoContent)
+		log.Info("member deleted")
+		render.Response(w, http.StatusNoContent, nil)
 	}
 }

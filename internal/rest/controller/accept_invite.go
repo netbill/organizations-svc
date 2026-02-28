@@ -33,6 +33,12 @@ func (c *Controller) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, errx.ErrorInviteNotFound):
 		log.Info("invite not found")
 		render.ResponseError(w, problems.NotFound("invite not found"))
+	case errors.Is(err, errx.ErrorOrganizationNotFound):
+		log.Info("organization not found for invite")
+		render.ResponseError(w, problems.NotFound("organization not found for invite"))
+	case errors.Is(err, errx.ErrorOrganizationIsNotActive):
+		log.Info("organization is not active")
+		render.ResponseError(w, problems.Forbidden("organization is not active"))
 	case errors.Is(err, errx.ErrorInviteNotForInitiator):
 		log.Info("account has no rights to accept this invite")
 		render.ResponseError(w, problems.Forbidden("account has no rights to accept this invite"))

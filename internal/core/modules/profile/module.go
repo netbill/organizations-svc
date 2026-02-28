@@ -21,7 +21,9 @@ type repo interface {
 	ExistsProfileByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
 
 	DeleteProfileByAccountID(ctx context.Context, accountID uuid.UUID) error
-	DeleteMembersByAccountID(ctx context.Context, accountID uuid.UUID) error
+
+	BuryProfile(ctx context.Context, accountID uuid.UUID) error
+	ProfileIsBuried(ctx context.Context, accountID uuid.UUID) (bool, error)
 
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }

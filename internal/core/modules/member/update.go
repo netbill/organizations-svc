@@ -20,13 +20,28 @@ func (m *Module) Update(
 	memberID uuid.UUID,
 	params UpdateParams,
 ) (models.Member, error) {
-	member, err := m.GetByID(ctx, actor)
+	member, err := m.GetByID(ctx, memberID)
 	if err != nil {
 		return models.Member{}, err
 	}
-	if !member.Head {
+
+	initiator, err := m.getInitiator(ctx, actor, member.OrganizationID)
+	if err != nil {
+		return models.Member{}, err
+	}
+	if !initiator.Head {
 		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("account has no rights to update member %s", memberID),
+		)
+	}
+
+	organization, err := m.repo.GetOrganizationByID(ctx, member.OrganizationID)
+	if err != nil {
+		return models.Member{}, err
+	}
+	if organization.Status == models.OrganizationStatusSuspended {
+		return models.Member{}, errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization %s is suspended", member.OrganizationID),
 		)
 	}
 

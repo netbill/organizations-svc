@@ -17,6 +17,7 @@ import (
 
 const operationGetInvite = "get_invite"
 
+// TODO
 func (c *Controller) GetInvite(w http.ResponseWriter, r *http.Request) {
 	log := scope.Log(r).WithOperation(operationGetInvite)
 
@@ -31,10 +32,6 @@ func (c *Controller) GetInvite(w http.ResponseWriter, r *http.Request) {
 
 	invite, err := c.modules.Invite.GetForAccount(r.Context(), scope.AccountActor(r), inviteID)
 	switch {
-	case errors.Is(err, errx.ErrorNotEnoughRights):
-		log.Info("not enough rights to get invite")
-		render.ResponseError(w, problems.Forbidden("not enough rights to get invite"))
-		return
 	case errors.Is(err, errx.ErrorInviteNotFound):
 		log.Info("invite not found")
 		render.ResponseError(w, problems.NotFound("invite not found"))

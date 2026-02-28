@@ -2,6 +2,15 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE TABLE tombstones (
+    id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entity_type  VARCHAR(64) NOT NULL,
+    entity_id    UUID        NOT NULL,
+    deleted_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    UNIQUE (entity_type, entity_id)
+);
+
 CREATE TABLE profiles (
     account_id  UUID        PRIMARY KEY,
     username    VARCHAR(32) NOT NULL UNIQUE,
@@ -18,7 +27,8 @@ CREATE TABLE profiles (
 
 CREATE TYPE organization_status AS ENUM (
     'active',
-    'inactive'
+    'inactive',
+    'suspended'
 );
 
 CREATE TABLE organizations (

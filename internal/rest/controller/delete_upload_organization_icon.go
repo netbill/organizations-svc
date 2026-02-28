@@ -36,6 +36,12 @@ func (c *Controller) DeleteOrganizationUploadIcon(w http.ResponseWriter, r *http
 	case errors.Is(err, errx.ErrorOrganizationNotFound):
 		log.Info("organization does not exist")
 		render.ResponseError(w, problems.NotFound("organization does not exist"))
+	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
+		log.Info("organization is suspended")
+		render.ResponseError(w, problems.Forbidden("organization is suspended"))
+	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
+		log.Info("member not found")
+		render.ResponseError(w, problems.Forbidden("member not found"))
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to update organization")
 		render.ResponseError(w, problems.Forbidden("not enough rights to update organization"))
@@ -43,6 +49,6 @@ func (c *Controller) DeleteOrganizationUploadIcon(w http.ResponseWriter, r *http
 		log.WithError(err).Error("failed to delete organization icon in upload session")
 		render.ResponseError(w, problems.InternalError())
 	default:
-		w.WriteHeader(http.StatusNoContent)
+		render.Response(w, http.StatusNoContent, nil)
 	}
 }

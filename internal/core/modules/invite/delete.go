@@ -18,16 +18,20 @@ func (m *Module) Delete(
 ) error {
 	invite, err := m.repo.GetInvite(ctx, inviteID)
 	if errors.Is(err, errx.ErrorInviteNotFound) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to get invite with id %s: %w", inviteID, err)
+		buried, err := m.repo.InviteIsBuried(ctx, inviteID)
+		if err != nil {
+			return err
+		}
+		if buried {
+			return errx.ErrorInviteDeleted.Raise(
+				fmt.Errorf("invite with id %s is already deleted", inviteID),
+			)
+		}
+	}
+	if err != nil {
+		return err
 	}
 
-	if invite.AccountID != actor {
-		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("account has no rights to accept this invite"),
-		)
-	}
 	if invite.Status != models.InviteStatusSent {
 		return errx.ErrorInviteAlreadyAnswered.Raise(
 			fmt.Errorf("invite status is %s", invite.Status),
@@ -49,7 +53,22 @@ func (m *Module) Delete(
 		)
 	}
 
+	org, err := m.repo.GetOrganizationByID(ctx, invite.OrganizationID)
+	if err != nil {
+		return err
+	}
+	if org.Status == models.OrganizationStatusSuspended {
+		return errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization with id %s is suspended", invite.OrganizationID),
+		)
+	}
+
 	return m.repo.Transaction(ctx, func(ctx context.Context) error {
+		err = m.repo.BuryInvite(ctx, inviteID)
+		if err != nil {
+			return err
+		}
+
 		err = m.repo.DeleteInvite(ctx, inviteID)
 		if err != nil {
 			return err

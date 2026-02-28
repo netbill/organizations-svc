@@ -3,9 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/netbill/eventbox"
 	"github.com/netbill/evtypes"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/place"
 )
 
@@ -18,7 +20,9 @@ func (h *Handler) PlaceCreated(
 		return err
 	}
 
-	return h.modules.Place.Create(ctx, place.CreateParams{
+	log := h.log.WithInboxEvent(event).With("place_id", payload.PlaceID)
+
+	err := h.modules.Place.Create(ctx, place.CreateParams{
 		ID:             payload.PlaceID,
 		ClassID:        payload.ClassID,
 		OrganizationID: payload.OrganizationID,
@@ -37,6 +41,19 @@ func (h *Handler) PlaceCreated(
 
 		CreatedAt: payload.CreatedAt,
 	})
+	switch {
+	case errors.Is(err, errx.ErrorPlaceAlreadyExists):
+		log.Debug("received place created event for already existing place")
+		return nil
+	case errors.Is(err, errx.ErrorPlaceDeleted):
+		log.Debug("received place created event for deleted place")
+		return nil
+	case err != nil:
+		return err
+	default:
+		log.Debug("place created successfully")
+		return nil
+	}
 }
 
 func (h *Handler) PlaceUpdated(
@@ -48,7 +65,9 @@ func (h *Handler) PlaceUpdated(
 		return err
 	}
 
-	return h.modules.Place.Update(ctx, payload.PlaceID, place.UpdateParams{
+	log := h.log.WithInboxEvent(event).With("place_id", payload.PlaceID)
+
+	err := h.modules.Place.Update(ctx, payload.PlaceID, place.UpdateParams{
 		ClassID:  payload.ClassID,
 		Name:     payload.Name,
 		Address:  payload.Address,
@@ -64,6 +83,16 @@ func (h *Handler) PlaceUpdated(
 		Version:   payload.Version,
 		UpdatedAt: payload.UpdatedAt,
 	})
+	switch {
+	case errors.Is(err, errx.ErrorPlaceDeleted):
+		log.Debug("received place update event for deleted place")
+		return nil
+	case err != nil:
+		return err
+	default:
+		log.Debug("place updated successfully")
+		return nil
+	}
 }
 
 func (h *Handler) PlaceDeleted(
@@ -75,5 +104,17 @@ func (h *Handler) PlaceDeleted(
 		return err
 	}
 
-	return h.modules.Place.Delete(ctx, payload.PlaceID)
+	log := h.log.WithInboxEvent(event).With("place_id", payload.PlaceID)
+
+	err := h.modules.Place.Delete(ctx, payload.PlaceID)
+	switch {
+	case errors.Is(err, errx.ErrorPlaceDeleted):
+		log.Debug("received place deleted event for already deleted place")
+		return nil
+	case err != nil:
+		return err
+	default:
+		log.Debug("place deleted successfully")
+		return nil
+	}
 }

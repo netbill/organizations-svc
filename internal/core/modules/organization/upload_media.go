@@ -19,13 +19,19 @@ func (m *Module) CreateOrgUploadMediaLinks(
 		return models.Organization{}, models.UploadOrgMediaLinks{}, err
 	}
 
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, org.ID)
+	member, err := m.getInitiator(ctx, actor, organizationID)
 	if err != nil {
 		return models.Organization{}, models.UploadOrgMediaLinks{}, err
 	}
 	if !member.Head {
 		return models.Organization{}, models.UploadOrgMediaLinks{}, errx.ErrorNotEnoughRights.Raise(
 			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
+		)
+	}
+
+	if org.Status == models.OrganizationStatusSuspended {
+		return models.Organization{}, models.UploadOrgMediaLinks{}, errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization with id %s is suspended", organizationID),
 		)
 	}
 
@@ -45,13 +51,55 @@ func (m *Module) CreateOrgUploadMediaLinks(
 	}, nil
 }
 
+func (m *Module) updateOrganizationIcon(
+	ctx context.Context,
+	organization models.Organization,
+	params UpdateParams,
+) (newKey *string, err error) {
+	if params.IconKey != nil {
+		if err = m.bucket.ValidateOrganizationIcon(ctx, organization.ID, *params.IconKey); err != nil {
+			return nil, fmt.Errorf("failed to validate organization icon: %w", err)
+		}
+
+		iconKey, err := m.bucket.UpdateOrganizationIcon(ctx, organization.ID, *params.IconKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update organization icon: %w", err)
+		}
+
+		if err = m.bucket.DeleteOrganizationIcon(ctx, organization.ID, iconKey); err != nil {
+			return nil, fmt.Errorf("failed to delete organization icon: %w", err)
+		}
+
+		newKey = &iconKey
+	}
+
+	if organization.IconKey != nil {
+		if err = m.bucket.DeleteOrganizationIcon(ctx, organization.ID, *organization.IconKey); err != nil {
+			return nil, fmt.Errorf("failed to delete organization icon: %w", err)
+		}
+	}
+
+	return newKey, nil
+}
+
 func (m *Module) DeleteOrgUploadIcon(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationID uuid.UUID,
 	key string,
 ) error {
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
+	org, err := m.GetByID(ctx, organizationID)
+	if err != nil {
+		return err
+	}
+
+	if org.Status == models.OrganizationStatusSuspended {
+		return errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization with id %s is suspended", organizationID),
+		)
+	}
+
+	member, err := m.getInitiator(ctx, actor, organizationID)
 	if err != nil {
 		return err
 	}
@@ -69,13 +117,55 @@ func (m *Module) DeleteOrgUploadIcon(
 	return nil
 }
 
+func (m *Module) updateOrganizationBanner(
+	ctx context.Context,
+	organization models.Organization,
+	params UpdateParams,
+) (newKey *string, err error) {
+	if params.BannerKey != nil {
+		if err = m.bucket.ValidateOrganizationBanner(ctx, organization.ID, *params.BannerKey); err != nil {
+			return nil, fmt.Errorf("failed to validate organization banner: %w", err)
+		}
+
+		key, err := m.bucket.UpdateOrganizationBanner(ctx, organization.ID, *params.BannerKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update organization banner: %w", err)
+		}
+
+		if err = m.bucket.DeleteOrganizationBanner(ctx, organization.ID, key); err != nil {
+			return nil, fmt.Errorf("failed to delete organization banner: %w", err)
+		}
+
+		newKey = &key
+	}
+
+	if organization.BannerKey != nil {
+		if err = m.bucket.DeleteOrganizationBanner(ctx, organization.ID, *organization.BannerKey); err != nil {
+			return nil, fmt.Errorf("failed to delete organization banner: %w", err)
+		}
+	}
+
+	return newKey, nil
+}
+
 func (m *Module) DeleteOrgUploadBanner(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationID uuid.UUID,
 	key string,
 ) error {
-	member, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
+	org, err := m.GetByID(ctx, organizationID)
+	if err != nil {
+		return err
+	}
+
+	if org.Status == models.OrganizationStatusSuspended {
+		return errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization with id %s is suspended", organizationID),
+		)
+	}
+
+	member, err := m.getInitiator(ctx, actor, organizationID)
 	if err != nil {
 		return err
 	}

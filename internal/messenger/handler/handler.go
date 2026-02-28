@@ -7,9 +7,11 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/organizations-svc/internal/core/modules/place"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
+	"github.com/netbill/organizations-svc/pkg/log"
 )
 
 type Handler struct {
+	log     *log.Logger
 	modules *Modules
 }
 
@@ -18,8 +20,9 @@ type Modules struct {
 	Place   placeMod
 }
 
-func New(modules Modules) *Handler {
+func New(log *log.Logger, modules Modules) *Handler {
 	return &Handler{
+		log:     log,
 		modules: &modules,
 	}
 }

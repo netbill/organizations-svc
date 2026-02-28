@@ -45,6 +45,10 @@ func (c *Controller) GetOrganizationInvites(w http.ResponseWriter, r *http.Reque
 		limit, offset,
 	)
 	switch {
+	case errors.Is(err, errx.ErrorOrganizationNotFound):
+		log.Info("organization not found")
+		render.ResponseError(w, problems.NotFound("organization not found"))
+		return
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to access organization invites")
 		render.ResponseError(w, problems.Forbidden("not enough rights to access organization invites"))

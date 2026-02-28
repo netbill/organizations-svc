@@ -36,6 +36,12 @@ func (c *Controller) CreateOrganizationUploadMediaLink(w http.ResponseWriter, r 
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to create organization upload media link")
 		render.ResponseError(w, problems.Forbidden("not enough rights to create organization upload media link"))
+	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
+		log.Info("membership in organization not found")
+		render.ResponseError(w, problems.Forbidden("not a member of the organization"))
+	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
+		log.Info("organization is suspended")
+		render.ResponseError(w, problems.Forbidden("organization is suspended"))
 	case err != nil:
 		log.WithError(err).Error("failed to create organization upload media link")
 		render.ResponseError(w, problems.InternalError())

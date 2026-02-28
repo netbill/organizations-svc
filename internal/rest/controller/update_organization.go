@@ -45,6 +45,9 @@ func (c *Controller) UpdateOrganization(w http.ResponseWriter, r *http.Request) 
 	case errors.Is(err, errx.ErrorNotEnoughRights):
 		log.Info("not enough rights to update organization")
 		render.ResponseError(w, problems.Forbidden("not enough rights to update organization"))
+	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
+		log.Info("organization is suspended")
+		render.ResponseError(w, problems.Forbidden("organization is suspended"))
 	case errors.Is(err, errx.ErrorOrganizationIconKeyIsInvalid):
 		log.WithError(err).Info("icon key is invalid")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
@@ -89,6 +92,7 @@ func (c *Controller) UpdateOrganization(w http.ResponseWriter, r *http.Request) 
 		log.WithError(err).Error("failed to update organization")
 		render.ResponseError(w, problems.InternalError())
 	default:
+		log.Info("organization updated successfully")
 		render.Response(w, http.StatusOK, responses.Organization(res))
 	}
 }

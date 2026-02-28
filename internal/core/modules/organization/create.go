@@ -21,8 +21,7 @@ func (m *Module) Create(
 			return err
 		}
 
-		err = m.messenger.WriteOrganizationCreated(ctx, org)
-		if err != nil {
+		if err = m.messenger.WriteOrganizationCreated(ctx, org); err != nil {
 			return err
 		}
 
@@ -31,12 +30,7 @@ func (m *Module) Create(
 			return err
 		}
 
-		err = m.messenger.WriteOrgMemberCreated(ctx, member)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return m.messenger.WriteOrgMemberCreated(ctx, member)
 	}); err != nil {
 		return models.Organization{}, err
 	}

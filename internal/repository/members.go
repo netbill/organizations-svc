@@ -60,7 +60,7 @@ type OrgMembersQ interface {
 
 	FilterByID(id uuid.UUID) OrgMembersQ
 	FilterByAccountID(accountID uuid.UUID) OrgMembersQ
-	FilterByOrganizationID(organizationID uuid.UUID) OrgMembersQ
+	FilterByOrganizationID(organizationID ...uuid.UUID) OrgMembersQ
 	FilterByUsername(username string) OrgMembersQ
 
 	FilterBestMatch(term string) OrgMembersQ
@@ -144,6 +144,28 @@ func (r *Repository) GetMember(
 	return row.ToModel(), nil
 }
 
+func (r *Repository) GetMembersByAccountAndOrgs(
+	ctx context.Context,
+	accountID uuid.UUID,
+	organizationIDs []uuid.UUID,
+) ([]models.Member, error) {
+	q := r.OrgMembersSql.New().
+		FilterByAccountID(accountID).
+		FilterByOrganizationID(organizationIDs...)
+
+	rows, err := q.Select(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get members by account and organizations, cause: %w", err)
+	}
+
+	members := make([]models.Member, 0, len(rows))
+	for _, row := range rows {
+		members = append(members, row.ToModel())
+	}
+
+	return members, nil
+}
+
 func (r *Repository) GetMemberByAccountAndOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
@@ -213,10 +235,6 @@ func (r *Repository) GetMembers(
 	}
 	if filter.Head != nil {
 		q = q.FilterByHead(*filter.Head)
-	}
-
-	if limit == 0 {
-		limit = 10
 	}
 
 	rows, err := q.Page(limit, offset).Select(ctx)

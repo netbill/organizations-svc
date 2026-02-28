@@ -2,8 +2,11 @@ package organization
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/restkit/pagi"
 )
@@ -66,6 +69,9 @@ type repo interface {
 
 	GetPlaceExistsForOrganization(ctx context.Context, organizationID uuid.UUID) (bool, error)
 
+	BuryOrganization(ctx context.Context, organizationID uuid.UUID) error
+	OrganizationIsBuried(ctx context.Context, orgID uuid.UUID) (bool, error)
+
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
@@ -86,27 +92,26 @@ type bucket interface {
 	ValidateOrganizationIcon(
 		ctx context.Context,
 		organizationID uuid.UUID,
-		tempKey string,
+		key string,
 	) error
 
 	DeleteUploadOrganizationIcon(
 		ctx context.Context,
 		organizationID uuid.UUID,
-		tempKey string,
+		key string,
 	) error
 
 	DeleteOrganizationIcon(
 		ctx context.Context,
-		organizationID uuid.UUID,
-		finalKey string,
+		classID uuid.UUID,
+		key string,
 	) error
 
 	UpdateOrganizationIcon(
 		ctx context.Context,
 		organizationID uuid.UUID,
-		oldFinalKey *string,
-		tempKey *string,
-	) (*string, error)
+		key string,
+	) (string, error)
 
 	CreateOrganizationBannerUploadMediaLinks(
 		ctx context.Context,
@@ -116,25 +121,39 @@ type bucket interface {
 	ValidateOrganizationBanner(
 		ctx context.Context,
 		organizationID uuid.UUID,
-		tempKey string,
+		key string,
 	) error
 
 	DeleteUploadOrganizationBanner(
 		ctx context.Context,
 		organizationID uuid.UUID,
-		tempKey string,
+		key string,
 	) error
 
 	DeleteOrganizationBanner(
 		ctx context.Context,
 		organizationID uuid.UUID,
-		finalKey string,
+		key string,
 	) error
 
 	UpdateOrganizationBanner(
 		ctx context.Context,
 		organizationID uuid.UUID,
-		oldFinalKey *string,
-		tempKey *string,
-	) (*string, error)
+		key string,
+	) (string, error)
+}
+
+func (m *Module) getInitiator(
+	ctx context.Context,
+	actor models.AccountActor,
+	organizationID uuid.UUID,
+) (models.Member, error) {
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
+	if errors.Is(err, errx.ErrorMemberNotFound) {
+		return models.Member{}, errx.ErrorInitiatorNotMemberOfOrganization.Raise(
+			fmt.Errorf("initiator with account id %s is not a member of organization %s", actor, organizationID),
+		)
+	}
+
+	return row, err
 }
