@@ -10,11 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
-	"github.com/netbill/eventbox"
-	"github.com/netbill/eventbox/headers"
 	"github.com/netbill/logium"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/segmentio/kafka-go"
 )
 
 const (
@@ -32,13 +29,6 @@ const (
 
 	HTTPMethodField = "http_method"
 	HTTPPathField   = "http_path"
-
-	EventIDField       = "event_id"
-	EventTypeField     = "event_type"
-	EventTopicField    = "event_topic"
-	EventVersionField  = "event_version"
-	EventProducerField = "event_producer"
-	EventAttemptField  = "event_attempt"
 )
 
 type Logger struct {
@@ -184,45 +174,6 @@ func (l *Logger) WithInvite(invite models.Invite) *Logger {
 		slog.String(OrganizationIDField, invite.OrganizationID.String()),
 		slog.String(InviteIDField, invite.ID.String()),
 	)}
-}
-
-func (l *Logger) WithTopic(topic string) *Logger {
-	return &Logger{base: l.base.With(slog.String(EventTopicField, topic))}
-}
-
-func (l *Logger) WithInboxEvent(ev eventbox.InboxEvent) *Logger {
-	return &Logger{base: l.base.With(
-		slog.String(EventIDField, ev.EventID.String()),
-		slog.String(EventTopicField, ev.Topic),
-		slog.String(EventTypeField, ev.Type),
-		slog.Int(EventVersionField, int(ev.Version)),
-		slog.String(EventProducerField, ev.Producer),
-		slog.Int(EventAttemptField, int(ev.Attempts)),
-	)}
-}
-
-func (l *Logger) WithMessage(msg *kafka.Message) *Logger {
-	if msg == nil {
-		return l
-	}
-
-	args := []any{
-		slog.String(EventTopicField, msg.Topic),
-		slog.String(EventIDField, "unknown"),
-		slog.String(EventTypeField, "unknown"),
-		slog.String(EventProducerField, "unknown"),
-	}
-
-	hs, err := headers.ParseMessageRequiredHeaders(msg.Headers)
-	if err == nil {
-		args = append(args,
-			slog.String(EventIDField, hs.EventID.String()),
-			slog.Int(EventVersionField, int(hs.EventVersion)),
-			slog.String(EventProducerField, hs.Producer),
-		)
-	}
-
-	return &Logger{base: l.base.With(args...)}
 }
 
 func parseLevel(level string) slog.Level {

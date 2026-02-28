@@ -17,7 +17,7 @@ CREATE TABLE profiles (
     official    BOOLEAN NOT NULL DEFAULT FALSE,
     pseudonym   VARCHAR(128),
     avatar_key  TEXT,
-    version     INT NOT NULL CHECK (version > 0),
+    version     INT NOT NULL DEFAULT 1 CHECK (version > 0),
 
     source_created_at  TIMESTAMPTZ NOT NULL,
     source_updated_at  TIMESTAMPTZ NOT NULL,
@@ -37,7 +37,6 @@ CREATE TABLE organizations (
     name       VARCHAR(255) NOT NULL,
     icon_key   TEXT,
     banner_key TEXT,
-    max_roles  INT NOT NULL DEFAULT 100 CHECK ( max_roles > 0 ),
     version    INT NOT NULL DEFAULT 1 CHECK (version > 0),
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -84,6 +83,8 @@ DROP TABLE IF EXISTS organization_members CASCADE;
 DROP TABLE IF EXISTS organization_invites CASCADE;
 DROP TABLE IF EXISTS organizations CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
+
+DROP TABLE IF EXISTS tombstones CASCADE;
 
 DROP INDEX IF EXISTS members_one_head_per_organization;
 

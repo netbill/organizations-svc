@@ -16,7 +16,7 @@ import (
 
 const profilesTable = "profiles"
 
-const profilesColumns = "account_id, username, official, pseudonym, avatar_key, source_created_at, version, source_updated_at, replica_created_at, replica_updated_at"
+const profilesColumns = "account_id, username, official, pseudonym, avatar_key, version, source_created_at, source_updated_at, replica_created_at, replica_updated_at"
 const profilesColumnsP = "p.account_id, p.username, p.official, p.pseudonym, p.avatar_key, p.version, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
 
 func scanProfile(row sq.RowScanner) (p repository.ProfileRow, err error) {
@@ -84,7 +84,6 @@ func (q *profiles) Insert(ctx context.Context, data repository.ProfileRow) (repo
 		"official":          data.Official,
 		"pseudonym":         data.Pseudonym,
 		"avatar_key":        data.AvatarKey,
-		"version":           data.Version,
 		"source_created_at": data.SourceCreatedAt.UTC(),
 		"source_updated_at": data.SourceUpdatedAt.UTC(),
 	}).Suffix("RETURNING " + profilesColumns).ToSql()
@@ -185,7 +184,7 @@ func (q *profiles) FilterLikePseudonym(pseudonym string) repository.ProfilesQ {
 }
 
 func (q *profiles) UpdateOne(ctx context.Context) (repository.ProfileRow, error) {
-	q.updater = q.updater.Set("updated_at", time.Now().UTC())
+	q.updater = q.updater.Set("replica_updated_at", time.Now().UTC())
 
 	query, args, err := q.updater.Suffix("RETURNING " + profilesColumns).ToSql()
 	if err != nil {

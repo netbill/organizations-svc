@@ -15,7 +15,7 @@ import (
 )
 
 const organizationMembersTable = "organization_members"
-const organizationMemberColumns = "id, account_id, organization_id, head, position, label, created_at, version, updated_at"
+const organizationMemberColumns = "id, account_id, organization_id, head, position, label, version, created_at, updated_at"
 const organizationMemberColumnsM = "m.id, m.account_id, m.organization_id, m.head, m.position, m.label, m.version, m.created_at, m.updated_at"
 
 func scanOrganizationMember(row sq.RowScanner) (m repository.OrganizationMemberRow, err error) {

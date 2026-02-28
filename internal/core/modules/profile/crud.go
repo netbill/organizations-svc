@@ -67,6 +67,17 @@ func (m *Module) Update(
 	params UpdateParams,
 ) (models.Profile, error) {
 	profile, err := m.repo.GetProfileByAccountID(ctx, accountID)
+	if errors.Is(err, errx.ErrorProfileNotFound) {
+		buried, err := m.repo.ProfileIsBuried(ctx, accountID)
+		if err != nil {
+			return models.Profile{}, err
+		}
+		if buried {
+			return models.Profile{}, errx.ErrorProfileDeleted.Raise(
+				fmt.Errorf("profile with account id %s is already deleted", accountID),
+			)
+		}
+	}
 	if err != nil {
 		return models.Profile{}, err
 	}

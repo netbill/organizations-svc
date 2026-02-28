@@ -11,6 +11,8 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/place"
 )
 
+const operationPlaceCreated = "place_created"
+
 func (h *Handler) PlaceCreated(
 	ctx context.Context,
 	event eventbox.InboxEvent,
@@ -20,7 +22,8 @@ func (h *Handler) PlaceCreated(
 		return err
 	}
 
-	log := h.log.WithInboxEvent(event).With("place_id", payload.PlaceID)
+	log := h.log.With("operation", operationPlaceCreated).
+		With("place_id", payload.PlaceID)
 
 	err := h.modules.Place.Create(ctx, place.CreateParams{
 		ID:             payload.PlaceID,
@@ -49,12 +52,15 @@ func (h *Handler) PlaceCreated(
 		log.Debug("received place created event for deleted place")
 		return nil
 	case err != nil:
+		log.WithError(err).Error("failed to create place")
 		return err
 	default:
 		log.Debug("place created successfully")
 		return nil
 	}
 }
+
+const operationPlaceUpdated = "place_updated"
 
 func (h *Handler) PlaceUpdated(
 	ctx context.Context,
@@ -65,7 +71,8 @@ func (h *Handler) PlaceUpdated(
 		return err
 	}
 
-	log := h.log.WithInboxEvent(event).With("place_id", payload.PlaceID)
+	log := h.log.With("operation", operationPlaceUpdated).
+		With("place_id", payload.PlaceID)
 
 	err := h.modules.Place.Update(ctx, payload.PlaceID, place.UpdateParams{
 		ClassID:  payload.ClassID,
@@ -88,12 +95,15 @@ func (h *Handler) PlaceUpdated(
 		log.Debug("received place update event for deleted place")
 		return nil
 	case err != nil:
+		log.WithError(err).Error("failed to update place")
 		return err
 	default:
 		log.Debug("place updated successfully")
 		return nil
 	}
 }
+
+const operationPlaceDeleted = "place_deleted"
 
 func (h *Handler) PlaceDeleted(
 	ctx context.Context,
@@ -104,7 +114,8 @@ func (h *Handler) PlaceDeleted(
 		return err
 	}
 
-	log := h.log.WithInboxEvent(event).With("place_id", payload.PlaceID)
+	log := h.log.With("operation", operationPlaceDeleted).
+		With("place_id", payload.PlaceID)
 
 	err := h.modules.Place.Delete(ctx, payload.PlaceID)
 	switch {
@@ -112,6 +123,7 @@ func (h *Handler) PlaceDeleted(
 		log.Debug("received place deleted event for already deleted place")
 		return nil
 	case err != nil:
+		log.WithError(err).Error("failed to delete place")
 		return err
 	default:
 		log.Debug("place deleted successfully")

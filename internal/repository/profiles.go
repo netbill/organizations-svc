@@ -75,7 +75,6 @@ func (r *Repository) CreateProfile(
 		Official:        profile.Official,
 		Pseudonym:       profile.Pseudonym,
 		AvatarKey:       profile.AvatarKey,
-		Version:         profile.Version,
 		SourceUpdatedAt: profile.UpdatedAt,
 		SourceCreatedAt: profile.CreatedAt,
 	})
