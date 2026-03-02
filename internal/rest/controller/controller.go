@@ -99,11 +99,11 @@ type inviteSvc interface {
 		inviteID uuid.UUID,
 	) (models.Invite, error)
 
-	Delete(
+	Cancelled(
 		ctx context.Context,
 		actor models.AccountActor,
 		inviteID uuid.UUID,
-	) error
+	) (models.Invite, error)
 
 	GetListForOrganization(
 		ctx context.Context,
@@ -158,6 +158,12 @@ type memberSvc interface {
 		ctx context.Context,
 		actor models.AccountActor,
 		memberID uuid.UUID,
+	) error
+
+	DeleteSelf(
+		ctx context.Context,
+		actor models.AccountActor,
+		orgID uuid.UUID,
 	) error
 }
 

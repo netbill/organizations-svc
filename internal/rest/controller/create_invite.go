@@ -21,7 +21,7 @@ func (c *Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.SentInvite(r)
 	if err != nil {
-		log.WithError(err).Info("invalid create invite requests")
+		log.WithError(err).Warn("invalid create invite requests")
 		render.ResponseError(w, problems.BadRequest(err)...)
 		return
 	}
@@ -38,25 +38,29 @@ func (c *Controller) CreateInvite(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	switch {
-	case errors.Is(err, errx.ErrorNotEnoughRights):
-		log.Info("not enough rights to create invite")
+	case errors.Is(err, errx.ErrorNotOrganizationHead):
+		log.WithError(err).Warn("not enough rights to create invite")
 		render.ResponseError(w, problems.Forbidden("not enough rights to create invite"))
 	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
-		log.Info("membership in organization not found")
+		log.WithError(err).Warn("membership in organization not found")
 		render.ResponseError(w, problems.Forbidden("not a member of the organization"))
-	case errors.Is(err, errx.ErrorProfileNotFound):
-		log.Info("profile for account not found")
+	case errors.Is(err, errx.ErrorProfileNotExists):
+		log.WithError(err).Warn("profile for account not found")
 		render.ResponseError(w, problems.NotFound("profile for account not found"))
-	case errors.Is(err, errx.ErrorOrganizationNotFound):
-		log.Info("organization not found")
+	case errors.Is(err, errx.ErrorOrganizationNotExists):
+		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorAccountAlreadyMember):
-		log.Info("account is already a member of the organization")
+		log.WithError(err).Warn("account is already a member of the organization")
 		render.ResponseError(w, problems.Conflict("account is already a member of the organization"))
+	case errors.Is(err, errx.ErrorActiveInviteAlreadyExists):
+		log.WithError(err).Warn("active invite for this account and organization already exists")
+		render.ResponseError(w, problems.Conflict("active invite for this account and organization already exists"))
 	case err != nil:
 		log.WithError(err).Error("failed to create invite")
 		render.ResponseError(w, problems.InternalError())
 	default:
+		log.WithField("invite_id", inv.ID).Info("invite created successfully")
 		render.Response(w, http.StatusCreated, responses.Invite(inv))
 	}
 }

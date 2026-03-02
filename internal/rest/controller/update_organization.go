@@ -21,7 +21,7 @@ func (c *Controller) UpdateOrganization(w http.ResponseWriter, r *http.Request) 
 
 	req, err := requests.UpdateOrganization(r)
 	if err != nil {
-		log.WithError(err).Info("invalid update organization requests")
+		log.WithError(err).Warn("invalid update organization requests")
 		render.ResponseError(w, problems.BadRequest(err)...)
 		return
 	}
@@ -39,52 +39,52 @@ func (c *Controller) UpdateOrganization(w http.ResponseWriter, r *http.Request) 
 		},
 	)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotFound):
-		log.Info("organization not found")
+	case errors.Is(err, errx.ErrorOrganizationNotExists):
+		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
-	case errors.Is(err, errx.ErrorNotEnoughRights):
-		log.Info("not enough rights to update organization")
+	case errors.Is(err, errx.ErrorNotOrganizationHead):
+		log.WithError(err).Warn("not enough rights to update organization")
 		render.ResponseError(w, problems.Forbidden("not enough rights to update organization"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
-		log.Info("organization is suspended")
+		log.WithError(err).Warn("organization is suspended")
 		render.ResponseError(w, problems.Forbidden("organization is suspended"))
 	case errors.Is(err, errx.ErrorOrganizationIconKeyIsInvalid):
-		log.WithError(err).Info("icon key is invalid")
+		log.WithError(err).Warn("icon key is invalid")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
 			"icon": err,
 		})...)
 	case errors.Is(err, errx.ErrorOrganizationIconFormatIsNotAllowed):
-		log.WithError(err).Info("icon format is not allowed")
+		log.WithError(err).Warn("icon format is not allowed")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
 			"icon": err,
 		})...)
 	case errors.Is(err, errx.ErrorOrganizationIconContentIsExceedsMax):
-		log.WithError(err).Info("icon content is exceeds max")
+		log.WithError(err).Warn("icon content is exceeds max")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
 			"icon": err,
 		})...)
 	case errors.Is(err, errx.ErrorOrganizationIconResolutionIsInvalid):
-		log.WithError(err).Info("icon resolution is invalid")
+		log.WithError(err).Warn("icon resolution is invalid")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
 			"icon": err,
 		})...)
 	case errors.Is(err, errx.ErrorOrganizationBannerKeyIsInvalid):
-		log.WithError(err).Info("banner key is invalid")
+		log.WithError(err).Warn("banner key is invalid")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
 			"banner": err,
 		})...)
 	case errors.Is(err, errx.ErrorOrganizationBannerFormatIsNotAllowed):
-		log.WithError(err).Info("banner format is not allowed")
+		log.WithError(err).Warn("banner format is not allowed")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
 			"banner": err,
 		})...)
 	case errors.Is(err, errx.ErrorOrganizationBannerContentIsExceedsMax):
-		log.WithError(err).Info("banner content is exceeds max")
+		log.WithError(err).Warn("banner content is exceeds max")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
 			"banner": err,
 		})...)
 	case errors.Is(err, errx.ErrorOrganizationBannerResolutionIsInvalid):
-		log.WithError(err).Info("banner resolution is invalid")
+		log.WithError(err).Warn("banner resolution is invalid")
 		render.ResponseError(w, problems.BadRequest(validation.Errors{
 			"banner": err,
 		})...)

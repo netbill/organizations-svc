@@ -103,7 +103,7 @@ func (r *Repository) UpdateProfile(
 		return models.Profile{}, fmt.Errorf("failed to update profile, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
+		return models.Profile{}, errx.ErrorProfileNotExists.Raise(
 			fmt.Errorf("profile with account ID %s not found", accountID),
 		)
 	}
@@ -120,7 +120,7 @@ func (r *Repository) GetProfileByAccountID(
 		return models.Profile{}, fmt.Errorf("failed to get profile by account ID, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
+		return models.Profile{}, errx.ErrorProfileNotExists.Raise(
 			fmt.Errorf("profile with account ID %s not found", accountID),
 		)
 	}
@@ -154,7 +154,7 @@ func (r *Repository) GetProfileByUsername(
 		return models.Profile{}, fmt.Errorf("failed to get profile by username, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Profile{}, errx.ErrorProfileNotFound.Raise(
+		return models.Profile{}, errx.ErrorProfileNotExists.Raise(
 			fmt.Errorf("profile with username %s not found", username),
 		)
 	}

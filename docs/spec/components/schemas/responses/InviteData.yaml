@@ -18,6 +18,7 @@ properties:
     type: object
     required:
       - status
+      - updated_at
       - expires_at
       - created_at
     properties:
@@ -25,6 +26,10 @@ properties:
         type: string
         enum: [ sent, accepted, declined ]
         description: "The status of the invite"
+      updated_at:
+        type: string
+        format: date-time
+        description: "The date and time when the invite was last updated"
       expires_at:
         type: string
         format: date-time

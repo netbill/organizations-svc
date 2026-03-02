@@ -65,7 +65,8 @@ CREATE UNIQUE INDEX members_one_head_per_organization
 CREATE TYPE organization_invite_status AS ENUM (
     'sent',
     'declined',
-    'accepted'
+    'accepted',
+    'canceled'
 );
 
 CREATE TABLE organization_invites (
@@ -74,6 +75,7 @@ CREATE TABLE organization_invites (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     status          organization_invite_status NOT NULL DEFAULT 'sent',
 
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc'),
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now() at time zone 'utc')
 );

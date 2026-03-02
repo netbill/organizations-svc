@@ -9,45 +9,20 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/pgdbx"
 )
 
 const placesTable = "places"
-const placesColumns = `id, class_id, organization_id, status, verified, point, address, name,
-	description, icon_key, banner_key, website, phone,
-	version, source_created_at, source_updated_at, replica_created_at, replica_updated_at`
-const placesColumnsP = `p.id, p.class_id, p.organization_id, p.status, p.verified, p.point, p.address, p.name,
-	p.description, p.icon_key, p.banner_key, p.website, p.phone,
-	p.version, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at`
+const placesColumns = `id, organization_id, source_created_at, replica_created_at`
+const placesColumnsP = `p.id, p.organization_id, p.source_created_at, p.replica_created_at`
 
 func scanPlace(row sq.RowScanner) (p repository.PlaceRow, err error) {
-	var description pgtype.Text
-	var iconKey pgtype.Text
-	var bannerKey pgtype.Text
-	var website pgtype.Text
-	var phone pgtype.Text
-
 	err = row.Scan(
 		&p.ID,
-		&p.ClassID,
 		&p.OrganizationID,
-		&p.Status,
-		&p.Verified,
-		&p.Point,
-		&p.Address,
-		&p.Name,
-		&description,
-		&iconKey,
-		&bannerKey,
-		&website,
-		&phone,
-		&p.Version,
 		&p.SourceCreatedAt,
-		&p.SourceUpdatedAt,
 		&p.ReplicaCreatedAt,
-		&p.ReplicaUpdatedAt,
 	)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
@@ -55,23 +30,6 @@ func scanPlace(row sq.RowScanner) (p repository.PlaceRow, err error) {
 	case err != nil:
 		return repository.PlaceRow{}, fmt.Errorf("scanning place: %w", err)
 	}
-
-	if description.Valid {
-		p.Description = &description.String
-	}
-	if iconKey.Valid {
-		p.IconKey = &iconKey.String
-	}
-	if bannerKey.Valid {
-		p.BannerKey = &bannerKey.String
-	}
-	if website.Valid {
-		p.Website = &website.String
-	}
-	if phone.Valid {
-		p.Phone = &phone.String
-	}
-
 	return p, nil
 }
 
@@ -103,21 +61,8 @@ func (q *places) New() repository.PlacesQ {
 func (q *places) Insert(ctx context.Context, data repository.PlaceRow) error {
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"id":                data.ID,
-		"class_id":          data.ClassID,
 		"organization_id":   data.OrganizationID,
-		"status":            data.Status,
-		"verified":          data.Verified,
-		"point":             data.Point,
-		"address":           data.Address,
-		"name":              data.Name,
-		"description":       data.Description,
-		"icon_key":          data.IconKey,
-		"banner_key":        data.BannerKey,
-		"website":           data.Website,
-		"phone":             data.Phone,
-		"version":           data.Version,
 		"source_created_at": data.SourceCreatedAt.UTC(),
-		"source_updated_at": data.SourceUpdatedAt.UTC(),
 	}).ToSql()
 	if err != nil {
 		return fmt.Errorf("building insert query for %s: %w", placesTable, err)

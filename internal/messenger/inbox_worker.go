@@ -22,6 +22,15 @@ type handlers interface {
 		ctx context.Context,
 		event eventbox.InboxEvent,
 	) error
+
+	PlaceCreated(
+		ctx context.Context,
+		event eventbox.InboxEvent,
+	) error
+	PlaceDeleted(
+		ctx context.Context,
+		event eventbox.InboxEvent,
+	) error
 }
 
 func NewInboxWorker(
@@ -37,6 +46,9 @@ func NewInboxWorker(
 	worker.Route(evtypes.ProfileCreatedEvent, handlers.ProfileCreated)
 	worker.Route(evtypes.ProfileDeletedEvent, handlers.ProfileDeleted)
 	worker.Route(evtypes.ProfileUpdatedEvent, handlers.ProfileUpdated)
+
+	worker.Route(evtypes.PlaceCreatedEvent, handlers.PlaceCreated)
+	worker.Route(evtypes.PlaceDeletedEvent, handlers.PlaceDeleted)
 
 	return worker
 }

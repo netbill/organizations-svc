@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
@@ -23,15 +24,17 @@ func (c *Controller) UpdateMember(w http.ResponseWriter, r *http.Request) {
 
 	req, err := requests.UpdateMember(r)
 	if err != nil {
-		log.WithError(err).Info("invalid update member requests")
+		log.WithError(err).Warn("invalid update member requests")
 		render.ResponseError(w, problems.BadRequest(err)...)
 		return
 	}
 
 	memberID, err := uuid.Parse(chi.URLParam(r, "member_id"))
 	if err != nil {
-		log.WithError(err).Info("invalid member id")
-		render.ResponseError(w, problems.BadRequest(fmt.Errorf("invalid member id"))...)
+		log.WithError(err).Warn("invalid member id")
+		render.ResponseError(w, problems.BadRequest(validation.Errors{
+			"query": fmt.Errorf("invalid member id: %s", chi.URLParam(r, "member_id")),
+		})...)
 		return
 	}
 
@@ -47,17 +50,17 @@ func (c *Controller) UpdateMember(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	switch {
-	case errors.Is(err, errx.ErrorMemberNotFound):
-		log.Info("member not found")
+	case errors.Is(err, errx.ErrorMemberNotExists):
+		log.WithError(err).Warn("member not found")
 		render.ResponseError(w, problems.NotFound("member not found"))
-	case errors.Is(err, errx.ErrorNotEnoughRights):
-		log.Info("not enough rights to update member")
+	case errors.Is(err, errx.ErrorNotOrganizationHead):
+		log.WithError(err).Warn("not enough rights to update member")
 		render.ResponseError(w, problems.Forbidden("not enough rights to update member"))
-	case errors.Is(err, errx.ErrorOrganizationNotFound):
-		log.Info("organization not found")
+	case errors.Is(err, errx.ErrorOrganizationNotExists):
+		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
-		log.Info("organization is suspended")
+		log.WithError(err).Warn("organization is suspended")
 		render.ResponseError(w, problems.Forbidden("organization is suspended"))
 	case err != nil:
 		log.WithError(err).Error("failed to update member")

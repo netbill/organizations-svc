@@ -42,10 +42,13 @@ type Handlers interface {
 	UpdateMember(w http.ResponseWriter, r *http.Request)
 	DeleteMember(w http.ResponseWriter, r *http.Request)
 
+	LeaveOrganization(w http.ResponseWriter, r *http.Request)
+
 	//invite handlers
 	CreateInvite(w http.ResponseWriter, r *http.Request)
 	GetInvite(w http.ResponseWriter, r *http.Request)
-	DeleteInvite(w http.ResponseWriter, r *http.Request)
+
+	CancelledInvite(w http.ResponseWriter, r *http.Request)
 	AcceptInvite(w http.ResponseWriter, r *http.Request)
 	DeclineInvite(w http.ResponseWriter, r *http.Request)
 }
@@ -114,12 +117,14 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 
 					r.With(auth).Post("/activate", s.handlers.ActivateOrganization)
 					r.With(auth).Post("/deactivate", s.handlers.DeactivateOrganization)
-					
+
 					r.With(sysadmin).Post("/suspend", s.handlers.SuspendOrganization)
 					r.With(sysadmin).Post("/unsuspend", s.handlers.UnsuspendOrganization)
 
 					r.Get("/members", s.handlers.GetOrganizationMembers)
 					r.With(auth).Get("/invites", s.handlers.GetOrganizationInvites)
+					
+					r.With(auth).Delete("/leave", s.handlers.LeaveOrganization)
 				})
 
 				r.With(auth).Get("/me", s.handlers.GetMyOrganizations)
@@ -142,6 +147,7 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 					r.Get("/", s.handlers.GetInvite)
 					r.Patch("/accept", s.handlers.AcceptInvite)
 					r.Patch("/decline", s.handlers.DeclineInvite)
+					r.Patch("/canclled", s.handlers.CancelledInvite)
 				})
 
 				//r.Get("/me", s.handlers.GetMyInvites)

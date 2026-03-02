@@ -53,9 +53,9 @@ type OrganizationsQ interface {
 	FilterByAccountID(accountID uuid.UUID) OrganizationsQ
 
 	UpdateName(name string) OrganizationsQ
+	UpdateStatus(status string) OrganizationsQ
 	UpdateIconKey(icon *string) OrganizationsQ
 	UpdateBannerKey(banner *string) OrganizationsQ
-	UpdateStatus(status string) OrganizationsQ
 
 	Get(ctx context.Context) (OrganizationRow, error)
 	Select(ctx context.Context) ([]OrganizationRow, error)
@@ -94,7 +94,7 @@ func (r *Repository) GetOrganizationByID(
 		return models.Organization{}, fmt.Errorf("failed to get organization with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+		return models.Organization{}, errx.ErrorOrganizationNotExists.Raise(
 			fmt.Errorf("organization with ID %s not found", ID),
 		)
 	}
@@ -115,8 +115,8 @@ func (r *Repository) GetOrganizations(
 	}
 
 	q := r.OrganizationsSql.New()
-	if filter.Name != nil {
-		q = q.FilterNameLike(*filter.Name)
+	if filter.Text != nil {
+		q = q.FilterNameLike(*filter.Text)
 	}
 	if filter.Status != nil {
 		q = q.FilterByStatus(*filter.Status)
@@ -198,7 +198,7 @@ func (r *Repository) UpdateOrganization(
 		return models.Organization{}, fmt.Errorf("failed to update organization with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+		return models.Organization{}, errx.ErrorOrganizationNotExists.Raise(
 			fmt.Errorf("organization with ID %s not found", ID),
 		)
 	}
@@ -219,7 +219,7 @@ func (r *Repository) UpdateOrganizationStatus(
 		return models.Organization{}, fmt.Errorf("failed to update organization status with ID %s: %w", ID, err)
 	}
 	if row.IsNil() {
-		return models.Organization{}, errx.ErrorOrganizationNotFound.Raise(
+		return models.Organization{}, errx.ErrorOrganizationNotExists.Raise(
 			fmt.Errorf("organization with ID %s not found", ID),
 		)
 	}

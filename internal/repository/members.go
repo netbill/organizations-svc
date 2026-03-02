@@ -119,7 +119,7 @@ func (r *Repository) UpdateMember(
 		return models.Member{}, fmt.Errorf("failed to update member, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+		return models.Member{}, errx.ErrorMemberNotExists.Raise(
 			fmt.Errorf("member with ID %s not found", ID),
 		)
 	}
@@ -136,7 +136,7 @@ func (r *Repository) GetMember(
 		return models.Member{}, fmt.Errorf("failed to get member, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+		return models.Member{}, errx.ErrorMemberNotExists.Raise(
 			fmt.Errorf("member with ID %s not found", memberID),
 		)
 	}
@@ -178,7 +178,7 @@ func (r *Repository) GetMemberByAccountAndOrganization(
 		return models.Member{}, fmt.Errorf("failed to get member by account and organization, cause: %w", err)
 	}
 	if row.IsNil() {
-		return models.Member{}, errx.ErrorMemberNotFound.Raise(
+		return models.Member{}, errx.ErrorMemberNotExists.Raise(
 			fmt.Errorf("member with account ID %s and organization ID %s not found", accountID, organizationID),
 		)
 	}

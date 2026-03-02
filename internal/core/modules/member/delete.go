@@ -15,14 +15,8 @@ func (m *Module) Delete(
 	actor models.AccountActor,
 	memberID uuid.UUID,
 ) error {
-	if actor == memberID {
-		return errx.ErrorCannotDeleteSelf.Raise(
-			fmt.Errorf("member %s cannot delete itself", actor),
-		)
-	}
-
-	member, err := m.GetByID(ctx, actor)
-	if errors.Is(err, errx.ErrorMemberNotFound) {
+	member, err := m.GetByID(ctx, memberID)
+	if errors.Is(err, errx.ErrorMemberNotExists) {
 		buried, err := m.repo.MemberIsBuried(ctx, memberID)
 		if err != nil {
 			return err
@@ -42,6 +36,12 @@ func (m *Module) Delete(
 		)
 	}
 
+	if member.AccountID == actor {
+		return errx.ErrorCannotDeleteSelf.Raise(
+			fmt.Errorf("account cannot delete itself as member %s", member.ID),
+		)
+	}
+
 	organization, err := m.repo.GetOrganizationByID(ctx, member.OrganizationID)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (m *Module) Delete(
 		return err
 	}
 	if !initiator.Head {
-		return errx.ErrorNotEnoughRights.Raise(
+		return errx.ErrorNotOrganizationHead.Raise(
 			fmt.Errorf("account has no rights to delete member %s", memberID),
 		)
 	}
@@ -81,7 +81,7 @@ func (m *Module) Delete(
 	})
 }
 
-func (m *Module) Refuse(ctx context.Context, actor models.AccountActor, orgID uuid.UUID) error {
+func (m *Module) DeleteSelf(ctx context.Context, actor models.AccountActor, orgID uuid.UUID) error {
 	_, err := m.repo.GetOrganizationByID(ctx, orgID)
 	if err != nil {
 		return err
@@ -98,13 +98,11 @@ func (m *Module) Refuse(ctx context.Context, actor models.AccountActor, orgID uu
 	}
 
 	return m.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = m.repo.BuryMember(ctx, member.ID)
-		if err != nil {
+		if err = m.repo.BuryMember(ctx, member.ID); err != nil {
 			return fmt.Errorf("failed to bury member %s: %w", member.ID, err)
 		}
 
-		err = m.repo.DeleteMember(ctx, member.ID)
-		if err != nil {
+		if err = m.repo.DeleteMember(ctx, member.ID); err != nil {
 			return fmt.Errorf("failed to delete member %s: %w", member.ID, err)
 		}
 

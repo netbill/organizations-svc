@@ -15,10 +15,10 @@ import (
 	"github.com/netbill/restkit/render"
 )
 
-const operationDeclineInvite = "decline_invite"
+const operationDeleteInvite = "delete_invite"
 
-func (c *Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
-	log := scope.Log(r).WithOperation(operationDeclineInvite)
+func (c *Controller) CancelledInvite(w http.ResponseWriter, r *http.Request) {
+	log := scope.Log(r).WithOperation(operationDeleteInvite)
 
 	inviteID, err := uuid.Parse(chi.URLParam(r, "invite_id"))
 	if err != nil {
@@ -31,30 +31,31 @@ func (c *Controller) DeclineInvite(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("invite_id", inviteID)
 
-	res, err := c.modules.Invite.Decline(r.Context(), scope.AccountActor(r), inviteID)
+	invite, err := c.modules.Invite.Cancelled(r.Context(), scope.AccountActor(r), inviteID)
 	switch {
 	case errors.Is(err, errx.ErrorInviteNotExists):
 		log.WithError(err).Warn("invite not found")
 		render.ResponseError(w, problems.NotFound("invite not found"))
-	case errors.Is(err, errx.ErrorInviteNotForInitiator):
-		log.WithError(err).Warn("invite not for this account")
-		render.ResponseError(w, problems.Forbidden("invite not for this account"))
+	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
+		log.WithError(err).Warn("only organization members can cancel invite")
+		render.ResponseError(w, problems.NotFound("invite not found"))
+	case errors.Is(err, errx.ErrorNotOrganizationHead):
+		log.WithError(err).Warn("only organization head can cancel invite")
+		render.ResponseError(w, problems.Forbidden("only organization head can cancel invite"))
 	case errors.Is(err, errx.ErrorInviteAlreadyAnswered):
 		log.WithError(err).Warn("invite already answered")
-		render.ResponseError(w, problems.Conflict("invite already answered"))
-	case errors.Is(err, errx.ErrorInviteExpired):
-		log.WithError(err).Warn("invite has expired")
-		render.ResponseError(w, problems.Forbidden("invite has expired"))
+		render.ResponseError(w, problems.Forbidden("invite already answered"))
 	case errors.Is(err, errx.ErrorOrganizationNotExists):
 		log.WithError(err).Warn("organization not found for invite")
 		render.ResponseError(w, problems.NotFound("organization not found for invite"))
-	case errors.Is(err, errx.ErrorOrganizationIsNotActive):
-		log.WithError(err).Warn("organization is not active")
-		render.ResponseError(w, problems.Forbidden("organization is not active"))
+	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
+		log.WithError(err).Warn("organization is suspended")
+		render.ResponseError(w, problems.Forbidden("organization is suspended"))
 	case err != nil:
-		log.WithError(err).Error("failed to decline invite")
+		log.WithError(err).Error("failed to delete invite")
 		render.ResponseError(w, problems.InternalError())
 	default:
-		render.Response(w, http.StatusOK, responses.Invite(res))
+		log.Info("invite deleted")
+		render.Response(w, http.StatusNoContent, responses.Invite(invite))
 	}
 }

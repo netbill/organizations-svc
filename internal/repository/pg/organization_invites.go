@@ -15,7 +15,7 @@ import (
 
 const OrganizationInviteTable = "organization_invites"
 
-const OrganizationInviteColumns = "id, organization_id, account_id, status, expires_at, created_at"
+const OrganizationInviteColumns = "id, organization_id, account_id, status, updated_at, expires_at, created_at"
 
 func scanOrganizationInvite(row sq.RowScanner) (r repository.OrgInviteRow, err error) {
 	if err = row.Scan(
@@ -23,6 +23,7 @@ func scanOrganizationInvite(row sq.RowScanner) (r repository.OrgInviteRow, err e
 		&r.OrganizationID,
 		&r.AccountID,
 		&r.Status,
+		&r.UpdatedAt,
 		&r.ExpiresAt,
 		&r.CreatedAt,
 	); err != nil {
@@ -110,6 +111,20 @@ func (q orgInvites) Select(ctx context.Context) ([]repository.OrgInviteRow, erro
 	return out, nil
 }
 
+func (q orgInvites) Exists(ctx context.Context) (bool, error) {
+	subSQL, subArgs, err := q.selector.Limit(1).ToSql()
+	if err != nil {
+		return false, err
+	}
+	sql := "SELECT EXISTS (" + subSQL + ")"
+
+	var exists bool
+	if err = q.db.QueryRow(ctx, sql, subArgs...).Scan(&exists); err != nil {
+		return false, fmt.Errorf("executing exists query for %s: %w", OrganizationInviteTable, err)
+	}
+	return exists, nil
+}
+
 func (q orgInvites) FilterByID(id uuid.UUID) repository.OrgInvitesQ {
 	q.selector = q.selector.Where(sq.Eq{"id": id})
 	q.counter = q.counter.Where(sq.Eq{"id": id})
@@ -159,26 +174,14 @@ func (q orgInvites) FilterExpiresAfter(t time.Time) repository.OrgInvitesQ {
 }
 
 func (q orgInvites) UpdateOne(ctx context.Context) (repository.OrgInviteRow, error) {
-	query, args, err := q.updater.Suffix("RETURNING " + OrganizationInviteColumns).ToSql()
+	query, args, err := q.updater.
+		Set("updated_at", time.Now().UTC()).
+		Suffix("RETURNING " + OrganizationInviteColumns).ToSql()
 	if err != nil {
 		return repository.OrgInviteRow{}, fmt.Errorf("building update query for %s: %w", OrganizationInviteTable, err)
 	}
 
 	return scanOrganizationInvite(q.db.QueryRow(ctx, query, args...))
-}
-
-func (q orgInvites) UpdateMany(ctx context.Context) (int64, error) {
-	query, args, err := q.updater.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("building update query for %s: %w", OrganizationInviteTable, err)
-	}
-
-	tag, err := q.db.Exec(ctx, query, args...)
-	if err != nil {
-		return 0, fmt.Errorf("executing update query for %s: %w", OrganizationInviteTable, err)
-	}
-
-	return tag.RowsAffected(), nil
 }
 
 func (q orgInvites) UpdateStatus(status string) repository.OrgInvitesQ {

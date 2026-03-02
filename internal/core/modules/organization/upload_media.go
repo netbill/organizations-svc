@@ -24,7 +24,7 @@ func (m *Module) CreateOrgUploadMediaLinks(
 		return models.Organization{}, models.UploadOrgMediaLinks{}, err
 	}
 	if !member.Head {
-		return models.Organization{}, models.UploadOrgMediaLinks{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Organization{}, models.UploadOrgMediaLinks{}, errx.ErrorNotOrganizationHead.Raise(
 			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
 		)
 	}
@@ -104,7 +104,7 @@ func (m *Module) DeleteOrgUploadIcon(
 		return err
 	}
 	if !member.Head {
-		return errx.ErrorNotEnoughRights.Raise(
+		return errx.ErrorNotOrganizationHead.Raise(
 			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
 		)
 	}
@@ -170,7 +170,7 @@ func (m *Module) DeleteOrgUploadBanner(
 		return err
 	}
 	if !member.Head {
-		return errx.ErrorNotEnoughRights.Raise(
+		return errx.ErrorNotOrganizationHead.Raise(
 			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
 		)
 	}

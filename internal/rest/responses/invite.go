@@ -52,6 +52,7 @@ func inviteData(invite models.Invite) resources.InviteData {
 		Type: "invite",
 		Attributes: resources.InviteDataAttributes{
 			Status:    invite.Status,
+			UpdatedAt: invite.UpdatedAt,
 			CreatedAt: invite.CreatedAt,
 			ExpiresAt: invite.ExpiresAt,
 		},

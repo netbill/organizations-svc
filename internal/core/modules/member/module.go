@@ -65,7 +65,7 @@ func (m *Module) getInitiator(
 	organizationID uuid.UUID,
 ) (models.Member, error) {
 	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
-	if errors.Is(err, errx.ErrorMemberNotFound) {
+	if errors.Is(err, errx.ErrorMemberNotExists) {
 		return models.Member{}, errx.ErrorInitiatorNotMemberOfOrganization.Raise(
 			fmt.Errorf("initiator with account id %s is not a member of organization %s", actor, organizationID),
 		)

@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Status** | **string** | The status of the invite | 
+**UpdatedAt** | **time.Time** | The date and time when the invite was last updated | 
 **ExpiresAt** | **time.Time** | The expiration date and time of the invite | 
 **CreatedAt** | **time.Time** | The date and time when the invite was created | 
 
@@ -12,7 +13,7 @@ Name | Type | Description | Notes
 
 ### NewInviteDataAttributes
 
-`func NewInviteDataAttributes(status string, expiresAt time.Time, createdAt time.Time, ) *InviteDataAttributes`
+`func NewInviteDataAttributes(status string, updatedAt time.Time, expiresAt time.Time, createdAt time.Time, ) *InviteDataAttributes`
 
 NewInviteDataAttributes instantiates a new InviteDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -45,6 +46,26 @@ and a boolean to check if the value has been set.
 `func (o *InviteDataAttributes) SetStatus(v string)`
 
 SetStatus sets Status field to given value.
+
+
+### GetUpdatedAt
+
+`func (o *InviteDataAttributes) GetUpdatedAt() time.Time`
+
+GetUpdatedAt returns the UpdatedAt field if non-nil, zero value otherwise.
+
+### GetUpdatedAtOk
+
+`func (o *InviteDataAttributes) GetUpdatedAtOk() (*time.Time, bool)`
+
+GetUpdatedAtOk returns a tuple with the UpdatedAt field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetUpdatedAt
+
+`func (o *InviteDataAttributes) SetUpdatedAt(v time.Time)`
+
+SetUpdatedAt sets UpdatedAt field to given value.
 
 
 ### GetExpiresAt

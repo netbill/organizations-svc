@@ -16,7 +16,7 @@ func (m *Module) Delete(
 	organizationID uuid.UUID,
 ) error {
 	organization, err := m.GetByID(ctx, organizationID)
-	if errors.Is(err, errx.ErrorOrganizationNotFound) {
+	if errors.Is(err, errx.ErrorOrganizationNotExists) {
 		buried, err := m.repo.OrganizationIsBuried(ctx, organizationID)
 		if err != nil {
 			return err
@@ -36,7 +36,7 @@ func (m *Module) Delete(
 		return err
 	}
 	if !member.Head {
-		return errx.ErrorNotEnoughRights.Raise(
+		return errx.ErrorNotOrganizationHead.Raise(
 			fmt.Errorf("initiator member %s is not head of organization %s", member.ID, organization.ID),
 		)
 	}

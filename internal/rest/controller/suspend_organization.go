@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
@@ -21,8 +22,10 @@ func (c *Controller) SuspendOrganization(w http.ResponseWriter, r *http.Request)
 
 	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
-		log.WithError(err).Info("invalid organization id")
-		render.ResponseError(w, problems.BadRequest(fmt.Errorf("invalid organization id"))...)
+		log.WithError(err).Warn("invalid organization id")
+		render.ResponseError(w, problems.BadRequest(validation.Errors{
+			"query": fmt.Errorf("invalid organization id: %s", chi.URLParam(r, "organization_id")),
+		})...)
 		return
 	}
 
@@ -30,8 +33,8 @@ func (c *Controller) SuspendOrganization(w http.ResponseWriter, r *http.Request)
 
 	org, err := c.modules.Organization.Suspend(r.Context(), organizationID, true)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotFound):
-		log.Info("organization not found")
+	case errors.Is(err, errx.ErrorOrganizationNotExists):
+		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case err != nil:
 		log.WithError(err).Error("failed to suspend organization")
@@ -48,8 +51,10 @@ func (c *Controller) UnsuspendOrganization(w http.ResponseWriter, r *http.Reques
 
 	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
-		log.WithError(err).Info("invalid organization id")
-		render.ResponseError(w, problems.BadRequest(fmt.Errorf("invalid organization id"))...)
+		log.WithError(err).Warn("invalid organization id")
+		render.ResponseError(w, problems.BadRequest(validation.Errors{
+			"query": fmt.Errorf("invalid organization id: %s", chi.URLParam(r, "organization_id")),
+		})...)
 		return
 	}
 
@@ -57,8 +62,8 @@ func (c *Controller) UnsuspendOrganization(w http.ResponseWriter, r *http.Reques
 
 	org, err := c.modules.Organization.Suspend(r.Context(), organizationID, false)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotFound):
-		log.Info("organization not found")
+	case errors.Is(err, errx.ErrorOrganizationNotExists):
+		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case err != nil:
 		log.WithError(err).Error("failed to unsuspend organization")

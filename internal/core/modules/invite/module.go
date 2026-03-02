@@ -44,6 +44,10 @@ type repo interface {
 		accountID uuid.UUID,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
+	ExistsActiveInviteByAccountID(
+		ctx context.Context,
+		accountID, organizationID uuid.UUID,
+	) (bool, error)
 
 	UpdateInviteStatus(
 		ctx context.Context,
@@ -82,7 +86,7 @@ type messenger interface {
 	WriteOrgInviteCreated(ctx context.Context, invite models.Invite) error
 	WriteOrgInviteAccepted(ctx context.Context, invite models.Invite) error
 	WriteOrgInviteDeclined(ctx context.Context, invite models.Invite) error
-	WriteOrgInviteDeleted(ctx context.Context, invite models.Invite) error
+	WriteOrgInviteCanceled(ctx context.Context, invite models.Invite) error
 }
 
 func (m *Module) getInitiator(
@@ -91,7 +95,7 @@ func (m *Module) getInitiator(
 	organizationID uuid.UUID,
 ) (models.Member, error) {
 	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
-	if errors.Is(err, errx.ErrorMemberNotFound) {
+	if errors.Is(err, errx.ErrorMemberNotExists) {
 		return models.Member{}, errx.ErrorInitiatorNotMemberOfOrganization.Raise(
 			fmt.Errorf("initiator with account id %s is not a member of organization %s", actor, organizationID),
 		)

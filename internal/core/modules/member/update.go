@@ -30,7 +30,7 @@ func (m *Module) Update(
 		return models.Member{}, err
 	}
 	if !initiator.Head {
-		return models.Member{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Member{}, errx.ErrorNotOrganizationHead.Raise(
 			fmt.Errorf("account has no rights to update member %s", memberID),
 		)
 	}

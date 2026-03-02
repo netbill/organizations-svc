@@ -595,6 +595,10 @@ components:
           - accepted
           - declined
           type: string
+        updated_at:
+          description: The date and time when the invite was last updated
+          format: date-time
+          type: string
         expires_at:
           description: The expiration date and time of the invite
           format: date-time
@@ -607,6 +611,7 @@ components:
       - created_at
       - expires_at
       - status
+      - updated_at
     Invite_data:
       properties:
         id:

@@ -21,7 +21,7 @@ func (m *Module) GetByID(
 }
 
 type FilterParams struct {
-	Name   *string `json:"name,omitempty"`
+	Text   *string `json:"name,omitempty"`
 	Status *string `json:"status,omitempty"`
 }
 

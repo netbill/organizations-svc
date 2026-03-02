@@ -18,7 +18,7 @@ func (c *Controller) CreateOrganization(w http.ResponseWriter, r *http.Request) 
 
 	req, err := requests.CreateOrganization(r)
 	if err != nil {
-		log.WithError(err).Info("invalid create organization requests")
+		log.WithError(err).Warn("invalid create organization requests")
 		render.ResponseError(w, problems.BadRequest(err)...)
 		return
 	}

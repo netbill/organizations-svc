@@ -26,7 +26,7 @@ func (m *Module) Create(
 		return models.Invite{}, err
 	}
 	if !initiator.Head {
-		return models.Invite{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Invite{}, errx.ErrorNotOrganizationHead.Raise(
 			fmt.Errorf("account has no rights to create invite for this organization"),
 		)
 	}
@@ -36,7 +36,7 @@ func (m *Module) Create(
 		return models.Invite{}, err
 	}
 	if !exist {
-		return models.Invite{}, errx.ErrorProfileNotFound.Raise(
+		return models.Invite{}, errx.ErrorProfileNotExists.Raise(
 			fmt.Errorf("profile for '%s' not found", params.AccountID),
 		)
 	}
@@ -58,6 +58,16 @@ func (m *Module) Create(
 	if member {
 		return models.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
 			fmt.Errorf("account with id %s is already a member of organization %s", params.AccountID, params.OrganizationID),
+		)
+	}
+
+	exist, err = m.repo.ExistsActiveInviteByAccountID(ctx, params.AccountID, params.OrganizationID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+	if exist {
+		return models.Invite{}, errx.ErrorActiveInviteAlreadyExists.Raise(
+			fmt.Errorf("active invite for account %s already exists in organization %s", params.AccountID, params.OrganizationID),
 		)
 	}
 

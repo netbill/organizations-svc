@@ -31,7 +31,7 @@ func (m *Module) Update(
 		return models.Organization{}, err
 	}
 	if !member.Head {
-		return models.Organization{}, errx.ErrorNotEnoughRights.Raise(
+		return models.Organization{}, errx.ErrorNotOrganizationHead.Raise(
 			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
 		)
 	}

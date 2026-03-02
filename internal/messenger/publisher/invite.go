@@ -32,7 +32,7 @@ func (p *Publisher) WriteOrgInviteCreated(
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteCreatedEvent,
 		Version:  1,
-		Topic:    evtypes.OrganizationsTopicV1,
+		Topic:    evtypes.OrgMembersTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
 		Producer: p.identity,
@@ -61,7 +61,7 @@ func (p *Publisher) WriteOrgInviteAccepted(
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteAcceptedEvent,
 		Version:  1,
-		Topic:    evtypes.OrganizationsTopicV1,
+		Topic:    evtypes.OrgMembersTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
 		Producer: p.identity,
@@ -89,7 +89,7 @@ func (p *Publisher) WriteOrgInviteDeclined(
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteDeclinedEvent,
 		Version:  1,
-		Topic:    evtypes.OrganizationsTopicV1,
+		Topic:    evtypes.OrgMembersTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
 		Producer: p.identity,
@@ -101,13 +101,13 @@ func (p *Publisher) WriteOrgInviteDeclined(
 	return nil
 }
 
-func (p *Publisher) WriteOrgInviteDeleted(
+func (p *Publisher) WriteOrgInviteCanceled(
 	ctx context.Context,
 	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(evtypes.OrgInviteDeletedPayload{
-		InvitedID: invite.ID,
-		DeletedAt: time.Now().UTC(),
+	payload, err := json.Marshal(evtypes.OrgInviteCancelledPayload{
+		InviteID:    invite.ID,
+		CancelledAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal org invite deleted payload, cause: %w", err)
@@ -115,9 +115,9 @@ func (p *Publisher) WriteOrgInviteDeleted(
 
 	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
 		ID:       uuid.New(),
-		Type:     evtypes.OrgInviteDeletedEvent,
+		Type:     evtypes.OrgInviteCancelledEvent,
 		Version:  1,
-		Topic:    evtypes.OrganizationsTopicV1,
+		Topic:    evtypes.OrgMembersTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
 		Producer: p.identity,

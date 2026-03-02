@@ -14,6 +14,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
+	"github.com/netbill/organizations-svc/internal/core/modules/place"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 
 	"github.com/netbill/organizations-svc/internal/messenger"
@@ -109,6 +110,7 @@ func (a *App) Run(ctx context.Context) error {
 	orgCore := organization.New(repo, outbound, s3)
 	orgMemberCore := member.New(repo, outbound)
 	orgInviteCore := invite.New(repo, outbound)
+	placeCore := place.New(repo)
 
 	tokenManager := tokenmanager.New(tokenmanager.Config{
 		Issuer:   a.config.Auth.Tokens.Issuer,
@@ -119,6 +121,7 @@ func (a *App) Run(ctx context.Context) error {
 		Organization: orgCore,
 		Member:       orgMemberCore,
 		Invite:       orgInviteCore,
+		Profile:      profileCore,
 	})
 	mdll := middlewares.New(tokenManager)
 	router := rest.New(mdll, ctrl)
@@ -150,6 +153,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	inbound := handler.New(a.log, handler.Modules{
 		Profile: profileCore,
+		Place:   placeCore,
 	})
 
 	inboxWorker := messenger.NewInboxWorker(a.log, inbox, eventbox.InboxWorkerConfig{

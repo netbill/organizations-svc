@@ -67,7 +67,7 @@ func (m *Module) Update(
 	params UpdateParams,
 ) (models.Profile, error) {
 	profile, err := m.repo.GetProfileByAccountID(ctx, accountID)
-	if errors.Is(err, errx.ErrorProfileNotFound) {
+	if errors.Is(err, errx.ErrorProfileNotExists) {
 		buried, err := m.repo.ProfileIsBuried(ctx, accountID)
 		if err != nil {
 			return models.Profile{}, err

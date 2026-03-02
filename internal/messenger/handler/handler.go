@@ -36,6 +36,5 @@ type profileMod interface {
 
 type placeMod interface {
 	Create(ctx context.Context, params place.CreateParams) error
-	Update(ctx context.Context, id uuid.UUID, params place.UpdateParams) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }

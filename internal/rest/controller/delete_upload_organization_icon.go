@@ -18,7 +18,7 @@ func (c *Controller) DeleteOrganizationUploadIcon(w http.ResponseWriter, r *http
 
 	req, err := requests.DeleteUploadOrgIcon(r)
 	if err != nil {
-		log.WithError(err).Info("invalid delete upload organization icon requests")
+		log.WithError(err).Warn("invalid delete upload organization icon requests")
 		render.ResponseError(w, problems.BadRequest(err)...)
 
 		return
@@ -33,17 +33,17 @@ func (c *Controller) DeleteOrganizationUploadIcon(w http.ResponseWriter, r *http
 		req.Data.Attributes.IconKey,
 	)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotFound):
-		log.Info("organization does not exist")
+	case errors.Is(err, errx.ErrorOrganizationNotExists):
+		log.WithError(err).Warn("organization does not exist")
 		render.ResponseError(w, problems.NotFound("organization does not exist"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
-		log.Info("organization is suspended")
+		log.WithError(err).Warn("organization is suspended")
 		render.ResponseError(w, problems.Forbidden("organization is suspended"))
 	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
-		log.Info("member not found")
+		log.WithError(err).Warn("member not found")
 		render.ResponseError(w, problems.Forbidden("member not found"))
-	case errors.Is(err, errx.ErrorNotEnoughRights):
-		log.Info("not enough rights to update organization")
+	case errors.Is(err, errx.ErrorNotOrganizationHead):
+		log.WithError(err).Warn("not enough rights to update organization")
 		render.ResponseError(w, problems.Forbidden("not enough rights to update organization"))
 	case err != nil:
 		log.WithError(err).Error("failed to delete organization icon in upload session")

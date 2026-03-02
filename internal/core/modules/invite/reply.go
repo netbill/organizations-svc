@@ -85,12 +85,12 @@ func (m *Module) Decline(
 	if err != nil {
 		return models.Invite{}, err
 	}
-
 	if invite.AccountID != actor {
 		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
 			fmt.Errorf("account has no rights to decline this invite"),
 		)
 	}
+
 	if invite.Status == models.InviteStatusDeclined {
 		return invite, nil
 	}

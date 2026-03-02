@@ -3,7 +3,7 @@ package errx
 import "github.com/netbill/ape"
 
 var (
-	ErrorOrganizationNotFound    = ape.DeclareError("ORGANIZATION_NOT_FOUND")
+	ErrorOrganizationNotExists   = ape.DeclareError("ORGANIZATION_NOT_EXISTS")
 	ErrorOrganizationDeleted     = ape.DeclareError("ORGANIZATION_DELETED")
 	ErrorOrganizationIsNotActive = ape.DeclareError("AGLOMERATION_IS_NOT_ACTIVE")
 	ErrorOrganizationIsSuspended = ape.DeclareError("ORGANIZATION_IS_SUSPENDED")

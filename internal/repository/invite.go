@@ -18,6 +18,7 @@ type OrgInviteRow struct {
 	OrganizationID uuid.UUID `db:"organization_id"`
 	AccountID      uuid.UUID `db:"account_id,omitempty"`
 	Status         string    `db:"status"`
+	UpdatedAt      time.Time `db:"updated_at"`
 	ExpiresAt      time.Time `db:"expires_at"`
 	CreatedAt      time.Time `db:"created_at"`
 }
@@ -32,6 +33,7 @@ func (r OrgInviteRow) ToModel() models.Invite {
 		OrganizationID: r.OrganizationID,
 		AccountID:      r.AccountID,
 		Status:         r.Status,
+		UpdatedAt:      r.UpdatedAt,
 		ExpiresAt:      r.ExpiresAt,
 		CreatedAt:      r.CreatedAt,
 	}
@@ -43,8 +45,8 @@ type OrgInvitesQ interface {
 
 	Get(ctx context.Context) (OrgInviteRow, error)
 	Select(ctx context.Context) ([]OrgInviteRow, error)
+	Exists(ctx context.Context) (bool, error)
 
-	UpdateMany(ctx context.Context) (int64, error)
 	UpdateOne(ctx context.Context) (OrgInviteRow, error)
 
 	UpdateStatus(status string) OrgInvitesQ
@@ -52,6 +54,9 @@ type OrgInvitesQ interface {
 	FilterByID(id uuid.UUID) OrgInvitesQ
 	FilterByOrganizationID(organizationID uuid.UUID) OrgInvitesQ
 	FilterByAccountID(accountID uuid.UUID) OrgInvitesQ
+	FilterByStatus(status string) OrgInvitesQ
+	FilterExpiresBefore(t time.Time) OrgInvitesQ
+	FilterExpiresAfter(t time.Time) OrgInvitesQ
 
 	Page(limit, offset uint) OrgInvitesQ
 
@@ -87,7 +92,7 @@ func (r *Repository) GetInvite(
 		return models.Invite{}, fmt.Errorf("failed to get invite with ID %s, cause: %w", inviteID, err)
 	}
 	if row.IsNil() {
-		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
+		return models.Invite{}, errx.ErrorInviteNotExists.Raise(
 			fmt.Errorf("invite with ID %s not found", inviteID),
 		)
 	}
@@ -105,7 +110,7 @@ func (r *Repository) UpdateInviteStatus(
 		return models.Invite{}, fmt.Errorf("failed to update invite status with ID %s, cause: %w", inviteID, err)
 	}
 	if row.IsNil() {
-		return models.Invite{}, errx.ErrorInviteNotFound.Raise(
+		return models.Invite{}, errx.ErrorInviteNotExists.Raise(
 			fmt.Errorf("invite with ID %s not found", inviteID),
 		)
 	}
@@ -208,4 +213,23 @@ func (r *Repository) GetAccountInvites(
 		Size:  uint(len(res)),
 		Total: total,
 	}, nil
+}
+
+func (r *Repository) ExistsActiveInviteByAccountID(
+	ctx context.Context,
+	accountID, organizationID uuid.UUID,
+) (bool, error) {
+	exists, err := r.OrgInvitesSql.New().
+		FilterByAccountID(accountID).
+		FilterByOrganizationID(organizationID).
+		FilterExpiresAfter(time.Now().UTC()).
+		Exists(ctx)
+	if err != nil {
+		return false, fmt.Errorf(
+			"failed to check active invite existence for account ID %s and organization ID %s, cause: %w",
+			accountID, organizationID, err,
+		)
+	}
+
+	return exists, nil
 }

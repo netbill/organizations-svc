@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
@@ -20,8 +21,10 @@ func (c *Controller) DeleteOrganization(w http.ResponseWriter, r *http.Request) 
 
 	orgID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
 	if err != nil {
-		log.WithError(err).Info("invalid organization id")
-		render.ResponseError(w, problems.BadRequest(fmt.Errorf("invalid organization id"))...)
+		log.WithError(err).Warn("invalid organization id")
+		render.ResponseError(w, problems.BadRequest(validation.Errors{
+			"query": fmt.Errorf("invalid organization id: %s", chi.URLParam(r, "organization_id")),
+		})...)
 		return
 	}
 
@@ -29,23 +32,23 @@ func (c *Controller) DeleteOrganization(w http.ResponseWriter, r *http.Request) 
 
 	err = c.modules.Organization.Delete(r.Context(), scope.AccountActor(r), orgID)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotFound):
-		log.Info("organization not found")
+	case errors.Is(err, errx.ErrorOrganizationNotExists):
+		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorOrganizationDeleted):
-		log.Info("organization already deleted")
+		log.WithError(err).Warn("organization already deleted")
 		render.Response(w, http.StatusNoContent, nil)
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
-		log.Info("organization is suspended")
+		log.WithError(err).Warn("organization is suspended")
 		render.ResponseError(w, problems.Forbidden("organization is suspended"))
 	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
-		log.Info("membership in organization not found")
+		log.WithError(err).Warn("membership in organization not found")
 		render.ResponseError(w, problems.Forbidden("not a member of the organization"))
-	case errors.Is(err, errx.ErrorNotEnoughRights):
-		log.Info("not enough rights to delete organization")
+	case errors.Is(err, errx.ErrorNotOrganizationHead):
+		log.WithError(err).Warn("not enough rights to delete organization")
 		render.ResponseError(w, problems.Forbidden("not enough rights to delete organization"))
 	case errors.Is(err, errx.ErrorOrganizationHavePlace):
-		log.Info("organization have place and cannot be deleted")
+		log.WithError(err).Warn("organization have place and cannot be deleted")
 		render.ResponseError(w, problems.Forbidden("organization have place and cannot be deleted"))
 	case err != nil:
 		log.WithError(err).Error("failed to delete organization")

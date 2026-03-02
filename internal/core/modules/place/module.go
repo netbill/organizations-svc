@@ -26,7 +26,6 @@ type repo interface {
 	GetPlacesByIDs(ctx context.Context, ids []uuid.UUID) ([]models.Place, error)
 	PlaceExists(ctx context.Context, id uuid.UUID) (bool, error)
 
-	UpdatePlaceByID(ctx context.Context, id uuid.UUID, params UpdateParams) error
 	DeletePlaceByID(ctx context.Context, id uuid.UUID) error
 
 	BuryPlace(ctx context.Context, id uuid.UUID) error

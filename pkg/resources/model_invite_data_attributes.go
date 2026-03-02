@@ -24,6 +24,8 @@ var _ MappedNullable = &InviteDataAttributes{}
 type InviteDataAttributes struct {
 	// The status of the invite
 	Status string `json:"status"`
+	// The date and time when the invite was last updated
+	UpdatedAt time.Time `json:"updated_at"`
 	// The expiration date and time of the invite
 	ExpiresAt time.Time `json:"expires_at"`
 	// The date and time when the invite was created
@@ -36,9 +38,10 @@ type _InviteDataAttributes InviteDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInviteDataAttributes(status string, expiresAt time.Time, createdAt time.Time) *InviteDataAttributes {
+func NewInviteDataAttributes(status string, updatedAt time.Time, expiresAt time.Time, createdAt time.Time) *InviteDataAttributes {
 	this := InviteDataAttributes{}
 	this.Status = status
+	this.UpdatedAt = updatedAt
 	this.ExpiresAt = expiresAt
 	this.CreatedAt = createdAt
 	return &this
@@ -74,6 +77,30 @@ func (o *InviteDataAttributes) GetStatusOk() (*string, bool) {
 // SetStatus sets field value
 func (o *InviteDataAttributes) SetStatus(v string) {
 	o.Status = v
+}
+
+// GetUpdatedAt returns the UpdatedAt field value
+func (o *InviteDataAttributes) GetUpdatedAt() time.Time {
+	if o == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return o.UpdatedAt
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value
+// and a boolean to check if the value has been set.
+func (o *InviteDataAttributes) GetUpdatedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.UpdatedAt, true
+}
+
+// SetUpdatedAt sets field value
+func (o *InviteDataAttributes) SetUpdatedAt(v time.Time) {
+	o.UpdatedAt = v
 }
 
 // GetExpiresAt returns the ExpiresAt field value
@@ -135,6 +162,7 @@ func (o InviteDataAttributes) MarshalJSON() ([]byte, error) {
 func (o InviteDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["status"] = o.Status
+	toSerialize["updated_at"] = o.UpdatedAt
 	toSerialize["expires_at"] = o.ExpiresAt
 	toSerialize["created_at"] = o.CreatedAt
 	return toSerialize, nil
@@ -146,6 +174,7 @@ func (o *InviteDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"status",
+		"updated_at",
 		"expires_at",
 		"created_at",
 	}
