@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/netbill/organizations-svc/pkg/log"
+	"github.com/netbill/restkit/tokens"
 )
 
 type Handlers interface {
@@ -23,41 +24,33 @@ type Handlers interface {
 
 	UpdateOrganization(w http.ResponseWriter, r *http.Request)
 
+	DeleteOrganization(w http.ResponseWriter, r *http.Request)
+
 	DeleteOrganizationUploadIcon(w http.ResponseWriter, r *http.Request)
 	DeleteOrganizationUploadBanner(w http.ResponseWriter, r *http.Request)
 
 	ActivateOrganization(w http.ResponseWriter, r *http.Request)
 	DeactivateOrganization(w http.ResponseWriter, r *http.Request)
+	SuspendOrganization(w http.ResponseWriter, r *http.Request)
+	UnsuspendOrganization(w http.ResponseWriter, r *http.Request)
 
 	GetOrganizationInvites(w http.ResponseWriter, r *http.Request)
 	GetOrganizationMembers(w http.ResponseWriter, r *http.Request)
-	GetOrganizationRoles(w http.ResponseWriter, r *http.Request)
 
 	//OrganizationMember handlers
 	GetMember(w http.ResponseWriter, r *http.Request)
 	UpdateMember(w http.ResponseWriter, r *http.Request)
 	DeleteMember(w http.ResponseWriter, r *http.Request)
 
-	MemberAddRole(w http.ResponseWriter, r *http.Request)
-	MemberRemoveRole(w http.ResponseWriter, r *http.Request)
+	LeaveOrganization(w http.ResponseWriter, r *http.Request)
 
 	//invite handlers
 	CreateInvite(w http.ResponseWriter, r *http.Request)
 	GetInvite(w http.ResponseWriter, r *http.Request)
-	DeleteInvite(w http.ResponseWriter, r *http.Request)
+
+	CancelledInvite(w http.ResponseWriter, r *http.Request)
 	AcceptInvite(w http.ResponseWriter, r *http.Request)
 	DeclineInvite(w http.ResponseWriter, r *http.Request)
-
-	//role handlers
-	CreateRole(w http.ResponseWriter, r *http.Request)
-	GetRole(w http.ResponseWriter, r *http.Request)
-	UpdateRole(w http.ResponseWriter, r *http.Request)
-	DeleteRole(w http.ResponseWriter, r *http.Request)
-
-	UpdateRolesRanks(w http.ResponseWriter, r *http.Request)
-
-	UpdateRolePermissions(w http.ResponseWriter, r *http.Request)
-	GetAllPermissions(w http.ResponseWriter, r *http.Request)
 }
 
 type Middlewares interface {
@@ -93,6 +86,7 @@ type Config struct {
 
 func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 	auth := s.middlewares.AccountAuth()
+	sysadmin := s.middlewares.AccountAuth(tokens.RoleSystemAdmin)
 
 	r := chi.NewRouter()
 	r.Use(
@@ -103,15 +97,16 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 	r.Route("/organizations-svc", func(r chi.Router) {
 		r.Route("/v1", func(r chi.Router) {
 
-			r.With(auth).Route("/organizations", func(r chi.Router) {
+			r.Route("/organizations", func(r chi.Router) {
 				r.Get("/", s.handlers.GetOrganizations)
-				r.Post("/", s.handlers.CreateOrganization)
+				r.With(auth).Post("/", s.handlers.CreateOrganization)
 
 				r.Route("/{organization_id}", func(r chi.Router) {
 					r.Get("/", s.handlers.GetOrganization)
-					r.Put("/", s.handlers.UpdateOrganization)
+					r.With(auth).Put("/", s.handlers.UpdateOrganization)
+					r.With(auth).Delete("/", s.handlers.DeleteOrganization)
 
-					r.Route("/media", func(r chi.Router) {
+					r.With(auth).Route("/media", func(r chi.Router) {
 						r.Route("/upload", func(r chi.Router) {
 							r.Post("/url", s.handlers.CreateOrganizationUploadMediaLink)
 
@@ -120,30 +115,29 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 						})
 					})
 
-					r.Patch("/activate", s.handlers.ActivateOrganization)
-					r.Patch("/deactivate", s.handlers.DeactivateOrganization)
+					r.With(auth).Post("/activate", s.handlers.ActivateOrganization)
+					r.With(auth).Post("/deactivate", s.handlers.DeactivateOrganization)
+
+					r.With(sysadmin).Post("/suspend", s.handlers.SuspendOrganization)
+					r.With(sysadmin).Post("/unsuspend", s.handlers.UnsuspendOrganization)
+
 					r.Get("/members", s.handlers.GetOrganizationMembers)
-					r.Get("/invites", s.handlers.GetOrganizationInvites)
-					r.Route("/roles", func(r chi.Router) {
-						r.Get("/", s.handlers.GetOrganizationRoles)
-						r.Put("/ranks", s.handlers.UpdateRolesRanks)
-					})
+					r.With(auth).Get("/invites", s.handlers.GetOrganizationInvites)
+					
+					r.With(auth).Delete("/leave", s.handlers.LeaveOrganization)
 				})
 
-				r.Get("/me", s.handlers.GetMyOrganizations)
+				r.With(auth).Get("/me", s.handlers.GetMyOrganizations)
 			})
 
-			r.With(auth).Route("/members", func(r chi.Router) {
+			r.Route("/members", func(r chi.Router) {
 				r.Route("/{member_id}", func(r chi.Router) {
 					r.Get("/", s.handlers.GetMember)
-					r.Put("/", s.handlers.UpdateMember)
-					r.Delete("/", s.handlers.DeleteMember)
-
-					r.Route("/roles/{role_id}", func(r chi.Router) {
-						r.Post("/", s.handlers.MemberAddRole)
-						r.Delete("/", s.handlers.MemberRemoveRole)
-					})
+					r.With(auth).Put("/", s.handlers.UpdateMember)
+					r.With(auth).Delete("/", s.handlers.DeleteMember)
 				})
+
+				//r.Get("/me", s.handlers.GetMyMembers)
 			})
 
 			r.With(auth).Route("/invites", func(r chi.Router) {
@@ -153,20 +147,10 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 					r.Get("/", s.handlers.GetInvite)
 					r.Patch("/accept", s.handlers.AcceptInvite)
 					r.Patch("/decline", s.handlers.DeclineInvite)
+					r.Patch("/canclled", s.handlers.CancelledInvite)
 				})
-			})
 
-			r.With(auth).Route("/roles", func(r chi.Router) {
-				r.Post("/", s.handlers.CreateRole)
-				r.Get("/permissions", s.handlers.GetAllPermissions)
-
-				r.Route("/{role_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetRole)
-					r.Put("/", s.handlers.UpdateRole)
-					r.Delete("/", s.handlers.DeleteRole)
-
-					r.Put("/permissions", s.handlers.UpdateRolePermissions)
-				})
+				//r.Get("/me", s.handlers.GetMyInvites)
 			})
 		})
 	})

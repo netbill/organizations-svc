@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
+	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 type UpdateParams struct {
@@ -16,45 +17,54 @@ type UpdateParams struct {
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
 	params UpdateParams,
-) (domain.Organization, error) {
+) (models.Organization, error) {
 	org, err := m.GetByID(ctx, organizationID)
 	if err != nil {
-		return domain.Organization{}, err
+		return models.Organization{}, err
 	}
 
-	err = m.chekPermissionForManageOrganization(ctx, initiator, org.ID)
+	member, err := m.getInitiator(ctx, actor, org.ID)
 	if err != nil {
-		return domain.Organization{}, err
+		return models.Organization{}, err
+	}
+	if !member.Head {
+		return models.Organization{}, errx.ErrorNotOrganizationHead.Raise(
+			fmt.Errorf("only organization head member can activate organization, but member %s is not head", member.ID),
+		)
 	}
 
-	if params.IconKey != nil {
-		err = m.bucket.ValidateOrganizationIcon(ctx, organizationID, *params.IconKey)
+	if org.Status == models.OrganizationStatusSuspended {
+		return models.Organization{}, errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization %s is suspended", org.ID),
+		)
+	}
+
+	upd := org.Name != params.Name
+
+	if !ptrStrEq(params.IconKey, org.IconKey) {
+		iconKey, err := m.updateOrganizationIcon(ctx, org, params)
 		if err != nil {
-			return domain.Organization{}, fmt.Errorf("failed to validate organization icon: %w", err)
+			return models.Organization{}, fmt.Errorf("failed to validate organization icon: %w", err)
 		}
+		params.IconKey = iconKey
+		upd = true
 	}
 
-	if params.BannerKey != nil {
-		err = m.bucket.ValidateOrganizationBanner(ctx, organizationID, *params.BannerKey)
+	if !ptrStrEq(params.BannerKey, org.BannerKey) {
+		bannerKey, err := m.updateOrganizationBanner(ctx, org, params)
 		if err != nil {
-			return domain.Organization{}, fmt.Errorf("failed to validate organization banner: %w", err)
+			return models.Organization{}, fmt.Errorf("failed to validate organization banner: %w", err)
 		}
+		params.BannerKey = bannerKey
+		upd = true
 	}
 
-	avatarKey, err := m.bucket.UpdateOrganizationIcon(ctx, organizationID, org.IconKey, params.IconKey)
-	if err != nil {
-		return domain.Organization{}, fmt.Errorf("failed to update organization icon: %w", err)
+	if !upd {
+		return org, nil
 	}
-	params.IconKey = avatarKey
-
-	bannerKey, err := m.bucket.UpdateOrganizationBanner(ctx, organizationID, org.BannerKey, params.BannerKey)
-	if err != nil {
-		return domain.Organization{}, fmt.Errorf("failed to update organization banner: %w", err)
-	}
-	params.BannerKey = bannerKey
 
 	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
 		org, err = m.repo.UpdateOrganization(ctx, organizationID, params)
@@ -69,8 +79,12 @@ func (m *Module) Update(
 
 		return nil
 	}); err != nil {
-		return domain.Organization{}, err
+		return models.Organization{}, err
 	}
 
 	return org, nil
+}
+
+func ptrStrEq(a, b *string) bool {
+	return (a == nil && b == nil) || (a != nil && b != nil && *a == *b)
 }

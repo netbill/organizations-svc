@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 type UpdateParams struct {
@@ -16,23 +16,33 @@ type UpdateParams struct {
 
 func (m *Module) Update(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	actor models.AccountActor,
 	memberID uuid.UUID,
 	params UpdateParams,
-) (domain.Member, error) {
+) (models.Member, error) {
 	member, err := m.GetByID(ctx, memberID)
 	if err != nil {
-		return domain.Member{}, err
+		return models.Member{}, err
 	}
-	if member.Head {
-		return domain.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("cannot update organization head member %s", member.ID),
+
+	initiator, err := m.getInitiator(ctx, actor, member.OrganizationID)
+	if err != nil {
+		return models.Member{}, err
+	}
+	if !initiator.Head {
+		return models.Member{}, errx.ErrorNotOrganizationHead.Raise(
+			fmt.Errorf("account has no rights to update member %s", memberID),
 		)
 	}
 
-	err = m.checkAbilityToUpdateMember(ctx, initiator, member.OrganizationID, memberID)
+	organization, err := m.repo.GetOrganizationByID(ctx, member.OrganizationID)
 	if err != nil {
-		return domain.Member{}, err
+		return models.Member{}, err
+	}
+	if organization.Status == models.OrganizationStatusSuspended {
+		return models.Member{}, errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization %s is suspended", member.OrganizationID),
+		)
 	}
 
 	err = m.repo.Transaction(ctx, func(ctx context.Context) error {

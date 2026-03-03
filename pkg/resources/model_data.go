@@ -22,11 +22,11 @@ var _ MappedNullable = &Data{}
 
 // Data struct for Data
 type Data struct {
-	// member ID
+	// Invite ID
 	Id uuid.UUID `json:"id"`
 	Type string `json:"type"`
-	Attributes RoleDataAttributes `json:"attributes"`
-	Included *RoleDataIncluded `json:"included,omitempty"`
+	Attributes InviteDataAttributes `json:"attributes"`
+	Relationships MemberDataRelationships `json:"relationships"`
 }
 
 type _Data Data
@@ -35,11 +35,12 @@ type _Data Data
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewData(id uuid.UUID, type_ string, attributes RoleDataAttributes) *Data {
+func NewData(id uuid.UUID, type_ string, attributes InviteDataAttributes, relationships MemberDataRelationships) *Data {
 	this := Data{}
 	this.Id = id
 	this.Type = type_
 	this.Attributes = attributes
+	this.Relationships = relationships
 	return &this
 }
 
@@ -100,9 +101,9 @@ func (o *Data) SetType(v string) {
 }
 
 // GetAttributes returns the Attributes field value
-func (o *Data) GetAttributes() RoleDataAttributes {
+func (o *Data) GetAttributes() InviteDataAttributes {
 	if o == nil {
-		var ret RoleDataAttributes
+		var ret InviteDataAttributes
 		return ret
 	}
 
@@ -111,7 +112,7 @@ func (o *Data) GetAttributes() RoleDataAttributes {
 
 // GetAttributesOk returns a tuple with the Attributes field value
 // and a boolean to check if the value has been set.
-func (o *Data) GetAttributesOk() (*RoleDataAttributes, bool) {
+func (o *Data) GetAttributesOk() (*InviteDataAttributes, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -119,40 +120,32 @@ func (o *Data) GetAttributesOk() (*RoleDataAttributes, bool) {
 }
 
 // SetAttributes sets field value
-func (o *Data) SetAttributes(v RoleDataAttributes) {
+func (o *Data) SetAttributes(v InviteDataAttributes) {
 	o.Attributes = v
 }
 
-// GetIncluded returns the Included field value if set, zero value otherwise.
-func (o *Data) GetIncluded() RoleDataIncluded {
-	if o == nil || IsNil(o.Included) {
-		var ret RoleDataIncluded
+// GetRelationships returns the Relationships field value
+func (o *Data) GetRelationships() MemberDataRelationships {
+	if o == nil {
+		var ret MemberDataRelationships
 		return ret
 	}
-	return *o.Included
+
+	return o.Relationships
 }
 
-// GetIncludedOk returns a tuple with the Included field value if set, nil otherwise
+// GetRelationshipsOk returns a tuple with the Relationships field value
 // and a boolean to check if the value has been set.
-func (o *Data) GetIncludedOk() (*RoleDataIncluded, bool) {
-	if o == nil || IsNil(o.Included) {
+func (o *Data) GetRelationshipsOk() (*MemberDataRelationships, bool) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Included, true
+	return &o.Relationships, true
 }
 
-// HasIncluded returns a boolean if a field has been set.
-func (o *Data) HasIncluded() bool {
-	if o != nil && !IsNil(o.Included) {
-		return true
-	}
-
-	return false
-}
-
-// SetIncluded gets a reference to the given RoleDataIncluded and assigns it to the Included field.
-func (o *Data) SetIncluded(v RoleDataIncluded) {
-	o.Included = &v
+// SetRelationships sets field value
+func (o *Data) SetRelationships(v MemberDataRelationships) {
+	o.Relationships = v
 }
 
 func (o Data) MarshalJSON() ([]byte, error) {
@@ -168,9 +161,7 @@ func (o Data) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["type"] = o.Type
 	toSerialize["attributes"] = o.Attributes
-	if !IsNil(o.Included) {
-		toSerialize["included"] = o.Included
-	}
+	toSerialize["relationships"] = o.Relationships
 	return toSerialize, nil
 }
 
@@ -182,6 +173,7 @@ func (o *Data) UnmarshalJSON(data []byte) (err error) {
 		"id",
 		"type",
 		"attributes",
+		"relationships",
 	}
 
 	allProperties := make(map[string]interface{})

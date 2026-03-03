@@ -14,8 +14,9 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
+	"github.com/netbill/organizations-svc/internal/core/modules/place"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
-	"github.com/netbill/organizations-svc/internal/core/modules/role"
+
 	"github.com/netbill/organizations-svc/internal/messenger"
 	"github.com/netbill/organizations-svc/internal/messenger/handler"
 	"github.com/netbill/organizations-svc/internal/messenger/publisher"
@@ -26,7 +27,6 @@ import (
 	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/tokenmanager"
 	"github.com/netbill/pgdbx"
-	"github.com/netbill/restkit"
 )
 
 func (a *App) Run(ctx context.Context) error {
@@ -46,21 +46,18 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	defer pool.Close()
 
-	defer pool.Close()
-	db := pgdbx.NewDB(pool)
-
 	a.log.Info("starting application")
 
+	db := pgdbx.NewDB(pool)
+
 	repo := &repository.Repository{
-		Transactioner:             pg.NewTransaction(db),
-		OrganizationsSql:          pg.NewOrganizationsQ(db),
-		OrgMembersSql:             pg.NewOrgMembersQ(db),
-		OrgMemberRolesSql:         pg.NewOrgMemberRolesQ(db),
-		OrgRolesSql:               pg.NewOrgRolesQ(db),
-		OrgRolePermissionLinksSql: pg.NewOrgRolePermissionLinksQ(db),
-		OrgRolePermissionsSql:     pg.NewOrgRolePermissionsQ(db),
-		OrgInvitesSql:             pg.NewOrgInvitesQ(db),
-		ProfilesSql:               pg.NewProfilesQ(db),
+		OrganizationsSql: pg.NewOrganizationsQ(db),
+		OrgMembersSql:    pg.NewOrgMembersQ(db),
+		OrgInvitesSql:    pg.NewOrgInvitesQ(db),
+		ProfilesSql:      pg.NewProfilesQ(db),
+		PlacesSql:        pg.NewPlacesQ(db),
+		TombstonesSql:    pg.NewTombstonesQ(db),
+		TransactionSql:   db,
 	}
 
 	cfg, err := awscfg.LoadDefaultConfig(
@@ -87,7 +84,7 @@ func (a *App) Run(ctx context.Context) error {
 	outbox := eventpg.NewOutbox(db)
 	inbox := eventpg.NewInbox(db)
 
-	producer := messenger.NewProducer(messenger.ProducerConfig{
+	producer := messenger.NewProducer(a.log, messenger.ProducerConfig{
 		Producer: a.config.Kafka.Identity,
 		Brokers:  a.config.Kafka.Brokers,
 		OrganizationV1: messenger.ProduceKafkaConfig{
@@ -112,22 +109,21 @@ func (a *App) Run(ctx context.Context) error {
 	profileCore := profile.New(repo)
 	orgCore := organization.New(repo, outbound, s3)
 	orgMemberCore := member.New(repo, outbound)
-	orgRoleCore := role.New(repo, outbound)
 	orgInviteCore := invite.New(repo, outbound)
+	placeCore := place.New(repo)
 
 	tokenManager := tokenmanager.New(tokenmanager.Config{
 		Issuer:   a.config.Auth.Tokens.Issuer,
 		AccessSK: a.config.Auth.Tokens.AccountAccess.SecretKey,
 	})
 
-	responser := restkit.NewResponser()
 	ctrl := controller.New(&controller.Modules{
 		Organization: orgCore,
 		Member:       orgMemberCore,
-		Role:         orgRoleCore,
 		Invite:       orgInviteCore,
-	}, responser)
-	mdll := middlewares.New(responser, tokenManager)
+		Profile:      profileCore,
+	})
+	mdll := middlewares.New(tokenManager)
 	router := rest.New(mdll, ctrl)
 
 	run(func() {
@@ -155,8 +151,9 @@ func (a *App) Run(ctx context.Context) error {
 		outboxWorker.Run(ctx)
 	})
 
-	inbound := handler.New(handler.Modules{
+	inbound := handler.New(a.log, handler.Modules{
 		Profile: profileCore,
+		Place:   placeCore,
 	})
 
 	inboxWorker := messenger.NewInboxWorker(a.log, inbox, eventbox.InboxWorkerConfig{
@@ -167,7 +164,7 @@ func (a *App) Run(ctx context.Context) error {
 		MinNextAttempt: a.config.Kafka.Inbox.MinNextAttempt,
 		MaxNextAttempt: a.config.Kafka.Inbox.MaxNextAttempt,
 		MaxAttempts:    a.config.Kafka.Inbox.MaxAttempts,
-	}, *inbound)
+	}, inbound)
 	defer inboxWorker.Clean()
 
 	run(func() {
@@ -185,6 +182,13 @@ func (a *App) Run(ctx context.Context) error {
 			MaxBytes:      a.config.Kafka.Consume.Topics.ProfilesV1.MaxBytes,
 			MaxWait:       a.config.Kafka.Consume.Topics.ProfilesV1.MaxWait,
 			QueueCapacity: a.config.Kafka.Consume.Topics.ProfilesV1.QueueCapacity,
+		},
+		PlacesV1: messenger.ConsumeKafkaConfig{
+			Instances:     a.config.Kafka.Consume.Topics.PlacesV1.Instances,
+			MinBytes:      a.config.Kafka.Consume.Topics.PlacesV1.MinBytes,
+			MaxBytes:      a.config.Kafka.Consume.Topics.PlacesV1.MaxBytes,
+			MaxWait:       a.config.Kafka.Consume.Topics.PlacesV1.MaxWait,
+			QueueCapacity: a.config.Kafka.Consume.Topics.PlacesV1.QueueCapacity,
 		},
 	})
 	defer consumer.Close()

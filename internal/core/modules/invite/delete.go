@@ -3,58 +3,66 @@ package invite
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
 	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) Delete(
+func (m *Module) Cancelled(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	actor models.AccountActor,
 	inviteID uuid.UUID,
-) error {
-	invite, err := m.GetForAccount(ctx, initiator, inviteID)
+) (models.Invite, error) {
+	invite, err := m.repo.GetInvite(ctx, inviteID)
 	if err != nil {
-		return err
+		return models.Invite{}, err
 	}
 
-	if invite.AccountID != initiator {
-		return errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf("account has no rights to accept this invite"),
+	initiator, err := m.getInitiator(ctx, actor, invite.OrganizationID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+	if !initiator.Head {
+		return models.Invite{}, errx.ErrorNotOrganizationHead.Raise(
+			fmt.Errorf("account has no rights to create invite for this organization"),
 		)
 	}
-	if invite.Status != domain.InviteStatusSent {
-		return errx.ErrorInviteAlreadyAnswered.Raise(
+
+	if invite.Status == models.InviteStatusCancelled {
+		return models.Invite{}, nil
+	} else if invite.Status != models.InviteStatusSent {
+		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
 			fmt.Errorf("invite status is %s", invite.Status),
 		)
 	}
-	if invite.ExpiresAt.Before(time.Now().UTC()) {
-		return errx.ErrorInviteExpired.Raise(
-			fmt.Errorf("invite expired at %s", invite.ExpiresAt),
+
+	org, err := m.repo.GetOrganizationByID(ctx, invite.OrganizationID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+	if org.Status == models.OrganizationStatusSuspended {
+		return models.Invite{}, errx.ErrorOrganizationIsSuspended.Raise(
+			fmt.Errorf("organization with id %s is suspended", invite.OrganizationID),
 		)
 	}
 
-	if err = m.checkPermissionForManageInvites(
-		ctx,
-		initiator,
-		invite.OrganizationID,
-	); err != nil {
-		return err
-	}
-
-	return m.repo.Transaction(ctx, func(ctx context.Context) error {
-		err = m.repo.DeleteInvite(ctx, inviteID)
+	if err = m.repo.Transaction(ctx, func(ctx context.Context) error {
+		invite, err = m.repo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusCancelled)
 		if err != nil {
 			return err
 		}
 
-		err = m.messenger.WriteOrgInviteDeleted(ctx, invite)
+		err = m.messenger.WriteOrgInviteCanceled(ctx, invite)
 		if err != nil {
 			return err
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return models.Invite{}, err
+	}
+
+	return invite, nil
+
 }

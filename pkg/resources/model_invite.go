@@ -22,6 +22,7 @@ var _ MappedNullable = &Invite{}
 // Invite struct for Invite
 type Invite struct {
 	Data InviteData `json:"data"`
+	Included []InviteIncludedInner `json:"included,omitempty"`
 }
 
 type _Invite Invite
@@ -68,6 +69,38 @@ func (o *Invite) SetData(v InviteData) {
 	o.Data = v
 }
 
+// GetIncluded returns the Included field value if set, zero value otherwise.
+func (o *Invite) GetIncluded() []InviteIncludedInner {
+	if o == nil || IsNil(o.Included) {
+		var ret []InviteIncludedInner
+		return ret
+	}
+	return o.Included
+}
+
+// GetIncludedOk returns a tuple with the Included field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *Invite) GetIncludedOk() ([]InviteIncludedInner, bool) {
+	if o == nil || IsNil(o.Included) {
+		return nil, false
+	}
+	return o.Included, true
+}
+
+// HasIncluded returns a boolean if a field has been set.
+func (o *Invite) HasIncluded() bool {
+	if o != nil && !IsNil(o.Included) {
+		return true
+	}
+
+	return false
+}
+
+// SetIncluded gets a reference to the given []InviteIncludedInner and assigns it to the Included field.
+func (o *Invite) SetIncluded(v []InviteIncludedInner) {
+	o.Included = v
+}
+
 func (o Invite) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -79,6 +112,9 @@ func (o Invite) MarshalJSON() ([]byte, error) {
 func (o Invite) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["data"] = o.Data
+	if !IsNil(o.Included) {
+		toSerialize["included"] = o.Included
+	}
 	return toSerialize, nil
 }
 

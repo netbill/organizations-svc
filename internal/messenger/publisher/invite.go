@@ -8,13 +8,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/internal/core/domain"
-	"github.com/netbill/organizations-svc/pkg/evtypes"
+	"github.com/netbill/evtypes"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (p *Publisher) WriteOrgInviteCreated(
 	ctx context.Context,
-	invite domain.Invite,
+	invite models.Invite,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgInviteCreatedPayload{
 		InviteID:       invite.ID,
@@ -32,7 +32,7 @@ func (p *Publisher) WriteOrgInviteCreated(
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteCreatedEvent,
 		Version:  1,
-		Topic:    evtypes.OrganizationsTopicV1,
+		Topic:    evtypes.OrgMembersTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
 		Producer: p.identity,
@@ -47,7 +47,7 @@ func (p *Publisher) WriteOrgInviteCreated(
 
 func (p *Publisher) WriteOrgInviteAccepted(
 	ctx context.Context,
-	invite domain.Invite,
+	invite models.Invite,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgInviteAcceptedPayload{
 		InviteID:   invite.ID,
@@ -61,7 +61,7 @@ func (p *Publisher) WriteOrgInviteAccepted(
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteAcceptedEvent,
 		Version:  1,
-		Topic:    evtypes.OrganizationsTopicV1,
+		Topic:    evtypes.OrgMembersTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
 		Producer: p.identity,
@@ -75,7 +75,7 @@ func (p *Publisher) WriteOrgInviteAccepted(
 
 func (p *Publisher) WriteOrgInviteDeclined(
 	ctx context.Context,
-	invite domain.Invite,
+	invite models.Invite,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgInviteDeclinedPayload{
 		InviteID:   invite.ID,
@@ -89,7 +89,7 @@ func (p *Publisher) WriteOrgInviteDeclined(
 		ID:       uuid.New(),
 		Type:     evtypes.OrgInviteDeclinedEvent,
 		Version:  1,
-		Topic:    evtypes.OrganizationsTopicV1,
+		Topic:    evtypes.OrgMembersTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
 		Producer: p.identity,
@@ -101,13 +101,13 @@ func (p *Publisher) WriteOrgInviteDeclined(
 	return nil
 }
 
-func (p *Publisher) WriteOrgInviteDeleted(
+func (p *Publisher) WriteOrgInviteCanceled(
 	ctx context.Context,
-	invite domain.Invite,
+	invite models.Invite,
 ) error {
-	payload, err := json.Marshal(evtypes.OrgInviteDeletedPayload{
-		InvitedID: invite.ID,
-		DeletedAt: time.Now().UTC(),
+	payload, err := json.Marshal(evtypes.OrgInviteCancelledPayload{
+		InviteID:    invite.ID,
+		CancelledAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal org invite deleted payload, cause: %w", err)
@@ -115,9 +115,9 @@ func (p *Publisher) WriteOrgInviteDeleted(
 
 	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
 		ID:       uuid.New(),
-		Type:     evtypes.OrgInviteDeletedEvent,
+		Type:     evtypes.OrgInviteCancelledEvent,
 		Version:  1,
-		Topic:    evtypes.OrganizationsTopicV1,
+		Topic:    evtypes.OrgMembersTopicV1,
 		Key:      invite.OrganizationID.String(),
 		Payload:  payload,
 		Producer: p.identity,

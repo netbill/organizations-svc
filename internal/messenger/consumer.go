@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/pkg/evtypes"
+	"github.com/netbill/evtypes"
 	"github.com/netbill/organizations-svc/pkg/log"
 )
 
@@ -16,6 +16,7 @@ type ConsumerConfig struct {
 	MaxBackoff time.Duration `json:"max_backoff"`
 
 	ProfilesV1 ConsumeKafkaConfig `json:"profiles_v1"`
+	PlacesV1   ConsumeKafkaConfig `json:"places_v1"`
 }
 
 type ConsumeKafkaConfig struct {
@@ -45,6 +46,17 @@ func NewConsumer(
 		MinBytes:      config.ProfilesV1.MinBytes,
 		MaxBytes:      config.ProfilesV1.MaxBytes,
 		QueueCapacity: config.ProfilesV1.QueueCapacity,
+	})
+
+	consumer.AddReader(eventbox.ReaderConfig{
+		Brokers:       config.Brokers,
+		GroupID:       config.GroupID,
+		Topic:         evtypes.PlacesTopicV1,
+		Instances:     config.PlacesV1.Instances,
+		MaxWait:       config.PlacesV1.MaxWait,
+		MinBytes:      config.PlacesV1.MinBytes,
+		MaxBytes:      config.PlacesV1.MaxBytes,
+		QueueCapacity: config.PlacesV1.QueueCapacity,
 	})
 
 	return consumer

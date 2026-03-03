@@ -22,6 +22,7 @@ var _ MappedNullable = &OrganizationsCollection{}
 // OrganizationsCollection struct for OrganizationsCollection
 type OrganizationsCollection struct {
 	Data []OrganizationData `json:"data"`
+	Included []MemberData `json:"included,omitempty"`
 	Links PaginationData `json:"links"`
 }
 
@@ -70,6 +71,38 @@ func (o *OrganizationsCollection) SetData(v []OrganizationData) {
 	o.Data = v
 }
 
+// GetIncluded returns the Included field value if set, zero value otherwise.
+func (o *OrganizationsCollection) GetIncluded() []MemberData {
+	if o == nil || IsNil(o.Included) {
+		var ret []MemberData
+		return ret
+	}
+	return o.Included
+}
+
+// GetIncludedOk returns a tuple with the Included field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationsCollection) GetIncludedOk() ([]MemberData, bool) {
+	if o == nil || IsNil(o.Included) {
+		return nil, false
+	}
+	return o.Included, true
+}
+
+// HasIncluded returns a boolean if a field has been set.
+func (o *OrganizationsCollection) HasIncluded() bool {
+	if o != nil && !IsNil(o.Included) {
+		return true
+	}
+
+	return false
+}
+
+// SetIncluded gets a reference to the given []MemberData and assigns it to the Included field.
+func (o *OrganizationsCollection) SetIncluded(v []MemberData) {
+	o.Included = v
+}
+
 // GetLinks returns the Links field value
 func (o *OrganizationsCollection) GetLinks() PaginationData {
 	if o == nil {
@@ -105,6 +138,9 @@ func (o OrganizationsCollection) MarshalJSON() ([]byte, error) {
 func (o OrganizationsCollection) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["data"] = o.Data
+	if !IsNil(o.Included) {
+		toSerialize["included"] = o.Included
+	}
 	toSerialize["links"] = o.Links
 	return toSerialize, nil
 }

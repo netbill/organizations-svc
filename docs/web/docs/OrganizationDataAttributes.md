@@ -6,6 +6,9 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Status** | **string** | The status of the organization | 
 **Name** | **string** | The name of the organization | 
+**IconKey** | Pointer to **string** | The media key for the organization&#39;s icon | [optional] 
+**BannerKey** | Pointer to **string** | The media key for the organization&#39;s banner | [optional] 
+**Version** | **int32** | The version number of the organization, used for optimistic concurrency control | 
 **CreatedAt** | **time.Time** | The date and time when the organization was created | 
 **UpdatedAt** | **time.Time** | The date and time when the organization was last updated | 
 
@@ -13,7 +16,7 @@ Name | Type | Description | Notes
 
 ### NewOrganizationDataAttributes
 
-`func NewOrganizationDataAttributes(status string, name string, createdAt time.Time, updatedAt time.Time, ) *OrganizationDataAttributes`
+`func NewOrganizationDataAttributes(status string, name string, version int32, createdAt time.Time, updatedAt time.Time, ) *OrganizationDataAttributes`
 
 NewOrganizationDataAttributes instantiates a new OrganizationDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -66,6 +69,76 @@ and a boolean to check if the value has been set.
 `func (o *OrganizationDataAttributes) SetName(v string)`
 
 SetName sets Name field to given value.
+
+
+### GetIconKey
+
+`func (o *OrganizationDataAttributes) GetIconKey() string`
+
+GetIconKey returns the IconKey field if non-nil, zero value otherwise.
+
+### GetIconKeyOk
+
+`func (o *OrganizationDataAttributes) GetIconKeyOk() (*string, bool)`
+
+GetIconKeyOk returns a tuple with the IconKey field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIconKey
+
+`func (o *OrganizationDataAttributes) SetIconKey(v string)`
+
+SetIconKey sets IconKey field to given value.
+
+### HasIconKey
+
+`func (o *OrganizationDataAttributes) HasIconKey() bool`
+
+HasIconKey returns a boolean if a field has been set.
+
+### GetBannerKey
+
+`func (o *OrganizationDataAttributes) GetBannerKey() string`
+
+GetBannerKey returns the BannerKey field if non-nil, zero value otherwise.
+
+### GetBannerKeyOk
+
+`func (o *OrganizationDataAttributes) GetBannerKeyOk() (*string, bool)`
+
+GetBannerKeyOk returns a tuple with the BannerKey field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetBannerKey
+
+`func (o *OrganizationDataAttributes) SetBannerKey(v string)`
+
+SetBannerKey sets BannerKey field to given value.
+
+### HasBannerKey
+
+`func (o *OrganizationDataAttributes) HasBannerKey() bool`
+
+HasBannerKey returns a boolean if a field has been set.
+
+### GetVersion
+
+`func (o *OrganizationDataAttributes) GetVersion() int32`
+
+GetVersion returns the Version field if non-nil, zero value otherwise.
+
+### GetVersionOk
+
+`func (o *OrganizationDataAttributes) GetVersionOk() (*int32, bool)`
+
+GetVersionOk returns a tuple with the Version field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetVersion
+
+`func (o *OrganizationDataAttributes) SetVersion(v int32)`
+
+SetVersion sets Version field to given value.
 
 
 ### GetCreatedAt

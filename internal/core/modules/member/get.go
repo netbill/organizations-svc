@@ -2,53 +2,40 @@ package member
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/domain"
-	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/restkit/pagi"
 )
 
 func (m *Module) GetByID(
 	ctx context.Context,
 	memberID uuid.UUID,
-) (domain.Member, error) {
-	row, err := m.repo.GetMember(ctx, memberID)
-	if err != nil {
-		return domain.Member{}, err
-	}
-
-	return row, nil
+) (models.Member, error) {
+	return m.repo.GetMember(ctx, memberID)
 }
 
-func (m *Module) GetInitiator(
+func (m *Module) GetByAccountAndOrgs(
 	ctx context.Context,
-	initiator domain.AccountActor,
-	organizationID uuid.UUID,
-) (domain.Member, error) {
-	member, err := m.GetByAccountAndOrganization(ctx, initiator, organizationID)
-	if errors.Is(err, errx.ErrorMemberNotFound) {
-		return domain.Member{}, errx.ErrorNotEnoughRights.Raise(
-			fmt.Errorf(
-				"initiator member with account id %s and organization id %s not found: %w",
-				member.AccountID, organizationID, err,
-			),
-		)
+	actor models.AccountActor,
+	organizationIDs []uuid.UUID,
+) ([]models.Member, error) {
+	rows, err := m.repo.GetMembersByAccountAndOrgs(ctx, actor, organizationIDs)
+	if err != nil {
+		return nil, err
 	}
 
-	return member, err
+	return rows, nil
 }
 
 func (m *Module) GetByAccountAndOrganization(
 	ctx context.Context,
-	initiator domain.AccountActor,
+	actor models.AccountActor,
 	organizationID uuid.UUID,
-) (domain.Member, error) {
-	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, initiator, organizationID)
+) (models.Member, error) {
+	row, err := m.repo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
 	if err != nil {
-		return domain.Member{}, err
+		return models.Member{}, err
 	}
 
 	return row, nil
@@ -57,25 +44,21 @@ func (m *Module) GetByAccountAndOrganization(
 type FilterParams struct {
 	OrganizationID *uuid.UUID
 	AccountID      *uuid.UUID
-	RoleID         *uuid.UUID
 	Head           *bool
 	Username       *string
 	BestMatch      *string
-	PermissionID   *uuid.UUID
 	Label          *string
 	Position       *string
-	RoleRankUp     *uint
-	RoleRankDown   *uint
 }
 
 func (m *Module) GetList(
 	ctx context.Context,
 	filter FilterParams,
 	limit, offset uint,
-) (pagi.Page[[]domain.Member], error) {
+) (pagi.Page[[]models.Member], error) {
 	res, err := m.repo.GetMembers(ctx, filter, limit, offset)
 	if err != nil {
-		return pagi.Page[[]domain.Member]{}, err
+		return pagi.Page[[]models.Member]{}, err
 	}
 
 	return res, nil

@@ -26,6 +26,12 @@ type OrganizationDataAttributes struct {
 	Status string `json:"status"`
 	// The name of the organization
 	Name string `json:"name"`
+	// The media key for the organization's icon
+	IconKey *string `json:"icon_key,omitempty"`
+	// The media key for the organization's banner
+	BannerKey *string `json:"banner_key,omitempty"`
+	// The version number of the organization, used for optimistic concurrency control
+	Version int32 `json:"version"`
 	// The date and time when the organization was created
 	CreatedAt time.Time `json:"created_at"`
 	// The date and time when the organization was last updated
@@ -38,10 +44,11 @@ type _OrganizationDataAttributes OrganizationDataAttributes
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOrganizationDataAttributes(status string, name string, createdAt time.Time, updatedAt time.Time) *OrganizationDataAttributes {
+func NewOrganizationDataAttributes(status string, name string, version int32, createdAt time.Time, updatedAt time.Time) *OrganizationDataAttributes {
 	this := OrganizationDataAttributes{}
 	this.Status = status
 	this.Name = name
+	this.Version = version
 	this.CreatedAt = createdAt
 	this.UpdatedAt = updatedAt
 	return &this
@@ -101,6 +108,94 @@ func (o *OrganizationDataAttributes) GetNameOk() (*string, bool) {
 // SetName sets field value
 func (o *OrganizationDataAttributes) SetName(v string) {
 	o.Name = v
+}
+
+// GetIconKey returns the IconKey field value if set, zero value otherwise.
+func (o *OrganizationDataAttributes) GetIconKey() string {
+	if o == nil || IsNil(o.IconKey) {
+		var ret string
+		return ret
+	}
+	return *o.IconKey
+}
+
+// GetIconKeyOk returns a tuple with the IconKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationDataAttributes) GetIconKeyOk() (*string, bool) {
+	if o == nil || IsNil(o.IconKey) {
+		return nil, false
+	}
+	return o.IconKey, true
+}
+
+// HasIconKey returns a boolean if a field has been set.
+func (o *OrganizationDataAttributes) HasIconKey() bool {
+	if o != nil && !IsNil(o.IconKey) {
+		return true
+	}
+
+	return false
+}
+
+// SetIconKey gets a reference to the given string and assigns it to the IconKey field.
+func (o *OrganizationDataAttributes) SetIconKey(v string) {
+	o.IconKey = &v
+}
+
+// GetBannerKey returns the BannerKey field value if set, zero value otherwise.
+func (o *OrganizationDataAttributes) GetBannerKey() string {
+	if o == nil || IsNil(o.BannerKey) {
+		var ret string
+		return ret
+	}
+	return *o.BannerKey
+}
+
+// GetBannerKeyOk returns a tuple with the BannerKey field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *OrganizationDataAttributes) GetBannerKeyOk() (*string, bool) {
+	if o == nil || IsNil(o.BannerKey) {
+		return nil, false
+	}
+	return o.BannerKey, true
+}
+
+// HasBannerKey returns a boolean if a field has been set.
+func (o *OrganizationDataAttributes) HasBannerKey() bool {
+	if o != nil && !IsNil(o.BannerKey) {
+		return true
+	}
+
+	return false
+}
+
+// SetBannerKey gets a reference to the given string and assigns it to the BannerKey field.
+func (o *OrganizationDataAttributes) SetBannerKey(v string) {
+	o.BannerKey = &v
+}
+
+// GetVersion returns the Version field value
+func (o *OrganizationDataAttributes) GetVersion() int32 {
+	if o == nil {
+		var ret int32
+		return ret
+	}
+
+	return o.Version
+}
+
+// GetVersionOk returns a tuple with the Version field value
+// and a boolean to check if the value has been set.
+func (o *OrganizationDataAttributes) GetVersionOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Version, true
+}
+
+// SetVersion sets field value
+func (o *OrganizationDataAttributes) SetVersion(v int32) {
+	o.Version = v
 }
 
 // GetCreatedAt returns the CreatedAt field value
@@ -163,6 +258,13 @@ func (o OrganizationDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["status"] = o.Status
 	toSerialize["name"] = o.Name
+	if !IsNil(o.IconKey) {
+		toSerialize["icon_key"] = o.IconKey
+	}
+	if !IsNil(o.BannerKey) {
+		toSerialize["banner_key"] = o.BannerKey
+	}
+	toSerialize["version"] = o.Version
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["updated_at"] = o.UpdatedAt
 	return toSerialize, nil
@@ -175,6 +277,7 @@ func (o *OrganizationDataAttributes) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"status",
 		"name",
+		"version",
 		"created_at",
 		"updated_at",
 	}

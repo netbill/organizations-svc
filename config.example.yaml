@@ -7,10 +7,10 @@ log:
 
 database:
   sql:
-    url: "postgresql://postgres:postgres@localhost:7777/postgres?sslmode=disable"
+    url: "postgresql://postgres:postgres@localhost:7003/postgres?sslmode=disable"
 
 rest:
-  port: ":8003"
+  port: "8003"
   timeouts:
     read: 15s #seconds
     read_header: 15s #seconds
@@ -62,7 +62,7 @@ kafka:
 
   identity: "organizations-svc" # used for consumer group and client id
 
-  writer:
+  produce:
     topics:
       organizations_v1:
         required_acks: "all"     # "all" | "one" | "none"
@@ -86,20 +86,25 @@ kafka:
         dial_timeout: 5s         # dial timeout (0 = default)
         idle_timeout: 30s        # close idle connections (0 = default)
 
-  reader:
+  consume:
     backoff:
       min: 100ms # minimum backoff time after an error
-      max: 10s   # maximum backoff time after an error
+      max: 1s   # maximum backoff time after an error
 
     topics:
       profiles_v1:
-        instances: 1           # number of readers for this topic which will be started in each process
-        min_bytes: 1           # minimum bytes to fetch in each request
-        max_bytes: 10e6        # maximum bytes to fetch in each request
-        max_wait: 1s           # maximum time to wait for messages in each request
-        commit_interval: 0s    # 0s = synchronous commits (CommitMessages does commit immediately)
-        start_offset: "latest" # used only if group has no committed offset: "earliest"|"latest"
-        queue_capacity: 100    # capacity of the internal queue for messages fetched from Kafka (should be >= batch_size)
+        instances: 4           # number of readers for this topic which will be started in each process
+        min_bytes: 1           # minimum bytes to fetch in each requests
+        max_bytes: 10e6        # maximum bytes to fetch in each requests
+        max_wait: 1s           # maximum time to wait for messages in each requests
+        queue_capacity: 10     # capacity of the internal queue for messages fetched from Kafka
+
+      places_v1:
+        instances: 4           # number of readers for this topic which will be started in each process
+        min_bytes: 1           # minimum bytes to fetch in each requests
+        max_bytes: 10e6        # maximum bytes to fetch in each requests
+        max_wait: 1s           # maximum time to wait for messages in each requests
+        queue_capacity: 10     # capacity of the internal queue for messages fetched from Kafka
 
   inbox:
     routines: 10          # number of goroutines which can process messages in each process

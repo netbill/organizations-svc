@@ -4,16 +4,16 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Id** | [**uuid.UUID**](uuid.UUID.md) | member ID | 
+**Id** | [**uuid.UUID**](uuid.UUID.md) | Invite ID | 
 **Type** | **string** |  | 
-**Attributes** | [**RoleDataAttributes**](RoleDataAttributes.md) |  | 
-**Included** | Pointer to [**RoleDataIncluded**](RoleDataIncluded.md) |  | [optional] 
+**Attributes** | [**InviteDataAttributes**](InviteDataAttributes.md) |  | 
+**Relationships** | [**MemberDataRelationships**](MemberDataRelationships.md) |  | 
 
 ## Methods
 
 ### NewData
 
-`func NewData(id uuid.UUID, type_ string, attributes RoleDataAttributes, ) *Data`
+`func NewData(id uuid.UUID, type_ string, attributes InviteDataAttributes, relationships MemberDataRelationships, ) *Data`
 
 NewData instantiates a new Data object
 This constructor will assign default values to properties that have it defined,
@@ -70,48 +70,43 @@ SetType sets Type field to given value.
 
 ### GetAttributes
 
-`func (o *Data) GetAttributes() RoleDataAttributes`
+`func (o *Data) GetAttributes() InviteDataAttributes`
 
 GetAttributes returns the Attributes field if non-nil, zero value otherwise.
 
 ### GetAttributesOk
 
-`func (o *Data) GetAttributesOk() (*RoleDataAttributes, bool)`
+`func (o *Data) GetAttributesOk() (*InviteDataAttributes, bool)`
 
 GetAttributesOk returns a tuple with the Attributes field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetAttributes
 
-`func (o *Data) SetAttributes(v RoleDataAttributes)`
+`func (o *Data) SetAttributes(v InviteDataAttributes)`
 
 SetAttributes sets Attributes field to given value.
 
 
-### GetIncluded
+### GetRelationships
 
-`func (o *Data) GetIncluded() RoleDataIncluded`
+`func (o *Data) GetRelationships() MemberDataRelationships`
 
-GetIncluded returns the Included field if non-nil, zero value otherwise.
+GetRelationships returns the Relationships field if non-nil, zero value otherwise.
 
-### GetIncludedOk
+### GetRelationshipsOk
 
-`func (o *Data) GetIncludedOk() (*RoleDataIncluded, bool)`
+`func (o *Data) GetRelationshipsOk() (*MemberDataRelationships, bool)`
 
-GetIncludedOk returns a tuple with the Included field if it's non-nil, zero value otherwise
+GetRelationshipsOk returns a tuple with the Relationships field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetIncluded
+### SetRelationships
 
-`func (o *Data) SetIncluded(v RoleDataIncluded)`
+`func (o *Data) SetRelationships(v MemberDataRelationships)`
 
-SetIncluded sets Included field to given value.
+SetRelationships sets Relationships field to given value.
 
-### HasIncluded
-
-`func (o *Data) HasIncluded() bool`
-
-HasIncluded returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

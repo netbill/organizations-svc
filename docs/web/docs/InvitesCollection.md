@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Data** | [**[]InviteData**](InviteData.md) |  | 
+**Included** | Pointer to [**[]InviteIncludedInner**](InviteIncludedInner.md) |  | [optional] 
 **Links** | [**PaginationData**](PaginationData.md) |  | 
 
 ## Methods
@@ -45,6 +46,31 @@ and a boolean to check if the value has been set.
 
 SetData sets Data field to given value.
 
+
+### GetIncluded
+
+`func (o *InvitesCollection) GetIncluded() []InviteIncludedInner`
+
+GetIncluded returns the Included field if non-nil, zero value otherwise.
+
+### GetIncludedOk
+
+`func (o *InvitesCollection) GetIncludedOk() (*[]InviteIncludedInner, bool)`
+
+GetIncludedOk returns a tuple with the Included field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIncluded
+
+`func (o *InvitesCollection) SetIncluded(v []InviteIncludedInner)`
+
+SetIncluded sets Included field to given value.
+
+### HasIncluded
+
+`func (o *InvitesCollection) HasIncluded() bool`
+
+HasIncluded returns a boolean if a field has been set.
 
 ### GetLinks
 

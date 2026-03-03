@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.1.1
 info:
   title: organizations-svc API
   description: API documentation for organizations-svc
@@ -25,14 +25,10 @@ components:
       $ref: './spec/components/schemas/requests/UpdateMember.yaml'
     CreateInvite:
       $ref: './spec/components/schemas/requests/CreateInvite.yaml'
-    CreateRole:
-      $ref: './spec/components/schemas/requests/CreateRole.yaml'
-    UpdateRole:
-      $ref: './spec/components/schemas/requests/UpdateRole.yaml'
-    UpdateRolesRanks:
-      $ref: './spec/components/schemas/requests/UpdateRolesRanks.yaml'
-    UpdateRolePermissions:
-      $ref: './spec/components/schemas/requests/UpdateRolePermissions.yaml'
+    DeleteUploadOrgIcon:
+      $ref: './spec/components/schemas/requests/DeleteUploadOrgIcon.yaml'
+    DeleteUploadOrgBanner:
+      $ref: './spec/components/schemas/requests/DeleteUploadOrgBanner.yaml'
 
     # responses:
     PaginationData:
@@ -40,8 +36,15 @@ components:
     UploadResourcesLink:
       $ref: './spec/components/schemas/responses/UploadResourcesLink.yaml'
 
+    ProfileData:
+      $ref: './spec/components/schemas/responses/ProfileData.yaml'
+    ProfileAttributes:
+      $ref: './spec/components/schemas/responses/ProfileAttributes.yaml'
+
     Organization:
       $ref: './spec/components/schemas/responses/Organization.yaml'
+    OrganizationData:
+      $ref: './spec/components/schemas/responses/OrganizationData.yaml'
     OrganizationsCollection:
       $ref: './spec/components/schemas/responses/OrganizationsCollection.yaml'
     UploadOrgMediaLinks:
@@ -51,19 +54,12 @@ components:
       $ref: './spec/components/schemas/responses/Member.yaml'
     MemberCollection:
       $ref: './spec/components/schemas/responses/MemberCollection.yaml'
-    DeleteUploadOrgIcon:
-      $ref: './spec/components/schemas/requests/DeleteUploadOrgIcon.yaml'
-    DeleteUploadOrgBanner:
-      $ref: './spec/components/schemas/requests/DeleteUploadOrgBanner.yaml'
+    MemberIncluded:
+      $ref: './spec/components/schemas/responses/MemberIncluded.yaml'
 
     Invite:
       $ref: './spec/components/schemas/responses/Invite.yaml'
     InvitesCollection:
       $ref: './spec/components/schemas/responses/InvitesCollection.yaml'
-
-    Role:
-      $ref: './spec/components/schemas/responses/Role.yaml'
-    RolesCollection:
-      $ref: './spec/components/schemas/responses/RolesCollection.yaml'
-    RolePermissions:
-      $ref: './spec/components/schemas/responses/RolePermissions.yaml'
+    InviteIncluded:
+      $ref: './spec/components/schemas/responses/InviteIncluded.yaml'

@@ -15,7 +15,7 @@ properties:
         description: "member ID"
       type:
         type: string
-        enum: [ update_member ]
+        enum: [ organization_member ]
       attributes:
         type: object
         properties:

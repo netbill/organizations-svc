@@ -8,13 +8,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/internal/core/domain"
-	"github.com/netbill/organizations-svc/pkg/evtypes"
+	"github.com/netbill/evtypes"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 func (p *Publisher) WriteOrgMemberCreated(
 	ctx context.Context,
-	member domain.Member,
+	member models.Member,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgMemberCreatedPayload{
 		MemberID:       member.ID,
@@ -48,12 +48,13 @@ func (p *Publisher) WriteOrgMemberCreated(
 
 func (p *Publisher) WriteOrgMemberUpdated(
 	ctx context.Context,
-	member domain.Member,
+	member models.Member,
 ) error {
 	payload, err := json.Marshal(evtypes.OrgMemberUpdatedPayload{
 		MemberID:  member.ID,
 		Position:  member.Position,
 		Label:     member.Label,
+		Version:   member.Version,
 		UpdatedAt: member.UpdatedAt,
 	})
 	if err != nil {
@@ -99,64 +100,6 @@ func (p *Publisher) WriteOrgMemberDeleted(
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create sender event for org member deleted, cause: %w", err)
-	}
-
-	return nil
-}
-
-func (p *Publisher) WriteOrgMemberRoleAdd(
-	ctx context.Context,
-	link domain.OrgMemberRolesLink,
-) error {
-	payload, err := json.Marshal(evtypes.OrgMemberRoleAddedPayload{
-		MemberID: link.MemberID,
-		RoleID:   link.RoleID,
-		AddedAt:  link.CreatedAt,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal org member role added payload, cause: %w", err)
-	}
-
-	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
-		ID:       uuid.New(),
-		Type:     evtypes.OrgMemberRoleAddedEvent,
-		Version:  1,
-		Topic:    evtypes.OrgMembersTopicV1,
-		Key:      link.MemberID.String(),
-		Payload:  payload,
-		Producer: p.identity,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org member role added, cause: %w", err)
-	}
-
-	return nil
-}
-
-func (p *Publisher) WriteOrgMemberRoleRemove(
-	ctx context.Context,
-	memberID uuid.UUID,
-	roleID uuid.UUID,
-) error {
-	payload, err := json.Marshal(evtypes.OrgMemberRoleRemovedPayload{
-		MemberID: memberID,
-		RoleID:   roleID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal org member role removed payload, cause: %w", err)
-	}
-
-	_, err = p.outbox.WriteOutboxEvent(ctx, eventbox.Message{
-		ID:       uuid.New(),
-		Type:     evtypes.OrgMemberRoleRemovedEvent,
-		Version:  1,
-		Topic:    evtypes.OrgMembersTopicV1,
-		Key:      memberID.String(),
-		Payload:  payload,
-		Producer: p.identity,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org member role removed, cause: %w", err)
 	}
 
 	return nil

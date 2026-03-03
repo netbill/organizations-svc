@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Data** | [**[]MemberData**](MemberData.md) |  | 
+**Included** | Pointer to [**[]MemberIncludedInner**](MemberIncludedInner.md) |  | [optional] 
 **Links** | [**PaginationData**](PaginationData.md) |  | 
 
 ## Methods
@@ -45,6 +46,31 @@ and a boolean to check if the value has been set.
 
 SetData sets Data field to given value.
 
+
+### GetIncluded
+
+`func (o *MemberCollection) GetIncluded() []MemberIncludedInner`
+
+GetIncluded returns the Included field if non-nil, zero value otherwise.
+
+### GetIncludedOk
+
+`func (o *MemberCollection) GetIncludedOk() (*[]MemberIncludedInner, bool)`
+
+GetIncludedOk returns a tuple with the Included field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIncluded
+
+`func (o *MemberCollection) SetIncluded(v []MemberIncludedInner)`
+
+SetIncluded sets Included field to given value.
+
+### HasIncluded
+
+`func (o *MemberCollection) HasIncluded() bool`
+
+HasIncluded returns a boolean if a field has been set.
 
 ### GetLinks
 

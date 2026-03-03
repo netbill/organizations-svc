@@ -1,0 +1,31 @@
+type: object
+required:
+  - username
+  - official
+  - version
+  - updated_at
+  - created_at
+properties:
+  username:
+    type: string
+    description: "username for this account and profile"
+  pseudonym:
+    type: string
+    description: "profile pseudonym"
+  official:
+    type: boolean
+    description: "official mark"
+  avatar_key:
+    type: string
+    description: "avatar key"
+  version:
+    type: integer
+    description: "profile version"
+  updated_at:
+    type: string
+    format: date-time
+    description: "updated at"
+  created_at:
+    type: string
+    format: date-time
+    description: "created at"

@@ -4,7 +4,8 @@ import (
 	"time"
 
 	"github.com/netbill/eventbox"
-	"github.com/netbill/organizations-svc/pkg/evtypes"
+	"github.com/netbill/evtypes"
+	"github.com/netbill/organizations-svc/pkg/log"
 )
 
 type ProducerConfig struct {
@@ -23,8 +24,8 @@ type ProduceKafkaConfig struct {
 	BatchTimeout time.Duration `json:"batch_timeout"`
 }
 
-func NewProducer(cfg ProducerConfig) *eventbox.Producer {
-	producer := eventbox.NewProducer(cfg.Brokers...)
+func NewProducer(log *log.Logger, cfg ProducerConfig) *eventbox.Producer {
+	producer := eventbox.NewProducer(log, cfg.Brokers...)
 
 	err := producer.AddWriter(evtypes.OrganizationsTopicV1, eventbox.WriterTopicConfig{
 		RequiredAcks: cfg.OrganizationV1.RequiredAcks,

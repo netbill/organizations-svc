@@ -15,22 +15,22 @@ import (
 )
 
 const organizationsTable = "organizations"
-const organizationsColumns = "id, status, name, icon_key, banner_key, max_roles, created_at, updated_at"
+const organizationsColumns = "id, status, name, icon_key, banner_key, version, created_at, updated_at"
+const organizationsColumnsO = "o.id, o.status, o.name, o.icon_key, o.banner_key, o.version, o.created_at, o.updated_at"
 
-func scanOrganization(row sq.RowScanner) (o repository.OrganizationRow, err error) {
+func scanOrganization(row sq.RowScanner) (res repository.OrganizationRow, err error) {
 	var iconKey pgtype.Text
 	var bannerKey pgtype.Text
-	var maxRoles int32
 
 	err = row.Scan(
-		&o.ID,
-		&o.Status,
-		&o.Name,
+		&res.ID,
+		&res.Status,
+		&res.Name,
 		&iconKey,
 		&bannerKey,
-		&maxRoles,
-		&o.CreatedAt,
-		&o.UpdatedAt,
+		&res.Version,
+		&res.CreatedAt,
+		&res.UpdatedAt,
 	)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
@@ -40,19 +40,13 @@ func scanOrganization(row sq.RowScanner) (o repository.OrganizationRow, err erro
 	}
 
 	if iconKey.Valid {
-		o.IconKey = &iconKey.String
+		res.IconKey = &iconKey.String
 	}
 	if bannerKey.Valid {
-		o.BannerKey = &bannerKey.String
+		res.BannerKey = &bannerKey.String
 	}
 
-	// max_roles в БД обычно int, в модели тебе нужен uint
-	if maxRoles < 0 {
-		maxRoles = 0
-	}
-	o.MaxRoles = uint(maxRoles)
-
-	return o, nil
+	return res, nil
 }
 
 type organizations struct {
@@ -68,11 +62,11 @@ func NewOrganizationsQ(db *pgdbx.DB) repository.OrganizationsQ {
 	b := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return &organizations{
 		db:       db,
-		selector: b.Select(organizationsColumns).From(organizationsTable),
+		selector: b.Select(organizationsColumnsO).From(organizationsTable + " o"),
 		inserter: b.Insert(organizationsTable),
-		updater:  b.Update(organizationsTable),
-		deleter:  b.Delete(organizationsTable),
-		counter:  b.Select("COUNT(*)").From(organizationsTable),
+		updater:  b.Update(organizationsTable + " o"),
+		deleter:  b.Delete(organizationsTable + " o"),
+		counter:  b.Select("COUNT(*)").From(organizationsTable + " o"),
 	}
 }
 
@@ -94,18 +88,24 @@ func (q *organizations) Insert(ctx context.Context, data repository.Organization
 }
 
 func (q *organizations) FilterByID(id ...uuid.UUID) repository.OrganizationsQ {
-	q.selector = q.selector.Where(sq.Eq{"id": id})
-	q.counter = q.counter.Where(sq.Eq{"id": id})
-	q.updater = q.updater.Where(sq.Eq{"id": id})
-	q.deleter = q.deleter.Where(sq.Eq{"id": id})
+	q.selector = q.selector.Where(sq.Eq{"o.id": id})
+	q.counter = q.counter.Where(sq.Eq{"o.id": id})
+	q.updater = q.updater.Where(sq.Eq{"o.id": id})
+	q.deleter = q.deleter.Where(sq.Eq{"o.id": id})
 	return q
 }
 
 func (q *organizations) FilterByStatus(status string) repository.OrganizationsQ {
-	q.selector = q.selector.Where(sq.Eq{"status": status})
-	q.counter = q.counter.Where(sq.Eq{"status": status})
-	q.updater = q.updater.Where(sq.Eq{"status": status})
-	q.deleter = q.deleter.Where(sq.Eq{"status": status})
+	q.selector = q.selector.Where(sq.Eq{"o.status": status})
+	q.counter = q.counter.Where(sq.Eq{"o.status": status})
+	q.updater = q.updater.Where(sq.Eq{"o.status": status})
+	q.deleter = q.deleter.Where(sq.Eq{"o.status": status})
+	return q
+}
+
+func (q *organizations) FilterNameLike(name string) repository.OrganizationsQ {
+	q.selector = q.selector.Where(sq.ILike{"o.name": "%" + name + "%"})
+	q.counter = q.counter.Where(sq.ILike{"o.name": "%" + name + "%"})
 	return q
 }
 
@@ -125,19 +125,13 @@ func (q *organizations) FilterByAccountID(accountID uuid.UUID) repository.Organi
 		return q
 	}
 
-	expr := sq.Expr("id IN ("+subSQL+")", subArgs...)
+	expr := sq.Expr("o.id IN ("+subSQL+")", subArgs...)
 
 	q.selector = q.selector.Where(expr)
 	q.updater = q.updater.Where(expr)
 	q.deleter = q.deleter.Where(expr)
 	q.counter = q.counter.Where(expr)
 
-	return q
-}
-
-func (q *organizations) FilterNameLike(name string) repository.OrganizationsQ {
-	q.selector = q.selector.Where(sq.ILike{"name": "%" + name + "%"})
-	q.counter = q.counter.Where(sq.ILike{"name": "%" + name + "%"})
 	return q
 }
 
@@ -178,32 +172,16 @@ func (q *organizations) Select(ctx context.Context) ([]repository.OrganizationRo
 }
 
 func (q *organizations) UpdateOne(ctx context.Context) (repository.OrganizationRow, error) {
-	q.updater = q.updater.Set("updated_at", time.Now().UTC())
+	q.updater = q.updater.
+		Set("updated_at", time.Now().UTC()).
+		Set("version", sq.Expr("version + 1"))
 
-	query, args, err := q.updater.
-		Suffix("RETURNING " + organizationsColumns).
-		ToSql()
+	query, args, err := q.updater.Suffix("RETURNING " + organizationsColumns).ToSql()
 	if err != nil {
 		return repository.OrganizationRow{}, fmt.Errorf("building update query for %s: %w", organizationsTable, err)
 	}
 
 	return scanOrganization(q.db.QueryRow(ctx, query, args...))
-}
-
-func (q *organizations) UpdateMany(ctx context.Context) (int64, error) {
-	q.updater = q.updater.Set("updated_at", time.Now().UTC())
-
-	query, args, err := q.updater.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("building update query for %s: %w", organizationsTable, err)
-	}
-
-	res, err := q.db.Exec(ctx, query, args...)
-	if err != nil {
-		return 0, fmt.Errorf("executing update query for %s: %w", organizationsTable, err)
-	}
-
-	return res.RowsAffected(), nil
 }
 
 func (q *organizations) UpdateName(v string) repository.OrganizationsQ {
@@ -223,11 +201,6 @@ func (q *organizations) UpdateIconKey(v *string) repository.OrganizationsQ {
 
 func (q *organizations) UpdateBannerKey(v *string) repository.OrganizationsQ {
 	q.updater = q.updater.Set("banner_key", v)
-	return q
-}
-
-func (q *organizations) UpdateMaxRoles(maxRoles uint) repository.OrganizationsQ {
-	q.updater = q.updater.Set("max_roles", int32(maxRoles))
 	return q
 }
 

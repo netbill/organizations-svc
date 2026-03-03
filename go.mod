@@ -16,13 +16,14 @@ require (
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/netbill/ape v0.1.3
 	github.com/netbill/awsx v0.3.3
-	github.com/netbill/eventbox v0.1.3
-	github.com/netbill/logium v0.2.6
+	github.com/netbill/eventbox v0.1.12
+	github.com/netbill/evtypes v0.1.2
+	github.com/netbill/logium v0.3.1
 	github.com/netbill/pgdbx v0.3.1
-	github.com/netbill/restkit v0.2.4
+	github.com/netbill/restkit v0.2.5
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v1.8.1
-	github.com/segmentio/kafka-go v0.4.50
+	github.com/segmentio/kafka-go v0.4.50 // indirect
 	github.com/spf13/viper v1.21.0
 )
 
@@ -56,7 +57,6 @@ require (
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
-	github.com/netbill/orgperm v0.0.0-20260216103323-137b8efab618
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
@@ -71,10 +71,6 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 )
 
-require github.com/lmittmann/tint v1.1.3
+require gopkg.in/validator.v2 v2.0.1
 
-replace (
-	github.com/netbill/eventbox => /home/trpdjke/go/src/github.com/netbill/eventbox
-	github.com/netbill/logium => /home/trpdjke/go/src/github.com/netbill/logium
-	github.com/netbill/orgperm => /home/trpdjke/go/src/github.com/netbill/orgperm
-)
+require github.com/paulmach/orb v0.12.0 // indirect

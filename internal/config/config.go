@@ -102,6 +102,14 @@ type KafkaConfig struct {
 				CommitInterval time.Duration `mapstructure:"commit_interval"`
 				QueueCapacity  int           `mapstructure:"queue_capacity"`
 			} `mapstructure:"profiles_v1"`
+			PlacesV1 struct {
+				Instances      int           `mapstructure:"instances"`
+				MinBytes       int           `mapstructure:"min_bytes"`
+				MaxBytes       int           `mapstructure:"max_bytes"`
+				MaxWait        time.Duration `mapstructure:"max_wait"`
+				CommitInterval time.Duration `mapstructure:"commit_interval"`
+				QueueCapacity  int           `mapstructure:"queue_capacity"`
+			} `mapstructure:"places_v1"`
 		} `mapstructure:"topics"`
 	} `mapstructure:"consume"`
 

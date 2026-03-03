@@ -15,7 +15,7 @@ properties:
         description: "organization id"
       type:
         type: string
-        enum: [ delete_organization_upload_banner ]
+        enum: [ organization ]
       attributes:
         type: object
         required:

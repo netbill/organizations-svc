@@ -10,10 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/ape"
-	"github.com/netbill/eventbox/headers"
 	"github.com/netbill/logium"
-	"github.com/netbill/organizations-svc/internal/core/domain"
-	"github.com/segmentio/kafka-go"
+	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
 const (
@@ -31,12 +29,6 @@ const (
 
 	HTTPMethodField = "http_method"
 	HTTPPathField   = "http_path"
-
-	EventIDField       = "event_id"
-	EventTypeField     = "event_type"
-	EventTopicField    = "event_topic"
-	EventVersionField  = "event_version"
-	EventProducerField = "event_producer"
 )
 
 type Logger struct {
@@ -97,21 +89,10 @@ func (l *Logger) WithError(err error) logium.Logger {
 	if errors.As(err, &ae) {
 		return &Logger{base: l.base.With(
 			slog.String("error", ae.Error()),
-			slog.Any("ape", ae),
 		)}
 	}
 
 	return &Logger{base: l.base.With(slog.String("error", err.Error()))}
-}
-
-func (l *Logger) WithRequest(r *http.Request) logium.Logger {
-	if r == nil {
-		return l
-	}
-	return &Logger{base: l.base.With(
-		slog.String(HTTPMethodField, r.Method),
-		slog.String(HTTPPathField, r.URL.Path),
-	)}
 }
 
 func (l *Logger) WithOperation(operation string) logium.Logger {
@@ -151,7 +132,17 @@ func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any) {
 	l.base.ErrorContext(ctx, msg, args...)
 }
 
-// --- your domain sugar stays returning *Logger if you want ---
+// --- your models sugar stays returning *Logger if you want ---
+
+func (l *Logger) WithRequest(r *http.Request) *Logger {
+	if r == nil {
+		return l
+	}
+	return &Logger{base: l.base.With(
+		slog.String(HTTPMethodField, r.Method),
+		slog.String(HTTPPathField, r.URL.Path),
+	)}
+}
 
 func (l *Logger) WithAccountAuthClaims(auth interface {
 	GetAccountID() uuid.UUID
@@ -166,57 +157,22 @@ func (l *Logger) WithAccountAuthClaims(auth interface {
 	)}
 }
 
-func (l *Logger) WithOrganization(organization domain.Organization) *Logger {
+func (l *Logger) WithOrganization(organization models.Organization) *Logger {
 	return &Logger{base: l.base.With(slog.String(OrganizationIDField, organization.ID.String()))}
 }
 
-func (l *Logger) WithMember(member domain.Member) *Logger {
+func (l *Logger) WithMember(member models.Member) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, member.OrganizationID.String()),
 		slog.String(MemberIDField, member.ID.String()),
 	)}
 }
 
-func (l *Logger) WithRole(role domain.Role) *Logger {
-	return &Logger{base: l.base.With(
-		slog.String(OrganizationIDField, role.OrganizationID.String()),
-		slog.String(RoleIDField, role.ID.String()),
-	)}
-}
-
-func (l *Logger) WithInvite(invite domain.Invite) *Logger {
+func (l *Logger) WithInvite(invite models.Invite) *Logger {
 	return &Logger{base: l.base.With(
 		slog.String(OrganizationIDField, invite.OrganizationID.String()),
 		slog.String(InviteIDField, invite.ID.String()),
 	)}
-}
-
-func (l *Logger) WithTopic(topic string) *Logger {
-	return &Logger{base: l.base.With(slog.String(EventTopicField, topic))}
-}
-
-func (l *Logger) WithMessage(msg *kafka.Message) *Logger {
-	if msg == nil {
-		return l
-	}
-
-	args := []any{
-		slog.String(EventTopicField, msg.Topic),
-		slog.String(EventIDField, "unknown"),
-		slog.String(EventTypeField, "unknown"),
-		slog.String(EventProducerField, "unknown"),
-	}
-
-	hs, err := headers.ParseMessageRequiredHeaders(msg.Headers)
-	if err == nil {
-		args = append(args,
-			slog.String(EventIDField, hs.EventID.String()),
-			slog.Int(EventVersionField, int(hs.EventVersion)),
-			slog.String(EventProducerField, hs.Producer),
-		)
-	}
-
-	return &Logger{base: l.base.With(args...)}
 }
 
 func parseLevel(level string) slog.Level {

@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/rest/request"
+	"github.com/netbill/organizations-svc/internal/rest/requests"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
+	"github.com/netbill/restkit/render"
 )
 
 const operationDeleteUploadOrganizationIcon = "delete_upload_organization_icon"
@@ -15,10 +16,10 @@ const operationDeleteUploadOrganizationIcon = "delete_upload_organization_icon"
 func (c *Controller) DeleteOrganizationUploadIcon(w http.ResponseWriter, r *http.Request) {
 	log := scope.Log(r).WithOperation(operationDeleteUploadOrganizationIcon)
 
-	req, err := request.DeleteUploadOrgIcon(r)
+	req, err := requests.DeleteUploadOrgIcon(r)
 	if err != nil {
-		log.WithError(err).Info("invalid delete upload organization icon request")
-		c.responser.RenderErr(w, problems.BadRequest(err)...)
+		log.WithError(err).Warn("invalid delete upload organization icon requests")
+		render.ResponseError(w, problems.BadRequest(err)...)
 
 		return
 	}
@@ -32,16 +33,22 @@ func (c *Controller) DeleteOrganizationUploadIcon(w http.ResponseWriter, r *http
 		req.Data.Attributes.IconKey,
 	)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotFound):
-		log.Info("organization does not exist")
-		c.responser.RenderErr(w, problems.NotFound("organization does not exist"))
-	case errors.Is(err, errx.ErrorNotEnoughRights):
-		log.Info("not enough rights to update organization")
-		c.responser.RenderErr(w, problems.Forbidden("not enough rights to update organization"))
+	case errors.Is(err, errx.ErrorOrganizationNotExists):
+		log.WithError(err).Warn("organization does not exist")
+		render.ResponseError(w, problems.NotFound("organization does not exist"))
+	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
+		log.WithError(err).Warn("organization is suspended")
+		render.ResponseError(w, problems.Forbidden("organization is suspended"))
+	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
+		log.WithError(err).Warn("member not found")
+		render.ResponseError(w, problems.Forbidden("member not found"))
+	case errors.Is(err, errx.ErrorNotOrganizationHead):
+		log.WithError(err).Warn("not enough rights to update organization")
+		render.ResponseError(w, problems.Forbidden("not enough rights to update organization"))
 	case err != nil:
 		log.WithError(err).Error("failed to delete organization icon in upload session")
-		c.responser.RenderErr(w, problems.InternalError())
+		render.ResponseError(w, problems.InternalError())
 	default:
-		w.WriteHeader(http.StatusNoContent)
+		render.Response(w, http.StatusNoContent, nil)
 	}
 }
