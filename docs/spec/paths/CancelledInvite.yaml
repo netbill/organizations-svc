@@ -1,0 +1,66 @@
+parameters:
+  - in: path
+    name: invite_id
+    required: true
+    schema:
+      type: string
+      format: uuid
+    description: Invite ID
+
+patch:
+  tags:
+    - invites
+  summary: Cancel invite
+  description: >
+    Cancels an invite by ID.
+    Only the organization head can cancel invites.
+
+    **400 Bad Request** is returned when the invite ID is not a valid UUID.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the initiator is not a member, not the organization head, the invite has already been answered, or the organization is suspended.
+    **404 Not Found** is returned when the invite or organization does not exist.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  responses:
+    '200':
+      description: Invite successfully cancelled
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Invite.yaml'
+    '400':
+      description: >
+        Bad Request. Provided invite ID is not a valid UUID.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Initiator is not the organization head, the invite has already been answered,
+        or the organization is suspended.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Invite or organization does not exist, or initiator does not have access.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'

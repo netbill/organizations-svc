@@ -1,5 +1,5 @@
 /*
-organizations-svc API
+NetBill organizations-svc API
 
 API documentation for organizations-svc
 

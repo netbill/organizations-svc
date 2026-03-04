@@ -35,7 +35,7 @@ type Handlers interface {
 	UnsuspendOrganization(w http.ResponseWriter, r *http.Request)
 
 	GetOrganizationInvites(w http.ResponseWriter, r *http.Request)
-	GetOrganizationMembers(w http.ResponseWriter, r *http.Request)
+	GetMembers(w http.ResponseWriter, r *http.Request)
 
 	//OrganizationMember handlers
 	GetMember(w http.ResponseWriter, r *http.Request)
@@ -47,6 +47,8 @@ type Handlers interface {
 	//invite handlers
 	CreateInvite(w http.ResponseWriter, r *http.Request)
 	GetInvite(w http.ResponseWriter, r *http.Request)
+
+	GetMyInvites(w http.ResponseWriter, r *http.Request)
 
 	CancelledInvite(w http.ResponseWriter, r *http.Request)
 	AcceptInvite(w http.ResponseWriter, r *http.Request)
@@ -115,19 +117,16 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 						})
 					})
 
-					r.With(auth).Post("/activate", s.handlers.ActivateOrganization)
-					r.With(auth).Post("/deactivate", s.handlers.DeactivateOrganization)
+					r.With(auth).Patch("/activate", s.handlers.ActivateOrganization)
+					r.With(auth).Patch("/deactivate", s.handlers.DeactivateOrganization)
 
-					r.With(sysadmin).Post("/suspend", s.handlers.SuspendOrganization)
-					r.With(sysadmin).Post("/unsuspend", s.handlers.UnsuspendOrganization)
+					r.With(sysadmin).Patch("/suspend", s.handlers.SuspendOrganization)
+					r.With(sysadmin).Patch("/unsuspend", s.handlers.UnsuspendOrganization)
 
-					r.Get("/members", s.handlers.GetOrganizationMembers)
 					r.With(auth).Get("/invites", s.handlers.GetOrganizationInvites)
-					
+
 					r.With(auth).Delete("/leave", s.handlers.LeaveOrganization)
 				})
-
-				r.With(auth).Get("/me", s.handlers.GetMyOrganizations)
 			})
 
 			r.Route("/members", func(r chi.Router) {
@@ -137,20 +136,19 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 					r.With(auth).Delete("/", s.handlers.DeleteMember)
 				})
 
-				//r.Get("/me", s.handlers.GetMyMembers)
+				r.Get("/", s.handlers.GetMembers)
 			})
 
 			r.With(auth).Route("/invites", func(r chi.Router) {
 				r.Post("/", s.handlers.CreateInvite)
+				r.Get("/me", s.handlers.GetMyInvites)
 
 				r.Route("/{invite_id}", func(r chi.Router) {
 					r.Get("/", s.handlers.GetInvite)
 					r.Patch("/accept", s.handlers.AcceptInvite)
 					r.Patch("/decline", s.handlers.DeclineInvite)
-					r.Patch("/canclled", s.handlers.CancelledInvite)
+					r.Patch("/cancel", s.handlers.CancelledInvite)
 				})
-
-				//r.Get("/me", s.handlers.GetMyInvites)
 			})
 		})
 	})

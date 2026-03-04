@@ -23,6 +23,10 @@ type organizationSvc interface {
 		ctx context.Context,
 		organizationID uuid.UUID,
 	) (models.Organization, error)
+	GetByIDs(
+		ctx context.Context,
+		organizationIDs []uuid.UUID,
+	) ([]models.Organization, error)
 	GetList(
 		ctx context.Context,
 		params organization.FilterParams,

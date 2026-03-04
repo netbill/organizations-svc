@@ -1,0 +1,73 @@
+parameters:
+  - in: path
+    name: invite_id
+    required: true
+    schema:
+      type: string
+      format: uuid
+    description: Invite ID
+
+patch:
+  tags:
+    - invites
+  summary: Decline invite
+  description: >
+    Declines an invite for the authenticated account.
+
+    **400 Bad Request** is returned when the invite ID is not a valid UUID.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the invite is not for this account, the invite has expired, or the organization is not active.
+    **404 Not Found** is returned when the invite or organization does not exist.
+    **409 Conflict** is returned when the invite has already been answered.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  responses:
+    '200':
+      description: Invite successfully declined
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Invite.yaml'
+    '400':
+      description: >
+        Bad Request. Provided invite ID is not a valid UUID.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Invite is not for this account, invite has expired,
+        or organization is not active.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Invite or organization does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '409':
+      description: >
+        Conflict. Invite has already been answered.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'

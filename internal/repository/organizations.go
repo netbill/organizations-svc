@@ -102,6 +102,23 @@ func (r *Repository) GetOrganizationByID(
 	return row.ToModel(), nil
 }
 
+func (r *Repository) GetOrganizationsByIDs(
+	ctx context.Context,
+	IDs []uuid.UUID,
+) ([]models.Organization, error) {
+	rows, err := r.OrganizationsSql.New().FilterByID(IDs...).Select(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get organizations by IDs: %w", err)
+	}
+
+	organizations := make([]models.Organization, len(rows))
+	for i, row := range rows {
+		organizations[i] = row.ToModel()
+	}
+
+	return organizations, nil
+}
+
 func (r *Repository) GetOrganizations(
 	ctx context.Context,
 	filter organization.FilterParams,

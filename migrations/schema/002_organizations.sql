@@ -14,7 +14,6 @@ CREATE TABLE tombstones (
 CREATE TABLE profiles (
     account_id  UUID        PRIMARY KEY,
     username    VARCHAR(32) NOT NULL UNIQUE,
-    official    BOOLEAN NOT NULL DEFAULT FALSE,
     pseudonym   VARCHAR(128),
     avatar_key  TEXT,
     version     INT NOT NULL DEFAULT 1 CHECK (version > 0),

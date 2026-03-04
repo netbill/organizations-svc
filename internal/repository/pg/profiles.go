@@ -16,8 +16,8 @@ import (
 
 const profilesTable = "profiles"
 
-const profilesColumns = "account_id, username, official, pseudonym, avatar_key, version, source_created_at, source_updated_at, replica_created_at, replica_updated_at"
-const profilesColumnsP = "p.account_id, p.username, p.official, p.pseudonym, p.avatar_key, p.version, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
+const profilesColumns = "account_id, username, pseudonym, avatar_key, version, source_created_at, source_updated_at, replica_created_at, replica_updated_at"
+const profilesColumnsP = "p.account_id, p.username, p.pseudonym, p.avatar_key, p.version, p.source_created_at, p.source_updated_at, p.replica_created_at, p.replica_updated_at"
 
 func scanProfile(row sq.RowScanner) (p repository.ProfileRow, err error) {
 	var pseudonym pgtype.Text
@@ -26,7 +26,6 @@ func scanProfile(row sq.RowScanner) (p repository.ProfileRow, err error) {
 	err = row.Scan(
 		&p.AccountID,
 		&p.Username,
-		&p.Official,
 		&pseudonym,
 		&avatarKey,
 		&p.Version,
@@ -81,7 +80,6 @@ func (q *profiles) Insert(ctx context.Context, data repository.ProfileRow) (repo
 	query, args, err := q.inserter.SetMap(map[string]any{
 		"account_id":        data.AccountID,
 		"username":          data.Username,
-		"official":          data.Official,
 		"pseudonym":         data.Pseudonym,
 		"avatar_key":        data.AvatarKey,
 		"source_created_at": data.SourceCreatedAt.UTC(),
@@ -159,30 +157,6 @@ func (q *profiles) FilterByUsername(username string) repository.ProfilesQ {
 	return q
 }
 
-func (q *profiles) FilterOfficial(official bool) repository.ProfilesQ {
-	q.selector = q.selector.Where(sq.Eq{"p.official": official})
-	q.counter = q.counter.Where(sq.Eq{"p.official": official})
-	q.updater = q.updater.Where(sq.Eq{"p.official": official})
-	q.deleter = q.deleter.Where(sq.Eq{"p.official": official})
-	return q
-}
-
-func (q *profiles) FilterLikeUsername(username string) repository.ProfilesQ {
-	q.selector = q.selector.Where(sq.ILike{"p.username": "%" + username + "%"})
-	q.counter = q.counter.Where(sq.ILike{"p.username": "%" + username + "%"})
-	q.updater = q.updater.Where(sq.ILike{"p.username": "%" + username + "%"})
-	q.deleter = q.deleter.Where(sq.ILike{"p.username": "%" + username + "%"})
-	return q
-}
-
-func (q *profiles) FilterLikePseudonym(pseudonym string) repository.ProfilesQ {
-	q.selector = q.selector.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
-	q.counter = q.counter.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
-	q.updater = q.updater.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
-	q.deleter = q.deleter.Where(sq.ILike{"p.pseudonym": "%" + pseudonym + "%"})
-	return q
-}
-
 func (q *profiles) UpdateOne(ctx context.Context) (repository.ProfileRow, error) {
 	q.updater = q.updater.Set("replica_updated_at", time.Now().UTC())
 
@@ -196,11 +170,6 @@ func (q *profiles) UpdateOne(ctx context.Context) (repository.ProfileRow, error)
 
 func (q *profiles) UpdateUsername(v string) repository.ProfilesQ {
 	q.updater = q.updater.Set("username", v)
-	return q
-}
-
-func (q *profiles) UpdateOfficial(v bool) repository.ProfilesQ {
-	q.updater = q.updater.Set("official", v)
 	return q
 }
 

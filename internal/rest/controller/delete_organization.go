@@ -37,7 +37,7 @@ func (c *Controller) DeleteOrganization(w http.ResponseWriter, r *http.Request) 
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization already deleted")
-		render.Response(w, http.StatusNoContent, nil)
+		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
 		log.WithError(err).Warn("organization is suspended")
 		render.ResponseError(w, problems.Forbidden("organization is suspended"))

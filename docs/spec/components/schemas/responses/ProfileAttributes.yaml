@@ -1,7 +1,6 @@
 type: object
 required:
   - username
-  - official
   - version
   - updated_at
   - created_at
@@ -12,9 +11,6 @@ properties:
   pseudonym:
     type: string
     description: "profile pseudonym"
-  official:
-    type: boolean
-    description: "official mark"
   avatar_key:
     type: string
     description: "avatar key"

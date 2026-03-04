@@ -1,0 +1,182 @@
+parameters:
+  - in: path
+    name: member_id
+    required: true
+    schema:
+      type: string
+      format: uuid
+    description: Member ID
+
+get:
+  tags:
+    - members
+  summary: Get member
+  description: >
+    Returns a member by ID.
+
+    **400 Bad Request** is returned when the member ID is not a valid UUID.
+    **404 Not Found** is returned when the member or any included resource is not found.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  parameters:
+    - in: query
+      name: include
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - profile
+            - organizations
+      style: form
+      explode: false
+      description: >
+        Optional list of related resources to include in the response.
+        Supported values: `profile`, `organizations`.
+  responses:
+    '200':
+      description: Member successfully retrieved
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Member.yaml'
+    '400':
+      description: >
+        Bad Request. Provided member ID is not a valid UUID.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Member, profile, or organization does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+
+put:
+  tags:
+    - members
+  summary: Update member
+  description: >
+    Updates a member by ID.
+    Only the organization head can perform this action.
+
+    **400 Bad Request** is returned when the member ID is not a valid UUID or request body is invalid.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the initiator is not the organization head or the organization is suspended.
+    **404 Not Found** is returned when the member or organization does not exist.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/requests/UpdateMember.yaml'
+  responses:
+    '200':
+      description: Member successfully updated
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Member.yaml'
+    '400':
+      description: >
+        Bad Request. Provided member ID is not a valid UUID or request body is invalid.
+        Check the `errors` array for details.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Initiator is not the organization head or the organization is suspended.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Member or organization does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+
+delete:
+  tags:
+    - members
+  summary: Delete member
+  description: >
+    Deletes a member by ID.
+    Only the organization head can delete members.
+    The organization head member cannot be deleted.
+
+    **400 Bad Request** is returned when the member ID is not a valid UUID.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the initiator cannot perform this action.
+    **404 Not Found** is returned when the member or organization does not exist.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  responses:
+    '204':
+      description: Member successfully deleted
+    '400':
+      description: >
+        Bad Request. Provided member ID is not a valid UUID.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Initiator cannot delete self, is not a member of the organization,
+        is not the organization head, the organization is suspended,
+        or the target member is the organization head.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Member or organization does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'

@@ -1,0 +1,96 @@
+parameters:
+  - in: path
+    name: organization_id
+    required: true
+    schema:
+      type: string
+      format: uuid
+    description: Organization ID
+
+get:
+  tags:
+    - organizations
+  summary: Get organization invites
+  description: >
+    Returns a paginated list of invites for the organization.
+    Only members of the organization can access this endpoint.
+
+    **400 Bad Request** is returned when the organization ID is not a valid UUID or pagination limit exceeds 100.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the initiator is not a member of the organization.
+    **404 Not Found** is returned when the organization does not exist.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  parameters:
+    - in: query
+      name: include
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - profile
+            - organization
+      style: form
+      explode: false
+      description: >
+        Optional list of related resources to include in the response.
+        Supported values: `profile`, `organization`.
+    - in: query
+      name: page[limit]
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+      description: Max number of items to return (1-100).
+    - in: query
+      name: page[offset]
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: Number of items to skip.
+  responses:
+    '200':
+      description: Invites successfully retrieved
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/InvitesCollection.yaml'
+    '400':
+      description: >
+        Bad Request. Organization ID is not a valid UUID or pagination limit exceeds 100.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Initiator is not a member of the organization.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Organization does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'

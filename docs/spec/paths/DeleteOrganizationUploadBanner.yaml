@@ -1,0 +1,69 @@
+parameters:
+  - in: path
+    name: organization_id
+    required: true
+    schema:
+      type: string
+      format: uuid
+    description: Organization ID
+
+delete:
+  tags:
+    - organizations
+  summary: Delete organization upload banner
+  description: >
+    Deletes an uploaded banner for the organization.
+    Only the organization head can perform this action.
+
+    **400 Bad Request** is returned when the request body is invalid.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended.
+    **404 Not Found** is returned when the organization does not exist.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/requests/DeleteUploadOrgBanner.yaml'
+  responses:
+    '204':
+      description: Banner successfully deleted
+    '400':
+      description: >
+        Bad Request. Request body is invalid.
+        Check the `errors` array for details.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Initiator is not a member of the organization, is not the organization head,
+        or the organization is suspended.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Organization does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'

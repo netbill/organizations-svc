@@ -100,6 +100,17 @@ func WithCollectionInvitesOrganization(organization models.Organization) Invites
 	}
 }
 
+func WithCollectionInvitesOrganizations(organizations []models.Organization) InvitesCollectionOption {
+	return func(r *inviteCollectionResponse) {
+		for _, model := range organizations {
+			inner := organizationData(model)
+			r.included = append(r.included, resources.InviteIncludedInner{
+				OrganizationData: &inner,
+			})
+		}
+	}
+}
+
 func Invites(r *http.Request, mods pagi.Page[[]models.Invite], opts ...InvitesCollectionOption) resources.InvitesCollection {
 	data := make([]resources.InviteData, len(mods.Data))
 	for i, mod := range mods.Data {

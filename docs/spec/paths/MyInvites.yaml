@@ -1,0 +1,77 @@
+get:
+  tags:
+    - invites
+  summary: Get my invites
+  description: >
+    Returns a paginated list of invites for the authenticated account.
+
+    **400 Bad Request** is returned when pagination limit exceeds 100.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **404 Not Found** is returned when the account profile does not exist.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  parameters:
+    - in: query
+      name: include
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - organizations
+      style: form
+      explode: false
+      description: >
+        Optional list of related resources to include in the response.
+        Supported values: `organizations`.
+    - in: query
+      name: page[limit]
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+      description: Max number of items to return (1-100).
+    - in: query
+      name: page[offset]
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: Number of items to skip.
+  responses:
+    '200':
+      description: Invites successfully retrieved
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/InvitesCollection.yaml'
+    '400':
+      description: >
+        Bad Request. Pagination limit exceeds 100.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Account profile does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'

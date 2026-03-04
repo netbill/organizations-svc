@@ -1,5 +1,5 @@
 /*
-organizations-svc API
+NetBill organizations-svc API
 
 API documentation for organizations-svc
 
@@ -41,7 +41,7 @@ var (
 	queryDescape    = strings.NewReplacer( "%5B", "[", "%5D", "]" )
 )
 
-// APIClient manages communication with the organizations-svc API API v0.1.0
+// APIClient manages communication with the NetBill organizations-svc API API v0.1.0
 // In most cases there should be only one, shared, APIClient.
 type APIClient struct {
 	cfg    *Configuration
@@ -49,7 +49,11 @@ type APIClient struct {
 
 	// API Services
 
-	TestAPI *TestAPIService
+	InvitesAPI *InvitesAPIService
+
+	MembersAPI *MembersAPIService
+
+	OrganizationsAPI *OrganizationsAPIService
 }
 
 type service struct {
@@ -68,7 +72,9 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
-	c.TestAPI = (*TestAPIService)(&c.common)
+	c.InvitesAPI = (*InvitesAPIService)(&c.common)
+	c.MembersAPI = (*MembersAPIService)(&c.common)
+	c.OrganizationsAPI = (*OrganizationsAPIService)(&c.common)
 
 	return c
 }
@@ -417,6 +423,11 @@ func (c *APIClient) prepareRequest(
 		localVarRequest = localVarRequest.WithContext(ctx)
 
 		// Walk through any authentication.
+
+		// AccessToken Authentication
+		if auth, ok := ctx.Value(ContextAccessToken).(string); ok {
+			localVarRequest.Header.Add("Authorization", "Bearer "+auth)
+		}
 
 	}
 

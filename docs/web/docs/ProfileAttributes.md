@@ -6,7 +6,6 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Username** | **string** | username for this account and profile | 
 **Pseudonym** | Pointer to **string** | profile pseudonym | [optional] 
-**Official** | **bool** | official mark | 
 **AvatarKey** | Pointer to **string** | avatar key | [optional] 
 **Version** | **int32** | profile version | 
 **UpdatedAt** | **time.Time** | updated at | 
@@ -16,7 +15,7 @@ Name | Type | Description | Notes
 
 ### NewProfileAttributes
 
-`func NewProfileAttributes(username string, official bool, version int32, updatedAt time.Time, createdAt time.Time, ) *ProfileAttributes`
+`func NewProfileAttributes(username string, version int32, updatedAt time.Time, createdAt time.Time, ) *ProfileAttributes`
 
 NewProfileAttributes instantiates a new ProfileAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -75,26 +74,6 @@ SetPseudonym sets Pseudonym field to given value.
 `func (o *ProfileAttributes) HasPseudonym() bool`
 
 HasPseudonym returns a boolean if a field has been set.
-
-### GetOfficial
-
-`func (o *ProfileAttributes) GetOfficial() bool`
-
-GetOfficial returns the Official field if non-nil, zero value otherwise.
-
-### GetOfficialOk
-
-`func (o *ProfileAttributes) GetOfficialOk() (*bool, bool)`
-
-GetOfficialOk returns a tuple with the Official field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetOfficial
-
-`func (o *ProfileAttributes) SetOfficial(v bool)`
-
-SetOfficial sets Official field to given value.
-
 
 ### GetAvatarKey
 

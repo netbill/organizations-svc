@@ -15,7 +15,6 @@ import (
 type ProfileRow struct {
 	AccountID uuid.UUID `db:"account_id"`
 	Username  string    `db:"username"`
-	Official  bool      `db:"official"`
 
 	Pseudonym *string `db:"pseudonym,omitempty"`
 	AvatarKey *string `db:"avatar_key,omitempty"`
@@ -35,7 +34,6 @@ func (r ProfileRow) ToModel() models.Profile {
 	return models.Profile{
 		AccountID: r.AccountID,
 		Username:  r.Username,
-		Official:  r.Official,
 		Pseudonym: r.Pseudonym,
 		AvatarKey: r.AvatarKey,
 		CreatedAt: r.SourceCreatedAt,
@@ -53,7 +51,6 @@ type ProfilesQ interface {
 	UpdateOne(ctx context.Context) (ProfileRow, error)
 
 	UpdateUsername(username string) ProfilesQ
-	UpdateOfficial(official bool) ProfilesQ
 	UpdatePseudonym(pseudo *string) ProfilesQ
 	UpdateAvatarKey(avatar *string) ProfilesQ
 	UpdateVersion(v int32) ProfilesQ
@@ -72,7 +69,6 @@ func (r *Repository) CreateProfile(
 	row, err := r.ProfilesSql.New().Insert(ctx, ProfileRow{
 		AccountID:       profile.AccountID,
 		Username:        profile.Username,
-		Official:        profile.Official,
 		Pseudonym:       profile.Pseudonym,
 		AvatarKey:       profile.AvatarKey,
 		SourceUpdatedAt: profile.UpdatedAt,
@@ -93,7 +89,6 @@ func (r *Repository) UpdateProfile(
 	row, err := r.ProfilesSql.New().
 		FilterByAccountID(accountID).
 		UpdateUsername(params.Username).
-		UpdateOfficial(params.Official).
 		UpdatePseudonym(params.Pseudonym).
 		UpdateAvatarKey(params.AvatarKey).
 		UpdateVersion(params.Version).

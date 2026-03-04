@@ -56,7 +56,6 @@ type UpdateParams struct {
 	Username  string    `json:"username"`
 	Pseudonym *string   `json:"pseudonym"`
 	AvatarKey *string   `json:"avatar"`
-	Official  bool      `json:"official"`
 	Version   int32     `json:"version"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

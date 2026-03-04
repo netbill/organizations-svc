@@ -1,0 +1,61 @@
+parameters:
+  - in: path
+    name: organization_id
+    required: true
+    schema:
+      type: string
+      format: uuid
+    description: Organization ID
+
+delete:
+  tags:
+    - organizations
+  summary: Leave organization
+  description: >
+    Removes the authenticated account from the organization.
+    The organization head cannot leave the organization.
+
+    **400 Bad Request** is returned when the organization ID is not a valid UUID.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the initiator is not a member of the organization or is the organization head.
+    **404 Not Found** is returned when the organization does not exist.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  responses:
+    '204':
+      description: Successfully left the organization
+    '400':
+      description: >
+        Bad Request. Provided organization ID is not a valid UUID.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Initiator is not a member of the organization or is the organization head.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Organization does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'

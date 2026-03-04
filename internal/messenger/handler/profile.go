@@ -65,7 +65,6 @@ func (h *Handler) ProfileUpdated(
 		Username:  payload.Username,
 		Pseudonym: payload.Pseudonym,
 		AvatarKey: payload.AvatarKey,
-		Official:  payload.Official,
 		Version:   payload.Version,
 		UpdatedAt: payload.UpdatedAt,
 	})

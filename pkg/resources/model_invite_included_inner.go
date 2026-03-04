@@ -1,5 +1,5 @@
 /*
-organizations-svc API
+NetBill organizations-svc API
 
 API documentation for organizations-svc
 
@@ -12,6 +12,7 @@ package resources
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"fmt"
 	"gopkg.in/validator.v2"
 )

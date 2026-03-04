@@ -1,5 +1,5 @@
 /*
-organizations-svc API
+NetBill organizations-svc API
 
 API documentation for organizations-svc
 
@@ -28,6 +28,9 @@ func (c contextKey) String() string {
 }
 
 var (
+	// ContextAccessToken takes a string oauth2 access token as authentication for the request.
+	ContextAccessToken = contextKey("accesstoken")
+
 	// ContextServerIndex uses a server configuration from the index.
 	ContextServerIndex = contextKey("serverIndex")
 
@@ -90,7 +93,7 @@ func NewConfiguration() *Configuration {
 		Debug:            false,
 		Servers:          ServerConfigurations{
 			{
-				URL: "",
+				URL: "http://localhost:8003",
 				Description: "No description provided",
 			},
 		},

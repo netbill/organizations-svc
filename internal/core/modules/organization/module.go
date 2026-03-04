@@ -35,6 +35,7 @@ type repo interface {
 	CreateOrganization(ctx context.Context, params CreateParams) (models.Organization, error)
 
 	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
+	GetOrganizationsByIDs(ctx context.Context, IDs []uuid.UUID) ([]models.Organization, error)
 	GetOrganizations(
 		ctx context.Context,
 		filter FilterParams,

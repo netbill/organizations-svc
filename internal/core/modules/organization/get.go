@@ -20,6 +20,18 @@ func (m *Module) GetByID(
 	return res, nil
 }
 
+func (m *Module) GetByIDs(
+	ctx context.Context,
+	organizationIDs []uuid.UUID,
+) ([]models.Organization, error) {
+	res, err := m.repo.GetOrganizationsByIDs(ctx, organizationIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 type FilterParams struct {
 	Text   *string `json:"name,omitempty"`
 	Status *string `json:"status,omitempty"`

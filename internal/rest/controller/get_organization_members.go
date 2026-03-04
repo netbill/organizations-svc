@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
@@ -19,17 +18,8 @@ import (
 
 const operationGetOrganizationMembers = "get_organization_members"
 
-func (c *Controller) GetOrganizationMembers(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) GetMembers(w http.ResponseWriter, r *http.Request) {
 	log := scope.Log(r).WithOperation(operationGetOrganizationMembers)
-
-	organizationID, err := uuid.Parse(chi.URLParam(r, "organization_id"))
-	if err != nil {
-		log.WithError(err).Warn("invalid organization id")
-		render.ResponseError(w, problems.BadRequest(validation.Errors{
-			"query": fmt.Errorf("invalid organization id: %s", chi.URLParam(r, "organization_id")),
-		})...)
-		return
-	}
 
 	limit, offset := pagi.GetPagination(r)
 	if limit > 100 {
@@ -40,12 +30,30 @@ func (c *Controller) GetOrganizationMembers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	log = log.WithField("organization_id", organizationID).
-		WithField("limit", limit).
-		WithField("offset", offset)
+	log = log.WithField("limit", limit).WithField("offset", offset)
 
-	params := member.FilterParams{
-		OrganizationID: &organizationID,
+	params := member.FilterParams{}
+
+	if v := r.URL.Query().Get("organization_id"); v != "" {
+		id, err := uuid.Parse(strings.TrimSpace(v))
+		if err != nil {
+			render.ResponseError(w, problems.BadRequest(validation.Errors{
+				"query/organization_id": fmt.Errorf("invalid uuid: %s", v),
+			})...)
+			return
+		}
+		params.OrganizationID = &id
+	}
+
+	if v := r.URL.Query().Get("account_id"); v != "" {
+		id, err := uuid.Parse(strings.TrimSpace(v))
+		if err != nil {
+			render.ResponseError(w, problems.BadRequest(validation.Errors{
+				"query/account_id": fmt.Errorf("invalid uuid: %s", v),
+			})...)
+			return
+		}
+		params.AccountID = &id
 	}
 
 	if v := r.URL.Query().Get("text"); v != "" {
@@ -58,6 +66,7 @@ func (c *Controller) GetOrganizationMembers(w http.ResponseWriter, r *http.Reque
 	case err != nil:
 		log.WithError(err).Error("failed to get organization members")
 		render.ResponseError(w, problems.InternalError())
+		return
 	}
 
 	opts := make([]responses.MembersCollectionOption, 0, 2)
@@ -78,13 +87,13 @@ func (c *Controller) GetOrganizationMembers(w http.ResponseWriter, r *http.Reque
 
 	if slices.Contains(includes, "profile") {
 		profileIDs := make([]uuid.UUID, 0, members.Size)
-		for _, invite := range members.Data {
-			profileIDs = append(profileIDs, invite.AccountID)
+		for _, m := range members.Data {
+			profileIDs = append(profileIDs, m.AccountID)
 		}
 
 		profiles, err := c.modules.Profile.GetByIDs(r.Context(), profileIDs)
 		if err != nil {
-			log.WithError(err).Error("failed to get profiles for invites")
+			log.WithError(err).Error("failed to get profiles for members")
 			render.ResponseError(w, problems.InternalError())
 			return
 		}
@@ -92,10 +101,10 @@ func (c *Controller) GetOrganizationMembers(w http.ResponseWriter, r *http.Reque
 		opts = append(opts, responses.WithCollectionMembersProfiles(profiles))
 	}
 
-	if slices.Contains(includes, "organization") {
-		organization, err := c.modules.Organization.GetByID(r.Context(), organizationID)
+	if slices.Contains(includes, "organization") && params.OrganizationID != nil {
+		organization, err := c.modules.Organization.GetByID(r.Context(), *params.OrganizationID)
 		if err != nil {
-			log.WithError(err).Error("failed to get organizations for invites")
+			log.WithError(err).Error("failed to get organization for members")
 			render.ResponseError(w, problems.InternalError())
 			return
 		}

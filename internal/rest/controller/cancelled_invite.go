@@ -56,6 +56,6 @@ func (c *Controller) CancelledInvite(w http.ResponseWriter, r *http.Request) {
 		render.ResponseError(w, problems.InternalError())
 	default:
 		log.Info("invite deleted")
-		render.Response(w, http.StatusNoContent, responses.Invite(invite))
+		render.Response(w, http.StatusOK, responses.Invite(invite))
 	}
 }

@@ -12,7 +12,6 @@ func profileData(profile models.Profile) resources.ProfileData {
 		Attributes: resources.ProfileAttributes{
 			Username:  profile.Username,
 			Pseudonym: profile.Pseudonym,
-			Official:  profile.Official,
 			AvatarKey: profile.AvatarKey,
 			Version:   profile.Version,
 			UpdatedAt: profile.UpdatedAt,
