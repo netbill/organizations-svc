@@ -13,7 +13,7 @@ type tombstones struct {
 	db *pgdbx.DB
 }
 
-func NewTombstonesQ(db *pgdbx.DB) repository.TombstonesSql {
+func NewTombstonesQ(db *pgdbx.DB) repository.TombstoneRepo {
 	return &tombstones{db: db}
 }
 

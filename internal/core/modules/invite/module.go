@@ -11,21 +11,23 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type Module struct {
+type Invite struct {
 	repo      repo
 	messenger messenger
 }
 
-func New(repo repo, messenger messenger) *Module {
-	return &Module{
+func New(repo repo, messenger messenger) *Invite {
+	return &Invite{
 		repo:      repo,
 		messenger: messenger,
 	}
 }
 
-type repo interface {
+type inviteRepo interface {
+	//organization
 	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
 
+	//invite
 	CreateInvite(
 		ctx context.Context,
 		params CreateParams,
@@ -48,7 +50,6 @@ type repo interface {
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
 	) (bool, error)
-
 	UpdateInviteStatus(
 		ctx context.Context,
 		id uuid.UUID,
@@ -59,6 +60,7 @@ type repo interface {
 		id uuid.UUID,
 	) error
 
+	//member
 	CreateMember(
 		ctx context.Context,
 		accountID, organizationID uuid.UUID,
@@ -72,15 +74,18 @@ type repo interface {
 		accountID, organizationID uuid.UUID,
 	) (bool, error)
 
+	//profile
 	ExistsProfileByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
 
+	//tombstone
 	BuryInvite(ctx context.Context, inviteID uuid.UUID) error
 	InviteIsBuried(ctx context.Context, inviteID uuid.UUID) (bool, error)
 
+	//transaction
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
-type messenger interface {
+type inviteMessenger interface {
 	WriteOrgMemberCreated(ctx context.Context, member models.Member) error
 
 	WriteOrgInviteCreated(ctx context.Context, invite models.Invite) error
@@ -89,7 +94,7 @@ type messenger interface {
 	WriteOrgInviteCanceled(ctx context.Context, invite models.Invite) error
 }
 
-func (m *Module) getInitiator(
+func (m *Invite) getInitiator(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationID uuid.UUID,

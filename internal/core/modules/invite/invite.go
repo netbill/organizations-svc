@@ -1,4 +1,4 @@
-package repository
+package invite
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
 	"github.com/netbill/restkit/pagi"
@@ -69,7 +68,7 @@ type OrgInvitesQ interface {
 
 func (r *InviteRepo) CreateInvite(
 	ctx context.Context,
-	params core.InviteCreateParams,
+	params CreateParams,
 ) (models.Invite, error) {
 	row, err := r.OrgInvitesSql.New().Insert(ctx, OrgInviteRow{
 		OrganizationID: params.OrganizationID,

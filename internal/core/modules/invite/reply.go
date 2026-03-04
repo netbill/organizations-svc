@@ -10,7 +10,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) Accept(
+func (m *Invite) Accept(
 	ctx context.Context,
 	actor models.AccountActor,
 	inviteID uuid.UUID,
@@ -76,7 +76,7 @@ func (m *Module) Accept(
 	return invite, err
 }
 
-func (m *Module) Decline(
+func (m *Invite) Decline(
 	ctx context.Context,
 	actor models.AccountActor,
 	inviteID uuid.UUID,

@@ -10,12 +10,12 @@ import (
 	"github.com/netbill/awsx"
 	"github.com/netbill/eventbox"
 	eventpg "github.com/netbill/eventbox/pg"
-	"github.com/netbill/organizations-svc/internal/bucket"
 	"github.com/netbill/organizations-svc/internal/core/modules/invite"
 	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/organizations-svc/internal/core/modules/place"
 	"github.com/netbill/organizations-svc/internal/core/modules/profile"
+	"github.com/netbill/organizations-svc/internal/media/bucket"
 
 	"github.com/netbill/organizations-svc/internal/messenger"
 	"github.com/netbill/organizations-svc/internal/messenger/handler"
@@ -49,16 +49,6 @@ func (a *App) Run(ctx context.Context) error {
 	a.log.Info("starting application")
 
 	db := pgdbx.NewDB(pool)
-
-	repo := &repository.Repository{
-		OrganizationsSql: pg.NewOrganizationsQ(db),
-		OrgMembersSql:    pg.NewOrgMembersQ(db),
-		OrgInvitesSql:    pg.NewOrgInvitesQ(db),
-		ProfilesSql:      pg.NewProfilesQ(db),
-		PlacesSql:        pg.NewPlacesQ(db),
-		TombstonesSql:    pg.NewTombstonesQ(db),
-		TransactionSql:   db,
-	}
 
 	cfg, err := awscfg.LoadDefaultConfig(
 		context.Background(),

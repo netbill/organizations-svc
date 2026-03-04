@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/core/modules/organization"
 	"github.com/netbill/restkit/pagi"
 )
+
+type OrganizationRepo struct {
+	OrganizationsSql OrganizationsQ
+}
 
 type OrganizationRow struct {
 	ID     uuid.UUID `db:"id"`
@@ -68,9 +72,9 @@ type OrganizationsQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r *Repository) CreateOrganization(
+func (r *OrganizationRepo) CreateOrganization(
 	ctx context.Context,
-	params organization.CreateParams,
+	params core.OrganizationCreateParams,
 ) (models.Organization, error) {
 	row, err := r.OrganizationsSql.New().Insert(ctx, OrganizationRow{
 		Name: params.Name,
@@ -85,7 +89,7 @@ func (r *Repository) CreateOrganization(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetOrganizationByID(
+func (r *OrganizationRepo) GetOrganizationByID(
 	ctx context.Context,
 	ID uuid.UUID,
 ) (models.Organization, error) {
@@ -102,7 +106,7 @@ func (r *Repository) GetOrganizationByID(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetOrganizationsByIDs(
+func (r *OrganizationRepo) GetOrganizationsByIDs(
 	ctx context.Context,
 	IDs []uuid.UUID,
 ) ([]models.Organization, error) {
@@ -119,9 +123,9 @@ func (r *Repository) GetOrganizationsByIDs(
 	return organizations, nil
 }
 
-func (r *Repository) GetOrganizations(
+func (r *OrganizationRepo) GetOrganizations(
 	ctx context.Context,
-	filter organization.FilterParams,
+	filter core.OrganizationFilterParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
 	if limit == 0 {
@@ -163,7 +167,7 @@ func (r *Repository) GetOrganizations(
 
 }
 
-func (r *Repository) GetOrganizationsForUser(
+func (r *OrganizationRepo) GetOrganizationsForUser(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,
@@ -199,16 +203,22 @@ func (r *Repository) GetOrganizationsForUser(
 	}, nil
 }
 
-func (r *Repository) UpdateOrganization(
+func (r *OrganizationRepo) UpdateOrganization(
 	ctx context.Context,
 	ID uuid.UUID,
-	params organization.UpdateParams,
+	params core.OrganizationUpdateParams,
 ) (models.Organization, error) {
-	q := r.OrganizationsSql.New().
-		FilterByID(ID).
-		UpdateName(params.Name).
-		UpdateIconKey(params.IconKey).
-		UpdateBannerKey(params.BannerKey)
+	q := r.OrganizationsSql.New().FilterByID(ID)
+
+	if params.Name != nil {
+		q = q.UpdateName(*params.Name)
+	}
+	if params.IconKey != nil {
+		q = q.UpdateIconKey(params.IconKey)
+	}
+	if params.BannerKey != nil {
+		q = q.UpdateBannerKey(params.BannerKey)
+	}
 
 	row, err := q.UpdateOne(ctx)
 	if err != nil {
@@ -223,7 +233,7 @@ func (r *Repository) UpdateOrganization(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) UpdateOrganizationStatus(
+func (r *OrganizationRepo) UpdateOrganizationStatus(
 	ctx context.Context,
 	ID uuid.UUID,
 	status string,
@@ -244,7 +254,7 @@ func (r *Repository) UpdateOrganizationStatus(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
+func (r *OrganizationRepo) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
 	err := r.OrganizationsSql.New().FilterByID(ID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete organization with ID %s, cause: %w", ID, err)

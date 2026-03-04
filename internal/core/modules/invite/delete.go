@@ -9,7 +9,7 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-func (m *Module) Cancelled(
+func (m *Invite) Cancelled(
 	ctx context.Context,
 	actor models.AccountActor,
 	inviteID uuid.UUID,

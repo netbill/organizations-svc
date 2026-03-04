@@ -12,47 +12,47 @@ import (
 	"github.com/netbill/restkit/tokens"
 )
 
-type Handlers interface {
-	//organization handlers
-	CreateOrganization(w http.ResponseWriter, r *http.Request)
+type OrgController interface {
+	Create(w http.ResponseWriter, r *http.Request)
 
-	GetOrganization(w http.ResponseWriter, r *http.Request)
-	GetOrganizations(w http.ResponseWriter, r *http.Request)
-	GetMyOrganizations(w http.ResponseWriter, r *http.Request)
+	Get(w http.ResponseWriter, r *http.Request)
+	GetList(w http.ResponseWriter, r *http.Request)
+	GetMyList(w http.ResponseWriter, r *http.Request)
 
-	CreateOrganizationUploadMediaLink(w http.ResponseWriter, r *http.Request)
+	CreateUploadMediaLink(w http.ResponseWriter, r *http.Request)
 
-	UpdateOrganization(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
 
-	DeleteOrganization(w http.ResponseWriter, r *http.Request)
+	Delete(w http.ResponseWriter, r *http.Request)
 
-	DeleteOrganizationUploadIcon(w http.ResponseWriter, r *http.Request)
-	DeleteOrganizationUploadBanner(w http.ResponseWriter, r *http.Request)
+	DeleteUploadIcon(w http.ResponseWriter, r *http.Request)
+	DeleteUploadBanner(w http.ResponseWriter, r *http.Request)
 
-	ActivateOrganization(w http.ResponseWriter, r *http.Request)
-	DeactivateOrganization(w http.ResponseWriter, r *http.Request)
-	SuspendOrganization(w http.ResponseWriter, r *http.Request)
-	UnsuspendOrganization(w http.ResponseWriter, r *http.Request)
+	Activate(w http.ResponseWriter, r *http.Request)
+	Deactivate(w http.ResponseWriter, r *http.Request)
+	Suspend(w http.ResponseWriter, r *http.Request)
+	Unsuspend(w http.ResponseWriter, r *http.Request)
+}
 
-	GetOrganizationInvites(w http.ResponseWriter, r *http.Request)
-	GetMembers(w http.ResponseWriter, r *http.Request)
+type MemberController interface {
+	GetList(w http.ResponseWriter, r *http.Request)
 
-	//OrganizationMember handlers
-	GetMember(w http.ResponseWriter, r *http.Request)
-	UpdateMember(w http.ResponseWriter, r *http.Request)
-	DeleteMember(w http.ResponseWriter, r *http.Request)
+	Get(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
+	Delete(w http.ResponseWriter, r *http.Request)
 
-	LeaveOrganization(w http.ResponseWriter, r *http.Request)
+	LeaveFromOrg(w http.ResponseWriter, r *http.Request)
+}
 
-	//invite handlers
-	CreateInvite(w http.ResponseWriter, r *http.Request)
-	GetInvite(w http.ResponseWriter, r *http.Request)
+type InviteController interface {
+	Create(w http.ResponseWriter, r *http.Request)
+	Get(w http.ResponseWriter, r *http.Request)
 
-	GetMyInvites(w http.ResponseWriter, r *http.Request)
+	GetMyList(w http.ResponseWriter, r *http.Request)
 
-	CancelledInvite(w http.ResponseWriter, r *http.Request)
-	AcceptInvite(w http.ResponseWriter, r *http.Request)
-	DeclineInvite(w http.ResponseWriter, r *http.Request)
+	Cancelled(w http.ResponseWriter, r *http.Request)
+	Accept(w http.ResponseWriter, r *http.Request)
+	Decline(w http.ResponseWriter, r *http.Request)
 }
 
 type Middlewares interface {
@@ -63,19 +63,14 @@ type Middlewares interface {
 	CorsDocs() func(next http.Handler) http.Handler
 }
 
-type Server struct {
-	handlers    Handlers
-	middlewares Middlewares
+type Controllers struct {
 }
 
-func New(
-	middlewares Middlewares,
-	handlers Handlers,
-) *Server {
-	return &Server{
-		middlewares: middlewares,
-		handlers:    handlers,
-	}
+type Server struct {
+	org         OrgController
+	member      MemberController
+	invite      InviteController
+	middlewares Middlewares
 }
 
 type Config struct {
@@ -100,54 +95,54 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 		r.Route("/v1", func(r chi.Router) {
 
 			r.Route("/organizations", func(r chi.Router) {
-				r.Get("/", s.handlers.GetOrganizations)
-				r.With(auth).Post("/", s.handlers.CreateOrganization)
+				r.Get("/", s.org.Get)
+				r.With(auth).Post("/", s.org.Create)
 
 				r.Route("/{organization_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetOrganization)
-					r.With(auth).Put("/", s.handlers.UpdateOrganization)
-					r.With(auth).Delete("/", s.handlers.DeleteOrganization)
+					r.Get("/", s.org.Get)
+					r.With(auth).Put("/", s.org.Update)
+					r.With(auth).Delete("/", s.org.Delete)
 
 					r.With(auth).Route("/media", func(r chi.Router) {
 						r.Route("/upload", func(r chi.Router) {
-							r.Post("/url", s.handlers.CreateOrganizationUploadMediaLink)
+							r.Post("/url", s.org.CreateUploadMediaLink)
 
-							r.Delete("/icon", s.handlers.DeleteOrganizationUploadIcon)
-							r.Delete("/banner", s.handlers.DeleteOrganizationUploadBanner)
+							r.Delete("/icon", s.org.DeleteUploadIcon)
+							r.Delete("/banner", s.org.DeleteUploadBanner)
 						})
 					})
 
-					r.With(auth).Patch("/activate", s.handlers.ActivateOrganization)
-					r.With(auth).Patch("/deactivate", s.handlers.DeactivateOrganization)
+					r.With(auth).Patch("/activate", s.org.Activate)
+					r.With(auth).Patch("/deactivate", s.org.Deactivate)
 
-					r.With(sysadmin).Patch("/suspend", s.handlers.SuspendOrganization)
-					r.With(sysadmin).Patch("/unsuspend", s.handlers.UnsuspendOrganization)
+					r.With(sysadmin).Patch("/suspend", s.org.Suspend)
+					r.With(sysadmin).Patch("/unsuspend", s.org.Unsuspend)
 
-					r.With(auth).Get("/invites", s.handlers.GetOrganizationInvites)
+					r.With(auth).Get("/invites", s.invite.GetMyList)
 
-					r.With(auth).Delete("/leave", s.handlers.LeaveOrganization)
+					r.With(auth).Delete("/leave", s.member.LeaveFromOrg)
 				})
 			})
 
 			r.Route("/members", func(r chi.Router) {
 				r.Route("/{member_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetMember)
-					r.With(auth).Put("/", s.handlers.UpdateMember)
-					r.With(auth).Delete("/", s.handlers.DeleteMember)
+					r.Get("/", s.member.Get)
+					r.With(auth).Put("/", s.member.Update)
+					r.With(auth).Delete("/", s.member.Delete)
 				})
 
-				r.Get("/", s.handlers.GetMembers)
+				r.Get("/", s.member.GetList)
 			})
 
 			r.With(auth).Route("/invites", func(r chi.Router) {
-				r.Post("/", s.handlers.CreateInvite)
-				r.Get("/me", s.handlers.GetMyInvites)
+				r.Post("/", s.invite.Create)
+				r.Get("/me", s.invite.GetMyList)
 
 				r.Route("/{invite_id}", func(r chi.Router) {
-					r.Get("/", s.handlers.GetInvite)
-					r.Patch("/accept", s.handlers.AcceptInvite)
-					r.Patch("/decline", s.handlers.DeclineInvite)
-					r.Patch("/cancel", s.handlers.CancelledInvite)
+					r.Get("/", s.invite.Get)
+					r.Patch("/accept", s.invite.Accept)
+					r.Patch("/decline", s.invite.Decline)
+					r.Patch("/cancel", s.invite.Cancelled)
 				})
 			})
 		})

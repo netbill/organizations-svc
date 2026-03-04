@@ -16,7 +16,7 @@ type CreateParams struct {
 	ExpiresAt      time.Time
 }
 
-func (m *Module) Create(
+func (m *Invite) Create(
 	ctx context.Context,
 	actor models.AccountActor,
 	params CreateParams,

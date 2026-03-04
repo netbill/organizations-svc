@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/core/modules/profile"
 )
+
+type ProfileRepo struct {
+	ProfilesSql ProfilesQ
+}
 
 type ProfileRow struct {
 	AccountID uuid.UUID `db:"account_id"`
@@ -62,7 +66,7 @@ type ProfilesQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r *Repository) CreateProfile(
+func (r *ProfileRepo) CreateProfile(
 	ctx context.Context,
 	profile models.Profile,
 ) (models.Profile, error) {
@@ -81,10 +85,10 @@ func (r *Repository) CreateProfile(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) UpdateProfile(
+func (r *ProfileRepo) UpdateProfile(
 	ctx context.Context,
 	accountID uuid.UUID,
-	params profile.UpdateParams,
+	params core.ProfileUpdateParams,
 ) (models.Profile, error) {
 	row, err := r.ProfilesSql.New().
 		FilterByAccountID(accountID).
@@ -106,7 +110,7 @@ func (r *Repository) UpdateProfile(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetProfileByAccountID(
+func (r *ProfileRepo) GetProfileByAccountID(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) (models.Profile, error) {
@@ -123,7 +127,7 @@ func (r *Repository) GetProfileByAccountID(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetProfilesByAccountIDs(
+func (r *ProfileRepo) GetProfilesByAccountIDs(
 	ctx context.Context,
 	accountIDs []uuid.UUID,
 ) ([]models.Profile, error) {
@@ -140,7 +144,7 @@ func (r *Repository) GetProfilesByAccountIDs(
 	return profiles, nil
 }
 
-func (r *Repository) GetProfileByUsername(
+func (r *ProfileRepo) GetProfileByUsername(
 	ctx context.Context,
 	username string,
 ) (models.Profile, error) {
@@ -157,7 +161,7 @@ func (r *Repository) GetProfileByUsername(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) ExistsProfileByAccountID(
+func (r *ProfileRepo) ExistsProfileByAccountID(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) (bool, error) {
@@ -169,7 +173,7 @@ func (r *Repository) ExistsProfileByAccountID(
 	return !row.IsNil(), nil
 }
 
-func (r *Repository) ExistsProfileByUsername(
+func (r *ProfileRepo) ExistsProfileByUsername(
 	ctx context.Context,
 	username string,
 ) (bool, error) {
@@ -181,7 +185,7 @@ func (r *Repository) ExistsProfileByUsername(
 	return !row.IsNil(), nil
 }
 
-func (r *Repository) DeleteProfileByAccountID(
+func (r *ProfileRepo) DeleteProfileByAccountID(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) error {

@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/core/modules/member"
 	"github.com/netbill/restkit/pagi"
 )
+
+type MemberRepo struct {
+	OrgMembersSql OrgMembersQ
+}
 
 type OrganizationMemberRow struct {
 	ID             uuid.UUID `db:"id"`
@@ -74,7 +78,7 @@ type OrgMembersQ interface {
 	Count(ctx context.Context) (uint, error)
 }
 
-func (r *Repository) CreateMember(
+func (r *MemberRepo) CreateMember(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
@@ -89,7 +93,7 @@ func (r *Repository) CreateMember(
 	return r.GetMember(ctx, row.ID)
 }
 
-func (r *Repository) CreateMemberHead(
+func (r *MemberRepo) CreateMemberHead(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
@@ -105,16 +109,22 @@ func (r *Repository) CreateMemberHead(
 	return r.GetMember(ctx, row.ID)
 }
 
-func (r *Repository) UpdateMember(
+func (r *MemberRepo) UpdateMember(
 	ctx context.Context,
 	ID uuid.UUID,
-	params member.UpdateParams,
+	params core.MemberUpdateParams,
 ) (models.Member, error) {
-	row, err := r.OrgMembersSql.New().
-		FilterByID(ID).
-		UpdatePosition(params.Position).
-		UpdateLabel(params.Label).
-		UpdateOne(ctx)
+	q := r.OrgMembersSql.New().
+		FilterByID(ID)
+
+	if params.Position != nil {
+		q = q.UpdatePosition(params.Position)
+	}
+	if params.Label != nil {
+		q = q.UpdateLabel(params.Label)
+	}
+
+	row, err := q.UpdateOne(ctx)
 	if err != nil {
 		return models.Member{}, fmt.Errorf("failed to update member, cause: %w", err)
 	}
@@ -127,7 +137,7 @@ func (r *Repository) UpdateMember(
 	return r.GetMember(ctx, row.ID)
 }
 
-func (r *Repository) GetMember(
+func (r *MemberRepo) GetMember(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Member, error) {
@@ -144,7 +154,7 @@ func (r *Repository) GetMember(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetMembersByAccountAndOrgs(
+func (r *MemberRepo) GetMembersByAccountAndOrgs(
 	ctx context.Context,
 	accountID uuid.UUID,
 	organizationIDs []uuid.UUID,
@@ -166,7 +176,7 @@ func (r *Repository) GetMembersByAccountAndOrgs(
 	return members, nil
 }
 
-func (r *Repository) GetMemberByAccountAndOrganization(
+func (r *MemberRepo) GetMemberByAccountAndOrganization(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
@@ -186,7 +196,7 @@ func (r *Repository) GetMemberByAccountAndOrganization(
 	return row.ToModel(), nil
 }
 
-func (r *Repository) MemberExists(
+func (r *MemberRepo) MemberExists(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (bool, error) {
@@ -201,9 +211,9 @@ func (r *Repository) MemberExists(
 	return exists, nil
 }
 
-func (r *Repository) GetMembers(
+func (r *MemberRepo) GetMembers(
 	ctx context.Context,
-	filter member.FilterParams,
+	filter core.MemberFilterParams,
 	limit uint,
 	offset uint,
 ) (pagi.Page[[]models.Member], error) {
@@ -260,7 +270,7 @@ func (r *Repository) GetMembers(
 	}, nil
 }
 
-func (r *Repository) DeleteMember(
+func (r *MemberRepo) DeleteMember(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) error {
@@ -272,7 +282,7 @@ func (r *Repository) DeleteMember(
 	return nil
 }
 
-func (r *Repository) DeleteMembersByAccountID(
+func (r *MemberRepo) DeleteMembersByAccountID(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) error {

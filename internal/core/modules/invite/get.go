@@ -8,7 +8,7 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-func (m *Module) GetListForOrganization(
+func (m *Invite) GetListForOrganization(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationID uuid.UUID,
@@ -27,7 +27,7 @@ func (m *Module) GetListForOrganization(
 	return res, nil
 }
 
-func (m *Module) GetListForAccount(
+func (m *Invite) GetListForAccount(
 	ctx context.Context,
 	actor models.AccountActor,
 	limit, offset uint,
@@ -40,7 +40,7 @@ func (m *Module) GetListForAccount(
 	return res, nil
 }
 
-func (m *Module) GetForAccount(
+func (m *Invite) GetForAccount(
 	ctx context.Context,
 	accountID uuid.UUID,
 	inviteID uuid.UUID,

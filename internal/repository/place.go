@@ -6,10 +6,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/netbill/organizations-svc/internal/core"
 	"github.com/netbill/organizations-svc/internal/core/errx"
 	"github.com/netbill/organizations-svc/internal/core/models"
-	"github.com/netbill/organizations-svc/internal/core/modules/place"
 )
+
+type PlaceRepo struct {
+	PlacesSql PlacesQ
+}
 
 type PlaceRow struct {
 	ID               uuid.UUID `db:"id"`
@@ -44,7 +48,7 @@ type PlacesQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r *Repository) CreatePlace(ctx context.Context, params place.CreateParams) error {
+func (r *PlaceRepo) CreatePlace(ctx context.Context, params core.PlaceCreateParams) error {
 	return r.PlacesSql.New().Insert(ctx, PlaceRow{
 		ID:              params.ID,
 		OrganizationID:  params.OrganizationID,
@@ -52,11 +56,11 @@ func (r *Repository) CreatePlace(ctx context.Context, params place.CreateParams)
 	})
 }
 
-func (r *Repository) GetPlaceExistsForOrganization(ctx context.Context, organizationID uuid.UUID) (bool, error) {
+func (r *PlaceRepo) GetPlaceExistsForOrganization(ctx context.Context, organizationID uuid.UUID) (bool, error) {
 	return r.PlacesSql.New().FilterByOrganizationID(organizationID).Exists(ctx)
 }
 
-func (r *Repository) GetPlaceByID(ctx context.Context, id uuid.UUID) (models.Place, error) {
+func (r *PlaceRepo) GetPlaceByID(ctx context.Context, id uuid.UUID) (models.Place, error) {
 	row, err := r.PlacesSql.New().FilterByID(id).Get(ctx)
 	if err != nil {
 		return models.Place{}, err
@@ -70,7 +74,7 @@ func (r *Repository) GetPlaceByID(ctx context.Context, id uuid.UUID) (models.Pla
 	return row.ToModel(), nil
 }
 
-func (r *Repository) GetPlacesByIDs(ctx context.Context, ids []uuid.UUID) ([]models.Place, error) {
+func (r *PlaceRepo) GetPlacesByIDs(ctx context.Context, ids []uuid.UUID) ([]models.Place, error) {
 	rows, err := r.PlacesSql.New().FilterByID(ids...).Select(ctx)
 	if err != nil {
 		return nil, err
@@ -84,10 +88,10 @@ func (r *Repository) GetPlacesByIDs(ctx context.Context, ids []uuid.UUID) ([]mod
 	return res, nil
 }
 
-func (r *Repository) PlaceExists(ctx context.Context, id uuid.UUID) (bool, error) {
+func (r *PlaceRepo) PlaceExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	return r.PlacesSql.New().FilterByID(id).Exists(ctx)
 }
 
-func (r *Repository) DeletePlaceByID(ctx context.Context, id uuid.UUID) error {
+func (r *PlaceRepo) DeletePlaceByID(ctx context.Context, id uuid.UUID) error {
 	return r.PlacesSql.New().FilterByID(id).Delete(ctx)
 }
