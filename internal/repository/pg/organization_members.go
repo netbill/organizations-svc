@@ -262,12 +262,22 @@ func (q *orgMembers) UpdateOne(ctx context.Context) (repository.OrganizationMemb
 }
 
 func (q *orgMembers) UpdatePosition(v *string) repository.OrgMembersQ {
-	q.updater = q.updater.Set("position", v)
+	value := pgtype.Text{Valid: v != nil, String: ""}
+	if v != nil {
+		value = pgtype.Text{String: *v, Valid: *v != ""}
+	}
+
+	q.updater = q.updater.Set("position", value)
 	return q
 }
 
 func (q *orgMembers) UpdateLabel(v *string) repository.OrgMembersQ {
-	q.updater = q.updater.Set("label", v)
+	value := pgtype.Text{Valid: v != nil, String: ""}
+	if v != nil {
+		value = pgtype.Text{String: *v, Valid: *v != ""}
+	}
+
+	q.updater = q.updater.Set("label", value)
 	return q
 }
 

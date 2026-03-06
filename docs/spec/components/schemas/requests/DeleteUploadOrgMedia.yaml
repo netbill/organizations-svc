@@ -1,0 +1,27 @@
+type: object
+required:
+  - data
+properties:
+  data:
+    type: object
+    required:
+      - id
+      - type
+      - attributes
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: "organization id"
+      type:
+        type: string
+        enum: [ organization ]
+      attributes:
+        type: object
+        properties:
+          icon_key:
+            type: string
+            description: "icon media key"
+          banner_key:
+            type: string
+            description: "banner media key"

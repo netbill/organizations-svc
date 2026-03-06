@@ -30,6 +30,7 @@ s3:
     access_key_id: "your-access-key-id"
     secret_access_key: "your-secret-access-key"
     session_token: "your-session-token"
+    base_url: "https://s3.amazonaws.com"
 
   media:
     link:

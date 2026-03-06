@@ -12,7 +12,6 @@ package resources
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"fmt"
 	"gopkg.in/validator.v2"
 )

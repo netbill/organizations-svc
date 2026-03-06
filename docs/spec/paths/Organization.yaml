@@ -45,7 +45,7 @@ get:
           schema:
             $ref: '../components/schemas/responses/Errors.yaml'
 
-put:
+patch:
   tags:
     - organizations
   summary: Update organization

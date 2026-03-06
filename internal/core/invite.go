@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -12,28 +11,34 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type inviteRepository interface {
-	CreateInvite(ctx context.Context, params InviteCreateParams) (models.Invite, error)
-	GetInvite(ctx context.Context, inviteID uuid.UUID) (models.Invite, error)
-	GetOrganizationInvites(ctx context.Context, organizationID uuid.UUID, limit, offset uint) (pagi.Page[[]models.Invite], error)
-	GetAccountInvites(ctx context.Context, accountID uuid.UUID, limit, offset uint) (pagi.Page[[]models.Invite], error)
-	ExistsActiveInviteByAccountID(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error)
-	UpdateInviteStatus(ctx context.Context, inviteID uuid.UUID, status string) (models.Invite, error)
-	DeleteInvite(ctx context.Context, inviteID uuid.UUID) error
+type inviteRepo interface {
+	Create(ctx context.Context, params InviteCreateParams) (models.Invite, error)
+
+	Get(ctx context.Context, inviteID uuid.UUID) (models.Invite, error)
+	GetList(
+		ctx context.Context,
+		params FilterInvitesParams,
+		limit, offset uint,
+	) (pagi.Page[[]models.Invite], error)
+	ExistActiveForAccountInOrg(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error)
+
+	UpdateStatus(ctx context.Context, inviteID uuid.UUID, status string) (models.Invite, error)
+
+	Delete(ctx context.Context, inviteID uuid.UUID) error
 }
 
 type inviteMemberRepo interface {
-	GetMemberByAccountAndOrganization(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-	MemberExists(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error)
-	CreateMember(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-}
+	Create(
+		ctx context.Context,
+		accountID, organizationID uuid.UUID,
+		head bool,
+	) (models.Member, error)
 
-type inviteOrgRepo interface {
-	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
+	ExistsForAccountAndOrg(ctx context.Context, accountID, organizationID uuid.UUID) (bool, error)
 }
 
 type inviteProfileRepo interface {
-	ExistsProfileByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
+	ExistsByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
 }
 
 type inviteMessenger interface {
@@ -46,62 +51,32 @@ type inviteMessenger interface {
 }
 
 type InviteModule struct {
-	inviteRepo  inviteRepository
-	memberRepo  inviteMemberRepo
-	orgRepo     inviteOrgRepo
-	profileRepo inviteProfileRepo
-	tx          transactor
-	messenger   inviteMessenger
+	auth      orgAuth
+	repo      inviteRepo
+	member    inviteMemberRepo
+	profile   inviteProfileRepo
+	tx        transactor
+	messenger inviteMessenger
 }
 
-func (m *InviteModule) authorizeOrgHead(
-	ctx context.Context,
-	actor models.AccountActor,
-	organizationID uuid.UUID,
-) (models.Organization, models.Member, error) {
-	org, err := m.orgRepo.GetOrganizationByID(ctx, organizationID)
-	if err != nil {
-		return models.Organization{}, models.Member{}, err
-	}
-
-	if org.Status == models.OrganizationStatusSuspended {
-		return models.Organization{}, models.Member{}, errx.ErrorOrganizationIsSuspended.Raise(
-			fmt.Errorf("organization with id %s is suspended", organizationID),
-		)
-	}
-
-	member, err := m.getInitiator(ctx, actor, organizationID)
-	if err != nil {
-		return models.Organization{}, models.Member{}, err
-	}
-
-	if !member.Head {
-		return models.Organization{}, models.Member{}, errx.ErrorNotOrganizationHead.Raise(
-			fmt.Errorf(
-				"only organization head member can manage members, but member %s is not head", member.ID,
-			),
-		)
-	}
-
-	return org, member, nil
+type InviteDeps struct {
+	Auth      orgAuth
+	Repo      inviteRepo
+	Member    inviteMemberRepo
+	Profile   inviteProfileRepo
+	Tx        transactor
+	Messenger inviteMessenger
 }
 
-func (m *InviteModule) getInitiator(
-	ctx context.Context,
-	accountID uuid.UUID,
-	organizationID uuid.UUID,
-) (models.Member, error) {
-	initiator, err := m.memberRepo.GetMemberByAccountAndOrganization(ctx, accountID, organizationID)
-	if errors.Is(err, errx.ErrorMemberNotExists) {
-		return models.Member{}, errx.ErrorInitiatorNotMemberOfOrganization.Raise(
-			fmt.Errorf("initiator with account id %s is not a member of organization %s", accountID, organizationID),
-		)
+func NewInviteModule(deps InviteDeps) *InviteModule {
+	return &InviteModule{
+		auth:      deps.Auth,
+		repo:      deps.Repo,
+		member:    deps.Member,
+		profile:   deps.Profile,
+		tx:        deps.Tx,
+		messenger: deps.Messenger,
 	}
-	if err != nil {
-		return models.Member{}, err
-	}
-
-	return initiator, nil
 }
 
 type InviteCreateParams struct {
@@ -115,12 +90,17 @@ func (m *InviteModule) Create(
 	actor models.AccountActor,
 	params InviteCreateParams,
 ) (invite models.Invite, err error) {
-	_, _, err = m.authorizeOrgHead(ctx, actor, params.OrganizationID)
+	_, err = m.auth.authorizeOrgHead(ctx, actor, params.OrganizationID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	exist, err := m.profileRepo.ExistsProfileByAccountID(ctx, params.AccountID)
+	_, err = m.auth.validateOrg(ctx, params.OrganizationID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+
+	exist, err := m.profile.ExistsByAccountID(ctx, params.AccountID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -130,28 +110,32 @@ func (m *InviteModule) Create(
 		)
 	}
 
-	memberExists, err := m.memberRepo.MemberExists(ctx, params.AccountID, params.OrganizationID)
+	memberExists, err := m.member.ExistsForAccountAndOrg(ctx, params.AccountID, params.OrganizationID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 	if memberExists {
 		return models.Invite{}, errx.ErrorAccountAlreadyMember.Raise(
-			fmt.Errorf("account with id %s is already a member of organization %s", params.AccountID, params.OrganizationID),
+			fmt.Errorf("account with id %s is already a member of organization %s",
+				params.AccountID, params.OrganizationID,
+			),
 		)
 	}
 
-	exist, err = m.inviteRepo.ExistsActiveInviteByAccountID(ctx, params.AccountID, params.OrganizationID)
+	exist, err = m.repo.ExistActiveForAccountInOrg(ctx, params.AccountID, params.OrganizationID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 	if exist {
 		return models.Invite{}, errx.ErrorActiveInviteAlreadyExists.Raise(
-			fmt.Errorf("active invite for account %s already exists in organization %s", params.AccountID, params.OrganizationID),
+			fmt.Errorf("active invite for account %s already exists in organization %s",
+				params.AccountID, params.OrganizationID,
+			),
 		)
 	}
 
 	err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		invite, err = m.inviteRepo.CreateInvite(ctx, params)
+		invite, err = m.repo.Create(ctx, params)
 		if err != nil {
 			return err
 		}
@@ -162,201 +146,52 @@ func (m *InviteModule) Create(
 	return invite, err
 }
 
-// GetListForOrganization - получить список инвайтов организации
-func (m *InviteModule) GetListForOrganization(
+type FilterInvitesParams struct {
+	OrganizationID *uuid.UUID
+	AccountID      *uuid.UUID
+}
+
+func (m *InviteModule) GetList(
 	ctx context.Context,
 	actor models.AccountActor,
-	organizationID uuid.UUID,
+	params FilterInvitesParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
-	_, err := m.getInitiator(ctx, actor, organizationID)
-	if err != nil {
-		return pagi.Page[[]models.Invite]{}, err
+	if params.OrganizationID != nil {
+		_, err := m.auth.authorizeOrgMember(ctx, actor, *params.OrganizationID)
+		if err != nil {
+			return pagi.Page[[]models.Invite]{}, err
+		}
+	}
+	if params.AccountID != nil && params.OrganizationID == nil {
+		if actor != *params.AccountID {
+			return pagi.Page[[]models.Invite]{}, errx.ErrorCannotGetInvitesForOtherAccount.Raise(
+				fmt.Errorf("cannot get invites for other account"),
+			)
+		}
+	}
+	if params.OrganizationID == nil && params.AccountID == nil {
+		params.AccountID = &actor
 	}
 
-	return m.inviteRepo.GetOrganizationInvites(ctx, organizationID, limit, offset)
+	return m.repo.GetList(ctx, params, limit, offset)
 }
 
-// GetListForAccount - получить список инвайтов аккаунта
-func (m *InviteModule) GetListForAccount(
-	ctx context.Context,
-	actor models.AccountActor,
-	limit, offset uint,
-) (pagi.Page[[]models.Invite], error) {
-	return m.inviteRepo.GetAccountInvites(ctx, actor, limit, offset)
-}
-
-// GetForAccount - получить инвайт для аккаунта
 func (m *InviteModule) GetForAccount(
 	ctx context.Context,
 	accountID uuid.UUID,
 	inviteID uuid.UUID,
 ) (models.Invite, error) {
-	res, err := m.inviteRepo.GetInvite(ctx, inviteID)
+	invite, err := m.repo.Get(ctx, inviteID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	if res.AccountID != accountID {
-		_, err = m.getInitiator(ctx, accountID, res.OrganizationID)
+	if invite.AccountID != accountID {
+		_, err = m.auth.authorizeOrgMember(ctx, accountID, invite.OrganizationID)
 		if err != nil {
 			return models.Invite{}, err
 		}
-	}
-
-	return res, nil
-}
-
-// Accept - принять инвайт
-func (m *InviteModule) Accept(
-	ctx context.Context,
-	actor models.AccountActor,
-	inviteID uuid.UUID,
-) (invite models.Invite, err error) {
-	invite, err = m.inviteRepo.GetInvite(ctx, inviteID)
-	if err != nil {
-		return models.Invite{}, err
-	}
-
-	if invite.AccountID != actor {
-		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
-			fmt.Errorf("account has no rights to accept this invite"),
-		)
-	}
-	if invite.Status == models.InviteStatusAccepted {
-		return invite, nil
-	}
-	if invite.Status != models.InviteStatusSent {
-		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
-			fmt.Errorf("invite status is %s", invite.Status),
-		)
-	}
-	if invite.ExpiresAt.Before(time.Now().UTC()) {
-		return models.Invite{}, errx.ErrorInviteExpired.Raise(
-			fmt.Errorf("invite expired at %s", invite.ExpiresAt),
-		)
-	}
-
-	org, err := m.orgRepo.GetOrganizationByID(ctx, invite.OrganizationID)
-	if err != nil {
-		return models.Invite{}, err
-	}
-	if org.Status != models.OrganizationStatusActive {
-		return models.Invite{}, errx.ErrorOrganizationIsNotActive.Raise(
-			fmt.Errorf("organization with id %s is not active", invite.OrganizationID),
-		)
-	}
-
-	if err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		invite, err = m.inviteRepo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusAccepted)
-		if err != nil {
-			return err
-		}
-
-		mem, err := m.memberRepo.CreateMember(ctx, actor, invite.OrganizationID)
-		if err != nil {
-			return err
-		}
-
-		if err = m.messenger.WriteOrgInviteAccepted(ctx, invite); err != nil {
-			return err
-		}
-
-		return m.messenger.WriteOrgMemberCreated(ctx, mem)
-	}); err != nil {
-		return models.Invite{}, err
-	}
-
-	return invite, err
-}
-
-// Decline - отклонить инвайт
-func (m *InviteModule) Decline(
-	ctx context.Context,
-	actor models.AccountActor,
-	inviteID uuid.UUID,
-) (invite models.Invite, err error) {
-	invite, err = m.inviteRepo.GetInvite(ctx, inviteID)
-	if err != nil {
-		return models.Invite{}, err
-	}
-	if invite.AccountID != actor {
-		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
-			fmt.Errorf("account has no rights to decline this invite"),
-		)
-	}
-	if invite.Status == models.InviteStatusDeclined {
-		return invite, nil
-	}
-	if invite.Status != models.InviteStatusSent {
-		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
-			fmt.Errorf("invite status is %s", invite.Status),
-		)
-	}
-	if invite.ExpiresAt.Before(time.Now().UTC()) {
-		return models.Invite{}, errx.ErrorInviteExpired.Raise(
-			fmt.Errorf("invite expired at %s", invite.ExpiresAt),
-		)
-	}
-
-	org, err := m.orgRepo.GetOrganizationByID(ctx, invite.OrganizationID)
-	if err != nil {
-		return models.Invite{}, err
-	}
-	if org.Status != models.OrganizationStatusActive {
-		return models.Invite{}, errx.ErrorOrganizationIsNotActive.Raise(
-			fmt.Errorf("organization with id %s is not active", invite.OrganizationID),
-		)
-	}
-
-	if err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		invite, err = m.inviteRepo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusDeclined)
-		if err != nil {
-			return err
-		}
-
-		return m.messenger.WriteOrgInviteDeclined(ctx, invite)
-	}); err != nil {
-		return models.Invite{}, err
-	}
-
-	return invite, err
-}
-
-// Cancelled - отменить инвайт
-func (m *InviteModule) Cancelled(
-	ctx context.Context,
-	actor models.AccountActor,
-	inviteID uuid.UUID,
-) (models.Invite, error) {
-	invite, err := m.inviteRepo.GetInvite(ctx, inviteID)
-	if err != nil {
-		return models.Invite{}, err
-	}
-
-	_, _, err = m.authorizeOrgHead(ctx, actor, invite.OrganizationID)
-	if err != nil {
-		return models.Invite{}, err
-	}
-
-	if invite.Status == models.InviteStatusCancelled {
-		return models.Invite{}, nil
-	}
-	if invite.Status != models.InviteStatusSent {
-		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
-			fmt.Errorf("invite status is %s", invite.Status),
-		)
-	}
-
-	if err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		invite, err = m.inviteRepo.UpdateInviteStatus(ctx, inviteID, models.InviteStatusCancelled)
-		if err != nil {
-			return err
-		}
-
-		return m.messenger.WriteOrgInviteCanceled(ctx, invite)
-	}); err != nil {
-		return models.Invite{}, err
 	}
 
 	return invite, nil

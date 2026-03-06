@@ -12,10 +12,6 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type ProfileRepo struct {
-	ProfilesSql ProfilesQ
-}
-
 type ProfileRow struct {
 	AccountID uuid.UUID `db:"account_id"`
 	Username  string    `db:"username"`
@@ -66,11 +62,21 @@ type ProfilesQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r *ProfileRepo) CreateProfile(
+type ProfileRepo struct {
+	query ProfilesQ
+}
+
+func NewProfileRepo(profilesSql ProfilesQ) *ProfileRepo {
+	return &ProfileRepo{
+		query: profilesSql,
+	}
+}
+
+func (r *ProfileRepo) Create(
 	ctx context.Context,
 	profile models.Profile,
 ) (models.Profile, error) {
-	row, err := r.ProfilesSql.New().Insert(ctx, ProfileRow{
+	row, err := r.query.New().Insert(ctx, ProfileRow{
 		AccountID:       profile.AccountID,
 		Username:        profile.Username,
 		Pseudonym:       profile.Pseudonym,
@@ -85,12 +91,12 @@ func (r *ProfileRepo) CreateProfile(
 	return row.ToModel(), nil
 }
 
-func (r *ProfileRepo) UpdateProfile(
+func (r *ProfileRepo) Update(
 	ctx context.Context,
 	accountID uuid.UUID,
 	params core.ProfileUpdateParams,
 ) (models.Profile, error) {
-	row, err := r.ProfilesSql.New().
+	row, err := r.query.New().
 		FilterByAccountID(accountID).
 		UpdateUsername(params.Username).
 		UpdatePseudonym(params.Pseudonym).
@@ -110,11 +116,11 @@ func (r *ProfileRepo) UpdateProfile(
 	return row.ToModel(), nil
 }
 
-func (r *ProfileRepo) GetProfileByAccountID(
+func (r *ProfileRepo) GetByID(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) (models.Profile, error) {
-	row, err := r.ProfilesSql.New().FilterByAccountID(accountID).Get(ctx)
+	row, err := r.query.New().FilterByAccountID(accountID).Get(ctx)
 	if err != nil {
 		return models.Profile{}, fmt.Errorf("failed to get profile by account ID, cause: %w", err)
 	}
@@ -127,11 +133,11 @@ func (r *ProfileRepo) GetProfileByAccountID(
 	return row.ToModel(), nil
 }
 
-func (r *ProfileRepo) GetProfilesByAccountIDs(
+func (r *ProfileRepo) GetListByIDs(
 	ctx context.Context,
 	accountIDs []uuid.UUID,
 ) ([]models.Profile, error) {
-	rows, err := r.ProfilesSql.New().FilterByAccountID(accountIDs...).Select(ctx)
+	rows, err := r.query.New().FilterByAccountID(accountIDs...).Select(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get profiles by account IDs, cause: %w", err)
 	}
@@ -144,11 +150,11 @@ func (r *ProfileRepo) GetProfilesByAccountIDs(
 	return profiles, nil
 }
 
-func (r *ProfileRepo) GetProfileByUsername(
+func (r *ProfileRepo) GetByUsername(
 	ctx context.Context,
 	username string,
 ) (models.Profile, error) {
-	row, err := r.ProfilesSql.New().FilterByUsername(username).Get(ctx)
+	row, err := r.query.New().FilterByUsername(username).Get(ctx)
 	if err != nil {
 		return models.Profile{}, fmt.Errorf("failed to get profile by username, cause: %w", err)
 	}
@@ -161,11 +167,11 @@ func (r *ProfileRepo) GetProfileByUsername(
 	return row.ToModel(), nil
 }
 
-func (r *ProfileRepo) ExistsProfileByAccountID(
+func (r *ProfileRepo) ExistsByAccountID(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) (bool, error) {
-	row, err := r.ProfilesSql.New().FilterByAccountID(accountID).Get(ctx)
+	row, err := r.query.New().FilterByAccountID(accountID).Get(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to check profile existence by account ID, cause: %w", err)
 	}
@@ -173,11 +179,11 @@ func (r *ProfileRepo) ExistsProfileByAccountID(
 	return !row.IsNil(), nil
 }
 
-func (r *ProfileRepo) ExistsProfileByUsername(
+func (r *ProfileRepo) ExistsByUsername(
 	ctx context.Context,
 	username string,
 ) (bool, error) {
-	row, err := r.ProfilesSql.New().FilterByUsername(username).Get(ctx)
+	row, err := r.query.New().FilterByUsername(username).Get(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to check profile existence by username, cause: %w", err)
 	}
@@ -185,11 +191,11 @@ func (r *ProfileRepo) ExistsProfileByUsername(
 	return !row.IsNil(), nil
 }
 
-func (r *ProfileRepo) DeleteProfileByAccountID(
+func (r *ProfileRepo) Delete(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) error {
-	err := r.ProfilesSql.New().FilterByAccountID(accountID).Delete(ctx)
+	err := r.query.New().FilterByAccountID(accountID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete profile by account ID, cause: %w", err)
 	}

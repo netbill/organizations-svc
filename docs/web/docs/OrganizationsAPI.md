@@ -9,12 +9,9 @@ Method | HTTP request | Description
 [**OrganizationsSvcV1OrganizationsOrganizationIdDeactivatePost**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdDeactivatePost) | **Post** /organizations-svc/v1/organizations/{organization_id}/deactivate | Deactivate organization
 [**OrganizationsSvcV1OrganizationsOrganizationIdDelete**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdDelete) | **Delete** /organizations-svc/v1/organizations/{organization_id} | Delete organization
 [**OrganizationsSvcV1OrganizationsOrganizationIdGet**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdGet) | **Get** /organizations-svc/v1/organizations/{organization_id} | Get organization
-[**OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet) | **Get** /organizations-svc/v1/organizations/{organization_id}/invites | Get organization invites
-[**OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete) | **Delete** /organizations-svc/v1/organizations/{organization_id}/leave | Leave organization
-[**OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete) | **Delete** /organizations-svc/v1/organizations/{organization_id}/media/upload/banner | Delete organization upload banner
-[**OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete) | **Delete** /organizations-svc/v1/organizations/{organization_id}/media/upload/icon | Delete organization upload icon
-[**OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost) | **Post** /organizations-svc/v1/organizations/{organization_id}/media/upload/url | Create organization upload media link
-[**OrganizationsSvcV1OrganizationsOrganizationIdPut**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdPut) | **Put** /organizations-svc/v1/organizations/{organization_id} | Update organization
+[**OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete) | **Delete** /organizations-svc/v1/organizations/{organization_id}/media | Delete organization upload media
+[**OrganizationsSvcV1OrganizationsOrganizationIdMediaPost**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdMediaPost) | **Post** /organizations-svc/v1/organizations/{organization_id}/media | Create organization upload media link
+[**OrganizationsSvcV1OrganizationsOrganizationIdPatch**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdPatch) | **Patch** /organizations-svc/v1/organizations/{organization_id} | Update organization
 [**OrganizationsSvcV1OrganizationsOrganizationIdSuspendPost**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdSuspendPost) | **Post** /organizations-svc/v1/organizations/{organization_id}/suspend | Suspend organization
 [**OrganizationsSvcV1OrganizationsOrganizationIdUnsuspendPost**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsOrganizationIdUnsuspendPost) | **Post** /organizations-svc/v1/organizations/{organization_id}/unsuspend | Unsuspend organization
 [**OrganizationsSvcV1OrganizationsPost**](OrganizationsAPI.md#OrganizationsSvcV1OrganizationsPost) | **Post** /organizations-svc/v1/organizations/ | Create organization
@@ -371,87 +368,11 @@ No authorization required
 [[Back to README]](../README.md)
 
 
-## OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet
+## OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete
 
-> InvitesCollection OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet(ctx, organizationId).Include(include).PageLimit(pageLimit).PageOffset(pageOffset).Execute()
+> OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete(ctx, organizationId).DeleteUploadOrgMedia(deleteUploadOrgMedia).Execute()
 
-Get organization invites
-
-
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
-)
-
-func main() {
-	organizationId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // uuid.UUID | Organization ID
-	include := []string{"Include_example"} // []string | Optional list of related resources to include in the response. Supported values: `profile`, `organization`.  (optional)
-	pageLimit := int32(56) // int32 | Max number of items to return (1-100). (optional)
-	pageOffset := int32(56) // int32 | Number of items to skip. (optional)
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet(context.Background(), organizationId).Include(include).PageLimit(pageLimit).PageOffset(pageOffset).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-	// response from `OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet`: InvitesCollection
-	fmt.Fprintf(os.Stdout, "Response from `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet`: %v\n", resp)
-}
-```
-
-### Path Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**organizationId** | **uuid.UUID** | Organization ID | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
- **include** | **[]string** | Optional list of related resources to include in the response. Supported values: &#x60;profile&#x60;, &#x60;organization&#x60;.  | 
- **pageLimit** | **int32** | Max number of items to return (1-100). | 
- **pageOffset** | **int32** | Number of items to skip. | 
-
-### Return type
-
-[**InvitesCollection**](InvitesCollection.md)
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
-## OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete
-
-> OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete(ctx, organizationId).Execute()
-
-Leave organization
+Delete organization upload media
 
 
 
@@ -469,12 +390,13 @@ import (
 
 func main() {
 	organizationId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // uuid.UUID | Organization ID
+	deleteUploadOrgMedia := *openapiclient.NewDeleteUploadOrgMedia(*openapiclient.NewDeleteUploadOrgMediaData("TODO", "Type_example", *openapiclient.NewDeleteUploadOrgMediaDataAttributes())) // DeleteUploadOrgMedia | 
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete(context.Background(), organizationId).Execute()
+	r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete(context.Background(), organizationId).DeleteUploadOrgMedia(deleteUploadOrgMedia).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
 }
@@ -490,82 +412,13 @@ Name | Type | Description  | Notes
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
-
-### Return type
-
- (empty response body)
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
-## OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete
-
-> OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete(ctx, organizationId).DeleteUploadOrgBanner(deleteUploadOrgBanner).Execute()
-
-Delete organization upload banner
-
-
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
-)
-
-func main() {
-	organizationId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // uuid.UUID | Organization ID
-	deleteUploadOrgBanner := *openapiclient.NewDeleteUploadOrgBanner(*openapiclient.NewDeleteUploadOrgBannerData("TODO", "Type_example", *openapiclient.NewDeleteUploadOrgBannerDataAttributes("BannerKey_example"))) // DeleteUploadOrgBanner | 
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete(context.Background(), organizationId).DeleteUploadOrgBanner(deleteUploadOrgBanner).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-}
-```
-
-### Path Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**organizationId** | **uuid.UUID** | Organization ID | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
- **deleteUploadOrgBanner** | [**DeleteUploadOrgBanner**](DeleteUploadOrgBanner.md) |  | 
+ **deleteUploadOrgMedia** | [**DeleteUploadOrgMedia**](DeleteUploadOrgMedia.md) |  | 
 
 ### Return type
 
@@ -585,79 +438,9 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete
+## OrganizationsSvcV1OrganizationsOrganizationIdMediaPost
 
-> OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete(ctx, organizationId).DeleteUploadOrgIcon(deleteUploadOrgIcon).Execute()
-
-Delete organization upload icon
-
-
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
-)
-
-func main() {
-	organizationId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // uuid.UUID | Organization ID
-	deleteUploadOrgIcon := *openapiclient.NewDeleteUploadOrgIcon(*openapiclient.NewDeleteUploadOrgIconData("TODO", "Type_example", *openapiclient.NewDeleteUploadOrgIconDataAttributes("IconKey_example"))) // DeleteUploadOrgIcon | 
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete(context.Background(), organizationId).DeleteUploadOrgIcon(deleteUploadOrgIcon).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-}
-```
-
-### Path Parameters
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**organizationId** | **uuid.UUID** | Organization ID | 
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest struct via the builder pattern
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
-
- **deleteUploadOrgIcon** | [**DeleteUploadOrgIcon**](DeleteUploadOrgIcon.md) |  | 
-
-### Return type
-
- (empty response body)
-
-### Authorization
-
-[BearerAuth](../README.md#BearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
-## OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost
-
-> UploadOrgMediaLinks OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost(ctx, organizationId).Execute()
+> UploadOrgMediaLinks OrganizationsSvcV1OrganizationsOrganizationIdMediaPost(ctx, organizationId).Execute()
 
 Create organization upload media link
 
@@ -680,13 +463,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost(context.Background(), organizationId).Execute()
+	resp, r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaPost(context.Background(), organizationId).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost`: UploadOrgMediaLinks
-	fmt.Fprintf(os.Stdout, "Response from `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost`: %v\n", resp)
+	// response from `OrganizationsSvcV1OrganizationsOrganizationIdMediaPost`: UploadOrgMediaLinks
+	fmt.Fprintf(os.Stdout, "Response from `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdMediaPost`: %v\n", resp)
 }
 ```
 
@@ -700,7 +483,7 @@ Name | Type | Description  | Notes
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdMediaPostRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes
@@ -725,9 +508,9 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## OrganizationsSvcV1OrganizationsOrganizationIdPut
+## OrganizationsSvcV1OrganizationsOrganizationIdPatch
 
-> Organization OrganizationsSvcV1OrganizationsOrganizationIdPut(ctx, organizationId).UpdateOrganization(updateOrganization).Execute()
+> Organization OrganizationsSvcV1OrganizationsOrganizationIdPatch(ctx, organizationId).UpdateOrganization(updateOrganization).Execute()
 
 Update organization
 
@@ -747,17 +530,17 @@ import (
 
 func main() {
 	organizationId := "38400000-8cf0-11bd-b23e-10b96e4ef00d" // uuid.UUID | Organization ID
-	updateOrganization := *openapiclient.NewUpdateOrganization(*openapiclient.NewUpdateOrganizationData("TODO", "Type_example", *openapiclient.NewUpdateOrganizationDataAttributes("Name_example"))) // UpdateOrganization | 
+	updateOrganization := *openapiclient.NewUpdateOrganization(*openapiclient.NewUpdateOrganizationData("TODO", "Type_example", *openapiclient.NewUpdateOrganizationDataAttributes())) // UpdateOrganization | 
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdPut(context.Background(), organizationId).UpdateOrganization(updateOrganization).Execute()
+	resp, r, err := apiClient.OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdPatch(context.Background(), organizationId).UpdateOrganization(updateOrganization).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdPut``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `OrganizationsSvcV1OrganizationsOrganizationIdPut`: Organization
-	fmt.Fprintf(os.Stdout, "Response from `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdPut`: %v\n", resp)
+	// response from `OrganizationsSvcV1OrganizationsOrganizationIdPatch`: Organization
+	fmt.Fprintf(os.Stdout, "Response from `OrganizationsAPI.OrganizationsSvcV1OrganizationsOrganizationIdPatch`: %v\n", resp)
 }
 ```
 
@@ -771,7 +554,7 @@ Name | Type | Description  | Notes
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes

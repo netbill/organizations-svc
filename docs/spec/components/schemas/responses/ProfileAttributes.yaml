@@ -11,9 +11,9 @@ properties:
   pseudonym:
     type: string
     description: "profile pseudonym"
-  avatar_key:
+  avatar_url:
     type: string
-    description: "avatar key"
+    description: "profile avatar url"
   version:
     type: integer
     description: "profile version"

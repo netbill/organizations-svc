@@ -6,8 +6,8 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Status** | **string** | The status of the organization | 
 **Name** | **string** | The name of the organization | 
-**IconKey** | Pointer to **string** | The media key for the organization&#39;s icon | [optional] 
-**BannerKey** | Pointer to **string** | The media key for the organization&#39;s banner | [optional] 
+**IconUrl** | Pointer to **string** | The media url for the organization&#39;s icon | [optional] 
+**BannerUrl** | Pointer to **string** | The media url for the organization&#39;s banner | [optional] 
 **Version** | **int32** | The version number of the organization, used for optimistic concurrency control | 
 **CreatedAt** | **time.Time** | The date and time when the organization was created | 
 **UpdatedAt** | **time.Time** | The date and time when the organization was last updated | 
@@ -71,55 +71,55 @@ and a boolean to check if the value has been set.
 SetName sets Name field to given value.
 
 
-### GetIconKey
+### GetIconUrl
 
-`func (o *OrganizationDataAttributes) GetIconKey() string`
+`func (o *OrganizationDataAttributes) GetIconUrl() string`
 
-GetIconKey returns the IconKey field if non-nil, zero value otherwise.
+GetIconUrl returns the IconUrl field if non-nil, zero value otherwise.
 
-### GetIconKeyOk
+### GetIconUrlOk
 
-`func (o *OrganizationDataAttributes) GetIconKeyOk() (*string, bool)`
+`func (o *OrganizationDataAttributes) GetIconUrlOk() (*string, bool)`
 
-GetIconKeyOk returns a tuple with the IconKey field if it's non-nil, zero value otherwise
+GetIconUrlOk returns a tuple with the IconUrl field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetIconKey
+### SetIconUrl
 
-`func (o *OrganizationDataAttributes) SetIconKey(v string)`
+`func (o *OrganizationDataAttributes) SetIconUrl(v string)`
 
-SetIconKey sets IconKey field to given value.
+SetIconUrl sets IconUrl field to given value.
 
-### HasIconKey
+### HasIconUrl
 
-`func (o *OrganizationDataAttributes) HasIconKey() bool`
+`func (o *OrganizationDataAttributes) HasIconUrl() bool`
 
-HasIconKey returns a boolean if a field has been set.
+HasIconUrl returns a boolean if a field has been set.
 
-### GetBannerKey
+### GetBannerUrl
 
-`func (o *OrganizationDataAttributes) GetBannerKey() string`
+`func (o *OrganizationDataAttributes) GetBannerUrl() string`
 
-GetBannerKey returns the BannerKey field if non-nil, zero value otherwise.
+GetBannerUrl returns the BannerUrl field if non-nil, zero value otherwise.
 
-### GetBannerKeyOk
+### GetBannerUrlOk
 
-`func (o *OrganizationDataAttributes) GetBannerKeyOk() (*string, bool)`
+`func (o *OrganizationDataAttributes) GetBannerUrlOk() (*string, bool)`
 
-GetBannerKeyOk returns a tuple with the BannerKey field if it's non-nil, zero value otherwise
+GetBannerUrlOk returns a tuple with the BannerUrl field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetBannerKey
+### SetBannerUrl
 
-`func (o *OrganizationDataAttributes) SetBannerKey(v string)`
+`func (o *OrganizationDataAttributes) SetBannerUrl(v string)`
 
-SetBannerKey sets BannerKey field to given value.
+SetBannerUrl sets BannerUrl field to given value.
 
-### HasBannerKey
+### HasBannerUrl
 
-`func (o *OrganizationDataAttributes) HasBannerKey() bool`
+`func (o *OrganizationDataAttributes) HasBannerUrl() bool`
 
-HasBannerKey returns a boolean if a field has been set.
+HasBannerUrl returns a boolean if a field has been set.
 
 ### GetVersion
 

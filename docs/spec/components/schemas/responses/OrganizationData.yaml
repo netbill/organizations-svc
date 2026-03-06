@@ -26,12 +26,12 @@ properties:
       name:
         type: string
         description: "The name of the organization"
-      icon_key:
+      icon_url:
         type: string
-        description: "The media key for the organization's icon"
-      banner_key:
+        description: "The media url for the organization's icon"
+      banner_url:
         type: string
-        description: "The media key for the organization's banner"
+        description: "The media url for the organization's banner"
       version:
         type: integer
         description: "The version number of the organization, used for optimistic concurrency control"

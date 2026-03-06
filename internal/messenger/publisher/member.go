@@ -38,12 +38,7 @@ func (p *Publisher) WriteOrgMemberCreated(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org member created, cause: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 func (p *Publisher) WriteOrgMemberUpdated(
@@ -70,11 +65,7 @@ func (p *Publisher) WriteOrgMemberUpdated(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org member updated, cause: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 func (p *Publisher) WriteOrgMemberDeleted(
@@ -98,9 +89,5 @@ func (p *Publisher) WriteOrgMemberDeleted(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org member deleted, cause: %w", err)
-	}
-
-	return nil
+	return err
 }

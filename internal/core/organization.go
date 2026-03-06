@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -11,58 +10,118 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type orgBucket interface {
-	CreateOrganizationIconUploadMediaLinks(ctx context.Context, orgID uuid.UUID) (models.UploadMediaLink, error)
-	CreateOrganizationBannerUploadMediaLinks(ctx context.Context, orgID uuid.UUID) (models.UploadMediaLink, error)
-
-	UpdateOrganizationIcon(
+type organizationRepo interface {
+	Create(
 		ctx context.Context,
-		orgID uuid.UUID,
-		oldKey *string,
-		tempKey *string,
-	) (newKey *string, err error)
+		params OrganizationCreateParams,
+	) (models.Organization, error)
 
-	UpdateOrganizationBanner(
+	Get(
 		ctx context.Context,
-		orgID uuid.UUID,
-		oldKey *string,
-		tempKey *string,
-	) (newKey *string, err error)
+		ID uuid.UUID,
+	) (models.Organization, error)
+	GetListByIds(
+		ctx context.Context,
+		IDs []uuid.UUID,
+	) ([]models.Organization, error)
+	GetList(
+		ctx context.Context,
+		filter OrganizationFilterParams,
+		limit, offset uint,
+	) (pagi.Page[[]models.Organization], error)
+	GetForAccountAndOrg(
+		ctx context.Context,
+		accountID uuid.UUID,
+		limit, offset uint,
+	) (pagi.Page[[]models.Organization], error)
 
-	DeleteUploadOrganizationIcon(ctx context.Context, orgID uuid.UUID, key string) error
-	DeleteUploadOrganizationBanner(ctx context.Context, orgID uuid.UUID, key string) error
+	Update(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		params OrganizationUpdateParams,
+	) (models.Organization, error)
+	UpdateStatus(
+		ctx context.Context,
+		ID uuid.UUID,
+		status string,
+	) (models.Organization, error)
+
+	Delete(ctx context.Context, ID uuid.UUID) error
 }
 
-type orgRepository interface {
-	CreateOrganization(ctx context.Context, params OrganizationCreateParams) (models.Organization, error)
-
-	UpdateOrganization(ctx context.Context, ID uuid.UUID, params OrganizationUpdateParams) (models.Organization, error)
-	UpdateOrganizationStatus(ctx context.Context, ID uuid.UUID, status string) (models.Organization, error)
-
-	GetOrganizationByID(ctx context.Context, ID uuid.UUID) (models.Organization, error)
-	GetOrganizationsByIDs(ctx context.Context, IDs []uuid.UUID) ([]models.Organization, error)
-	GetOrganizations(ctx context.Context, filter OrganizationFilterParams, limit, offset uint) (pagi.Page[[]models.Organization], error)
-	GetOrganizationsForUser(ctx context.Context, accountID uuid.UUID, limit, offset uint) (pagi.Page[[]models.Organization], error)
-
-	DeleteOrganization(ctx context.Context, ID uuid.UUID) error
-}
-
-type orgMemberRepository interface {
-	CreateMemberHead(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-	GetMemberByAccountAndOrganization(ctx context.Context, accountID, organizationID uuid.UUID) (models.Member, error)
-}
-
-type orgPlaceRepository interface {
-	GetPlaceExistsForOrganization(ctx context.Context, organizationID uuid.UUID) (bool, error)
-}
-
-type orgTombstoneRepository interface {
+type orgTombstoneRepo interface {
 	BuryOrganization(ctx context.Context, organizationID uuid.UUID) error
 	OrganizationIsBuried(ctx context.Context, organizationID uuid.UUID) (bool, error)
 }
 
+type orgMemberRepo interface {
+	Create(
+		ctx context.Context,
+		accountID, organizationID uuid.UUID,
+		head bool,
+	) (models.Member, error)
+
+	GetForAccountAndOrg(
+		ctx context.Context,
+		accountID models.AccountActor,
+		organizationID uuid.UUID,
+	) (models.Member, error)
+}
+
+type orgPlaceRepo interface {
+	ExistsForOrg(ctx context.Context, organizationID uuid.UUID) (bool, error)
+}
+
 type transactor interface {
 	Transaction(ctx context.Context, fn func(ctx context.Context) error) error
+}
+
+type organizationMedia interface {
+	CreateOrganizationIconUploadMediaLinks(
+		ctx context.Context,
+		organizationID uuid.UUID,
+	) (models.UploadMediaLink, error)
+
+	UpdateOrganizationIcon(
+		ctx context.Context,
+		orgID uuid.UUID,
+		tempKey string,
+	) (newKey string, err error)
+
+	DeleteOrganizationIcon(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		key string,
+	) error
+
+	DeleteUploadOrganizationIcon(
+		ctx context.Context,
+		orgID uuid.UUID,
+		key string,
+	) error
+
+	CreateOrganizationBannerUploadMediaLinks(
+		ctx context.Context,
+		organizationID uuid.UUID,
+	) (models.UploadMediaLink, error)
+
+	UpdateOrganizationBanner(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		key string,
+	) (string, error)
+
+	DeleteOrganizationBanner(
+		ctx context.Context,
+		organizationID uuid.UUID,
+		key string,
+	) error
+
+	DeleteUploadOrganizationBanner(
+		ctx context.Context,
+		orgID uuid.UUID,
+		key string,
+	) error
 }
 
 type orgMessenger interface {
@@ -74,50 +133,35 @@ type orgMessenger interface {
 }
 
 type OrganizationModule struct {
-	orgRepo       orgRepository
-	memberRepo    orgMemberRepository
-	placeRepo     orgPlaceRepository
-	tombstoneRepo orgTombstoneRepository
-	tx            transactor
-	messenger     orgMessenger
-	bucket        orgBucket
+	org       organizationRepo
+	member    orgMemberRepo
+	place     orgPlaceRepo
+	tombstone orgTombstoneRepo
+	tx        transactor
+	messenger orgMessenger
+	media     organizationMedia
 }
 
-func (m *OrganizationModule) authorizeOrgHead(
-	ctx context.Context,
-	actor models.AccountActor,
-	organizationID uuid.UUID,
-) (models.Organization, models.Member, error) {
-	org, err := m.GetByID(ctx, organizationID)
-	if err != nil {
-		return models.Organization{}, models.Member{}, err
-	}
+type OrganizationDeps struct {
+	Repo      organizationRepo
+	Member    orgMemberRepo
+	Place     orgPlaceRepo
+	Tombstone orgTombstoneRepo
+	Tx        transactor
+	Messenger orgMessenger
+	Media     organizationMedia
+}
 
-	if org.Status == models.OrganizationStatusSuspended {
-		return models.Organization{}, models.Member{}, errx.ErrorOrganizationIsSuspended.Raise(
-			fmt.Errorf("organization with id %s is suspended", organizationID),
-		)
+func NewOrganizationModule(deps OrganizationDeps) *OrganizationModule {
+	return &OrganizationModule{
+		org:       deps.Repo,
+		member:    deps.Member,
+		place:     deps.Place,
+		tombstone: deps.Tombstone,
+		tx:        deps.Tx,
+		messenger: deps.Messenger,
+		media:     deps.Media,
 	}
-
-	member, err := m.memberRepo.GetMemberByAccountAndOrganization(ctx, actor, organizationID)
-	if errors.Is(err, errx.ErrorMemberNotExists) {
-		return models.Organization{}, models.Member{}, errx.ErrorInitiatorNotMemberOfOrganization.Raise(
-			fmt.Errorf("initiator with account id %s is not a member of organization %s", actor, organizationID),
-		)
-	}
-	if err != nil {
-		return models.Organization{}, models.Member{}, err
-	}
-
-	if !member.Head {
-		return models.Organization{}, models.Member{}, errx.ErrorNotOrganizationHead.Raise(
-			fmt.Errorf(
-				"only organization head member can manage organization, but member %s is not head", member.ID,
-			),
-		)
-	}
-
-	return org, member, nil
 }
 
 type OrganizationCreateParams struct {
@@ -130,16 +174,17 @@ func (m *OrganizationModule) Create(
 	params OrganizationCreateParams,
 ) (org models.Organization, err error) {
 	err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		org, err = m.orgRepo.CreateOrganization(ctx, params)
+		org, err = m.org.Create(ctx, params)
 		if err != nil {
 			return err
 		}
 
-		if err = m.messenger.WriteOrganizationCreated(ctx, org); err != nil {
+		err = m.messenger.WriteOrganizationCreated(ctx, org)
+		if err != nil {
 			return err
 		}
 
-		member, err := m.memberRepo.CreateMemberHead(ctx, actor, org.ID)
+		member, err := m.member.Create(ctx, actor, org.ID, true)
 		if err != nil {
 			return err
 		}
@@ -154,33 +199,19 @@ func (m *OrganizationModule) GetByID(
 	ctx context.Context,
 	organizationID uuid.UUID,
 ) (models.Organization, error) {
-	org, err := m.orgRepo.GetOrganizationByID(ctx, organizationID)
-	if errors.Is(err, errx.ErrorOrganizationNotExists) {
-		buried, err := m.tombstoneRepo.OrganizationIsBuried(ctx, organizationID)
-		if err != nil {
-			return models.Organization{}, fmt.Errorf("check organization tombstone: %w", err)
-		}
-
-		if buried {
-			return models.Organization{}, errx.ErrorOrganizationNotExists.Raise(
-				fmt.Errorf("organization with id %s is buried", organizationID),
-			)
-		}
-	}
-
-	return org, err
+	return m.org.Get(ctx, organizationID)
 }
 
 func (m *OrganizationModule) GetByIDs(
 	ctx context.Context,
 	organizationIDs []uuid.UUID,
 ) ([]models.Organization, error) {
-	return m.orgRepo.GetOrganizationsByIDs(ctx, organizationIDs)
+	return m.org.GetListByIds(ctx, organizationIDs)
 }
 
 type OrganizationFilterParams struct {
-	Text   *string `json:"name,omitempty"`
-	Status *string `json:"status,omitempty"`
+	Text   *string
+	Status *string
 }
 
 func (m *OrganizationModule) GetList(
@@ -188,80 +219,7 @@ func (m *OrganizationModule) GetList(
 	params OrganizationFilterParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
-	return m.orgRepo.GetOrganizations(ctx, params, limit, offset)
-}
-
-func (m *OrganizationModule) GetForUser(
-	ctx context.Context,
-	actor models.AccountActor,
-	limit, offset uint,
-) (pagi.Page[[]models.Organization], error) {
-	return m.orgRepo.GetOrganizationsForUser(ctx, actor, limit, offset)
-}
-
-type OrganizationUpdateParams struct {
-	Name      string
-	IconKey   *string
-	BannerKey *string
-}
-
-func (m *OrganizationUpdateParams) isEmpty(model models.Organization) (upd bool) {
-	if m.Name != model.Name {
-		return false
-	}
-
-	if m.IconKey != nil && (model.IconKey == nil || *m.IconKey != *model.IconKey) {
-		return false
-	}
-
-	if m.BannerKey != nil && (model.BannerKey == nil || *m.BannerKey != *model.BannerKey) {
-		return false
-	}
-
-	return true
-}
-
-func (m *OrganizationModule) Update(
-	ctx context.Context,
-	actor models.AccountActor,
-	organizationID uuid.UUID,
-	params OrganizationUpdateParams,
-) (models.Organization, error) {
-	org, _, err := m.authorizeOrgHead(ctx, actor, organizationID)
-	if err != nil {
-		return models.Organization{}, err
-	}
-
-	if params.isEmpty(org) {
-		return org, nil
-	}
-
-	if params.IconKey != nil {
-		iconKey, err := m.bucket.UpdateOrganizationIcon(ctx, org.ID, org.IconKey, params.IconKey)
-		if err != nil {
-			return models.Organization{}, err
-		}
-		params.IconKey = iconKey
-	}
-
-	if params.BannerKey != nil {
-		bannerKey, err := m.bucket.UpdateOrganizationBanner(ctx, org.ID, org.BannerKey, params.BannerKey)
-		if err != nil {
-			return models.Organization{}, err
-		}
-		params.BannerKey = bannerKey
-	}
-
-	err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		org, err = m.orgRepo.UpdateOrganization(ctx, organizationID, params)
-		if err != nil {
-			return err
-		}
-
-		return m.messenger.WriteOrganizationUpdated(ctx, org)
-	})
-
-	return org, err
+	return m.org.GetList(ctx, params, limit, offset)
 }
 
 func (m *OrganizationModule) Delete(
@@ -269,12 +227,27 @@ func (m *OrganizationModule) Delete(
 	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) error {
-	org, _, err := m.authorizeOrgHead(ctx, actor, organizationID)
+	_, err := m.authorizeOrgHead(ctx, actor, organizationID)
 	if err != nil {
 		return err
 	}
 
-	places, err := m.placeRepo.GetPlaceExistsForOrganization(ctx, org.ID)
+	buried, err := m.tombstone.OrganizationIsBuried(ctx, organizationID)
+	if err != nil {
+		return err
+	}
+	if buried {
+		return errx.ErrorOrganizationDeleted.Raise(
+			fmt.Errorf("organization with id %s is already deleted", organizationID),
+		)
+	}
+
+	org, err := m.validateOrg(ctx, organizationID)
+	if err != nil {
+		return err
+	}
+
+	places, err := m.place.ExistsForOrg(ctx, org.ID)
 	if err != nil {
 		return err
 	}
@@ -285,140 +258,14 @@ func (m *OrganizationModule) Delete(
 	}
 
 	return m.tx.Transaction(ctx, func(ctx context.Context) error {
-		if err = m.tombstoneRepo.BuryOrganization(ctx, organizationID); err != nil {
+		if err = m.tombstone.BuryOrganization(ctx, organizationID); err != nil {
 			return err
 		}
 
-		if err = m.orgRepo.DeleteOrganization(ctx, organizationID); err != nil {
+		if err = m.org.Delete(ctx, organizationID); err != nil {
 			return err
 		}
 
 		return m.messenger.WriteOrganizationDeleted(ctx, org)
 	})
-}
-
-func (m *OrganizationModule) Activate(
-	ctx context.Context,
-	actor models.AccountActor,
-	organizationID uuid.UUID,
-	value bool,
-) (models.Organization, error) {
-	org, _, err := m.authorizeOrgHead(ctx, actor, organizationID)
-	if err != nil {
-		return models.Organization{}, err
-	}
-
-	if org.Status == models.OrganizationStatusActive && value {
-		return org, nil
-	}
-	if org.Status != models.OrganizationStatusActive && !value {
-		return org, nil
-	}
-
-	var newStatus string
-	if value {
-		newStatus = models.OrganizationStatusActive
-	} else {
-		newStatus = models.OrganizationStatusInactive
-	}
-
-	return m.updateStatus(ctx, organizationID, newStatus)
-}
-
-func (m *OrganizationModule) Suspend(
-	ctx context.Context,
-	organizationID uuid.UUID,
-	value bool,
-) (models.Organization, error) {
-	org, err := m.GetByID(ctx, organizationID)
-	if err != nil {
-		return models.Organization{}, err
-	}
-
-	if org.Status == models.OrganizationStatusSuspended && value {
-		return org, nil
-	}
-	if org.Status != models.OrganizationStatusSuspended && !value {
-		return org, nil
-	}
-
-	var newStatus string
-	if value {
-		newStatus = models.OrganizationStatusSuspended
-	} else {
-		newStatus = models.OrganizationStatusInactive
-	}
-
-	return m.updateStatus(ctx, organizationID, newStatus)
-}
-
-func (m *OrganizationModule) updateStatus(
-	ctx context.Context,
-	organizationID uuid.UUID,
-	status string,
-) (org models.Organization, err error) {
-	err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		org, err = m.orgRepo.UpdateOrganizationStatus(ctx, organizationID, status)
-		if err != nil {
-			return err
-		}
-
-		return m.messenger.WriteOrganizationUpdated(ctx, org)
-	})
-
-	return org, err
-}
-
-func (m *OrganizationModule) CreateOrgUploadMediaLinks(
-	ctx context.Context,
-	actor models.AccountActor,
-	organizationID uuid.UUID,
-) (models.Organization, models.UploadOrgMediaLinks, error) {
-	org, _, err := m.authorizeOrgHead(ctx, actor, organizationID)
-	if err != nil {
-		return models.Organization{}, models.UploadOrgMediaLinks{}, err
-	}
-
-	iconLinks, err := m.bucket.CreateOrganizationIconUploadMediaLinks(ctx, organizationID)
-	if err != nil {
-		return models.Organization{}, models.UploadOrgMediaLinks{}, err
-	}
-
-	bannerLinks, err := m.bucket.CreateOrganizationBannerUploadMediaLinks(ctx, organizationID)
-	if err != nil {
-		return models.Organization{}, models.UploadOrgMediaLinks{}, err
-	}
-
-	return org, models.UploadOrgMediaLinks{
-		Icon:   iconLinks,
-		Banner: bannerLinks,
-	}, nil
-}
-
-func (m *OrganizationModule) DeleteOrgUploadIcon(
-	ctx context.Context,
-	actor models.AccountActor,
-	organizationID uuid.UUID,
-	key string,
-) error {
-	_, _, err := m.authorizeOrgHead(ctx, actor, organizationID)
-	if err != nil {
-		return err
-	}
-
-	return m.bucket.DeleteUploadOrganizationIcon(ctx, organizationID, key)
-}
-
-func (m *OrganizationModule) DeleteOrgUploadBanner(
-	ctx context.Context,
-	actor models.AccountActor,
-	organizationID uuid.UUID,
-	key string,
-) error {
-	_, _, err := m.authorizeOrgHead(ctx, actor, organizationID)
-	if err != nil {
-		return err
-	}
-
-	return m.bucket.DeleteUploadOrganizationBanner(ctx, organizationID, key)
 }

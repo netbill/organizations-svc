@@ -10,15 +10,10 @@ import (
 	"github.com/netbill/awsx"
 	"github.com/netbill/eventbox"
 	eventpg "github.com/netbill/eventbox/pg"
-	"github.com/netbill/organizations-svc/internal/core/modules/invite"
-	"github.com/netbill/organizations-svc/internal/core/modules/member"
-	"github.com/netbill/organizations-svc/internal/core/modules/organization"
-	"github.com/netbill/organizations-svc/internal/core/modules/place"
-	"github.com/netbill/organizations-svc/internal/core/modules/profile"
-	"github.com/netbill/organizations-svc/internal/media/bucket"
-
+	"github.com/netbill/organizations-svc/internal/core"
+	"github.com/netbill/organizations-svc/internal/media"
 	"github.com/netbill/organizations-svc/internal/messenger"
-	"github.com/netbill/organizations-svc/internal/messenger/handler"
+	"github.com/netbill/organizations-svc/internal/messenger/evcontroller"
 	"github.com/netbill/organizations-svc/internal/messenger/publisher"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/organizations-svc/internal/repository/pg"
@@ -65,7 +60,7 @@ func (a *App) Run(ctx context.Context) error {
 		return fmt.Errorf("load aws config: %w", err)
 	}
 
-	s3 := bucket.NewStorage(awsx.New(a.config.S3.Aws.BucketName, cfg), bucket.Config{
+	uploader := media.NewUploader(awsx.New(a.config.S3.Aws.BucketName, cfg), media.Config{
 		LinkTTL:   a.config.S3.Media.Link.TTL,
 		OrgIcon:   a.config.S3.Media.Resources.Organization.Icon,
 		OrgBanner: a.config.S3.Media.Resources.Organization.Banner,
@@ -74,7 +69,7 @@ func (a *App) Run(ctx context.Context) error {
 	outbox := eventpg.NewOutbox(db)
 	inbox := eventpg.NewInbox(db)
 
-	producer := messenger.NewProducer(a.log, messenger.ProducerConfig{
+	producer, err := messenger.NewProducer(a.log, messenger.ProducerConfig{
 		Producer: a.config.Kafka.Identity,
 		Brokers:  a.config.Kafka.Brokers,
 		OrganizationV1: messenger.ProduceKafkaConfig{
@@ -92,39 +87,99 @@ func (a *App) Run(ctx context.Context) error {
 			BatchTimeout: a.config.Kafka.Produce.Topics.OrgMemberV1.BatchTimeout,
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("create kafka producer: %w", err)
+	}
 	defer producer.Close()
 
-	outbound := publisher.New(a.config.Kafka.Identity, outbox, producer)
+	outbound := publisher.New(a.config.Kafka.Identity, outbox)
 
-	profileCore := profile.New(repo)
-	orgCore := organization.New(repo, outbound, s3)
-	orgMemberCore := member.New(repo, outbound)
-	orgInviteCore := invite.New(repo, outbound)
-	placeCore := place.New(repo)
+	profileRepo := repository.NewProfileRepo(pg.NewProfilesQ(db))
+	organizationRepo := repository.NewOrganizationRepo(pg.NewOrganizationsQ(db))
+	orgMemberRepo := repository.NewMemberRepo(pg.NewOrgMembersQ(db))
+	orgInviteRepo := repository.NewInviteRepo(pg.NewOrgInvitesQ(db))
+	placeRepo := repository.NewPlaceRepo(pg.NewPlacesQ(db))
+	tombstoneRepo := pg.NewTombstonesQ(db)
+
+	profileCore := core.NewProfileModule(core.ProfileDeps{
+		Repo:      profileRepo,
+		Tombstone: tombstoneRepo,
+		Tx:        db,
+	})
+
+	placeCore := core.NewPlaceModule(core.PlaceDeps{
+		Repo: placeRepo,
+		Tx:   db,
+	})
+
+	orgCore := core.NewOrganizationModule(core.OrganizationDeps{
+		Repo:      organizationRepo,
+		Member:    orgMemberRepo,
+		Place:     placeRepo,
+		Tombstone: tombstoneRepo,
+		Tx:        db,
+		Messenger: outbound,
+		Media:     uploader,
+	})
+
+	memberCore := core.NewMemberModule(core.MemberDeps{
+		Auth:      orgCore,
+		Repo:      orgMemberRepo,
+		Tombstone: tombstoneRepo,
+		Tx:        db,
+		Messenger: outbound,
+	})
+
+	inviteCore := core.NewInviteModule(core.InviteDeps{
+		Auth:      orgCore,
+		Repo:      orgInviteRepo,
+		Profile:   profileRepo,
+		Member:    orgMemberRepo,
+		Tx:        db,
+		Messenger: outbound,
+	})
 
 	tokenManager := tokenmanager.New(tokenmanager.Config{
 		Issuer:   a.config.Auth.Tokens.Issuer,
 		AccessSK: a.config.Auth.Tokens.AccountAccess.SecretKey,
 	})
 
-	ctrl := controller.New(&controller.Modules{
-		Organization: orgCore,
-		Member:       orgMemberCore,
-		Invite:       orgInviteCore,
-		Profile:      profileCore,
+	orgController := controller.NewOrganizationController(controller.OrganizationControllerDeps{
+		Organizations: orgCore,
+		Members:       memberCore,
+		Profiles:      profileCore,
 	})
-	mdll := middlewares.New(tokenManager)
-	router := rest.New(mdll, ctrl)
 
-	run(func() {
-		router.Run(ctx, a.log, rest.Config{
+	memberController := controller.NewMemberController(controller.MemberControllerDeps{
+		Members:       memberCore,
+		Profiles:      profileCore,
+		Organizations: orgCore,
+	})
+
+	inviteController := controller.NewInviteController(controller.InviteControllerDeps{
+		Invites:       inviteCore,
+		Organizations: orgCore,
+		Profiles:      profileCore,
+	})
+
+	router := rest.NewServer(rest.ServerDeps{
+		Middlewares: middlewares.New(tokenManager),
+		Org:         orgController,
+		Member:      memberController,
+		Invite:      inviteController,
+
+		Log:           a.log,
+		MediaResolver: media.NewResolver(a.config.S3.Aws.BaseURL),
+		Config: rest.Config{
 			Port:              a.config.Rest.Port,
 			ReadTimeout:       a.config.Rest.Timeouts.Read,
 			ReadHeaderTimeout: a.config.Rest.Timeouts.ReadHeader,
 			WriteTimeout:      a.config.Rest.Timeouts.Write,
 			IdleTimeout:       a.config.Rest.Timeouts.Idle,
-		})
+		},
 	})
+
+	run(func() { router.Run(ctx) })
 
 	outboxWorker := messenger.NewOutboxWorker(a.log, outbox, producer, eventbox.OutboxWorkerConfig{
 		Routines:       a.config.Kafka.Outbox.Routines,
@@ -137,29 +192,29 @@ func (a *App) Run(ctx context.Context) error {
 	})
 	defer outboxWorker.Clean()
 
-	run(func() {
-		outboxWorker.Run(ctx)
-	})
+	run(func() { outboxWorker.Run(ctx) })
 
-	inbound := handler.New(a.log, handler.Modules{
-		Profile: profileCore,
-		Place:   placeCore,
-	})
+	evProfileController := evcontroller.NewProfileController(a.log, profileCore)
+	evPlaceController := evcontroller.NewPlaceController(a.log, placeCore)
 
-	inboxWorker := messenger.NewInboxWorker(a.log, inbox, eventbox.InboxWorkerConfig{
-		Routines:       a.config.Kafka.Inbox.Routines,
-		Slots:          a.config.Kafka.Inbox.Slots,
-		BatchSize:      a.config.Kafka.Inbox.BatchSize,
-		Sleep:          a.config.Kafka.Inbox.Sleep,
-		MinNextAttempt: a.config.Kafka.Inbox.MinNextAttempt,
-		MaxNextAttempt: a.config.Kafka.Inbox.MaxNextAttempt,
-		MaxAttempts:    a.config.Kafka.Inbox.MaxAttempts,
-	}, inbound)
+	inboxWorker := messenger.NewInboxWorker(messenger.InboxWorkerDeps{
+		Logger:            a.log,
+		Inbox:             inbox,
+		ProfileController: evProfileController,
+		PlaceController:   evPlaceController,
+		Config: eventbox.InboxWorkerConfig{
+			Routines:       a.config.Kafka.Inbox.Routines,
+			Slots:          a.config.Kafka.Inbox.Slots,
+			BatchSize:      a.config.Kafka.Inbox.BatchSize,
+			Sleep:          a.config.Kafka.Inbox.Sleep,
+			MinNextAttempt: a.config.Kafka.Inbox.MinNextAttempt,
+			MaxNextAttempt: a.config.Kafka.Inbox.MaxNextAttempt,
+			MaxAttempts:    a.config.Kafka.Inbox.MaxAttempts,
+		},
+	})
 	defer inboxWorker.Clean()
 
-	run(func() {
-		inboxWorker.Run(ctx)
-	})
+	run(func() { inboxWorker.Run(ctx) })
 
 	consumer := messenger.NewConsumer(a.log, inbox, messenger.ConsumerConfig{
 		GroupID:    a.config.Kafka.Identity,
@@ -183,9 +238,7 @@ func (a *App) Run(ctx context.Context) error {
 	})
 	defer consumer.Close()
 
-	run(func() {
-		consumer.Run(ctx)
-	})
+	run(func() { consumer.Run(ctx) })
 
 	wg.Wait()
 	return nil

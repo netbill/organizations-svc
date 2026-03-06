@@ -26,10 +26,10 @@ type OrganizationDataAttributes struct {
 	Status string `json:"status"`
 	// The name of the organization
 	Name string `json:"name"`
-	// The media key for the organization's icon
-	IconKey *string `json:"icon_key,omitempty"`
-	// The media key for the organization's banner
-	BannerKey *string `json:"banner_key,omitempty"`
+	// The media url for the organization's icon
+	IconUrl *string `json:"icon_url,omitempty"`
+	// The media url for the organization's banner
+	BannerUrl *string `json:"banner_url,omitempty"`
 	// The version number of the organization, used for optimistic concurrency control
 	Version int32 `json:"version"`
 	// The date and time when the organization was created
@@ -110,68 +110,68 @@ func (o *OrganizationDataAttributes) SetName(v string) {
 	o.Name = v
 }
 
-// GetIconKey returns the IconKey field value if set, zero value otherwise.
-func (o *OrganizationDataAttributes) GetIconKey() string {
-	if o == nil || IsNil(o.IconKey) {
+// GetIconUrl returns the IconUrl field value if set, zero value otherwise.
+func (o *OrganizationDataAttributes) GetIconUrl() string {
+	if o == nil || IsNil(o.IconUrl) {
 		var ret string
 		return ret
 	}
-	return *o.IconKey
+	return *o.IconUrl
 }
 
-// GetIconKeyOk returns a tuple with the IconKey field value if set, nil otherwise
+// GetIconUrlOk returns a tuple with the IconUrl field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *OrganizationDataAttributes) GetIconKeyOk() (*string, bool) {
-	if o == nil || IsNil(o.IconKey) {
+func (o *OrganizationDataAttributes) GetIconUrlOk() (*string, bool) {
+	if o == nil || IsNil(o.IconUrl) {
 		return nil, false
 	}
-	return o.IconKey, true
+	return o.IconUrl, true
 }
 
-// HasIconKey returns a boolean if a field has been set.
-func (o *OrganizationDataAttributes) HasIconKey() bool {
-	if o != nil && !IsNil(o.IconKey) {
+// HasIconUrl returns a boolean if a field has been set.
+func (o *OrganizationDataAttributes) HasIconUrl() bool {
+	if o != nil && !IsNil(o.IconUrl) {
 		return true
 	}
 
 	return false
 }
 
-// SetIconKey gets a reference to the given string and assigns it to the IconKey field.
-func (o *OrganizationDataAttributes) SetIconKey(v string) {
-	o.IconKey = &v
+// SetIconUrl gets a reference to the given string and assigns it to the IconUrl field.
+func (o *OrganizationDataAttributes) SetIconUrl(v string) {
+	o.IconUrl = &v
 }
 
-// GetBannerKey returns the BannerKey field value if set, zero value otherwise.
-func (o *OrganizationDataAttributes) GetBannerKey() string {
-	if o == nil || IsNil(o.BannerKey) {
+// GetBannerUrl returns the BannerUrl field value if set, zero value otherwise.
+func (o *OrganizationDataAttributes) GetBannerUrl() string {
+	if o == nil || IsNil(o.BannerUrl) {
 		var ret string
 		return ret
 	}
-	return *o.BannerKey
+	return *o.BannerUrl
 }
 
-// GetBannerKeyOk returns a tuple with the BannerKey field value if set, nil otherwise
+// GetBannerUrlOk returns a tuple with the BannerUrl field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *OrganizationDataAttributes) GetBannerKeyOk() (*string, bool) {
-	if o == nil || IsNil(o.BannerKey) {
+func (o *OrganizationDataAttributes) GetBannerUrlOk() (*string, bool) {
+	if o == nil || IsNil(o.BannerUrl) {
 		return nil, false
 	}
-	return o.BannerKey, true
+	return o.BannerUrl, true
 }
 
-// HasBannerKey returns a boolean if a field has been set.
-func (o *OrganizationDataAttributes) HasBannerKey() bool {
-	if o != nil && !IsNil(o.BannerKey) {
+// HasBannerUrl returns a boolean if a field has been set.
+func (o *OrganizationDataAttributes) HasBannerUrl() bool {
+	if o != nil && !IsNil(o.BannerUrl) {
 		return true
 	}
 
 	return false
 }
 
-// SetBannerKey gets a reference to the given string and assigns it to the BannerKey field.
-func (o *OrganizationDataAttributes) SetBannerKey(v string) {
-	o.BannerKey = &v
+// SetBannerUrl gets a reference to the given string and assigns it to the BannerUrl field.
+func (o *OrganizationDataAttributes) SetBannerUrl(v string) {
+	o.BannerUrl = &v
 }
 
 // GetVersion returns the Version field value
@@ -258,11 +258,11 @@ func (o OrganizationDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["status"] = o.Status
 	toSerialize["name"] = o.Name
-	if !IsNil(o.IconKey) {
-		toSerialize["icon_key"] = o.IconKey
+	if !IsNil(o.IconUrl) {
+		toSerialize["icon_url"] = o.IconUrl
 	}
-	if !IsNil(o.BannerKey) {
-		toSerialize["banner_key"] = o.BannerKey
+	if !IsNil(o.BannerUrl) {
+		toSerialize["banner_url"] = o.BannerUrl
 	}
 	toSerialize["version"] = o.Version
 	toSerialize["created_at"] = o.CreatedAt

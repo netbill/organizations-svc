@@ -12,10 +12,6 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type OrganizationRepo struct {
-	OrganizationsSql OrganizationsQ
-}
-
 type OrganizationRow struct {
 	ID     uuid.UUID `db:"id"`
 	Status string    `db:"status"`
@@ -72,11 +68,21 @@ type OrganizationsQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r *OrganizationRepo) CreateOrganization(
+type OrganizationRepo struct {
+	query OrganizationsQ
+}
+
+func NewOrganizationRepo(organizationsSql OrganizationsQ) *OrganizationRepo {
+	return &OrganizationRepo{
+		query: organizationsSql,
+	}
+}
+
+func (r *OrganizationRepo) Create(
 	ctx context.Context,
 	params core.OrganizationCreateParams,
 ) (models.Organization, error) {
-	row, err := r.OrganizationsSql.New().Insert(ctx, OrganizationRow{
+	row, err := r.query.New().Insert(ctx, OrganizationRow{
 		Name: params.Name,
 	})
 	if err != nil {
@@ -89,11 +95,11 @@ func (r *OrganizationRepo) CreateOrganization(
 	return row.ToModel(), nil
 }
 
-func (r *OrganizationRepo) GetOrganizationByID(
+func (r *OrganizationRepo) Get(
 	ctx context.Context,
 	ID uuid.UUID,
 ) (models.Organization, error) {
-	row, err := r.OrganizationsSql.New().FilterByID(ID).Get(ctx)
+	row, err := r.query.New().FilterByID(ID).Get(ctx)
 	if err != nil {
 		return models.Organization{}, fmt.Errorf("failed to get organization with ID %s: %w", ID, err)
 	}
@@ -106,11 +112,11 @@ func (r *OrganizationRepo) GetOrganizationByID(
 	return row.ToModel(), nil
 }
 
-func (r *OrganizationRepo) GetOrganizationsByIDs(
+func (r *OrganizationRepo) GetListByIds(
 	ctx context.Context,
 	IDs []uuid.UUID,
 ) ([]models.Organization, error) {
-	rows, err := r.OrganizationsSql.New().FilterByID(IDs...).Select(ctx)
+	rows, err := r.query.New().FilterByID(IDs...).Select(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get organizations by IDs: %w", err)
 	}
@@ -123,7 +129,7 @@ func (r *OrganizationRepo) GetOrganizationsByIDs(
 	return organizations, nil
 }
 
-func (r *OrganizationRepo) GetOrganizations(
+func (r *OrganizationRepo) GetList(
 	ctx context.Context,
 	filter core.OrganizationFilterParams,
 	limit, offset uint,
@@ -135,7 +141,7 @@ func (r *OrganizationRepo) GetOrganizations(
 		limit = 1000
 	}
 
-	q := r.OrganizationsSql.New()
+	q := r.query.New()
 	if filter.Text != nil {
 		q = q.FilterNameLike(*filter.Text)
 	}
@@ -167,7 +173,7 @@ func (r *OrganizationRepo) GetOrganizations(
 
 }
 
-func (r *OrganizationRepo) GetOrganizationsForUser(
+func (r *OrganizationRepo) GetForAccountAndOrg(
 	ctx context.Context,
 	accountID uuid.UUID,
 	limit, offset uint,
@@ -176,14 +182,14 @@ func (r *OrganizationRepo) GetOrganizationsForUser(
 		limit = 10
 	}
 
-	row, err := r.OrganizationsSql.New().FilterByAccountID(accountID).Page(limit, offset).Select(ctx)
+	row, err := r.query.New().FilterByAccountID(accountID).Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, fmt.Errorf(
 			"failed to get organizations for account ID %s, cause: %w", accountID, err,
 		)
 	}
 
-	total, err := r.OrganizationsSql.New().FilterByAccountID(accountID).Count(ctx)
+	total, err := r.query.New().FilterByAccountID(accountID).Count(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Organization]{}, fmt.Errorf(
 			"failed to count organizations for account ID %s, cause: %w", accountID, err,
@@ -203,12 +209,12 @@ func (r *OrganizationRepo) GetOrganizationsForUser(
 	}, nil
 }
 
-func (r *OrganizationRepo) UpdateOrganization(
+func (r *OrganizationRepo) Update(
 	ctx context.Context,
 	ID uuid.UUID,
 	params core.OrganizationUpdateParams,
 ) (models.Organization, error) {
-	q := r.OrganizationsSql.New().FilterByID(ID)
+	q := r.query.New().FilterByID(ID)
 
 	if params.Name != nil {
 		q = q.UpdateName(*params.Name)
@@ -233,12 +239,12 @@ func (r *OrganizationRepo) UpdateOrganization(
 	return row.ToModel(), nil
 }
 
-func (r *OrganizationRepo) UpdateOrganizationStatus(
+func (r *OrganizationRepo) UpdateStatus(
 	ctx context.Context,
 	ID uuid.UUID,
 	status string,
 ) (models.Organization, error) {
-	row, err := r.OrganizationsSql.New().
+	row, err := r.query.New().
 		FilterByID(ID).
 		UpdateStatus(status).
 		UpdateOne(ctx)
@@ -254,8 +260,8 @@ func (r *OrganizationRepo) UpdateOrganizationStatus(
 	return row.ToModel(), nil
 }
 
-func (r *OrganizationRepo) DeleteOrganization(ctx context.Context, ID uuid.UUID) error {
-	err := r.OrganizationsSql.New().FilterByID(ID).Delete(ctx)
+func (r *OrganizationRepo) Delete(ctx context.Context, ID uuid.UUID) error {
+	err := r.query.New().FilterByID(ID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete organization with ID %s, cause: %w", ID, err)
 	}

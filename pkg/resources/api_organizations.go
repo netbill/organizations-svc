@@ -789,372 +789,35 @@ func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdG
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest struct {
+type ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest struct {
 	ctx context.Context
 	ApiService *OrganizationsAPIService
 	organizationId uuid.UUID
-	include *[]string
-	pageLimit *int32
-	pageOffset *int32
+	deleteUploadOrgMedia *DeleteUploadOrgMedia
 }
 
-// Optional list of related resources to include in the response. Supported values: &#x60;profile&#x60;, &#x60;organization&#x60;. 
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest) Include(include []string) ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest {
-	r.include = &include
+func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest) DeleteUploadOrgMedia(deleteUploadOrgMedia DeleteUploadOrgMedia) ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest {
+	r.deleteUploadOrgMedia = &deleteUploadOrgMedia
 	return r
 }
 
-// Max number of items to return (1-100).
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest) PageLimit(pageLimit int32) ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest {
-	r.pageLimit = &pageLimit
-	return r
-}
-
-// Number of items to skip.
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest) PageOffset(pageOffset int32) ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest {
-	r.pageOffset = &pageOffset
-	return r
-}
-
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest) Execute() (*InvitesCollection, *http.Response, error) {
-	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdInvitesGetExecute(r)
+func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest) Execute() (*http.Response, error) {
+	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteExecute(r)
 }
 
 /*
-OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet Get organization invites
+OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete Delete organization upload media
 
-Returns a paginated list of invites for the organization. Only members of the organization can access this endpoint.
-**400 Bad Request** is returned when the organization ID is not a valid UUID or pagination limit exceeds 100. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member of the organization. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
-
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param organizationId Organization ID
- @return ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest
-*/
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest {
-	return ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest{
-		ApiService: a,
-		ctx: ctx,
-		organizationId: organizationId,
-	}
-}
-
-// Execute executes the request
-//  @return InvitesCollection
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdInvitesGetExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdInvitesGetRequest) (*InvitesCollection, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *InvitesCollection
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/organizations-svc/v1/organizations/{organization_id}/invites"
-	localVarPath = strings.Replace(localVarPath, "{"+"organization_id"+"}", url.PathEscape(parameterValueToString(r.organizationId, "organizationId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	if r.include != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "include", r.include, "form", "csv")
-	}
-	if r.pageLimit != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "page[limit]", r.pageLimit, "form", "")
-	}
-	if r.pageOffset != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "page[offset]", r.pageOffset, "form", "")
-	}
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiOrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteRequest struct {
-	ctx context.Context
-	ApiService *OrganizationsAPIService
-	organizationId uuid.UUID
-}
-
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteRequest) Execute() (*http.Response, error) {
-	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteExecute(r)
-}
-
-/*
-OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete Leave organization
-
-Removes the authenticated account from the organization. The organization head cannot leave the organization.
-**400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member of the organization or is the organization head. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
-
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param organizationId Organization ID
- @return ApiOrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteRequest
-*/
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteRequest {
-	return ApiOrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteRequest{
-		ApiService: a,
-		ctx: ctx,
-		organizationId: organizationId,
-	}
-}
-
-// Execute executes the request
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdLeaveDeleteRequest) (*http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete")
-	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/organizations-svc/v1/organizations/{organization_id}/leave"
-	localVarPath = strings.Replace(localVarPath, "{"+"organization_id"+"}", url.PathEscape(parameterValueToString(r.organizationId, "organizationId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
-		return localVarHTTPResponse, newErr
-	}
-
-	return localVarHTTPResponse, nil
-}
-
-type ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest struct {
-	ctx context.Context
-	ApiService *OrganizationsAPIService
-	organizationId uuid.UUID
-	deleteUploadOrgBanner *DeleteUploadOrgBanner
-}
-
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest) DeleteUploadOrgBanner(deleteUploadOrgBanner DeleteUploadOrgBanner) ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest {
-	r.deleteUploadOrgBanner = &deleteUploadOrgBanner
-	return r
-}
-
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest) Execute() (*http.Response, error) {
-	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteExecute(r)
-}
-
-/*
-OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete Delete organization upload banner
-
-Deletes an uploaded banner for the organization. Only the organization head can perform this action.
+Deletes an uploaded media for the organization. Only the organization head can perform this action.
 **400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param organizationId Organization ID
- @return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest
+ @return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest
 */
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest {
-	return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest{
+func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest {
+	return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest{
 		ApiService: a,
 		ctx: ctx,
 		organizationId: organizationId,
@@ -1162,26 +825,26 @@ func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdM
 }
 
 // Execute executes the request
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDeleteRequest) (*http.Response, error) {
+func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/organizations-svc/v1/organizations/{organization_id}/media/upload/banner"
+	localVarPath := localBasePath + "/organizations-svc/v1/organizations/{organization_id}/media"
 	localVarPath = strings.Replace(localVarPath, "{"+"organization_id"+"}", url.PathEscape(parameterValueToString(r.organizationId, "organizationId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.deleteUploadOrgBanner == nil {
-		return nil, reportError("deleteUploadOrgBanner is required and must be specified")
+	if r.deleteUploadOrgMedia == nil {
+		return nil, reportError("deleteUploadOrgMedia is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -1202,7 +865,7 @@ func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdM
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.deleteUploadOrgBanner
+	localVarPostBody = r.deleteUploadOrgMedia
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err
@@ -1285,177 +948,18 @@ func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdM
 	return localVarHTTPResponse, nil
 }
 
-type ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest struct {
-	ctx context.Context
-	ApiService *OrganizationsAPIService
-	organizationId uuid.UUID
-	deleteUploadOrgIcon *DeleteUploadOrgIcon
-}
-
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest) DeleteUploadOrgIcon(deleteUploadOrgIcon DeleteUploadOrgIcon) ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest {
-	r.deleteUploadOrgIcon = &deleteUploadOrgIcon
-	return r
-}
-
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest) Execute() (*http.Response, error) {
-	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteExecute(r)
-}
-
-/*
-OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete Delete organization upload icon
-
-Deletes an uploaded icon for the organization. Only the organization head can perform this action.
-**400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
-
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param organizationId Organization ID
- @return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest
-*/
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest {
-	return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest{
-		ApiService: a,
-		ctx: ctx,
-		organizationId: organizationId,
-	}
-}
-
-// Execute executes the request
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDeleteRequest) (*http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete")
-	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/organizations-svc/v1/organizations/{organization_id}/media/upload/icon"
-	localVarPath = strings.Replace(localVarPath, "{"+"organization_id"+"}", url.PathEscape(parameterValueToString(r.organizationId, "organizationId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.deleteUploadOrgIcon == nil {
-		return nil, reportError("deleteUploadOrgIcon is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.deleteUploadOrgIcon
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
-		return localVarHTTPResponse, newErr
-	}
-
-	return localVarHTTPResponse, nil
-}
-
-type ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostRequest struct {
+type ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaPostRequest struct {
 	ctx context.Context
 	ApiService *OrganizationsAPIService
 	organizationId uuid.UUID
 }
 
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostRequest) Execute() (*UploadOrgMediaLinks, *http.Response, error) {
-	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostExecute(r)
+func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaPostRequest) Execute() (*UploadOrgMediaLinks, *http.Response, error) {
+	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdMediaPostExecute(r)
 }
 
 /*
-OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost Create organization upload media link
+OrganizationsSvcV1OrganizationsOrganizationIdMediaPost Create organization upload media link
 
 Creates upload media links for the organization's avatar. Only the organization head can perform this action.
 **400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
@@ -1463,10 +967,10 @@ Creates upload media links for the organization's avatar. Only the organization 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param organizationId Organization ID
- @return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostRequest
+ @return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaPostRequest
 */
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostRequest {
-	return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostRequest{
+func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaPost(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaPostRequest {
+	return ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaPostRequest{
 		ApiService: a,
 		ctx: ctx,
 		organizationId: organizationId,
@@ -1475,7 +979,7 @@ func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdM
 
 // Execute executes the request
 //  @return UploadOrgMediaLinks
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPostRequest) (*UploadOrgMediaLinks, *http.Response, error) {
+func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdMediaPostExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaPostRequest) (*UploadOrgMediaLinks, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
@@ -1483,12 +987,12 @@ func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdM
 		localVarReturnValue  *UploadOrgMediaLinks
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdMediaPost")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/organizations-svc/v1/organizations/{organization_id}/media/upload/url"
+	localVarPath := localBasePath + "/organizations-svc/v1/organizations/{organization_id}/media"
 	localVarPath = strings.Replace(localVarPath, "{"+"organization_id"+"}", url.PathEscape(parameterValueToString(r.organizationId, "organizationId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -1603,24 +1107,24 @@ func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdM
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest struct {
+type ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest struct {
 	ctx context.Context
 	ApiService *OrganizationsAPIService
 	organizationId uuid.UUID
 	updateOrganization *UpdateOrganization
 }
 
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest) UpdateOrganization(updateOrganization UpdateOrganization) ApiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest {
+func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest) UpdateOrganization(updateOrganization UpdateOrganization) ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest {
 	r.updateOrganization = &updateOrganization
 	return r
 }
 
-func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest) Execute() (*Organization, *http.Response, error) {
-	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdPutExecute(r)
+func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest) Execute() (*Organization, *http.Response, error) {
+	return r.ApiService.OrganizationsSvcV1OrganizationsOrganizationIdPatchExecute(r)
 }
 
 /*
-OrganizationsSvcV1OrganizationsOrganizationIdPut Update organization
+OrganizationsSvcV1OrganizationsOrganizationIdPatch Update organization
 
 Updates an organization by ID.
 **400 Bad Request** is returned when the organization ID is not a valid UUID or request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **500 Internal Server Error** is returned when an unexpected error occurs.
@@ -1628,10 +1132,10 @@ Updates an organization by ID.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param organizationId Organization ID
- @return ApiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest
+ @return ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest
 */
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdPut(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest {
-	return ApiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest{
+func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdPatch(ctx context.Context, organizationId uuid.UUID) ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest {
+	return ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest{
 		ApiService: a,
 		ctx: ctx,
 		organizationId: organizationId,
@@ -1640,15 +1144,15 @@ func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdP
 
 // Execute executes the request
 //  @return Organization
-func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdPutExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdPutRequest) (*Organization, *http.Response, error) {
+func (a *OrganizationsAPIService) OrganizationsSvcV1OrganizationsOrganizationIdPatchExecute(r ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest) (*Organization, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPut
+		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
 		localVarReturnValue  *Organization
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdPut")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OrganizationsAPIService.OrganizationsSvcV1OrganizationsOrganizationIdPatch")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

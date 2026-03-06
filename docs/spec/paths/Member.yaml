@@ -61,7 +61,7 @@ get:
           schema:
             $ref: '../components/schemas/responses/Errors.yaml'
 
-put:
+patch:
   tags:
     - members
   summary: Update member
@@ -160,7 +160,7 @@ delete:
             $ref: '../components/schemas/responses/Errors.yaml'
     '403':
       description: >
-        Forbidden. Initiator cannot delete self, is not a member of the organization,
+        Forbidden. Initiator is not a member of the organization,
         is not the organization head, the organization is suspended,
         or the target member is the organization head.
       content:

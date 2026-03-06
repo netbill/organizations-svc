@@ -9,46 +9,35 @@ import (
 	"github.com/netbill/organizations-svc/pkg/log"
 )
 
-type handlers interface {
-	ProfileCreated(
-		ctx context.Context,
-		event eventbox.InboxEvent,
-	) error
-	ProfileUpdated(
-		ctx context.Context,
-		event eventbox.InboxEvent,
-	) error
-	ProfileDeleted(
-		ctx context.Context,
-		event eventbox.InboxEvent,
-	) error
-
-	PlaceCreated(
-		ctx context.Context,
-		event eventbox.InboxEvent,
-	) error
-	PlaceDeleted(
-		ctx context.Context,
-		event eventbox.InboxEvent,
-	) error
+type profileController interface {
+	Created(ctx context.Context, event eventbox.InboxEvent) error
+	Updated(ctx context.Context, event eventbox.InboxEvent) error
+	Deleted(ctx context.Context, event eventbox.InboxEvent) error
 }
 
-func NewInboxWorker(
-	logger *log.Logger,
-	inbox eventbox.Inbox,
-	cfg eventbox.InboxWorkerConfig,
-	handlers handlers,
-) *eventbox.InboxWorker {
-	id := uuid.New().String()
+type placeController interface {
+	Created(ctx context.Context, event eventbox.InboxEvent) error
+	Deleted(ctx context.Context, event eventbox.InboxEvent) error
+}
 
-	worker := eventbox.NewInboxWorker(id, logger, inbox, cfg)
+type InboxWorkerDeps struct {
+	ProfileController profileController
+	PlaceController   placeController
 
-	worker.Route(evtypes.ProfileCreatedEvent, handlers.ProfileCreated)
-	worker.Route(evtypes.ProfileDeletedEvent, handlers.ProfileDeleted)
-	worker.Route(evtypes.ProfileUpdatedEvent, handlers.ProfileUpdated)
+	Logger *log.Logger
+	Inbox  eventbox.Inbox
+	Config eventbox.InboxWorkerConfig
+}
 
-	worker.Route(evtypes.PlaceCreatedEvent, handlers.PlaceCreated)
-	worker.Route(evtypes.PlaceDeletedEvent, handlers.PlaceDeleted)
+func NewInboxWorker(deps InboxWorkerDeps) *eventbox.InboxWorker {
+	worker := eventbox.NewInboxWorker(uuid.New().String(), deps.Logger, deps.Inbox, deps.Config)
+
+	worker.Route(evtypes.ProfileCreatedEvent, deps.ProfileController.Created)
+	worker.Route(evtypes.ProfileDeletedEvent, deps.ProfileController.Deleted)
+	worker.Route(evtypes.ProfileUpdatedEvent, deps.ProfileController.Updated)
+
+	worker.Route(evtypes.PlaceCreatedEvent, deps.PlaceController.Created)
+	worker.Route(evtypes.PlaceDeletedEvent, deps.PlaceController.Deleted)
 
 	return worker
 }

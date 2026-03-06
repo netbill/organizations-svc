@@ -24,7 +24,7 @@ type ProduceKafkaConfig struct {
 	BatchTimeout time.Duration `json:"batch_timeout"`
 }
 
-func NewProducer(log *log.Logger, cfg ProducerConfig) *eventbox.Producer {
+func NewProducer(log *log.Logger, cfg ProducerConfig) (*eventbox.Producer, error) {
 	producer := eventbox.NewProducer(log, cfg.Brokers...)
 
 	err := producer.AddWriter(evtypes.OrganizationsTopicV1, eventbox.WriterTopicConfig{
@@ -35,7 +35,7 @@ func NewProducer(log *log.Logger, cfg ProducerConfig) *eventbox.Producer {
 		BatchTimeout: cfg.OrganizationV1.BatchTimeout,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = producer.AddWriter(evtypes.OrgMembersTopicV1, eventbox.WriterTopicConfig{
@@ -46,8 +46,8 @@ func NewProducer(log *log.Logger, cfg ProducerConfig) *eventbox.Producer {
 		BatchTimeout: cfg.OrgMembersV1.BatchTimeout,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return producer
+	return producer, nil
 }

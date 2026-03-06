@@ -52,6 +52,7 @@ type S3Config struct {
 		AccessKeyID     string `mapstructure:"access_key_id"`
 		SecretAccessKey string `mapstructure:"secret_access_key"`
 		SessionToken    string `mapstructure:"session_token"`
+		BaseURL         string `mapstructure:"base_url"`
 	} `mapstructure:"aws"`
 
 	Media struct {

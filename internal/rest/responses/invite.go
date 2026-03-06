@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/models"
@@ -9,44 +10,49 @@ import (
 )
 
 type inviteResponse struct {
-	invite   resources.InviteData
+	data     resources.InviteData
 	included []resources.InviteIncludedInner
 }
 
 type InviteOption func(*inviteResponse)
 
-func WithInviteOrganization(organization models.Organization) InviteOption {
-	return func(r *inviteResponse) {
-		inner := organizationData(organization)
-		r.included = append(r.included, resources.InviteIncludedInner{
-			OrganizationData: &inner,
+func WithInviteOrganization(r *http.Request, organization models.Organization) InviteOption {
+	return func(res *inviteResponse) {
+		org := organizationData(r, organization)
+		res.included = append(res.included, resources.InviteIncludedInner{
+			OrganizationData: &org,
 		})
 	}
 }
 
-func WithInviteProfile(model models.Profile) InviteOption {
-	return func(r *inviteResponse) {
-		inner := profileData(model)
-		r.included = append(r.included, resources.InviteIncludedInner{
-			ProfileData: &inner,
+func WithInviteProfile(r *http.Request, profile models.Profile) InviteOption {
+	return func(res *inviteResponse) {
+		prof := profileData(r, profile)
+		res.included = append(res.included, resources.InviteIncludedInner{
+			ProfileData: &prof,
 		})
 	}
 }
 
-func Invite(mod models.Invite, opts ...InviteOption) resources.Invite {
-	r := &inviteResponse{
-		invite: inviteData(mod),
+func Invite(
+	r *http.Request,
+	mod models.Invite,
+	opts ...InviteOption,
+) resources.Invite {
+	res := &inviteResponse{
+		data: inviteData(r, mod),
 	}
 	for _, opt := range opts {
-		opt(r)
+		opt(res)
 	}
+
 	return resources.Invite{
-		Data:     r.invite,
-		Included: r.included,
+		Data:     res.data,
+		Included: res.included,
 	}
 }
 
-func inviteData(invite models.Invite) resources.InviteData {
+func inviteData(r *http.Request, invite models.Invite) resources.InviteData {
 	return resources.InviteData{
 		Id:   invite.ID,
 		Type: "invite",
@@ -80,44 +86,46 @@ type inviteCollectionResponse struct {
 
 type InvitesCollectionOption func(*inviteCollectionResponse)
 
-func WithCollectionInvitesProfiles(profile []models.Profile) InvitesCollectionOption {
-	return func(r *inviteCollectionResponse) {
-		for _, model := range profile {
-			inner := profileData(model)
-			r.included = append(r.included, resources.InviteIncludedInner{
-				ProfileData: &inner,
+func WithCollectionInvitesProfiles(r *http.Request, profiles []models.Profile) InvitesCollectionOption {
+	return func(res *inviteCollectionResponse) {
+		for _, model := range profiles {
+			prof := profileData(r, model)
+			res.included = append(res.included, resources.InviteIncludedInner{
+				ProfileData: &prof,
 			})
 		}
 	}
 }
 
-func WithCollectionInvitesOrganization(organization models.Organization) InvitesCollectionOption {
-	return func(r *inviteCollectionResponse) {
-		inner := organizationData(organization)
-		r.included = append(r.included, resources.InviteIncludedInner{
-			OrganizationData: &inner,
+func WithCollectionInvitesOrganization(r *http.Request, organization models.Organization) InvitesCollectionOption {
+	return func(res *inviteCollectionResponse) {
+		org := organizationData(r, organization)
+		res.included = append(res.included, resources.InviteIncludedInner{
+			OrganizationData: &org,
 		})
 	}
 }
 
-func WithCollectionInvitesOrganizations(organizations []models.Organization) InvitesCollectionOption {
-	return func(r *inviteCollectionResponse) {
-		for _, model := range organizations {
-			inner := organizationData(model)
-			r.included = append(r.included, resources.InviteIncludedInner{
-				OrganizationData: &inner,
+func WithCollectionInvitesOrganizations(r *http.Request, organizations []models.Organization) InvitesCollectionOption {
+	return func(res *inviteCollectionResponse) {
+		for _, org := range organizations {
+			orgData := organizationData(r, org)
+			res.included = append(res.included, resources.InviteIncludedInner{
+				OrganizationData: &orgData,
 			})
 		}
 	}
 }
 
-func Invites(r *http.Request, mods pagi.Page[[]models.Invite], opts ...InvitesCollectionOption) resources.InvitesCollection {
-	data := make([]resources.InviteData, len(mods.Data))
-	for i, mod := range mods.Data {
-		data[i] = inviteData(mod)
+func Invites(
+	r *http.Request,
+	page pagi.Page[[]models.Invite],
+	opts ...InvitesCollectionOption,
+) resources.InvitesCollection {
+	data := make([]resources.InviteData, len(page.Data))
+	for i, mod := range page.Data {
+		data[i] = inviteData(r, mod)
 	}
-
-	links := pagi.BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
 
 	resp := &inviteCollectionResponse{
 		data: data,
@@ -126,9 +134,11 @@ func Invites(r *http.Request, mods pagi.Page[[]models.Invite], opts ...InvitesCo
 		opt(resp)
 	}
 
+	links := pagi.BuildPageLinks(r, page.Page, page.Size, page.Total)
+
 	return resources.InvitesCollection{
-		Data:     resp.data,
-		Included: deduplicateInviteIncluded(resp.included),
+		Data:     data,
+		Included: deduplicateIncluded(resp.included),
 		Links: resources.PaginationData{
 			First: links.First,
 			Last:  links.Last,
@@ -139,26 +149,27 @@ func Invites(r *http.Request, mods pagi.Page[[]models.Invite], opts ...InvitesCo
 	}
 }
 
-func deduplicateInviteIncluded(items []resources.InviteIncludedInner) []resources.InviteIncludedInner {
+func deduplicateIncluded(included []resources.InviteIncludedInner) []resources.InviteIncludedInner {
 	seen := make(map[string]struct{})
-	result := make([]resources.InviteIncludedInner, 0, len(items))
+	result := make([]resources.InviteIncludedInner, 0, len(included))
 
-	for _, item := range items {
-		var key string
-		switch {
-		case item.ProfileData != nil:
-			key = "profile:" + item.ProfileData.Id.String()
-		case item.OrganizationData != nil:
-			key = "organization:" + item.OrganizationData.Id.String()
-		default:
+	for _, item := range included {
+		key := includeKey(item)
+		if _, ok := seen[key]; ok {
 			continue
 		}
-
-		if _, exists := seen[key]; !exists {
-			seen[key] = struct{}{}
-			result = append(result, item)
-		}
+		seen[key] = struct{}{}
+		result = append(result, item)
 	}
-
 	return result
+}
+
+func includeKey(item resources.InviteIncludedInner) string {
+	if item.OrganizationData != nil {
+		return fmt.Sprintf("organization:%s", item.OrganizationData.Id)
+	}
+	if item.ProfileData != nil {
+		return fmt.Sprintf("profile:%s", item.ProfileData.Id)
+	}
+	return ""
 }

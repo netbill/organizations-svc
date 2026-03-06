@@ -11,26 +11,39 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type placeRepository interface {
-	CreatePlace(ctx context.Context, params PlaceCreateParams) error
+type placeRepo interface {
+	Get(ctx context.Context, id uuid.UUID) (models.Place, error)
+	GetListByIDs(ctx context.Context, ids []uuid.UUID) ([]models.Place, error)
+	ExistsForOrg(ctx context.Context, organizationID uuid.UUID) (bool, error)
+	Exists(ctx context.Context, id uuid.UUID) (bool, error)
 
-	GetPlaceByID(ctx context.Context, id uuid.UUID) (models.Place, error)
-	GetPlacesByIDs(ctx context.Context, ids []uuid.UUID) ([]models.Place, error)
-	GetPlaceExistsForOrganization(ctx context.Context, organizationID uuid.UUID) (bool, error)
-	PlaceExists(ctx context.Context, id uuid.UUID) (bool, error)
-
-	DeletePlaceByID(ctx context.Context, id uuid.UUID) error
+	Create(ctx context.Context, params PlaceCreateParams) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type placeTombstoneRepository interface {
+type placeTombstone interface {
 	BuryPlace(ctx context.Context, placeID uuid.UUID) error
 	PlaceIsBuried(ctx context.Context, placeID uuid.UUID) (bool, error)
 }
 
 type PlaceModule struct {
-	placeRepo     placeRepository
-	tombstoneRepo placeTombstoneRepository
-	tx            transactor
+	repo      placeRepo
+	tombstone placeTombstone
+	tx        transactor
+}
+
+type PlaceDeps struct {
+	Repo      placeRepo
+	Tombstone placeTombstone
+	Tx        transactor
+}
+
+func NewPlaceModule(deps PlaceDeps) *PlaceModule {
+	return &PlaceModule{
+		repo:      deps.Repo,
+		tombstone: deps.Tombstone,
+		tx:        deps.Tx,
+	}
 }
 
 type PlaceCreateParams struct {
@@ -43,7 +56,7 @@ func (m *PlaceModule) Create(
 	ctx context.Context,
 	params PlaceCreateParams,
 ) error {
-	exists, err := m.placeRepo.PlaceExists(ctx, params.ID)
+	exists, err := m.repo.Exists(ctx, params.ID)
 	if err != nil {
 		return err
 	}
@@ -53,7 +66,7 @@ func (m *PlaceModule) Create(
 		)
 	}
 
-	buried, err := m.tombstoneRepo.PlaceIsBuried(ctx, params.ID)
+	buried, err := m.tombstone.PlaceIsBuried(ctx, params.ID)
 	if err != nil {
 		return err
 	}
@@ -63,14 +76,14 @@ func (m *PlaceModule) Create(
 		)
 	}
 
-	return m.placeRepo.CreatePlace(ctx, params)
+	return m.repo.Create(ctx, params)
 }
 
 func (m *PlaceModule) Delete(
 	ctx context.Context,
 	id uuid.UUID,
 ) error {
-	buried, err := m.tombstoneRepo.PlaceIsBuried(ctx, id)
+	buried, err := m.tombstone.PlaceIsBuried(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -81,10 +94,10 @@ func (m *PlaceModule) Delete(
 	}
 
 	return m.tx.Transaction(ctx, func(ctx context.Context) error {
-		if err = m.tombstoneRepo.BuryPlace(ctx, id); err != nil {
+		if err := m.tombstone.BuryPlace(ctx, id); err != nil {
 			return err
 		}
 
-		return m.placeRepo.DeletePlaceByID(ctx, id)
+		return m.repo.Delete(ctx, id)
 	})
 }

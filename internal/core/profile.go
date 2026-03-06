@@ -11,36 +11,50 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type profileRepository interface {
-	CreateProfile(ctx context.Context, profile models.Profile) (models.Profile, error)
+type profileRepo interface {
+	Create(ctx context.Context, profile models.Profile) (models.Profile, error)
 
-	GetProfileByAccountID(ctx context.Context, accountID uuid.UUID) (models.Profile, error)
-	GetProfilesByAccountIDs(ctx context.Context, accountIDs []uuid.UUID) ([]models.Profile, error)
-	GetProfileByUsername(ctx context.Context, username string) (models.Profile, error)
-	ExistsProfileByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
-	ExistsProfileByUsername(ctx context.Context, username string) (bool, error)
+	GetByID(ctx context.Context, accountID uuid.UUID) (models.Profile, error)
+	GetByUsername(ctx context.Context, username string) (models.Profile, error)
+	ExistsByUsername(ctx context.Context, username string) (bool, error)
 
-	UpdateProfile(ctx context.Context, accountID uuid.UUID, params ProfileUpdateParams) (models.Profile, error)
+	GetListByIDs(ctx context.Context, accountIDs []uuid.UUID) ([]models.Profile, error)
+	ExistsByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error)
 
-	DeleteProfileByAccountID(ctx context.Context, accountID uuid.UUID) error
+	Update(ctx context.Context, accountID uuid.UUID, params ProfileUpdateParams) (models.Profile, error)
+	Delete(ctx context.Context, accountID uuid.UUID) error
 }
 
-type tombstoneProfileRepository interface {
+type profileTombstone interface {
 	BuryProfile(ctx context.Context, accountID uuid.UUID) error
 	ProfileIsBuried(ctx context.Context, accountID uuid.UUID) (bool, error)
 }
 
 type ProfileModule struct {
-	profileRepo   profileRepository
-	tombstoneRepo tombstoneProfileRepository
-	tx            transactor
+	repo      profileRepo
+	tombstone profileTombstone
+	tx        transactor
+}
+
+type ProfileDeps struct {
+	Repo      profileRepo
+	Tombstone profileTombstone
+	Tx        transactor
+}
+
+func NewProfileModule(deps ProfileDeps) *ProfileModule {
+	return &ProfileModule{
+		repo:      deps.Repo,
+		tombstone: deps.Tombstone,
+		tx:        deps.Tx,
+	}
 }
 
 func (m *ProfileModule) Create(
 	ctx context.Context,
 	profile models.Profile,
 ) (models.Profile, error) {
-	exists, err := m.profileRepo.ExistsProfileByAccountID(ctx, profile.AccountID)
+	exists, err := m.repo.ExistsByAccountID(ctx, profile.AccountID)
 	if err != nil {
 		return models.Profile{}, err
 	}
@@ -50,7 +64,7 @@ func (m *ProfileModule) Create(
 		)
 	}
 
-	buried, err := m.tombstoneRepo.ProfileIsBuried(ctx, profile.AccountID)
+	buried, err := m.tombstone.ProfileIsBuried(ctx, profile.AccountID)
 	if err != nil {
 		return models.Profile{}, err
 	}
@@ -60,21 +74,21 @@ func (m *ProfileModule) Create(
 		)
 	}
 
-	return m.profileRepo.CreateProfile(ctx, profile)
+	return m.repo.Create(ctx, profile)
 }
 
 func (m *ProfileModule) GetByID(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) (models.Profile, error) {
-	return m.profileRepo.GetProfileByAccountID(ctx, accountID)
+	return m.repo.GetByID(ctx, accountID)
 }
 
 func (m *ProfileModule) GetByIDs(
 	ctx context.Context,
 	accountIDs []uuid.UUID,
 ) ([]models.Profile, error) {
-	return m.profileRepo.GetProfilesByAccountIDs(ctx, accountIDs)
+	return m.repo.GetListByIDs(ctx, accountIDs)
 }
 
 type ProfileUpdateParams struct {
@@ -90,9 +104,9 @@ func (m *ProfileModule) Update(
 	accountID uuid.UUID,
 	params ProfileUpdateParams,
 ) (models.Profile, error) {
-	profile, err := m.profileRepo.GetProfileByAccountID(ctx, accountID)
+	profile, err := m.repo.GetByID(ctx, accountID)
 	if errors.Is(err, errx.ErrorProfileNotExists) {
-		buried, err := m.tombstoneRepo.ProfileIsBuried(ctx, accountID)
+		buried, err := m.tombstone.ProfileIsBuried(ctx, accountID)
 		if err != nil {
 			return models.Profile{}, err
 		}
@@ -109,14 +123,14 @@ func (m *ProfileModule) Update(
 		return profile, nil
 	}
 
-	return m.profileRepo.UpdateProfile(ctx, accountID, params)
+	return m.repo.Update(ctx, accountID, params)
 }
 
 func (m *ProfileModule) Delete(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) error {
-	buried, err := m.tombstoneRepo.ProfileIsBuried(ctx, accountID)
+	buried, err := m.tombstone.ProfileIsBuried(ctx, accountID)
 	if err != nil {
 		return err
 	}
@@ -127,10 +141,10 @@ func (m *ProfileModule) Delete(
 	}
 
 	return m.tx.Transaction(ctx, func(ctx context.Context) error {
-		if err := m.tombstoneRepo.BuryProfile(ctx, accountID); err != nil {
+		if err := m.tombstone.BuryProfile(ctx, accountID); err != nil {
 			return err
 		}
 
-		return m.profileRepo.DeleteProfileByAccountID(ctx, accountID)
+		return m.repo.Delete(ctx, accountID)
 	})
 }

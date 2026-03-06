@@ -1,13 +1,13 @@
 services:
-#  organizations-svc:
-#    build: .
-#    container_name: organizations-svc
-#    environment:
-#      - KV_VIPER_FILE=./config_docker.yaml
-#    ports:
-#      - "8003:8000"
-#    networks:
-#      - chains-net
+  organizations-svc:
+    build: .
+    container_name: organizations-svc
+    environment:
+      - KV_VIPER_FILE=./config_docker.yaml
+    ports:
+      - "8003:8000"
+    networks:
+      - netbill-net
 
   organizations-svc-postgres:
     image: postgis/postgis:16-3.4
@@ -21,12 +21,24 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - chains-net
+      - netbill-net
+
+  organizations-svc-swagger:
+    image: swaggerapi/swagger-ui
+    container_name: organizations-svc-swagger
+    environment:
+      - SWAGGER_JSON=/docs/api-bundled.yaml
+    volumes:
+      - ./docs:/docs:ro
+    ports:
+      - "5003:8080"
+    networks:
+      - netbill-net
 
 volumes:
   pgdata:
   bundle:
 
 networks:
-  chains-net:
+  netbill-net:
     external: true

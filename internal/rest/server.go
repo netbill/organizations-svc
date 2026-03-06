@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/netbill/organizations-svc/internal/media"
 	"github.com/netbill/organizations-svc/pkg/log"
 	"github.com/netbill/restkit/tokens"
 )
@@ -17,7 +18,6 @@ type OrgController interface {
 
 	Get(w http.ResponseWriter, r *http.Request)
 	GetList(w http.ResponseWriter, r *http.Request)
-	GetMyList(w http.ResponseWriter, r *http.Request)
 
 	CreateUploadMediaLink(w http.ResponseWriter, r *http.Request)
 
@@ -25,8 +25,7 @@ type OrgController interface {
 
 	Delete(w http.ResponseWriter, r *http.Request)
 
-	DeleteUploadIcon(w http.ResponseWriter, r *http.Request)
-	DeleteUploadBanner(w http.ResponseWriter, r *http.Request)
+	DeleteUploadMedia(w http.ResponseWriter, r *http.Request)
 
 	Activate(w http.ResponseWriter, r *http.Request)
 	Deactivate(w http.ResponseWriter, r *http.Request)
@@ -40,15 +39,13 @@ type MemberController interface {
 	Get(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
-
-	LeaveFromOrg(w http.ResponseWriter, r *http.Request)
 }
 
 type InviteController interface {
 	Create(w http.ResponseWriter, r *http.Request)
 	Get(w http.ResponseWriter, r *http.Request)
 
-	GetMyList(w http.ResponseWriter, r *http.Request)
+	GetList(w http.ResponseWriter, r *http.Request)
 
 	Cancelled(w http.ResponseWriter, r *http.Request)
 	Accept(w http.ResponseWriter, r *http.Request)
@@ -61,16 +58,30 @@ type Middlewares interface {
 	) func(next http.Handler) http.Handler
 	Logger(log *log.Logger) func(next http.Handler) http.Handler
 	CorsDocs() func(next http.Handler) http.Handler
-}
-
-type Controllers struct {
+	ResolverUrl(resolver *media.Resolver) func(next http.Handler) http.Handler
 }
 
 type Server struct {
+	middlewares Middlewares
 	org         OrgController
 	member      MemberController
 	invite      InviteController
-	middlewares Middlewares
+
+	log           *log.Logger
+	mediaResolver *media.Resolver
+	config        Config
+}
+
+type ServerDeps struct {
+	Middlewares Middlewares
+
+	Org    OrgController
+	Member MemberController
+	Invite InviteController
+
+	Log           *log.Logger
+	MediaResolver *media.Resolver
+	Config        Config
 }
 
 type Config struct {
@@ -81,13 +92,26 @@ type Config struct {
 	IdleTimeout       time.Duration
 }
 
-func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
+func NewServer(deps ServerDeps) *Server {
+	return &Server{
+		middlewares:   deps.Middlewares,
+		org:           deps.Org,
+		member:        deps.Member,
+		invite:        deps.Invite,
+		log:           deps.Log,
+		mediaResolver: deps.MediaResolver,
+		config:        deps.Config,
+	}
+}
+
+func (s *Server) Run(ctx context.Context) {
 	auth := s.middlewares.AccountAuth()
 	sysadmin := s.middlewares.AccountAuth(tokens.RoleSystemAdmin)
 
 	r := chi.NewRouter()
 	r.Use(
-		s.middlewares.Logger(log),
+		s.middlewares.Logger(s.log),
+		s.middlewares.ResolverUrl(s.mediaResolver),
 		s.middlewares.CorsDocs(),
 	)
 
@@ -95,21 +119,17 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 		r.Route("/v1", func(r chi.Router) {
 
 			r.Route("/organizations", func(r chi.Router) {
-				r.Get("/", s.org.Get)
+				r.Get("/", s.org.GetList)
 				r.With(auth).Post("/", s.org.Create)
 
 				r.Route("/{organization_id}", func(r chi.Router) {
 					r.Get("/", s.org.Get)
-					r.With(auth).Put("/", s.org.Update)
+					r.With(auth).Patch("/", s.org.Update)
 					r.With(auth).Delete("/", s.org.Delete)
 
 					r.With(auth).Route("/media", func(r chi.Router) {
-						r.Route("/upload", func(r chi.Router) {
-							r.Post("/url", s.org.CreateUploadMediaLink)
-
-							r.Delete("/icon", s.org.DeleteUploadIcon)
-							r.Delete("/banner", s.org.DeleteUploadBanner)
-						})
+						r.Post("/", s.org.CreateUploadMediaLink)
+						r.Delete("/", s.org.DeleteUploadMedia)
 					})
 
 					r.With(auth).Patch("/activate", s.org.Activate)
@@ -117,17 +137,13 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 
 					r.With(sysadmin).Patch("/suspend", s.org.Suspend)
 					r.With(sysadmin).Patch("/unsuspend", s.org.Unsuspend)
-
-					r.With(auth).Get("/invites", s.invite.GetMyList)
-
-					r.With(auth).Delete("/leave", s.member.LeaveFromOrg)
 				})
 			})
 
 			r.Route("/members", func(r chi.Router) {
 				r.Route("/{member_id}", func(r chi.Router) {
 					r.Get("/", s.member.Get)
-					r.With(auth).Put("/", s.member.Update)
+					r.With(auth).Patch("/", s.member.Update)
 					r.With(auth).Delete("/", s.member.Delete)
 				})
 
@@ -136,10 +152,11 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 
 			r.With(auth).Route("/invites", func(r chi.Router) {
 				r.Post("/", s.invite.Create)
-				r.Get("/me", s.invite.GetMyList)
+				r.Get("/", s.invite.GetList)
 
 				r.Route("/{invite_id}", func(r chi.Router) {
 					r.Get("/", s.invite.Get)
+
 					r.Patch("/accept", s.invite.Accept)
 					r.Patch("/decline", s.invite.Decline)
 					r.Patch("/cancel", s.invite.Cancelled)
@@ -149,15 +166,15 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 	})
 
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%d", cfg.Port),
+		Addr:              fmt.Sprintf(":%d", s.config.Port),
 		Handler:           r,
-		ReadTimeout:       cfg.ReadTimeout,
-		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
-		WriteTimeout:      cfg.WriteTimeout,
-		IdleTimeout:       cfg.IdleTimeout,
+		ReadTimeout:       s.config.ReadTimeout,
+		ReadHeaderTimeout: s.config.ReadHeaderTimeout,
+		WriteTimeout:      s.config.WriteTimeout,
+		IdleTimeout:       s.config.IdleTimeout,
 	}
 
-	log.WithField("port", cfg.Port).Info("starting http service...")
+	s.log.WithField("port", s.config.Port).Info("starting http service...")
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -170,18 +187,18 @@ func (s *Server) Run(ctx context.Context, log *log.Logger, cfg Config) {
 
 	select {
 	case <-ctx.Done():
-		log.Info("shutting down http service...")
+		s.log.Info("shutting down http service...")
 	case err := <-errCh:
 		if err != nil {
-			log.WithError(err).Error("http server error")
+			s.log.WithError(err).Error("http server error")
 		}
 	}
 
 	shCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shCtx); err != nil {
-		log.WithError(err).Error("failed to shutdown http server gracefully")
+		s.log.WithError(err).Error("failed to shutdown http server gracefully")
 	} else {
-		log.Info("http server shutdown gracefully")
+		s.log.Info("http server shutdown gracefully")
 	}
 }

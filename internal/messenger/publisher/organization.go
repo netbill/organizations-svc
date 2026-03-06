@@ -37,11 +37,7 @@ func (p *Publisher) WriteOrganizationCreated(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for organization created: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 func (p *Publisher) WriteOrganizationUpdated(
@@ -70,11 +66,7 @@ func (p *Publisher) WriteOrganizationUpdated(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for organization updated: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 func (p *Publisher) WriteOrganizationDeleted(
@@ -98,9 +90,5 @@ func (p *Publisher) WriteOrganizationDeleted(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for organization deleted: %w", err)
-	}
-
-	return nil
+	return err
 }

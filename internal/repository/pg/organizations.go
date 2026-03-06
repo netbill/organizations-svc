@@ -185,7 +185,7 @@ func (q *organizations) UpdateOne(ctx context.Context) (repository.OrganizationR
 }
 
 func (q *organizations) UpdateName(v string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("name", v)
+	q.updater = q.updater.Set("name", pgtype.Text{String: v, Valid: v != ""})
 	return q
 }
 
@@ -195,12 +195,22 @@ func (q *organizations) UpdateStatus(v string) repository.OrganizationsQ {
 }
 
 func (q *organizations) UpdateIconKey(v *string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("icon_key", v)
+	value := pgtype.Text{Valid: v != nil, String: ""}
+	if v != nil {
+		value = pgtype.Text{String: *v, Valid: *v != ""}
+	}
+
+	q.updater = q.updater.Set("icon_key", value)
 	return q
 }
 
 func (q *organizations) UpdateBannerKey(v *string) repository.OrganizationsQ {
-	q.updater = q.updater.Set("banner_key", v)
+	value := pgtype.Text{Valid: v != nil, String: ""}
+	if v != nil {
+		value = pgtype.Text{String: *v, Valid: *v != ""}
+	}
+
+	q.updater = q.updater.Set("banner_key", value)
 	return q
 }
 

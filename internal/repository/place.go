@@ -11,10 +11,6 @@ import (
 	"github.com/netbill/organizations-svc/internal/core/models"
 )
 
-type PlaceRepo struct {
-	PlacesSql PlacesQ
-}
-
 type PlaceRow struct {
 	ID               uuid.UUID `db:"id"`
 	OrganizationID   uuid.UUID `db:"organization_id"`
@@ -48,20 +44,30 @@ type PlacesQ interface {
 	Delete(ctx context.Context) error
 }
 
-func (r *PlaceRepo) CreatePlace(ctx context.Context, params core.PlaceCreateParams) error {
-	return r.PlacesSql.New().Insert(ctx, PlaceRow{
+type PlaceRepo struct {
+	query PlacesQ
+}
+
+func NewPlaceRepo(query PlacesQ) *PlaceRepo {
+	return &PlaceRepo{
+		query: query,
+	}
+}
+
+func (r *PlaceRepo) Create(ctx context.Context, params core.PlaceCreateParams) error {
+	return r.query.New().Insert(ctx, PlaceRow{
 		ID:              params.ID,
 		OrganizationID:  params.OrganizationID,
 		SourceCreatedAt: params.CreatedAt,
 	})
 }
 
-func (r *PlaceRepo) GetPlaceExistsForOrganization(ctx context.Context, organizationID uuid.UUID) (bool, error) {
-	return r.PlacesSql.New().FilterByOrganizationID(organizationID).Exists(ctx)
+func (r *PlaceRepo) ExistsForOrg(ctx context.Context, organizationID uuid.UUID) (bool, error) {
+	return r.query.New().FilterByOrganizationID(organizationID).Exists(ctx)
 }
 
-func (r *PlaceRepo) GetPlaceByID(ctx context.Context, id uuid.UUID) (models.Place, error) {
-	row, err := r.PlacesSql.New().FilterByID(id).Get(ctx)
+func (r *PlaceRepo) Get(ctx context.Context, id uuid.UUID) (models.Place, error) {
+	row, err := r.query.New().FilterByID(id).Get(ctx)
 	if err != nil {
 		return models.Place{}, err
 	}
@@ -74,8 +80,8 @@ func (r *PlaceRepo) GetPlaceByID(ctx context.Context, id uuid.UUID) (models.Plac
 	return row.ToModel(), nil
 }
 
-func (r *PlaceRepo) GetPlacesByIDs(ctx context.Context, ids []uuid.UUID) ([]models.Place, error) {
-	rows, err := r.PlacesSql.New().FilterByID(ids...).Select(ctx)
+func (r *PlaceRepo) GetListByIDs(ctx context.Context, ids []uuid.UUID) ([]models.Place, error) {
+	rows, err := r.query.New().FilterByID(ids...).Select(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -88,10 +94,10 @@ func (r *PlaceRepo) GetPlacesByIDs(ctx context.Context, ids []uuid.UUID) ([]mode
 	return res, nil
 }
 
-func (r *PlaceRepo) PlaceExists(ctx context.Context, id uuid.UUID) (bool, error) {
-	return r.PlacesSql.New().FilterByID(id).Exists(ctx)
+func (r *PlaceRepo) Exists(ctx context.Context, id uuid.UUID) (bool, error) {
+	return r.query.New().FilterByID(id).Exists(ctx)
 }
 
-func (r *PlaceRepo) DeletePlaceByID(ctx context.Context, id uuid.UUID) error {
-	return r.PlacesSql.New().FilterByID(id).Delete(ctx)
+func (r *PlaceRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return r.query.New().FilterByID(id).Delete(ctx)
 }

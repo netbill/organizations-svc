@@ -4,64 +4,81 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/rest/scope"
 	resources "github.com/netbill/organizations-svc/pkg/resources"
 	"github.com/netbill/restkit/pagi"
 )
 
-func Organization(organization models.Organization) resources.Organization {
+func Organization(
+	r *http.Request,
+	organization models.Organization,
+) resources.Organization {
 	return resources.Organization{
-		Data: organizationData(organization),
+		Data: organizationData(r, organization),
 	}
 }
 
-func organizationData(organization models.Organization) resources.OrganizationData {
-	return resources.OrganizationData{
+func organizationData(r *http.Request, organization models.Organization) resources.OrganizationData {
+	res := resources.OrganizationData{
 		Id:   organization.ID,
 		Type: "organization",
 		Attributes: resources.OrganizationDataAttributes{
 			Status:    organization.Status,
 			Name:      organization.Name,
-			IconKey:   organization.IconKey,
-			BannerKey: organization.BannerKey,
 			Version:   organization.Version,
 			CreatedAt: organization.CreatedAt,
 			UpdatedAt: organization.UpdatedAt,
 		},
 	}
+	if organization.IconKey != nil {
+		url := scope.ResolverURL(r, *organization.IconKey)
+		res.Attributes.IconUrl = &url
+	}
+	if organization.BannerKey != nil {
+		url := scope.ResolverURL(r, *organization.BannerKey)
+		res.Attributes.BannerUrl = &url
+	}
+
+	return res
 }
 
-type organizationResponse struct {
+type organizationCollectionResponse struct {
 	data     []resources.OrganizationData
 	included []resources.MemberData
 }
 
-type OrgCollectionOption func(*organizationResponse)
+type OrgCollectionOption func(*organizationCollectionResponse)
 
-func WithOrganizationMembers(members []models.Member) OrgCollectionOption {
-	return func(r *organizationResponse) {
+func WithOrganizationMembers(r *http.Request, members []models.Member) OrgCollectionOption {
+	return func(res *organizationCollectionResponse) {
 		for _, member := range members {
-			r.included = append(r.included, memberData(member))
+			res.included = append(res.included, memberData(r, member))
 		}
 	}
 }
 
-func Organizations(r *http.Request, page pagi.Page[[]models.Organization], opts ...OrgCollectionOption) resources.OrganizationsCollection {
+func Organizations(
+	r *http.Request,
+	page pagi.Page[[]models.Organization],
+	opts ...OrgCollectionOption,
+) resources.OrganizationsCollection {
 	data := make([]resources.OrganizationData, len(page.Data))
-	for i, ag := range page.Data {
-		data[i] = Organization(ag).Data
+	for i, org := range page.Data {
+		data[i] = organizationData(r, org)
+	}
+
+	res := &organizationCollectionResponse{
+		data: data,
+	}
+	for _, opt := range opts {
+		opt(res)
 	}
 
 	links := pagi.BuildPageLinks(r, page.Page, page.Size, page.Total)
 
-	resp := &organizationResponse{
-		data: data,
-	}
-	for _, opt := range opts {
-		opt(resp)
-	}
-
 	return resources.OrganizationsCollection{
-		Data: data,
+		Data:     res.data,
+		Included: res.included,
 		Links: resources.PaginationData{
 			First: links.First,
 			Last:  links.Last,
@@ -73,6 +90,7 @@ func Organizations(r *http.Request, page pagi.Page[[]models.Organization], opts 
 }
 
 func UploadOrganizationMediaLinks(
+	r *http.Request,
 	organization models.Organization,
 	uploadLinks models.UploadOrgMediaLinks,
 ) resources.UploadOrgMediaLinks {
@@ -102,7 +120,7 @@ func UploadOrganizationMediaLinks(
 			},
 		},
 		Included: []resources.OrganizationData{
-			organizationData(organization),
+			organizationData(r, organization),
 		},
 	}
 }

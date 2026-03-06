@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/media"
 	"github.com/netbill/organizations-svc/pkg/log"
 	"github.com/netbill/restkit/tokens"
 )
@@ -14,6 +15,7 @@ type ctxKey int
 const (
 	LogCtxKey ctxKey = iota
 	AccountDataCtxKey
+	BaseURLCtxKey
 )
 
 func CtxLog(ctx context.Context, log *log.Logger) context.Context {
@@ -38,4 +40,12 @@ func CtxAccountAuth(ctx context.Context, accountData tokens.AccountAuthClaims) c
 func AccountActor(r *http.Request) models.AccountActor {
 	claims := r.Context().Value(AccountDataCtxKey).(tokens.AccountAuthClaims)
 	return claims.GetAccountID()
+}
+
+func CtxUrlResolver(ctx context.Context, resolver *media.Resolver) context.Context {
+	return context.WithValue(ctx, BaseURLCtxKey, resolver)
+}
+
+func ResolverURL(r *http.Request, key string) (url string) {
+	return r.Context().Value(BaseURLCtxKey).(*media.Resolver).Resolve(key)
 }

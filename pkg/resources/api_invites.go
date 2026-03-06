@@ -24,6 +24,202 @@ import (
 // InvitesAPIService InvitesAPI service
 type InvitesAPIService service
 
+type ApiOrganizationsSvcV1InvitesGetRequest struct {
+	ctx context.Context
+	ApiService *InvitesAPIService
+	accountId *uuid.UUID
+	organizationId *uuid.UUID
+	include *[]string
+	pageLimit *int32
+	pageOffset *int32
+}
+
+// Filter invites by account ID. Must match the authenticated account. 
+func (r ApiOrganizationsSvcV1InvitesGetRequest) AccountId(accountId uuid.UUID) ApiOrganizationsSvcV1InvitesGetRequest {
+	r.accountId = &accountId
+	return r
+}
+
+// Filter invites by organization ID. The initiator must be a member of the organization. 
+func (r ApiOrganizationsSvcV1InvitesGetRequest) OrganizationId(organizationId uuid.UUID) ApiOrganizationsSvcV1InvitesGetRequest {
+	r.organizationId = &organizationId
+	return r
+}
+
+// Optional list of related resources to include in the response. Supported values: &#x60;profile&#x60;, &#x60;organization&#x60;. 
+func (r ApiOrganizationsSvcV1InvitesGetRequest) Include(include []string) ApiOrganizationsSvcV1InvitesGetRequest {
+	r.include = &include
+	return r
+}
+
+// Max number of items to return (1-100).
+func (r ApiOrganizationsSvcV1InvitesGetRequest) PageLimit(pageLimit int32) ApiOrganizationsSvcV1InvitesGetRequest {
+	r.pageLimit = &pageLimit
+	return r
+}
+
+// Number of items to skip.
+func (r ApiOrganizationsSvcV1InvitesGetRequest) PageOffset(pageOffset int32) ApiOrganizationsSvcV1InvitesGetRequest {
+	r.pageOffset = &pageOffset
+	return r
+}
+
+func (r ApiOrganizationsSvcV1InvitesGetRequest) Execute() (*InvitesCollection, *http.Response, error) {
+	return r.ApiService.OrganizationsSvcV1InvitesGetExecute(r)
+}
+
+/*
+OrganizationsSvcV1InvitesGet Get invites
+
+Returns a paginated list of invites.
+By default returns invites for the authenticated account. Can be filtered by `account_id` or `organization_id`.
+When filtering by `organization_id`, the initiator must be a member of that organization. When filtering by `account_id`, the initiator must match the requested account.
+**400 Bad Request** is returned when query parameters are invalid or pagination limit exceeds 100. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member of the organization or requests invites for another account. **500 Internal Server Error** is returned when an unexpected error occurs.
+
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiOrganizationsSvcV1InvitesGetRequest
+*/
+func (a *InvitesAPIService) OrganizationsSvcV1InvitesGet(ctx context.Context) ApiOrganizationsSvcV1InvitesGetRequest {
+	return ApiOrganizationsSvcV1InvitesGetRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return InvitesCollection
+func (a *InvitesAPIService) OrganizationsSvcV1InvitesGetExecute(r ApiOrganizationsSvcV1InvitesGetRequest) (*InvitesCollection, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *InvitesCollection
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "InvitesAPIService.OrganizationsSvcV1InvitesGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/organizations-svc/v1/invites/"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.accountId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "account_id", r.accountId, "form", "")
+	}
+	if r.organizationId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "organization_id", r.organizationId, "form", "")
+	}
+	if r.include != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "include", r.include, "form", "csv")
+	}
+	if r.pageLimit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "page[limit]", r.pageLimit, "form", "")
+	}
+	if r.pageOffset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "page[offset]", r.pageOffset, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v Errors
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v Errors
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v Errors
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v Errors
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiOrganizationsSvcV1InvitesInviteIdAcceptPatchRequest struct {
 	ctx context.Context
 	ApiService *InvitesAPIService
@@ -38,7 +234,7 @@ func (r ApiOrganizationsSvcV1InvitesInviteIdAcceptPatchRequest) Execute() (*Invi
 OrganizationsSvcV1InvitesInviteIdAcceptPatch Accept invite
 
 Accepts an invite for the authenticated account.
-**400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the account has no rights to accept this invite, the invite has expired, or the organization is not active. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
+**400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the account has no rights to accept this invite, the invite has expired, or the organization is suspend. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -367,7 +563,7 @@ func (r ApiOrganizationsSvcV1InvitesInviteIdDeclinePatchRequest) Execute() (*Inv
 OrganizationsSvcV1InvitesInviteIdDeclinePatch Decline invite
 
 Declines an invite for the authenticated account.
-**400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the invite is not for this account, the invite has expired, or the organization is not active. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
+**400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the invite is not for this account, the invite has expired. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -583,180 +779,6 @@ func (a *InvitesAPIService) OrganizationsSvcV1InvitesInviteIdGetExecute(r ApiOrg
 
 	if r.include != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "include", r.include, "form", "csv")
-	}
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v Errors
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiOrganizationsSvcV1InvitesMeGetRequest struct {
-	ctx context.Context
-	ApiService *InvitesAPIService
-	include *[]string
-	pageLimit *int32
-	pageOffset *int32
-}
-
-// Optional list of related resources to include in the response. Supported values: &#x60;organizations&#x60;. 
-func (r ApiOrganizationsSvcV1InvitesMeGetRequest) Include(include []string) ApiOrganizationsSvcV1InvitesMeGetRequest {
-	r.include = &include
-	return r
-}
-
-// Max number of items to return (1-100).
-func (r ApiOrganizationsSvcV1InvitesMeGetRequest) PageLimit(pageLimit int32) ApiOrganizationsSvcV1InvitesMeGetRequest {
-	r.pageLimit = &pageLimit
-	return r
-}
-
-// Number of items to skip.
-func (r ApiOrganizationsSvcV1InvitesMeGetRequest) PageOffset(pageOffset int32) ApiOrganizationsSvcV1InvitesMeGetRequest {
-	r.pageOffset = &pageOffset
-	return r
-}
-
-func (r ApiOrganizationsSvcV1InvitesMeGetRequest) Execute() (*InvitesCollection, *http.Response, error) {
-	return r.ApiService.OrganizationsSvcV1InvitesMeGetExecute(r)
-}
-
-/*
-OrganizationsSvcV1InvitesMeGet Get my invites
-
-Returns a paginated list of invites for the authenticated account.
-**400 Bad Request** is returned when pagination limit exceeds 100. **401 Unauthorized** is returned when the authorization token is missing or invalid. **404 Not Found** is returned when the account profile does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
-
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiOrganizationsSvcV1InvitesMeGetRequest
-*/
-func (a *InvitesAPIService) OrganizationsSvcV1InvitesMeGet(ctx context.Context) ApiOrganizationsSvcV1InvitesMeGetRequest {
-	return ApiOrganizationsSvcV1InvitesMeGetRequest{
-		ApiService: a,
-		ctx: ctx,
-	}
-}
-
-// Execute executes the request
-//  @return InvitesCollection
-func (a *InvitesAPIService) OrganizationsSvcV1InvitesMeGetExecute(r ApiOrganizationsSvcV1InvitesMeGetRequest) (*InvitesCollection, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *InvitesCollection
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "InvitesAPIService.OrganizationsSvcV1InvitesMeGet")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/organizations-svc/v1/invites/me"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	if r.include != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "include", r.include, "form", "csv")
-	}
-	if r.pageLimit != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "page[limit]", r.pageLimit, "form", "")
-	}
-	if r.pageOffset != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "page[offset]", r.pageOffset, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

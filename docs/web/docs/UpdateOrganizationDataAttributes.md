@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Name** | **string** | The name of the organization | 
+**Name** | Pointer to **string** | The name of the organization | [optional] 
 **IconKey** | Pointer to **string** | The media key for the organization&#39;s icon | [optional] 
 **BannerKey** | Pointer to **string** | The media key for the organization&#39;s banner | [optional] 
 
@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 
 ### NewUpdateOrganizationDataAttributes
 
-`func NewUpdateOrganizationDataAttributes(name string, ) *UpdateOrganizationDataAttributes`
+`func NewUpdateOrganizationDataAttributes() *UpdateOrganizationDataAttributes`
 
 NewUpdateOrganizationDataAttributes instantiates a new UpdateOrganizationDataAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -46,6 +46,11 @@ and a boolean to check if the value has been set.
 
 SetName sets Name field to given value.
 
+### HasName
+
+`func (o *UpdateOrganizationDataAttributes) HasName() bool`
+
+HasName returns a boolean if a field has been set.
 
 ### GetIconKey
 

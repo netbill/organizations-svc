@@ -149,7 +149,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Errors'
-    put:
+    patch:
       tags:
         - organizations
       summary: Update organization
@@ -237,7 +237,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Errors'
-  '/organizations-svc/v1/organizations/{organization_id}/media/upload/url':
+  '/organizations-svc/v1/organizations/{organization_id}/media':
     parameters:
       - in: path
         name: organization_id
@@ -296,21 +296,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Errors'
-  '/organizations-svc/v1/organizations/{organization_id}/media/upload/icon':
-    parameters:
-      - in: path
-        name: organization_id
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Organization ID
     delete:
       tags:
         - organizations
-      summary: Delete organization upload icon
+      summary: Delete organization upload media
       description: |
-        Deletes an uploaded icon for the organization. Only the organization head can perform this action.
+        Deletes an uploaded media for the organization. Only the organization head can perform this action.
         **400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
@@ -319,71 +310,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeleteUploadOrgIcon'
+              $ref: '#/components/schemas/DeleteUploadOrgMedia'
       responses:
         '204':
           description: Icon successfully deleted
-        '400':
-          description: |
-            Bad Request. Request body is invalid. Check the `errors` array for details.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '401':
-          description: |
-            Unauthorized. Missing or invalid authorization token.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '403':
-          description: |
-            Forbidden. Initiator is not a member of the organization, is not the organization head, or the organization is suspended.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '404':
-          description: |
-            Not Found. Organization does not exist.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-  '/organizations-svc/v1/organizations/{organization_id}/media/upload/banner':
-    parameters:
-      - in: path
-        name: organization_id
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Organization ID
-    delete:
-      tags:
-        - organizations
-      summary: Delete organization upload banner
-      description: |
-        Deletes an uploaded banner for the organization. Only the organization head can perform this action.
-        **400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteUploadOrgBanner'
-      responses:
-        '204':
-          description: Banner successfully deleted
         '400':
           description: |
             Bad Request. Request body is invalid. Check the `errors` array for details.
@@ -646,150 +576,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Errors'
-  '/organizations-svc/v1/organizations/{organization_id}/invites':
-    parameters:
-      - in: path
-        name: organization_id
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Organization ID
-    get:
-      tags:
-        - organizations
-      summary: Get organization invites
-      description: |
-        Returns a paginated list of invites for the organization. Only members of the organization can access this endpoint.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID or pagination limit exceeds 100. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member of the organization. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: query
-          name: include
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - profile
-                - organization
-          style: form
-          explode: false
-          description: |
-            Optional list of related resources to include in the response. Supported values: `profile`, `organization`.
-        - in: query
-          name: 'page[limit]'
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Max number of items to return (1-100).
-        - in: query
-          name: 'page[offset]'
-          required: false
-          schema:
-            type: integer
-            minimum: 0
-          description: Number of items to skip.
-      responses:
-        '200':
-          description: Invites successfully retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InvitesCollection'
-        '400':
-          description: |
-            Bad Request. Organization ID is not a valid UUID or pagination limit exceeds 100.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '401':
-          description: |
-            Unauthorized. Missing or invalid authorization token.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '403':
-          description: |
-            Forbidden. Initiator is not a member of the organization.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '404':
-          description: |
-            Not Found. Organization does not exist.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-  '/organizations-svc/v1/organizations/{organization_id}/leave':
-    parameters:
-      - in: path
-        name: organization_id
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Organization ID
-    delete:
-      tags:
-        - organizations
-      summary: Leave organization
-      description: |
-        Removes the authenticated account from the organization. The organization head cannot leave the organization.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member of the organization or is the organization head. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
-      security:
-        - BearerAuth: []
-      responses:
-        '204':
-          description: Successfully left the organization
-        '400':
-          description: |
-            Bad Request. Provided organization ID is not a valid UUID.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '401':
-          description: |
-            Unauthorized. Missing or invalid authorization token.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '403':
-          description: |
-            Forbidden. Initiator is not a member of the organization or is the organization head.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '404':
-          description: |
-            Not Found. Organization does not exist.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Errors'
   /organizations-svc/v1/members/:
     get:
       tags:
@@ -927,7 +713,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Errors'
-    put:
+    patch:
       tags:
         - members
       summary: Update member
@@ -1011,7 +797,7 @@ paths:
                 $ref: '#/components/schemas/Errors'
         '403':
           description: |
-            Forbidden. Initiator cannot delete self, is not a member of the organization, is not the organization head, the organization is suspended, or the target member is the organization head.
+            Forbidden. Initiator is not a member of the organization, is not the organization head, the organization is suspended, or the target member is the organization head.
           content:
             application/json:
               schema:
@@ -1093,17 +879,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Errors'
-  /organizations-svc/v1/invites/me:
     get:
       tags:
         - invites
-      summary: Get my invites
+      summary: Get invites
       description: |
-        Returns a paginated list of invites for the authenticated account.
-        **400 Bad Request** is returned when pagination limit exceeds 100. **401 Unauthorized** is returned when the authorization token is missing or invalid. **404 Not Found** is returned when the account profile does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
+        Returns a paginated list of invites.
+        By default returns invites for the authenticated account. Can be filtered by `account_id` or `organization_id`.
+        When filtering by `organization_id`, the initiator must be a member of that organization. When filtering by `account_id`, the initiator must match the requested account.
+        **400 Bad Request** is returned when query parameters are invalid or pagination limit exceeds 100. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member of the organization or requests invites for another account. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       parameters:
+        - in: query
+          name: account_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: |
+            Filter invites by account ID. Must match the authenticated account.
+        - in: query
+          name: organization_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: |
+            Filter invites by organization ID. The initiator must be a member of the organization.
         - in: query
           name: include
           required: false
@@ -1112,11 +915,12 @@ paths:
             items:
               type: string
               enum:
-                - organizations
+                - profile
+                - organization
           style: form
           explode: false
           description: |
-            Optional list of related resources to include in the response. Supported values: `organizations`.
+            Optional list of related resources to include in the response. Supported values: `profile`, `organization`.
         - in: query
           name: 'page[limit]'
           required: false
@@ -1141,7 +945,7 @@ paths:
                 $ref: '#/components/schemas/InvitesCollection'
         '400':
           description: |
-            Bad Request. Pagination limit exceeds 100.
+            Bad Request. Query parameters are invalid or pagination limit exceeds 100. Check the `errors` array for details.
           content:
             application/json:
               schema:
@@ -1153,9 +957,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Errors'
-        '404':
+        '403':
           description: |
-            Not Found. Account profile does not exist.
+            Forbidden. Initiator is not a member of the organization or requested invites for another account.
           content:
             application/json:
               schema:
@@ -1248,7 +1052,7 @@ paths:
       summary: Accept invite
       description: |
         Accepts an invite for the authenticated account.
-        **400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the account has no rights to accept this invite, the invite has expired, or the organization is not active. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
+        **400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the account has no rights to accept this invite, the invite has expired, or the organization is suspend. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -1274,7 +1078,7 @@ paths:
                 $ref: '#/components/schemas/Errors'
         '403':
           description: |
-            Forbidden. Account has no rights to accept this invite, invite has expired, or organization is not active.
+            Forbidden. Account has no rights to accept this invite, invite has expired, or organization is suspend.
           content:
             application/json:
               schema:
@@ -1314,7 +1118,7 @@ paths:
       summary: Decline invite
       description: |
         Declines an invite for the authenticated account.
-        **400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the invite is not for this account, the invite has expired, or the organization is not active. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
+        **400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the invite is not for this account, the invite has expired. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -1340,7 +1144,7 @@ paths:
                 $ref: '#/components/schemas/Errors'
         '403':
           description: |
-            Forbidden. Invite is not for this account, invite has expired, or organization is not active.
+            Forbidden. Invite is not for this account, invite has expired.
           content:
             application/json:
               schema:
@@ -1476,8 +1280,6 @@ components:
                 - organization
             attributes:
               type: object
-              required:
-                - name
               properties:
                 name:
                   type: string
@@ -1546,7 +1348,7 @@ components:
                   type: string
                   format: uuid
                   description: The ID of the account that was invited
-    DeleteUploadOrgIcon:
+    DeleteUploadOrgMedia:
       type: object
       required:
         - data
@@ -1568,40 +1370,13 @@ components:
                 - organization
             attributes:
               type: object
-              required:
-                - icon_key
               properties:
                 icon_key:
                   type: string
                   description: icon media key
-    DeleteUploadOrgBanner:
-      type: object
-      required:
-        - data
-      properties:
-        data:
-          type: object
-          required:
-            - id
-            - type
-            - attributes
-          properties:
-            id:
-              type: string
-              format: uuid
-              description: organization id
-            type:
-              type: string
-              enum:
-                - organization
-            attributes:
-              type: object
-              required:
-                - banner_key
-              properties:
                 banner_key:
                   type: string
-                  description: icon media key
+                  description: banner media key
     PaginationData:
       type: object
       required:
@@ -1734,9 +1509,9 @@ components:
         pseudonym:
           type: string
           description: profile pseudonym
-        avatar_key:
+        avatar_url:
           type: string
-          description: avatar key
+          description: profile avatar url
         version:
           type: integer
           description: profile version
@@ -1785,12 +1560,12 @@ components:
             name:
               type: string
               description: The name of the organization
-            icon_key:
+            icon_url:
               type: string
-              description: The media key for the organization's icon
-            banner_key:
+              description: The media url for the organization's icon
+            banner_url:
               type: string
-              description: The media key for the organization's banner
+              description: The media url for the organization's banner
             version:
               type: integer
               description: 'The version number of the organization, used for optimistic concurrency control'

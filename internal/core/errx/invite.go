@@ -6,6 +6,8 @@ var (
 	ErrorInviteNotExists       = ape.DeclareError("INVITE_NOT_EXISTS")
 	ErrorInviteNotForInitiator = ape.DeclareError("INVITE_NOT_FOR_INITIATOR")
 
+	ErrorCannotGetInvitesForOtherAccount = ape.DeclareError("CANNOT_GET_INVITES_FOR_OTHER_ACCOUNT")
+
 	ErrorActiveInviteAlreadyExists = ape.DeclareError("ACTIVE_INVITE_ALREADY_EXISTS")
 	ErrorInviteAlreadyAnswered     = ape.DeclareError("INVITE_ALREADY_ANSWERED")
 	ErrorInviteExpired             = ape.DeclareError("INVITE_EXPIRED")

@@ -12,8 +12,6 @@ package resources
 
 import (
 	"encoding/json"
-	"bytes"
-	"fmt"
 )
 
 // checks if the UpdateOrganizationDataAttributes type satisfies the MappedNullable interface at compile time
@@ -22,22 +20,19 @@ var _ MappedNullable = &UpdateOrganizationDataAttributes{}
 // UpdateOrganizationDataAttributes struct for UpdateOrganizationDataAttributes
 type UpdateOrganizationDataAttributes struct {
 	// The name of the organization
-	Name string `json:"name"`
+	Name *string `json:"name,omitempty"`
 	// The media key for the organization's icon
 	IconKey *string `json:"icon_key,omitempty"`
 	// The media key for the organization's banner
 	BannerKey *string `json:"banner_key,omitempty"`
 }
 
-type _UpdateOrganizationDataAttributes UpdateOrganizationDataAttributes
-
 // NewUpdateOrganizationDataAttributes instantiates a new UpdateOrganizationDataAttributes object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUpdateOrganizationDataAttributes(name string) *UpdateOrganizationDataAttributes {
+func NewUpdateOrganizationDataAttributes() *UpdateOrganizationDataAttributes {
 	this := UpdateOrganizationDataAttributes{}
-	this.Name = name
 	return &this
 }
 
@@ -49,28 +44,36 @@ func NewUpdateOrganizationDataAttributesWithDefaults() *UpdateOrganizationDataAt
 	return &this
 }
 
-// GetName returns the Name field value
+// GetName returns the Name field value if set, zero value otherwise.
 func (o *UpdateOrganizationDataAttributes) GetName() string {
-	if o == nil {
+	if o == nil || IsNil(o.Name) {
 		var ret string
 		return ret
 	}
-
-	return o.Name
+	return *o.Name
 }
 
-// GetNameOk returns a tuple with the Name field value
+// GetNameOk returns a tuple with the Name field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *UpdateOrganizationDataAttributes) GetNameOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Name) {
 		return nil, false
 	}
-	return &o.Name, true
+	return o.Name, true
 }
 
-// SetName sets field value
+// HasName returns a boolean if a field has been set.
+func (o *UpdateOrganizationDataAttributes) HasName() bool {
+	if o != nil && !IsNil(o.Name) {
+		return true
+	}
+
+	return false
+}
+
+// SetName gets a reference to the given string and assigns it to the Name field.
 func (o *UpdateOrganizationDataAttributes) SetName(v string) {
-	o.Name = v
+	o.Name = &v
 }
 
 // GetIconKey returns the IconKey field value if set, zero value otherwise.
@@ -147,7 +150,9 @@ func (o UpdateOrganizationDataAttributes) MarshalJSON() ([]byte, error) {
 
 func (o UpdateOrganizationDataAttributes) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["name"] = o.Name
+	if !IsNil(o.Name) {
+		toSerialize["name"] = o.Name
+	}
 	if !IsNil(o.IconKey) {
 		toSerialize["icon_key"] = o.IconKey
 	}
@@ -155,43 +160,6 @@ func (o UpdateOrganizationDataAttributes) ToMap() (map[string]interface{}, error
 		toSerialize["banner_key"] = o.BannerKey
 	}
 	return toSerialize, nil
-}
-
-func (o *UpdateOrganizationDataAttributes) UnmarshalJSON(data []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"name",
-	}
-
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(data, &allProperties)
-
-	if err != nil {
-		return err;
-	}
-
-	for _, requiredProperty := range(requiredProperties) {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varUpdateOrganizationDataAttributes := _UpdateOrganizationDataAttributes{}
-
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varUpdateOrganizationDataAttributes)
-
-	if err != nil {
-		return err
-	}
-
-	*o = UpdateOrganizationDataAttributes(varUpdateOrganizationDataAttributes)
-
-	return err
 }
 
 type NullableUpdateOrganizationDataAttributes struct {

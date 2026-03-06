@@ -12,10 +12,6 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type InviteRepo struct {
-	OrgInvitesSql OrgInvitesQ
-}
-
 type OrgInviteRow struct {
 	ID             uuid.UUID `db:"id"`
 	OrganizationID uuid.UUID `db:"organization_id"`
@@ -67,11 +63,21 @@ type OrgInvitesQ interface {
 	Count(ctx context.Context) (uint, error)
 }
 
-func (r *InviteRepo) CreateInvite(
+type InviteRepo struct {
+	query OrgInvitesQ
+}
+
+func NewInviteRepo(orgInvitesSql OrgInvitesQ) *InviteRepo {
+	return &InviteRepo{
+		query: orgInvitesSql,
+	}
+}
+
+func (r *InviteRepo) Create(
 	ctx context.Context,
 	params core.InviteCreateParams,
 ) (models.Invite, error) {
-	row, err := r.OrgInvitesSql.New().Insert(ctx, OrgInviteRow{
+	row, err := r.query.New().Insert(ctx, OrgInviteRow{
 		OrganizationID: params.OrganizationID,
 		AccountID:      params.AccountID,
 		ExpiresAt:      params.ExpiresAt,
@@ -86,11 +92,11 @@ func (r *InviteRepo) CreateInvite(
 	return row.ToModel(), nil
 }
 
-func (r *InviteRepo) GetInvite(
+func (r *InviteRepo) Get(
 	ctx context.Context,
 	inviteID uuid.UUID,
 ) (models.Invite, error) {
-	row, err := r.OrgInvitesSql.New().FilterByID(inviteID).Get(ctx)
+	row, err := r.query.New().FilterByID(inviteID).Get(ctx)
 	if err != nil {
 		return models.Invite{}, fmt.Errorf("failed to get invite with ID %s, cause: %w", inviteID, err)
 	}
@@ -103,12 +109,12 @@ func (r *InviteRepo) GetInvite(
 	return row.ToModel(), nil
 }
 
-func (r *InviteRepo) UpdateInviteStatus(
+func (r *InviteRepo) UpdateStatus(
 	ctx context.Context,
 	inviteID uuid.UUID,
 	status string,
 ) (models.Invite, error) {
-	row, err := r.OrgInvitesSql.New().FilterByID(inviteID).UpdateStatus(status).UpdateOne(ctx)
+	row, err := r.query.New().FilterByID(inviteID).UpdateStatus(status).UpdateOne(ctx)
 	if err != nil {
 		return models.Invite{}, fmt.Errorf("failed to update invite status with ID %s, cause: %w", inviteID, err)
 	}
@@ -121,11 +127,11 @@ func (r *InviteRepo) UpdateInviteStatus(
 	return row.ToModel(), nil
 }
 
-func (r *InviteRepo) DeleteInvite(
+func (r *InviteRepo) Delete(
 	ctx context.Context,
 	inviteID uuid.UUID,
 ) error {
-	err := r.OrgInvitesSql.New().FilterByID(inviteID).Delete(ctx)
+	err := r.query.New().FilterByID(inviteID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete invite with inviteID %s, cause: %w", inviteID, err)
 	}
@@ -133,9 +139,9 @@ func (r *InviteRepo) DeleteInvite(
 	return nil
 }
 
-func (r *InviteRepo) GetOrganizationInvites(
+func (r *InviteRepo) GetList(
 	ctx context.Context,
-	organizationID uuid.UUID,
+	params core.FilterInvitesParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
 	if limit == 0 {
@@ -145,63 +151,25 @@ func (r *InviteRepo) GetOrganizationInvites(
 		limit = 1000
 	}
 
-	rows, err := r.OrgInvitesSql.New().
-		FilterByOrganizationID(organizationID).
-		Page(limit, offset).
-		Select(ctx)
+	q := r.query.New()
+	if params.OrganizationID != nil {
+		q = q.FilterByOrganizationID(*params.OrganizationID)
+	}
+	if params.AccountID != nil {
+		q = q.FilterByAccountID(*params.AccountID)
+	}
+
+	rows, err := q.Page(limit, offset).Select(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
-			"failed to get invites for organization ID %s, cause: %w", organizationID, err,
+			"failed to get invites for filter params %+v, cause: %w", params, err,
 		)
 	}
 
-	total, err := r.OrgInvitesSql.New().
-		FilterByOrganizationID(organizationID).
-		Count(ctx)
+	total, err := q.Count(ctx)
 	if err != nil {
 		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
-			"failed to count invites for organization ID %s, cause: %w", organizationID, err,
-		)
-	}
-
-	res := make([]models.Invite, 0, len(rows))
-	for _, row := range rows {
-		res = append(res, row.ToModel())
-	}
-
-	return pagi.Page[[]models.Invite]{
-		Data:  res,
-		Page:  uint(offset/limit) + 1,
-		Size:  uint(len(res)),
-		Total: total,
-	}, nil
-}
-
-func (r *InviteRepo) GetAccountInvites(
-	ctx context.Context,
-	accountID uuid.UUID,
-	limit, offset uint,
-) (pagi.Page[[]models.Invite], error) {
-	if limit == 0 {
-		limit = 10
-	}
-
-	rows, err := r.OrgInvitesSql.New().
-		FilterByAccountID(accountID).
-		Page(limit, offset).
-		Select(ctx)
-	if err != nil {
-		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
-			"failed to get invites for account ID %s, cause: %w", accountID, err,
-		)
-	}
-
-	total, err := r.OrgInvitesSql.New().
-		FilterByAccountID(accountID).
-		Count(ctx)
-	if err != nil {
-		return pagi.Page[[]models.Invite]{}, fmt.Errorf(
-			"failed to count invites for account ID %s, cause: %w", accountID, err,
+			"failed to count invites for filter params %+v, cause: %w", params, err,
 		)
 	}
 
@@ -218,11 +186,11 @@ func (r *InviteRepo) GetAccountInvites(
 	}, nil
 }
 
-func (r *InviteRepo) ExistsActiveInviteByAccountID(
+func (r *InviteRepo) ExistActiveForAccountInOrg(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (bool, error) {
-	exists, err := r.OrgInvitesSql.New().
+	exists, err := r.query.New().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		FilterExpiresAfter(time.Now().UTC()).

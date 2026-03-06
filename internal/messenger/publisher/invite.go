@@ -37,12 +37,7 @@ func (p *Publisher) WriteOrgInviteCreated(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org invite created, cause: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 func (p *Publisher) WriteOrgInviteAccepted(
@@ -66,11 +61,7 @@ func (p *Publisher) WriteOrgInviteAccepted(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org invite accepted, cause: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 func (p *Publisher) WriteOrgInviteDeclined(
@@ -94,11 +85,7 @@ func (p *Publisher) WriteOrgInviteDeclined(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org invite declined, cause: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 func (p *Publisher) WriteOrgInviteCanceled(
@@ -122,9 +109,5 @@ func (p *Publisher) WriteOrgInviteCanceled(
 		Payload:  payload,
 		Producer: p.identity,
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create sender event for org invite deleted, cause: %w", err)
-	}
-
-	return nil
+	return err
 }

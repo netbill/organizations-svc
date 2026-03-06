@@ -501,24 +501,24 @@ func (a *MembersAPIService) OrganizationsSvcV1MembersMemberIdGetExecute(r ApiOrg
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiOrganizationsSvcV1MembersMemberIdPutRequest struct {
+type ApiOrganizationsSvcV1MembersMemberIdPatchRequest struct {
 	ctx context.Context
 	ApiService *MembersAPIService
 	memberId uuid.UUID
 	updateMember *UpdateMember
 }
 
-func (r ApiOrganizationsSvcV1MembersMemberIdPutRequest) UpdateMember(updateMember UpdateMember) ApiOrganizationsSvcV1MembersMemberIdPutRequest {
+func (r ApiOrganizationsSvcV1MembersMemberIdPatchRequest) UpdateMember(updateMember UpdateMember) ApiOrganizationsSvcV1MembersMemberIdPatchRequest {
 	r.updateMember = &updateMember
 	return r
 }
 
-func (r ApiOrganizationsSvcV1MembersMemberIdPutRequest) Execute() (*Member, *http.Response, error) {
-	return r.ApiService.OrganizationsSvcV1MembersMemberIdPutExecute(r)
+func (r ApiOrganizationsSvcV1MembersMemberIdPatchRequest) Execute() (*Member, *http.Response, error) {
+	return r.ApiService.OrganizationsSvcV1MembersMemberIdPatchExecute(r)
 }
 
 /*
-OrganizationsSvcV1MembersMemberIdPut Update member
+OrganizationsSvcV1MembersMemberIdPatch Update member
 
 Updates a member by ID. Only the organization head can perform this action.
 **400 Bad Request** is returned when the member ID is not a valid UUID or request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not the organization head or the organization is suspended. **404 Not Found** is returned when the member or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
@@ -526,10 +526,10 @@ Updates a member by ID. Only the organization head can perform this action.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param memberId Member ID
- @return ApiOrganizationsSvcV1MembersMemberIdPutRequest
+ @return ApiOrganizationsSvcV1MembersMemberIdPatchRequest
 */
-func (a *MembersAPIService) OrganizationsSvcV1MembersMemberIdPut(ctx context.Context, memberId uuid.UUID) ApiOrganizationsSvcV1MembersMemberIdPutRequest {
-	return ApiOrganizationsSvcV1MembersMemberIdPutRequest{
+func (a *MembersAPIService) OrganizationsSvcV1MembersMemberIdPatch(ctx context.Context, memberId uuid.UUID) ApiOrganizationsSvcV1MembersMemberIdPatchRequest {
+	return ApiOrganizationsSvcV1MembersMemberIdPatchRequest{
 		ApiService: a,
 		ctx: ctx,
 		memberId: memberId,
@@ -538,15 +538,15 @@ func (a *MembersAPIService) OrganizationsSvcV1MembersMemberIdPut(ctx context.Con
 
 // Execute executes the request
 //  @return Member
-func (a *MembersAPIService) OrganizationsSvcV1MembersMemberIdPutExecute(r ApiOrganizationsSvcV1MembersMemberIdPutRequest) (*Member, *http.Response, error) {
+func (a *MembersAPIService) OrganizationsSvcV1MembersMemberIdPatchExecute(r ApiOrganizationsSvcV1MembersMemberIdPatchRequest) (*Member, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPut
+		localVarHTTPMethod   = http.MethodPatch
 		localVarPostBody     interface{}
 		formFiles            []formFile
 		localVarReturnValue  *Member
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MembersAPIService.OrganizationsSvcV1MembersMemberIdPut")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MembersAPIService.OrganizationsSvcV1MembersMemberIdPatch")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}

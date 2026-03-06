@@ -7,7 +7,7 @@ Method | HTTP request | Description
 [**OrganizationsSvcV1MembersGet**](MembersAPI.md#OrganizationsSvcV1MembersGet) | **Get** /organizations-svc/v1/members/ | Get members
 [**OrganizationsSvcV1MembersMemberIdDelete**](MembersAPI.md#OrganizationsSvcV1MembersMemberIdDelete) | **Delete** /organizations-svc/v1/members/{member_id} | Delete member
 [**OrganizationsSvcV1MembersMemberIdGet**](MembersAPI.md#OrganizationsSvcV1MembersMemberIdGet) | **Get** /organizations-svc/v1/members/{member_id} | Get member
-[**OrganizationsSvcV1MembersMemberIdPut**](MembersAPI.md#OrganizationsSvcV1MembersMemberIdPut) | **Put** /organizations-svc/v1/members/{member_id} | Update member
+[**OrganizationsSvcV1MembersMemberIdPatch**](MembersAPI.md#OrganizationsSvcV1MembersMemberIdPatch) | **Patch** /organizations-svc/v1/members/{member_id} | Update member
 
 
 
@@ -227,9 +227,9 @@ No authorization required
 [[Back to README]](../README.md)
 
 
-## OrganizationsSvcV1MembersMemberIdPut
+## OrganizationsSvcV1MembersMemberIdPatch
 
-> Member OrganizationsSvcV1MembersMemberIdPut(ctx, memberId).UpdateMember(updateMember).Execute()
+> Member OrganizationsSvcV1MembersMemberIdPatch(ctx, memberId).UpdateMember(updateMember).Execute()
 
 Update member
 
@@ -253,13 +253,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.MembersAPI.OrganizationsSvcV1MembersMemberIdPut(context.Background(), memberId).UpdateMember(updateMember).Execute()
+	resp, r, err := apiClient.MembersAPI.OrganizationsSvcV1MembersMemberIdPatch(context.Background(), memberId).UpdateMember(updateMember).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `MembersAPI.OrganizationsSvcV1MembersMemberIdPut``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `MembersAPI.OrganizationsSvcV1MembersMemberIdPatch``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `OrganizationsSvcV1MembersMemberIdPut`: Member
-	fmt.Fprintf(os.Stdout, "Response from `MembersAPI.OrganizationsSvcV1MembersMemberIdPut`: %v\n", resp)
+	// response from `OrganizationsSvcV1MembersMemberIdPatch`: Member
+	fmt.Fprintf(os.Stdout, "Response from `MembersAPI.OrganizationsSvcV1MembersMemberIdPatch`: %v\n", resp)
 }
 ```
 
@@ -273,7 +273,7 @@ Name | Type | Description  | Notes
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiOrganizationsSvcV1MembersMemberIdPutRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiOrganizationsSvcV1MembersMemberIdPatchRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes

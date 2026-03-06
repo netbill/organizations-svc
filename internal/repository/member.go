@@ -12,10 +12,6 @@ import (
 	"github.com/netbill/restkit/pagi"
 )
 
-type MemberRepo struct {
-	OrgMembersSql OrgMembersQ
-}
-
 type OrganizationMemberRow struct {
 	ID             uuid.UUID `db:"id"`
 	AccountID      uuid.UUID `db:"account_id"`
@@ -78,43 +74,39 @@ type OrgMembersQ interface {
 	Count(ctx context.Context) (uint, error)
 }
 
-func (r *MemberRepo) CreateMember(
+type MemberRepo struct {
+	query OrgMembersQ
+}
+
+func NewMemberRepo(orgMembersSql OrgMembersQ) *MemberRepo {
+	return &MemberRepo{
+		query: orgMembersSql,
+	}
+}
+
+func (r *MemberRepo) Create(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
+	head bool,
 ) (models.Member, error) {
-	row, err := r.OrgMembersSql.New().Insert(ctx, OrganizationMemberRow{
+	row, err := r.query.New().Insert(ctx, OrganizationMemberRow{
 		AccountID:      accountID,
 		OrganizationID: organizationID,
+		Head:           head,
 	})
 	if err != nil {
 		return models.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
 	}
 
-	return r.GetMember(ctx, row.ID)
+	return r.GetByID(ctx, row.ID)
 }
 
-func (r *MemberRepo) CreateMemberHead(
-	ctx context.Context,
-	accountID, organizationID uuid.UUID,
-) (models.Member, error) {
-	row, err := r.OrgMembersSql.New().Insert(ctx, OrganizationMemberRow{
-		AccountID:      accountID,
-		OrganizationID: organizationID,
-		Head:           true,
-	})
-	if err != nil {
-		return models.Member{}, fmt.Errorf("failed to create member, cause: %w", err)
-	}
-
-	return r.GetMember(ctx, row.ID)
-}
-
-func (r *MemberRepo) UpdateMember(
+func (r *MemberRepo) Update(
 	ctx context.Context,
 	ID uuid.UUID,
 	params core.MemberUpdateParams,
 ) (models.Member, error) {
-	q := r.OrgMembersSql.New().
+	q := r.query.New().
 		FilterByID(ID)
 
 	if params.Position != nil {
@@ -134,14 +126,14 @@ func (r *MemberRepo) UpdateMember(
 		)
 	}
 
-	return r.GetMember(ctx, row.ID)
+	return row.ToModel(), nil
 }
 
-func (r *MemberRepo) GetMember(
+func (r *MemberRepo) GetByID(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Member, error) {
-	row, err := r.OrgMembersSql.New().FilterByID(memberID).Get(ctx)
+	row, err := r.query.New().FilterByID(memberID).Get(ctx)
 	if err != nil {
 		return models.Member{}, fmt.Errorf("failed to get member, cause: %w", err)
 	}
@@ -154,12 +146,12 @@ func (r *MemberRepo) GetMember(
 	return row.ToModel(), nil
 }
 
-func (r *MemberRepo) GetMembersByAccountAndOrgs(
+func (r *MemberRepo) GetListForAccountAndOrgs(
 	ctx context.Context,
 	accountID uuid.UUID,
 	organizationIDs []uuid.UUID,
 ) ([]models.Member, error) {
-	q := r.OrgMembersSql.New().
+	q := r.query.New().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationIDs...)
 
@@ -176,11 +168,11 @@ func (r *MemberRepo) GetMembersByAccountAndOrgs(
 	return members, nil
 }
 
-func (r *MemberRepo) GetMemberByAccountAndOrganization(
+func (r *MemberRepo) GetForAccountAndOrg(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (models.Member, error) {
-	row, err := r.OrgMembersSql.New().
+	row, err := r.query.New().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		Get(ctx)
@@ -196,11 +188,11 @@ func (r *MemberRepo) GetMemberByAccountAndOrganization(
 	return row.ToModel(), nil
 }
 
-func (r *MemberRepo) MemberExists(
+func (r *MemberRepo) ExistsForAccountAndOrg(
 	ctx context.Context,
 	accountID, organizationID uuid.UUID,
 ) (bool, error) {
-	exists, err := r.OrgMembersSql.New().
+	exists, err := r.query.New().
 		FilterByAccountID(accountID).
 		FilterByOrganizationID(organizationID).
 		Exists(ctx)
@@ -211,7 +203,7 @@ func (r *MemberRepo) MemberExists(
 	return exists, nil
 }
 
-func (r *MemberRepo) GetMembers(
+func (r *MemberRepo) GetList(
 	ctx context.Context,
 	filter core.MemberFilterParams,
 	limit uint,
@@ -224,7 +216,7 @@ func (r *MemberRepo) GetMembers(
 		limit = 1000
 	}
 
-	q := r.OrgMembersSql.New()
+	q := r.query.New()
 	if filter.OrganizationID != nil {
 		q = q.FilterByOrganizationID(*filter.OrganizationID)
 	}
@@ -270,11 +262,11 @@ func (r *MemberRepo) GetMembers(
 	}, nil
 }
 
-func (r *MemberRepo) DeleteMember(
+func (r *MemberRepo) Delete(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) error {
-	err := r.OrgMembersSql.New().FilterByID(memberID).Delete(ctx)
+	err := r.query.New().FilterByID(memberID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete member with ID %s, cause: %w", memberID, err)
 	}
@@ -282,11 +274,11 @@ func (r *MemberRepo) DeleteMember(
 	return nil
 }
 
-func (r *MemberRepo) DeleteMembersByAccountID(
+func (r *MemberRepo) DeleteForAccountAndOrg(
 	ctx context.Context,
 	accountID uuid.UUID,
 ) error {
-	err := r.OrgMembersSql.New().FilterByAccountID(accountID).Delete(ctx)
+	err := r.query.New().FilterByAccountID(accountID).Delete(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete members with account ID %s, cause: %w", accountID, err)
 	}

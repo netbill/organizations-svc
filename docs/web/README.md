@@ -78,27 +78,24 @@ All URIs are relative to *http://localhost:8003*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*InvitesAPI* | [**OrganizationsSvcV1InvitesGet**](docs/InvitesAPI.md#organizationssvcv1invitesget) | **Get** /organizations-svc/v1/invites/ | Get invites
 *InvitesAPI* | [**OrganizationsSvcV1InvitesInviteIdAcceptPatch**](docs/InvitesAPI.md#organizationssvcv1invitesinviteidacceptpatch) | **Patch** /organizations-svc/v1/invites/{invite_id}/accept | Accept invite
 *InvitesAPI* | [**OrganizationsSvcV1InvitesInviteIdCancelledPatch**](docs/InvitesAPI.md#organizationssvcv1invitesinviteidcancelledpatch) | **Patch** /organizations-svc/v1/invites/{invite_id}/cancelled | Cancel invite
 *InvitesAPI* | [**OrganizationsSvcV1InvitesInviteIdDeclinePatch**](docs/InvitesAPI.md#organizationssvcv1invitesinviteiddeclinepatch) | **Patch** /organizations-svc/v1/invites/{invite_id}/decline | Decline invite
 *InvitesAPI* | [**OrganizationsSvcV1InvitesInviteIdGet**](docs/InvitesAPI.md#organizationssvcv1invitesinviteidget) | **Get** /organizations-svc/v1/invites/{invite_id} | Get invite
-*InvitesAPI* | [**OrganizationsSvcV1InvitesMeGet**](docs/InvitesAPI.md#organizationssvcv1invitesmeget) | **Get** /organizations-svc/v1/invites/me | Get my invites
 *InvitesAPI* | [**OrganizationsSvcV1InvitesPost**](docs/InvitesAPI.md#organizationssvcv1invitespost) | **Post** /organizations-svc/v1/invites/ | Create invite
 *MembersAPI* | [**OrganizationsSvcV1MembersGet**](docs/MembersAPI.md#organizationssvcv1membersget) | **Get** /organizations-svc/v1/members/ | Get members
 *MembersAPI* | [**OrganizationsSvcV1MembersMemberIdDelete**](docs/MembersAPI.md#organizationssvcv1membersmemberiddelete) | **Delete** /organizations-svc/v1/members/{member_id} | Delete member
 *MembersAPI* | [**OrganizationsSvcV1MembersMemberIdGet**](docs/MembersAPI.md#organizationssvcv1membersmemberidget) | **Get** /organizations-svc/v1/members/{member_id} | Get member
-*MembersAPI* | [**OrganizationsSvcV1MembersMemberIdPut**](docs/MembersAPI.md#organizationssvcv1membersmemberidput) | **Put** /organizations-svc/v1/members/{member_id} | Update member
+*MembersAPI* | [**OrganizationsSvcV1MembersMemberIdPatch**](docs/MembersAPI.md#organizationssvcv1membersmemberidpatch) | **Patch** /organizations-svc/v1/members/{member_id} | Update member
 *OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsGet**](docs/OrganizationsAPI.md#organizationssvcv1organizationsget) | **Get** /organizations-svc/v1/organizations/ | Get organizations
 *OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdActivatePost**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidactivatepost) | **Post** /organizations-svc/v1/organizations/{organization_id}/activate | Activate organization
 *OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdDeactivatePost**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationiddeactivatepost) | **Post** /organizations-svc/v1/organizations/{organization_id}/deactivate | Deactivate organization
 *OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdDelete**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationiddelete) | **Delete** /organizations-svc/v1/organizations/{organization_id} | Delete organization
 *OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdGet**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidget) | **Get** /organizations-svc/v1/organizations/{organization_id} | Get organization
-*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdInvitesGet**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidinvitesget) | **Get** /organizations-svc/v1/organizations/{organization_id}/invites | Get organization invites
-*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdLeaveDelete**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidleavedelete) | **Delete** /organizations-svc/v1/organizations/{organization_id}/leave | Leave organization
-*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadBannerDelete**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidmediauploadbannerdelete) | **Delete** /organizations-svc/v1/organizations/{organization_id}/media/upload/banner | Delete organization upload banner
-*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadIconDelete**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidmediauploadicondelete) | **Delete** /organizations-svc/v1/organizations/{organization_id}/media/upload/icon | Delete organization upload icon
-*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdMediaUploadUrlPost**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidmediauploadurlpost) | **Post** /organizations-svc/v1/organizations/{organization_id}/media/upload/url | Create organization upload media link
-*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdPut**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidput) | **Put** /organizations-svc/v1/organizations/{organization_id} | Update organization
+*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidmediadelete) | **Delete** /organizations-svc/v1/organizations/{organization_id}/media | Delete organization upload media
+*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdMediaPost**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidmediapost) | **Post** /organizations-svc/v1/organizations/{organization_id}/media | Create organization upload media link
+*OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdPatch**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidpatch) | **Patch** /organizations-svc/v1/organizations/{organization_id} | Update organization
 *OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdSuspendPost**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidsuspendpost) | **Post** /organizations-svc/v1/organizations/{organization_id}/suspend | Suspend organization
 *OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsOrganizationIdUnsuspendPost**](docs/OrganizationsAPI.md#organizationssvcv1organizationsorganizationidunsuspendpost) | **Post** /organizations-svc/v1/organizations/{organization_id}/unsuspend | Unsuspend organization
 *OrganizationsAPI* | [**OrganizationsSvcV1OrganizationsPost**](docs/OrganizationsAPI.md#organizationssvcv1organizationspost) | **Post** /organizations-svc/v1/organizations/ | Create organization
@@ -113,12 +110,9 @@ Class | Method | HTTP request | Description
  - [CreateOrganizationData](docs/CreateOrganizationData.md)
  - [CreateOrganizationDataAttributes](docs/CreateOrganizationDataAttributes.md)
  - [Data](docs/Data.md)
- - [DeleteUploadOrgBanner](docs/DeleteUploadOrgBanner.md)
- - [DeleteUploadOrgBannerData](docs/DeleteUploadOrgBannerData.md)
- - [DeleteUploadOrgBannerDataAttributes](docs/DeleteUploadOrgBannerDataAttributes.md)
- - [DeleteUploadOrgIcon](docs/DeleteUploadOrgIcon.md)
- - [DeleteUploadOrgIconData](docs/DeleteUploadOrgIconData.md)
- - [DeleteUploadOrgIconDataAttributes](docs/DeleteUploadOrgIconDataAttributes.md)
+ - [DeleteUploadOrgMedia](docs/DeleteUploadOrgMedia.md)
+ - [DeleteUploadOrgMediaData](docs/DeleteUploadOrgMediaData.md)
+ - [DeleteUploadOrgMediaDataAttributes](docs/DeleteUploadOrgMediaDataAttributes.md)
  - [Errors](docs/Errors.md)
  - [ErrorsErrorsInner](docs/ErrorsErrorsInner.md)
  - [Invite](docs/Invite.md)

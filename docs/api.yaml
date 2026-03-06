@@ -13,12 +13,8 @@ paths:
 
   /organizations-svc/v1/organizations/{organization_id}:
     $ref: './spec/paths/Organization.yaml'
-  /organizations-svc/v1/organizations/{organization_id}/media/upload/url:
-    $ref: './spec/paths/CreateOrganizationUploadMediaLink.yaml'
-  /organizations-svc/v1/organizations/{organization_id}/media/upload/icon:
-    $ref: './spec/paths/DeleteOrganizationUploadIcon.yaml'
-  /organizations-svc/v1/organizations/{organization_id}/media/upload/banner:
-    $ref: './spec/paths/DeleteOrganizationUploadBanner.yaml'
+  /organizations-svc/v1/organizations/{organization_id}/media:
+    $ref: './spec/paths/OrganizationMedia.yaml'
   /organizations-svc/v1/organizations/{organization_id}/activate:
     $ref: './spec/paths/ActivateOrganization.yaml'
   /organizations-svc/v1/organizations/{organization_id}/deactivate:
@@ -27,10 +23,6 @@ paths:
     $ref: './spec/paths/SuspendOrganization.yaml'
   /organizations-svc/v1/organizations/{organization_id}/unsuspend:
     $ref: './spec/paths/UnsuspendOrganization.yaml'
-  /organizations-svc/v1/organizations/{organization_id}/invites:
-    $ref: './spec/paths/OrganizationInvites.yaml'
-  /organizations-svc/v1/organizations/{organization_id}/leave:
-    $ref: './spec/paths/LeaveOrganization.yaml'
 
   /organizations-svc/v1/members/:
     $ref: './spec/paths/Members.yaml'
@@ -38,9 +30,7 @@ paths:
     $ref: './spec/paths/Member.yaml'
 
   /organizations-svc/v1/invites/:
-    $ref: './spec/paths/CreateInvite.yaml'
-  /organizations-svc/v1/invites/me:
-    $ref: './spec/paths/MyInvites.yaml'
+    $ref: './spec/paths/Invites.yaml'
   /organizations-svc/v1/invites/{invite_id}:
     $ref: './spec/paths/GetInvite.yaml'
   /organizations-svc/v1/invites/{invite_id}/accept:
@@ -67,10 +57,8 @@ components:
       $ref: './spec/components/schemas/requests/UpdateMember.yaml'
     CreateInvite:
       $ref: './spec/components/schemas/requests/CreateInvite.yaml'
-    DeleteUploadOrgIcon:
-      $ref: './spec/components/schemas/requests/DeleteUploadOrgIcon.yaml'
-    DeleteUploadOrgBanner:
-      $ref: './spec/components/schemas/requests/DeleteUploadOrgBanner.yaml'
+    DeleteUploadOrgMedia:
+      $ref: './spec/components/schemas/requests/DeleteUploadOrgMedia.yaml'
 
     # responses
     PaginationData:

@@ -26,8 +26,8 @@ type ProfileAttributes struct {
 	Username string `json:"username"`
 	// profile pseudonym
 	Pseudonym *string `json:"pseudonym,omitempty"`
-	// avatar key
-	AvatarKey *string `json:"avatar_key,omitempty"`
+	// profile avatar url
+	AvatarUrl *string `json:"avatar_url,omitempty"`
 	// profile version
 	Version int32 `json:"version"`
 	// updated at
@@ -115,36 +115,36 @@ func (o *ProfileAttributes) SetPseudonym(v string) {
 	o.Pseudonym = &v
 }
 
-// GetAvatarKey returns the AvatarKey field value if set, zero value otherwise.
-func (o *ProfileAttributes) GetAvatarKey() string {
-	if o == nil || IsNil(o.AvatarKey) {
+// GetAvatarUrl returns the AvatarUrl field value if set, zero value otherwise.
+func (o *ProfileAttributes) GetAvatarUrl() string {
+	if o == nil || IsNil(o.AvatarUrl) {
 		var ret string
 		return ret
 	}
-	return *o.AvatarKey
+	return *o.AvatarUrl
 }
 
-// GetAvatarKeyOk returns a tuple with the AvatarKey field value if set, nil otherwise
+// GetAvatarUrlOk returns a tuple with the AvatarUrl field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ProfileAttributes) GetAvatarKeyOk() (*string, bool) {
-	if o == nil || IsNil(o.AvatarKey) {
+func (o *ProfileAttributes) GetAvatarUrlOk() (*string, bool) {
+	if o == nil || IsNil(o.AvatarUrl) {
 		return nil, false
 	}
-	return o.AvatarKey, true
+	return o.AvatarUrl, true
 }
 
-// HasAvatarKey returns a boolean if a field has been set.
-func (o *ProfileAttributes) HasAvatarKey() bool {
-	if o != nil && !IsNil(o.AvatarKey) {
+// HasAvatarUrl returns a boolean if a field has been set.
+func (o *ProfileAttributes) HasAvatarUrl() bool {
+	if o != nil && !IsNil(o.AvatarUrl) {
 		return true
 	}
 
 	return false
 }
 
-// SetAvatarKey gets a reference to the given string and assigns it to the AvatarKey field.
-func (o *ProfileAttributes) SetAvatarKey(v string) {
-	o.AvatarKey = &v
+// SetAvatarUrl gets a reference to the given string and assigns it to the AvatarUrl field.
+func (o *ProfileAttributes) SetAvatarUrl(v string) {
+	o.AvatarUrl = &v
 }
 
 // GetVersion returns the Version field value
@@ -233,8 +233,8 @@ func (o ProfileAttributes) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Pseudonym) {
 		toSerialize["pseudonym"] = o.Pseudonym
 	}
-	if !IsNil(o.AvatarKey) {
-		toSerialize["avatar_key"] = o.AvatarKey
+	if !IsNil(o.AvatarUrl) {
+		toSerialize["avatar_url"] = o.AvatarUrl
 	}
 	toSerialize["version"] = o.Version
 	toSerialize["updated_at"] = o.UpdatedAt

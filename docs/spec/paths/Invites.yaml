@@ -1,0 +1,176 @@
+post:
+  tags:
+    - invites
+  summary: Create invite
+  description: >
+    Creates an invite for an account to join an organization.
+    Only the organization head can create invites.
+    The invite expires in 24 hours.
+
+    **400 Bad Request** is returned when the request body is invalid.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the initiator is not a member or not the organization head.
+    **404 Not Found** is returned when the organization or account profile does not exist.
+    **409 Conflict** is returned when the account is already a member or an active invite already exists.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/requests/CreateInvite.yaml'
+  responses:
+    '201':
+      description: Invite successfully created
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Invite.yaml'
+    '400':
+      description: >
+        Bad Request. Request body is invalid.
+        Check the `errors` array for details.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Initiator is not a member of the organization or is not the organization head.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '404':
+      description: >
+        Not Found. Organization or account profile does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '409':
+      description: >
+        Conflict. Account is already a member of the organization or an active invite already exists.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+
+get:
+  tags:
+    - invites
+  summary: Get invites
+  description: >
+    Returns a paginated list of invites.
+
+    By default returns invites for the authenticated account.
+    Can be filtered by `account_id` or `organization_id`.
+
+    When filtering by `organization_id`, the initiator must be a member of that organization.
+    When filtering by `account_id`, the initiator must match the requested account.
+
+    **400 Bad Request** is returned when query parameters are invalid or pagination limit exceeds 100.
+    **401 Unauthorized** is returned when the authorization token is missing or invalid.
+    **403 Forbidden** is returned when the initiator is not a member of the organization or requests invites for another account.
+    **500 Internal Server Error** is returned when an unexpected error occurs.
+  security:
+    - BearerAuth: [ ]
+  parameters:
+    - in: query
+      name: account_id
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: >
+        Filter invites by account ID.
+        Must match the authenticated account.
+    - in: query
+      name: organization_id
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: >
+        Filter invites by organization ID.
+        The initiator must be a member of the organization.
+    - in: query
+      name: include
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - profile
+            - organization
+      style: form
+      explode: false
+      description: >
+        Optional list of related resources to include in the response.
+        Supported values: `profile`, `organization`.
+    - in: query
+      name: page[limit]
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+      description: Max number of items to return (1-100).
+    - in: query
+      name: page[offset]
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: Number of items to skip.
+  responses:
+    '200':
+      description: Invites successfully retrieved
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/InvitesCollection.yaml'
+    '400':
+      description: >
+        Bad Request. Query parameters are invalid or pagination limit exceeds 100.
+        Check the `errors` array for details.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '401':
+      description: >
+        Unauthorized. Missing or invalid authorization token.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '403':
+      description: >
+        Forbidden. Initiator is not a member of the organization or requested invites for another account.
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'
+    '500':
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/responses/Errors.yaml'

@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/netbill/organizations-svc/internal/core/models"
@@ -9,44 +10,49 @@ import (
 )
 
 type memberResponse struct {
-	member   resources.MemberData
+	data     resources.MemberData
 	included []resources.MemberIncludedInner
 }
 
 type MemberOption func(*memberResponse)
 
-func WithMemberOrganization(organization models.Organization) MemberOption {
-	return func(r *memberResponse) {
-		inner := organizationData(organization)
-		r.included = append(r.included, resources.MemberIncludedInner{
-			OrganizationData: &inner,
+func WithMemberOrganization(r *http.Request, organization models.Organization) MemberOption {
+	return func(res *memberResponse) {
+		org := organizationData(r, organization)
+		res.included = append(res.included, resources.MemberIncludedInner{
+			OrganizationData: &org,
 		})
 	}
 }
 
-func WithMemberProfile(profile models.Profile) MemberOption {
-	return func(r *memberResponse) {
-		inner := profileData(profile)
-		r.included = append(r.included, resources.MemberIncludedInner{
-			ProfileData: &inner,
+func WithMemberProfile(r *http.Request, profile models.Profile) MemberOption {
+	return func(res *memberResponse) {
+		prof := profileData(r, profile)
+		res.included = append(res.included, resources.MemberIncludedInner{
+			ProfileData: &prof,
 		})
 	}
 }
 
-func Member(mod models.Member, opts ...MemberOption) resources.Member {
-	r := &memberResponse{
-		member: memberData(mod),
+func Member(
+	r *http.Request,
+	mod models.Member,
+	opts ...MemberOption,
+) resources.Member {
+	res := &memberResponse{
+		data: memberData(r, mod),
 	}
 	for _, opt := range opts {
-		opt(r)
+		opt(res)
 	}
+
 	return resources.Member{
-		Data:     r.member,
-		Included: r.included,
+		Data:     res.data,
+		Included: deduplicateMemberIncluded(res.included),
 	}
 }
 
-func memberData(mod models.Member) resources.MemberData {
+func memberData(r *http.Request, mod models.Member) resources.MemberData {
 	return resources.MemberData{
 		Id:   mod.ID,
 		Type: "member",
@@ -82,44 +88,48 @@ type memberCollectionResponse struct {
 
 type MembersCollectionOption func(*memberCollectionResponse)
 
-func WithCollectionMembersProfiles(profiles []models.Profile) MembersCollectionOption {
-	return func(r *memberCollectionResponse) {
-		for _, model := range profiles {
-			inner := profileData(model)
-			r.included = append(r.included, resources.MemberIncludedInner{
-				ProfileData: &inner,
+func WithCollectionMembersProfiles(r *http.Request, profiles []models.Profile) MembersCollectionOption {
+	return func(res *memberCollectionResponse) {
+		for _, profile := range profiles {
+			prof := profileData(r, profile)
+			res.included = append(res.included, resources.MemberIncludedInner{
+				ProfileData: &prof,
 			})
 		}
 	}
 }
 
-func WithCollectionMembersOrganization(organization models.Organization) MembersCollectionOption {
-	return func(r *memberCollectionResponse) {
-		inner := organizationData(organization)
-		r.included = append(r.included, resources.MemberIncludedInner{
-			OrganizationData: &inner,
+func WithCollectionMembersOrganization(r *http.Request, organization models.Organization) MembersCollectionOption {
+	return func(res *memberCollectionResponse) {
+		org := organizationData(r, organization)
+		res.included = append(res.included, resources.MemberIncludedInner{
+			OrganizationData: &org,
 		})
 	}
 }
 
-func Members(r *http.Request, mods pagi.Page[[]models.Member], opts ...MembersCollectionOption) resources.MemberCollection {
-	data := make([]resources.MemberData, len(mods.Data))
-	for i, mod := range mods.Data {
-		data[i] = memberData(mod)
+func Members(
+	r *http.Request,
+	page pagi.Page[[]models.Member],
+	opts ...MembersCollectionOption,
+) resources.MembersCollection {
+	data := make([]resources.MemberData, len(page.Data))
+	for i, mod := range page.Data {
+		data[i] = memberData(r, mod)
 	}
 
-	links := pagi.BuildPageLinks(r, mods.Page, mods.Size, mods.Total)
-
-	resp := &memberCollectionResponse{
+	res := &memberCollectionResponse{
 		data: data,
 	}
 	for _, opt := range opts {
-		opt(resp)
+		opt(res)
 	}
 
-	return resources.MemberCollection{
-		Data:     resp.data,
-		Included: deduplicateIncluded(resp.included),
+	links := pagi.BuildPageLinks(r, page.Page, page.Size, page.Total)
+
+	return resources.MembersCollection{
+		Data:     res.data,
+		Included: deduplicateMemberIncluded(res.included),
 		Links: resources.PaginationData{
 			First: links.First,
 			Last:  links.Last,
@@ -130,26 +140,27 @@ func Members(r *http.Request, mods pagi.Page[[]models.Member], opts ...MembersCo
 	}
 }
 
-func deduplicateIncluded(items []resources.MemberIncludedInner) []resources.MemberIncludedInner {
+func deduplicateMemberIncluded(included []resources.MemberIncludedInner) []resources.MemberIncludedInner {
 	seen := make(map[string]struct{})
-	result := make([]resources.MemberIncludedInner, 0, len(items))
+	result := make([]resources.MemberIncludedInner, 0, len(included))
 
-	for _, item := range items {
-		var key string
-		switch {
-		case item.ProfileData != nil:
-			key = "profile:" + item.ProfileData.Id.String()
-		case item.OrganizationData != nil:
-			key = "organization:" + item.OrganizationData.Id.String()
-		default:
+	for _, item := range included {
+		key := memberIncludeKey(item)
+		if _, ok := seen[key]; ok {
 			continue
 		}
-
-		if _, exists := seen[key]; !exists {
-			seen[key] = struct{}{}
-			result = append(result, item)
-		}
+		seen[key] = struct{}{}
+		result = append(result, item)
 	}
-
 	return result
+}
+
+func memberIncludeKey(item resources.MemberIncludedInner) string {
+	if item.OrganizationData != nil {
+		return fmt.Sprintf("organization:%s", item.OrganizationData.Id)
+	}
+	if item.ProfileData != nil {
+		return fmt.Sprintf("profile:%s", item.ProfileData.Id)
+	}
+	return ""
 }
