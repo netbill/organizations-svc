@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/member"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -104,7 +104,7 @@ func (r *MemberRepo) Create(
 func (r *MemberRepo) Update(
 	ctx context.Context,
 	ID uuid.UUID,
-	params core.MemberUpdateParams,
+	params member.UpdateParams,
 ) (models.Member, error) {
 	q := r.query.New().
 		FilterByID(ID)
@@ -205,7 +205,7 @@ func (r *MemberRepo) ExistsForAccountAndOrg(
 
 func (r *MemberRepo) GetList(
 	ctx context.Context,
-	filter core.MemberFilterParams,
+	filter member.FilterParams,
 	limit uint,
 	offset uint,
 ) (pagi.Page[[]models.Member], error) {

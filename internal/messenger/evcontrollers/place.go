@@ -1,4 +1,4 @@
-package evcontroller
+package evcontrollers
 
 import (
 	"context"
@@ -8,13 +8,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
 	"github.com/netbill/evtypes"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/place"
+	"github.com/netbill/organizations-svc/internal/errx"
 	"github.com/netbill/organizations-svc/pkg/log"
 )
 
 type placeCore interface {
-	Create(ctx context.Context, params core.PlaceCreateParams) error
+	Create(ctx context.Context, params place.CreateParams) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -44,7 +44,7 @@ func (c *PlaceController) Created(
 	logger := c.log.With("operation", operationPlaceCreated).
 		With("place_id", payload.PlaceID)
 
-	err := c.core.Create(ctx, core.PlaceCreateParams{
+	err := c.core.Create(ctx, place.CreateParams{
 		ID:             payload.PlaceID,
 		OrganizationID: payload.OrganizationID,
 		CreatedAt:      payload.CreatedAt,

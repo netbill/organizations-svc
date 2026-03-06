@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
 	"github.com/netbill/evtypes"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/models"
 )
 
 func (p *Publisher) WriteOrgInviteCreated(

@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/invite"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/organizations-svc/internal/rest/requests"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
@@ -23,14 +23,14 @@ import (
 	"github.com/netbill/restkit/render"
 )
 
-type inviteModule interface {
-	Create(ctx context.Context, actor models.AccountActor, params core.InviteCreateParams) (models.Invite, error)
+type inviteCore interface {
+	Create(ctx context.Context, actor models.AccountActor, params invite.CreateParams) (models.Invite, error)
 
 	GetForAccount(ctx context.Context, accountID uuid.UUID, inviteID uuid.UUID) (models.Invite, error)
 	GetList(
 		ctx context.Context,
 		actor models.AccountActor,
-		params core.FilterInvitesParams,
+		params invite.FilterParams,
 		limit, offset uint,
 	) (pagi.Page[[]models.Invite], error)
 
@@ -39,26 +39,21 @@ type inviteModule interface {
 	Cancelled(ctx context.Context, actor models.AccountActor, inviteID uuid.UUID) (models.Invite, error)
 }
 
-type inviteOrganizationModule interface {
+type inviteGetter interface {
 	GetByID(ctx context.Context, organizationID uuid.UUID) (models.Organization, error)
 	GetByIDs(ctx context.Context, organizationIDs []uuid.UUID) ([]models.Organization, error)
 }
 
-type inviteProfileModule interface {
-	GetByID(ctx context.Context, accountID uuid.UUID) (models.Profile, error)
-	GetByIDs(ctx context.Context, accountIDs []uuid.UUID) ([]models.Profile, error)
-}
-
 type InviteController struct {
-	invites       inviteModule
-	organizations inviteOrganizationModule
-	profiles      inviteProfileModule
+	invites       inviteCore
+	organizations inviteGetter
+	profiles      profileGetter
 }
 
 type InviteControllerDeps struct {
-	Invites       inviteModule
-	Organizations inviteOrganizationModule
-	Profiles      inviteProfileModule
+	Invites       inviteCore
+	Organizations inviteGetter
+	Profiles      profileGetter
 }
 
 func NewInviteController(deps InviteControllerDeps) *InviteController {
@@ -87,7 +82,7 @@ func (c *InviteController) Create(w http.ResponseWriter, r *http.Request) {
 	inv, err := c.invites.Create(
 		r.Context(),
 		scope.AccountActor(r),
-		core.InviteCreateParams{
+		invite.CreateParams{
 			OrganizationID: req.Data.Attributes.OrganizationId,
 			AccountID:      req.Data.Attributes.AccountId,
 			ExpiresAt:      time.Now().UTC().Add(24 * time.Hour),
@@ -103,7 +98,8 @@ func (c *InviteController) Create(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, errx.ErrorProfileNotExists):
 		log.WithError(err).Warn("profile for account not found")
 		render.ResponseError(w, problems.NotFound("profile for account not found"))
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorAccountAlreadyMember):
@@ -203,7 +199,7 @@ func (c *InviteController) GetList(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("limit", limit).WithField("offset", offset)
 
-	params := core.FilterInvitesParams{}
+	params := invite.FilterParams{}
 	if accountIdStr := r.URL.Query().Get("account_id"); accountIdStr != "" {
 		accountID, err := uuid.Parse(accountIdStr)
 		if err != nil {

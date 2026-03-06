@@ -69,7 +69,6 @@ type Server struct {
 
 	log           *log.Logger
 	mediaResolver *media.Resolver
-	config        Config
 }
 
 type ServerDeps struct {
@@ -81,7 +80,18 @@ type ServerDeps struct {
 
 	Log           *log.Logger
 	MediaResolver *media.Resolver
-	Config        Config
+}
+
+func NewServer(deps ServerDeps) *Server {
+	return &Server{
+		middlewares: deps.Middlewares,
+		org:         deps.Org,
+		member:      deps.Member,
+		invite:      deps.Invite,
+
+		log:           deps.Log,
+		mediaResolver: deps.MediaResolver,
+	}
 }
 
 type Config struct {
@@ -92,19 +102,7 @@ type Config struct {
 	IdleTimeout       time.Duration
 }
 
-func NewServer(deps ServerDeps) *Server {
-	return &Server{
-		middlewares:   deps.Middlewares,
-		org:           deps.Org,
-		member:        deps.Member,
-		invite:        deps.Invite,
-		log:           deps.Log,
-		mediaResolver: deps.MediaResolver,
-		config:        deps.Config,
-	}
-}
-
-func (s *Server) Run(ctx context.Context) {
+func (s *Server) Run(ctx context.Context, config Config) {
 	auth := s.middlewares.AccountAuth()
 	sysadmin := s.middlewares.AccountAuth(tokens.RoleSystemAdmin)
 
@@ -166,15 +164,15 @@ func (s *Server) Run(ctx context.Context) {
 	})
 
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%d", s.config.Port),
+		Addr:              fmt.Sprintf(":%d", config.Port),
 		Handler:           r,
-		ReadTimeout:       s.config.ReadTimeout,
-		ReadHeaderTimeout: s.config.ReadHeaderTimeout,
-		WriteTimeout:      s.config.WriteTimeout,
-		IdleTimeout:       s.config.IdleTimeout,
+		ReadTimeout:       config.ReadTimeout,
+		ReadHeaderTimeout: config.ReadHeaderTimeout,
+		WriteTimeout:      config.WriteTimeout,
+		IdleTimeout:       config.IdleTimeout,
 	}
 
-	s.log.WithField("port", s.config.Port).Info("starting http service...")
+	s.log.WithField("port", config.Port).Info("starting http service...")
 
 	errCh := make(chan error, 1)
 	go func() {

@@ -1,4 +1,4 @@
-package evcontroller
+package evcontrollers
 
 import (
 	"context"
@@ -8,15 +8,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/netbill/eventbox"
 	"github.com/netbill/evtypes"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/profile"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/organizations-svc/pkg/log"
 )
 
 type profileCore interface {
-	Create(ctx context.Context, profile models.Profile) (models.Profile, error)
-	Update(ctx context.Context, accountID uuid.UUID, params core.ProfileUpdateParams) (models.Profile, error)
+	Create(ctx context.Context, profile profile.CreateParams) (models.Profile, error)
+	Update(ctx context.Context, accountID uuid.UUID, params profile.UpdateParams) (models.Profile, error)
 	Delete(ctx context.Context, accountID uuid.UUID) error
 }
 
@@ -46,7 +46,7 @@ func (c *ProfileController) Created(
 	logger := c.log.WithOperation(operationProfileCreated).
 		With("account_id", payload.AccountID)
 
-	_, err := c.core.Create(ctx, models.Profile{
+	_, err := c.core.Create(ctx, profile.CreateParams{
 		AccountID: payload.AccountID,
 		Username:  payload.Username,
 		CreatedAt: payload.CreatedAt,
@@ -80,7 +80,7 @@ func (c *ProfileController) Updated(
 
 	logger := c.log.WithOperation(operationProfileDeleted).With("account_id", payload.AccountID)
 
-	_, err := c.core.Update(ctx, payload.AccountID, core.ProfileUpdateParams{
+	_, err := c.core.Update(ctx, payload.AccountID, profile.UpdateParams{
 		Username:  payload.Username,
 		Pseudonym: payload.Pseudonym,
 		AvatarKey: payload.AvatarKey,

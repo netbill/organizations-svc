@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/organization"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -80,7 +80,7 @@ func NewOrganizationRepo(organizationsSql OrganizationsQ) *OrganizationRepo {
 
 func (r *OrganizationRepo) Create(
 	ctx context.Context,
-	params core.OrganizationCreateParams,
+	params organization.CreateParams,
 ) (models.Organization, error) {
 	row, err := r.query.New().Insert(ctx, OrganizationRow{
 		Name: params.Name,
@@ -131,7 +131,7 @@ func (r *OrganizationRepo) GetListByIds(
 
 func (r *OrganizationRepo) GetList(
 	ctx context.Context,
-	filter core.OrganizationFilterParams,
+	filter organization.FilterParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Organization], error) {
 	if limit == 0 {
@@ -212,7 +212,7 @@ func (r *OrganizationRepo) GetForAccountAndOrg(
 func (r *OrganizationRepo) Update(
 	ctx context.Context,
 	ID uuid.UUID,
-	params core.OrganizationUpdateParams,
+	params organization.UpdateParams,
 ) (models.Organization, error) {
 	q := r.query.New().FilterByID(ID)
 

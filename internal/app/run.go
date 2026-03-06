@@ -10,15 +10,19 @@ import (
 	"github.com/netbill/awsx"
 	"github.com/netbill/eventbox"
 	eventpg "github.com/netbill/eventbox/pg"
-	"github.com/netbill/organizations-svc/internal/core"
+	"github.com/netbill/organizations-svc/internal/core/invite"
+	"github.com/netbill/organizations-svc/internal/core/member"
+	"github.com/netbill/organizations-svc/internal/core/organization"
+	"github.com/netbill/organizations-svc/internal/core/place"
+	"github.com/netbill/organizations-svc/internal/core/profile"
 	"github.com/netbill/organizations-svc/internal/media"
 	"github.com/netbill/organizations-svc/internal/messenger"
-	"github.com/netbill/organizations-svc/internal/messenger/evcontroller"
+	"github.com/netbill/organizations-svc/internal/messenger/evcontrollers"
 	"github.com/netbill/organizations-svc/internal/messenger/publisher"
 	"github.com/netbill/organizations-svc/internal/repository"
 	"github.com/netbill/organizations-svc/internal/repository/pg"
 	"github.com/netbill/organizations-svc/internal/rest"
-	"github.com/netbill/organizations-svc/internal/rest/controller"
+	"github.com/netbill/organizations-svc/internal/rest/controllers"
 	"github.com/netbill/organizations-svc/internal/rest/middlewares"
 	"github.com/netbill/organizations-svc/internal/tokenmanager"
 	"github.com/netbill/pgdbx"
@@ -101,18 +105,18 @@ func (a *App) Run(ctx context.Context) error {
 	placeRepo := repository.NewPlaceRepo(pg.NewPlacesQ(db))
 	tombstoneRepo := pg.NewTombstonesQ(db)
 
-	profileCore := core.NewProfileModule(core.ProfileDeps{
+	profileCore := profile.NewProfileModule(profile.ServiceDeps{
 		Repo:      profileRepo,
 		Tombstone: tombstoneRepo,
 		Tx:        db,
 	})
 
-	placeCore := core.NewPlaceModule(core.PlaceDeps{
+	placeCore := place.NewPlaceModule(place.ServiceDeps{
 		Repo: placeRepo,
 		Tx:   db,
 	})
 
-	orgCore := core.NewOrganizationModule(core.OrganizationDeps{
+	orgCore := organization.NewOrganizationModule(organization.ServiceDeps{
 		Repo:      organizationRepo,
 		Member:    orgMemberRepo,
 		Place:     placeRepo,
@@ -122,7 +126,7 @@ func (a *App) Run(ctx context.Context) error {
 		Media:     uploader,
 	})
 
-	memberCore := core.NewMemberModule(core.MemberDeps{
+	memberCore := member.NewMemberModule(member.ServiceDeps{
 		Auth:      orgCore,
 		Repo:      orgMemberRepo,
 		Tombstone: tombstoneRepo,
@@ -130,7 +134,7 @@ func (a *App) Run(ctx context.Context) error {
 		Messenger: outbound,
 	})
 
-	inviteCore := core.NewInviteModule(core.InviteDeps{
+	inviteCore := invite.NewInviteModule(invite.InviteDeps{
 		Auth:      orgCore,
 		Repo:      orgInviteRepo,
 		Profile:   profileRepo,
@@ -144,19 +148,19 @@ func (a *App) Run(ctx context.Context) error {
 		AccessSK: a.config.Auth.Tokens.AccountAccess.SecretKey,
 	})
 
-	orgController := controller.NewOrganizationController(controller.OrganizationControllerDeps{
+	orgController := controllers.NewOrganizationController(controllers.OrganizationControllerDeps{
 		Organizations: orgCore,
 		Members:       memberCore,
 		Profiles:      profileCore,
 	})
 
-	memberController := controller.NewMemberController(controller.MemberControllerDeps{
+	memberController := controllers.NewMemberController(controllers.MemberControllerDeps{
 		Members:       memberCore,
 		Profiles:      profileCore,
 		Organizations: orgCore,
 	})
 
-	inviteController := controller.NewInviteController(controller.InviteControllerDeps{
+	inviteController := controllers.NewInviteController(controllers.InviteControllerDeps{
 		Invites:       inviteCore,
 		Organizations: orgCore,
 		Profiles:      profileCore,
@@ -170,16 +174,17 @@ func (a *App) Run(ctx context.Context) error {
 
 		Log:           a.log,
 		MediaResolver: media.NewResolver(a.config.S3.Aws.BaseURL),
-		Config: rest.Config{
+	})
+
+	run(func() {
+		router.Run(ctx, rest.Config{
 			Port:              a.config.Rest.Port,
 			ReadTimeout:       a.config.Rest.Timeouts.Read,
 			ReadHeaderTimeout: a.config.Rest.Timeouts.ReadHeader,
 			WriteTimeout:      a.config.Rest.Timeouts.Write,
 			IdleTimeout:       a.config.Rest.Timeouts.Idle,
-		},
+		})
 	})
-
-	run(func() { router.Run(ctx) })
 
 	outboxWorker := messenger.NewOutboxWorker(a.log, outbox, producer, eventbox.OutboxWorkerConfig{
 		Routines:       a.config.Kafka.Outbox.Routines,
@@ -194,8 +199,8 @@ func (a *App) Run(ctx context.Context) error {
 
 	run(func() { outboxWorker.Run(ctx) })
 
-	evProfileController := evcontroller.NewProfileController(a.log, profileCore)
-	evPlaceController := evcontroller.NewPlaceController(a.log, placeCore)
+	evProfileController := evcontrollers.NewProfileController(a.log, profileCore)
+	evPlaceController := evcontrollers.NewPlaceController(a.log, placeCore)
 
 	inboxWorker := messenger.NewInboxWorker(messenger.InboxWorkerDeps{
 		Logger:            a.log,

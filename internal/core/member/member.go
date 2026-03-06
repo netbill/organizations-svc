@@ -1,70 +1,14 @@
-package core
+package member
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/restkit/pagi"
 )
-
-type memberRepo interface {
-	Create(
-		ctx context.Context,
-		accountID, organizationID uuid.UUID,
-		head bool,
-	) (models.Member, error)
-
-	GetByID(ctx context.Context, memberID uuid.UUID) (models.Member, error)
-
-	GetListForAccountAndOrgs(
-		ctx context.Context,
-		accountID uuid.UUID,
-		organizationIDs []uuid.UUID,
-	) ([]models.Member, error)
-
-	GetList(
-		ctx context.Context,
-		filter MemberFilterParams,
-		limit, offset uint,
-	) (pagi.Page[[]models.Member], error)
-
-	ExistsForAccountAndOrg(
-		ctx context.Context,
-		accountID, organizationID uuid.UUID,
-	) (bool, error)
-
-	Update(ctx context.Context, ID uuid.UUID, params MemberUpdateParams) (models.Member, error)
-
-	Delete(ctx context.Context, memberID uuid.UUID) error
-	DeleteForAccountAndOrg(ctx context.Context, accountID uuid.UUID) error
-}
-
-type memberTombstoneRepo interface {
-	BuryMember(ctx context.Context, memberID uuid.UUID) error
-	MemberIsBuried(ctx context.Context, memberID uuid.UUID) (bool, error)
-}
-
-type orgAuth interface {
-	authorizeOrgHead(
-		ctx context.Context,
-		actor models.AccountActor,
-		organizationID uuid.UUID,
-	) (models.Member, error)
-
-	authorizeOrgMember(
-		ctx context.Context,
-		accountID uuid.UUID,
-		organizationID uuid.UUID,
-	) (models.Member, error)
-
-	validateOrg(
-		ctx context.Context,
-		organizationID uuid.UUID,
-	) (models.Organization, error)
-}
 
 type memberMessenger interface {
 	WriteOrgMemberCreated(ctx context.Context, member models.Member) error
@@ -72,25 +16,25 @@ type memberMessenger interface {
 	WriteOrgMemberDeleted(ctx context.Context, memberID uuid.UUID) error
 }
 
-type MemberModule struct {
-	auth      orgAuth
-	repo      memberRepo
-	tombstone memberTombstoneRepo
+type Service struct {
+	org       org
+	repo      repo
+	tombstone tombstone
 	tx        transactor
 	messenger memberMessenger
 }
 
-type MemberDeps struct {
-	Auth      orgAuth
-	Repo      memberRepo
-	Tombstone memberTombstoneRepo
+type ServiceDeps struct {
+	Auth      org
+	Repo      repo
+	Tombstone tombstone
 	Tx        transactor
 	Messenger memberMessenger
 }
 
-func NewMemberModule(deps MemberDeps) *MemberModule {
-	return &MemberModule{
-		auth:      deps.Auth,
+func NewMemberModule(deps ServiceDeps) *Service {
+	return &Service{
+		org:       deps.Auth,
 		repo:      deps.Repo,
 		tombstone: deps.Tombstone,
 		tx:        deps.Tx,
@@ -98,14 +42,14 @@ func NewMemberModule(deps MemberDeps) *MemberModule {
 	}
 }
 
-func (m *MemberModule) GetByID(
+func (m *Service) GetByID(
 	ctx context.Context,
 	memberID uuid.UUID,
 ) (models.Member, error) {
 	return m.repo.GetByID(ctx, memberID)
 }
 
-func (m *MemberModule) GetByAccountAndOrgs(
+func (m *Service) GetByAccountAndOrgs(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationIDs []uuid.UUID,
@@ -113,7 +57,7 @@ func (m *MemberModule) GetByAccountAndOrgs(
 	return m.repo.GetListForAccountAndOrgs(ctx, actor, organizationIDs)
 }
 
-type MemberFilterParams struct {
+type FilterParams struct {
 	OrganizationID *uuid.UUID
 	AccountID      *uuid.UUID
 	Head           *bool
@@ -123,20 +67,20 @@ type MemberFilterParams struct {
 	Position       *string
 }
 
-func (m *MemberModule) GetList(
+func (m *Service) GetList(
 	ctx context.Context,
-	filter MemberFilterParams,
+	filter FilterParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Member], error) {
 	return m.repo.GetList(ctx, filter, limit, offset)
 }
 
-type MemberUpdateParams struct {
+type UpdateParams struct {
 	Position *string
 	Label    *string
 }
 
-func (m *MemberUpdateParams) HasChanges(model models.Member) bool {
+func (m *UpdateParams) HasChanges(model models.Member) bool {
 	if m.Position != nil && !ptrEqual(m.Position, model.Position) {
 		return true
 	}
@@ -146,11 +90,18 @@ func (m *MemberUpdateParams) HasChanges(model models.Member) bool {
 	return false
 }
 
-func (m *MemberModule) Update(
+func ptrEqual[T comparable](a, b *T) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
+}
+
+func (m *Service) Update(
 	ctx context.Context,
 	actor models.AccountActor,
 	memberID uuid.UUID,
-	params MemberUpdateParams,
+	params UpdateParams,
 ) (models.Member, error) {
 	member, err := m.GetByID(ctx, memberID)
 	if err != nil {
@@ -161,12 +112,12 @@ func (m *MemberModule) Update(
 		return member, nil
 	}
 
-	_, err = m.auth.validateOrg(ctx, member.OrganizationID)
+	_, err = m.org.ValidateOrg(ctx, member.OrganizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
 
-	_, err = m.auth.authorizeOrgHead(ctx, actor, member.OrganizationID)
+	_, err = m.org.AuthorizeOrgHead(ctx, actor, member.OrganizationID)
 	if err != nil {
 		return models.Member{}, err
 	}
@@ -183,7 +134,7 @@ func (m *MemberModule) Update(
 	return member, err
 }
 
-func (m *MemberModule) Delete(
+func (m *Service) Delete(
 	ctx context.Context,
 	actor models.AccountActor,
 	memberID uuid.UUID,
@@ -208,12 +159,12 @@ func (m *MemberModule) Delete(
 		)
 	}
 
-	_, err = m.auth.authorizeOrgHead(ctx, actor, member.OrganizationID)
+	_, err = m.org.AuthorizeOrgHead(ctx, actor, member.OrganizationID)
 	if err != nil {
 		return err
 	}
 
-	_, err = m.auth.validateOrg(ctx, member.OrganizationID)
+	_, err = m.org.ValidateOrg(ctx, member.OrganizationID)
 	if err != nil {
 		return err
 	}

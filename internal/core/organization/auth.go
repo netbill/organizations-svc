@@ -1,4 +1,4 @@
-package core
+package organization
 
 import (
 	"context"
@@ -6,16 +6,16 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 )
 
-func (m *OrganizationModule) authorizeOrgHead(
+func (s *Service) AuthorizeOrgHead(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	member, err := m.member.GetForAccountAndOrg(ctx, actor, organizationID)
+	member, err := s.member.GetForAccountAndOrg(ctx, actor, organizationID)
 	if errors.Is(err, errx.ErrorMemberNotExists) {
 		return models.Member{}, errx.ErrorInitiatorNotMemberOfOrganization.Raise(
 			fmt.Errorf("initiator with account id %s is not a member of organization %s", actor, organizationID),
@@ -36,12 +36,12 @@ func (m *OrganizationModule) authorizeOrgHead(
 	return member, nil
 }
 
-func (m *OrganizationModule) authorizeOrgMember(
+func (s *Service) AuthorizeOrgMember(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationID uuid.UUID,
 ) (models.Member, error) {
-	initiator, err := m.member.GetForAccountAndOrg(ctx, actor, organizationID)
+	initiator, err := s.member.GetForAccountAndOrg(ctx, actor, organizationID)
 	if errors.Is(err, errx.ErrorMemberNotExists) {
 		return models.Member{}, errx.ErrorInitiatorNotMemberOfOrganization.Raise(
 			fmt.Errorf("initiator with account id %s is not a member of organization %s", actor, organizationID),
@@ -54,8 +54,8 @@ func (m *OrganizationModule) authorizeOrgMember(
 	return initiator, nil
 }
 
-func (m *OrganizationModule) validateOrg(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
-	org, err := m.org.Get(ctx, organizationID)
+func (s *Service) ValidateOrg(ctx context.Context, organizationID uuid.UUID) (models.Organization, error) {
+	org, err := s.GetByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}

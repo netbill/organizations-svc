@@ -1,19 +1,19 @@
-package core
+package organization
 
 import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/models"
 )
 
-type OrganizationUpdateParams struct {
+type UpdateParams struct {
 	Name      *string
 	IconKey   *string
 	BannerKey *string
 }
 
-func (p OrganizationUpdateParams) HasChanges(current models.Organization) bool {
+func (p UpdateParams) HasChanges(current models.Organization) bool {
 	if p.Name != nil && *p.Name != current.Name {
 		return true
 	}
@@ -33,18 +33,18 @@ func ptrEqual[T comparable](a, b *T) bool {
 	return *a == *b
 }
 
-func (m *OrganizationModule) Update(
+func (s *Service) Update(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationID uuid.UUID,
-	params OrganizationUpdateParams,
+	params UpdateParams,
 ) (models.Organization, error) {
-	_, err := m.authorizeOrgHead(ctx, actor, organizationID)
+	_, err := s.AuthorizeOrgHead(ctx, actor, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	org, err := m.validateOrg(ctx, organizationID)
+	org, err := s.ValidateOrg(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -55,12 +55,12 @@ func (m *OrganizationModule) Update(
 
 	switch {
 	case params.IconKey != nil && *params.IconKey == "" && org.IconKey != nil:
-		if err := m.media.DeleteOrganizationIcon(ctx, org.ID, *org.IconKey); err != nil {
+		if err := s.media.DeleteOrganizationIcon(ctx, org.ID, *org.IconKey); err != nil {
 			return models.Organization{}, err
 		}
 		params.IconKey = nil
 	case params.IconKey != nil:
-		iconKey, err := m.media.UpdateOrganizationIcon(ctx, org.ID, *params.IconKey)
+		iconKey, err := s.media.UpdateOrganizationIcon(ctx, org.ID, *params.IconKey)
 		if err != nil {
 			return models.Organization{}, err
 		}
@@ -70,12 +70,12 @@ func (m *OrganizationModule) Update(
 
 	switch {
 	case params.BannerKey != nil && *params.BannerKey == "" && org.BannerKey != nil:
-		if err := m.media.DeleteOrganizationBanner(ctx, org.ID, *org.BannerKey); err != nil {
+		if err := s.media.DeleteOrganizationBanner(ctx, org.ID, *org.BannerKey); err != nil {
 			return models.Organization{}, err
 		}
 		params.BannerKey = nil
 	case params.BannerKey != nil:
-		bannerKey, err := m.media.UpdateOrganizationBanner(ctx, org.ID, *params.BannerKey)
+		bannerKey, err := s.media.UpdateOrganizationBanner(ctx, org.ID, *params.BannerKey)
 		if err != nil {
 			return models.Organization{}, err
 		}
@@ -83,30 +83,30 @@ func (m *OrganizationModule) Update(
 		params.BannerKey = &bannerKey
 	}
 
-	err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		org, err = m.org.Update(ctx, organizationID, params)
+	err = s.tx.Transaction(ctx, func(ctx context.Context) error {
+		org, err = s.repo.Update(ctx, organizationID, params)
 		if err != nil {
 			return err
 		}
 
-		return m.messenger.WriteOrganizationUpdated(ctx, org)
+		return s.messenger.WriteOrganizationUpdated(ctx, org)
 	})
 
 	return org, err
 }
 
-func (m *OrganizationModule) Activate(
+func (s *Service) Activate(
 	ctx context.Context,
 	actor models.AccountActor,
 	organizationID uuid.UUID,
 	value bool,
 ) (models.Organization, error) {
-	_, err := m.authorizeOrgHead(ctx, actor, organizationID)
+	_, err := s.AuthorizeOrgHead(ctx, actor, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
 
-	org, err := m.validateOrg(ctx, organizationID)
+	org, err := s.ValidateOrg(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -125,15 +125,15 @@ func (m *OrganizationModule) Activate(
 		newStatus = models.OrganizationStatusInactive
 	}
 
-	return m.updateStatus(ctx, organizationID, newStatus)
+	return s.updateStatus(ctx, organizationID, newStatus)
 }
 
-func (m *OrganizationModule) Suspend(
+func (s *Service) Suspend(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	value bool,
 ) (models.Organization, error) {
-	org, err := m.GetByID(ctx, organizationID)
+	org, err := s.GetByID(ctx, organizationID)
 	if err != nil {
 		return models.Organization{}, err
 	}
@@ -152,21 +152,21 @@ func (m *OrganizationModule) Suspend(
 		newStatus = models.OrganizationStatusInactive
 	}
 
-	return m.updateStatus(ctx, organizationID, newStatus)
+	return s.updateStatus(ctx, organizationID, newStatus)
 }
 
-func (m *OrganizationModule) updateStatus(
+func (s *Service) updateStatus(
 	ctx context.Context,
 	organizationID uuid.UUID,
 	status string,
 ) (org models.Organization, err error) {
-	err = m.tx.Transaction(ctx, func(ctx context.Context) error {
-		org, err = m.org.UpdateStatus(ctx, organizationID, status)
+	err = s.tx.Transaction(ctx, func(ctx context.Context) error {
+		org, err = s.repo.UpdateStatus(ctx, organizationID, status)
 		if err != nil {
 			return err
 		}
 
-		return m.messenger.WriteOrganizationUpdated(ctx, org)
+		return s.messenger.WriteOrganizationUpdated(ctx, org)
 	})
 
 	return org, err

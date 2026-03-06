@@ -3,7 +3,7 @@ package responses
 import (
 	"net/http"
 
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	resources "github.com/netbill/organizations-svc/pkg/resources"
 	"github.com/netbill/restkit/pagi"

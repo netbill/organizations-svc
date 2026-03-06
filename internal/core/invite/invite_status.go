@@ -1,4 +1,4 @@
-package core
+package invite
 
 import (
 	"context"
@@ -6,44 +6,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 )
 
-func (m *InviteModule) validateInviteForResponse(
-	ctx context.Context,
-	actor models.AccountActor,
-	inviteID uuid.UUID,
-	terminalStatus string,
-) (models.Invite, error) {
-	invite, err := m.repo.Get(ctx, inviteID)
-	if err != nil {
-		return models.Invite{}, err
-	}
-
-	if invite.AccountID != actor {
-		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
-			fmt.Errorf("account has no rights to respond to this invite"),
-		)
-	}
-	if invite.Status == terminalStatus {
-		return invite, nil
-	}
-	if invite.Status != models.InviteStatusSent {
-		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
-			fmt.Errorf("invite status is %s", invite.Status),
-		)
-	}
-	if invite.ExpiresAt.Before(time.Now().UTC()) {
-		return models.Invite{}, errx.ErrorInviteExpired.Raise(
-			fmt.Errorf("invite expired at %s", invite.ExpiresAt),
-		)
-	}
-
-	return invite, nil
-}
-
-func (m *InviteModule) Accept(
+func (m *Service) Accept(
 	ctx context.Context,
 	actor models.AccountActor,
 	inviteID uuid.UUID,
@@ -56,7 +23,7 @@ func (m *InviteModule) Accept(
 		return invite, nil
 	}
 
-	_, err = m.auth.validateOrg(ctx, invite.OrganizationID)
+	_, err = m.auth.ValidateOrg(ctx, invite.OrganizationID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -84,7 +51,7 @@ func (m *InviteModule) Accept(
 	return invite, nil
 }
 
-func (m *InviteModule) Decline(
+func (m *Service) Decline(
 	ctx context.Context,
 	actor models.AccountActor,
 	inviteID uuid.UUID,
@@ -111,7 +78,7 @@ func (m *InviteModule) Decline(
 	return invite, nil
 }
 
-func (m *InviteModule) Cancelled(
+func (m *Service) Cancelled(
 	ctx context.Context,
 	actor models.AccountActor,
 	inviteID uuid.UUID,
@@ -121,12 +88,12 @@ func (m *InviteModule) Cancelled(
 		return models.Invite{}, err
 	}
 
-	_, err = m.auth.validateOrg(ctx, invite.OrganizationID)
+	_, err = m.auth.ValidateOrg(ctx, invite.OrganizationID)
 	if err != nil {
 		return models.Invite{}, err
 	}
 
-	_, err = m.auth.authorizeOrgHead(ctx, actor, invite.OrganizationID)
+	_, err = m.auth.AuthorizeOrgHead(ctx, actor, invite.OrganizationID)
 	if err != nil {
 		return models.Invite{}, err
 	}
@@ -149,6 +116,39 @@ func (m *InviteModule) Cancelled(
 		return m.messenger.WriteOrgInviteCanceled(ctx, invite)
 	}); err != nil {
 		return models.Invite{}, err
+	}
+
+	return invite, nil
+}
+
+func (m *Service) validateInviteForResponse(
+	ctx context.Context,
+	actor models.AccountActor,
+	inviteID uuid.UUID,
+	terminalStatus string,
+) (models.Invite, error) {
+	invite, err := m.repo.Get(ctx, inviteID)
+	if err != nil {
+		return models.Invite{}, err
+	}
+
+	if invite.AccountID != actor {
+		return models.Invite{}, errx.ErrorInviteNotForInitiator.Raise(
+			fmt.Errorf("account has no rights to respond to this invite"),
+		)
+	}
+	if invite.Status == terminalStatus {
+		return invite, nil
+	}
+	if invite.Status != models.InviteStatusSent {
+		return models.Invite{}, errx.ErrorInviteAlreadyAnswered.Raise(
+			fmt.Errorf("invite status is %s", invite.Status),
+		)
+	}
+	if invite.ExpiresAt.Before(time.Now().UTC()) {
+		return models.Invite{}, errx.ErrorInviteExpired.Raise(
+			fmt.Errorf("invite expired at %s", invite.ExpiresAt),
+		)
 	}
 
 	return invite, nil

@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/errx"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
@@ -35,7 +35,8 @@ func (c *OrganizationController) Suspend(w http.ResponseWriter, r *http.Request)
 
 	org, err := c.organizations.Suspend(r.Context(), organizationID, true)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case err != nil:
@@ -67,7 +68,8 @@ func (c *OrganizationController) Unsuspend(w http.ResponseWriter, r *http.Reques
 
 	org, err := c.organizations.Suspend(r.Context(), organizationID, false)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case err != nil:
@@ -99,7 +101,8 @@ func (c *OrganizationController) Activate(w http.ResponseWriter, r *http.Request
 
 	res, err := c.organizations.Activate(r.Context(), scope.AccountActor(r), organizationID, true)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
@@ -140,7 +143,8 @@ func (c *OrganizationController) Deactivate(w http.ResponseWriter, r *http.Reque
 
 	res, err := c.organizations.Activate(r.Context(), scope.AccountActor(r), organizationID, false)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):

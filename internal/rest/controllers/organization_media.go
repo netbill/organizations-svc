@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"errors"
@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/core/organization"
+	"github.com/netbill/organizations-svc/internal/errx"
 	"github.com/netbill/organizations-svc/internal/rest/requests"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
@@ -35,7 +35,8 @@ func (c *OrganizationController) CreateUploadMediaLink(w http.ResponseWriter, r 
 
 	org, media, err := c.organizations.CreateUploadMediaLinks(r.Context(), scope.AccountActor(r), organizationID)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization does not exist")
 		render.ResponseError(w, problems.NotFound("organization does not exist"))
 	case errors.Is(err, errx.ErrorNotOrganizationHead):
@@ -73,13 +74,14 @@ func (c *OrganizationController) DeleteUploadMedia(w http.ResponseWriter, r *htt
 		r.Context(),
 		scope.AccountActor(r),
 		req.Data.Id,
-		core.DeleteUploadOrgMediaParams{
+		organization.DeleteUploaderParams{
 			Icon:   req.Data.Attributes.IconKey,
 			Banner: req.Data.Attributes.BannerKey,
 		},
 	)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization does not exist")
 		render.ResponseError(w, problems.NotFound("organization does not exist"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):

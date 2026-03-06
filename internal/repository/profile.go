@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/profile"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 )
 
 type ProfileRow struct {
@@ -74,14 +73,14 @@ func NewProfileRepo(profilesSql ProfilesQ) *ProfileRepo {
 
 func (r *ProfileRepo) Create(
 	ctx context.Context,
-	profile models.Profile,
+	profile profile.CreateParams,
 ) (models.Profile, error) {
 	row, err := r.query.New().Insert(ctx, ProfileRow{
 		AccountID:       profile.AccountID,
 		Username:        profile.Username,
 		Pseudonym:       profile.Pseudonym,
 		AvatarKey:       profile.AvatarKey,
-		SourceUpdatedAt: profile.UpdatedAt,
+		SourceUpdatedAt: profile.CreatedAt,
 		SourceCreatedAt: profile.CreatedAt,
 	})
 	if err != nil {
@@ -94,7 +93,7 @@ func (r *ProfileRepo) Create(
 func (r *ProfileRepo) Update(
 	ctx context.Context,
 	accountID uuid.UUID,
-	params core.ProfileUpdateParams,
+	params profile.UpdateParams,
 ) (models.Profile, error) {
 	row, err := r.query.New().
 		FilterByAccountID(accountID).

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/invite"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/restkit/pagi"
 )
 
@@ -75,7 +75,7 @@ func NewInviteRepo(orgInvitesSql OrgInvitesQ) *InviteRepo {
 
 func (r *InviteRepo) Create(
 	ctx context.Context,
-	params core.InviteCreateParams,
+	params invite.CreateParams,
 ) (models.Invite, error) {
 	row, err := r.query.New().Insert(ctx, OrgInviteRow{
 		OrganizationID: params.OrganizationID,
@@ -141,7 +141,7 @@ func (r *InviteRepo) Delete(
 
 func (r *InviteRepo) GetList(
 	ctx context.Context,
-	params core.FilterInvitesParams,
+	params invite.FilterParams,
 	limit, offset uint,
 ) (pagi.Page[[]models.Invite], error) {
 	if limit == 0 {

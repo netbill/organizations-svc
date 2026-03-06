@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/member"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/organizations-svc/internal/rest/requests"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
@@ -23,34 +23,35 @@ import (
 	"github.com/netbill/restkit/render"
 )
 
-type memberModule interface {
+type memberCore interface {
 	GetByID(ctx context.Context, memberID uuid.UUID) (models.Member, error)
-	GetList(ctx context.Context, filter core.MemberFilterParams, limit, offset uint) (pagi.Page[[]models.Member], error)
+	GetList(ctx context.Context, filter member.FilterParams, limit, offset uint) (pagi.Page[[]models.Member], error)
 
-	Update(ctx context.Context, actor models.AccountActor, memberID uuid.UUID, params core.MemberUpdateParams) (models.Member, error)
+	Update(ctx context.Context, actor models.AccountActor, memberID uuid.UUID, params member.UpdateParams) (models.Member, error)
 
 	Delete(ctx context.Context, actor models.AccountActor, memberID uuid.UUID) error
 }
 
-type memberProfileModule interface {
+type organizationGetter interface {
+	GetByID(ctx context.Context, organizationID uuid.UUID) (models.Organization, error)
+	GetByIDs(ctx context.Context, organizationIDs []uuid.UUID) ([]models.Organization, error)
+}
+
+type profileGetter interface {
 	GetByID(ctx context.Context, accountID uuid.UUID) (models.Profile, error)
 	GetByIDs(ctx context.Context, accountIDs []uuid.UUID) ([]models.Profile, error)
 }
 
-type memberOrganizationModule interface {
-	GetByID(ctx context.Context, organizationID uuid.UUID) (models.Organization, error)
-}
-
 type MemberController struct {
-	members       memberModule
-	profiles      memberProfileModule
-	organizations memberOrganizationModule
+	members       memberCore
+	profiles      profileGetter
+	organizations organizationGetter
 }
 
 type MemberControllerDeps struct {
-	Members       memberModule
-	Profiles      memberProfileModule
-	Organizations memberOrganizationModule
+	Members       memberCore
+	Profiles      profileGetter
+	Organizations organizationGetter
 }
 
 func NewMemberController(deps MemberControllerDeps) *MemberController {
@@ -79,7 +80,8 @@ func (c *MemberController) Get(w http.ResponseWriter, r *http.Request) {
 
 	member, err := c.members.GetByID(r.Context(), memberID)
 	switch {
-	case errors.Is(err, errx.ErrorMemberNotExists):
+	case errors.Is(err, errx.ErrorMemberNotExists),
+		errors.Is(err, errx.ErrorMemberDeleted):
 		log.WithError(err).Warn("member not found")
 		render.ResponseError(w, problems.NotFound("member not found"))
 		return
@@ -95,7 +97,8 @@ func (c *MemberController) Get(w http.ResponseWriter, r *http.Request) {
 	if slices.Contains(includes, "profile") {
 		profile, err := c.profiles.GetByID(r.Context(), member.AccountID)
 		switch {
-		case errors.Is(err, errx.ErrorProfileNotExists):
+		case errors.Is(err, errx.ErrorProfileNotExists),
+			errors.Is(err, errx.ErrorProfileDeleted):
 			log.WithField("account_id", member.AccountID).Warn("profile not found")
 			render.ResponseError(w, problems.NotFound("profile not found"))
 			return
@@ -111,7 +114,8 @@ func (c *MemberController) Get(w http.ResponseWriter, r *http.Request) {
 	if slices.Contains(includes, "organizations") {
 		org, err := c.organizations.GetByID(r.Context(), member.OrganizationID)
 		switch {
-		case errors.Is(err, errx.ErrorOrganizationNotExists):
+		case errors.Is(err, errx.ErrorOrganizationNotExists),
+			errors.Is(err, errx.ErrorOrganizationDeleted):
 			log.WithError(err).Warn("organization not found")
 			render.ResponseError(w, problems.NotFound("organization not found"))
 			return
@@ -143,7 +147,7 @@ func (c *MemberController) GetList(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("limit", limit).WithField("offset", offset)
 
-	params := core.MemberFilterParams{}
+	params := member.FilterParams{}
 
 	if v := r.URL.Query().Get("organization_id"); v != "" {
 		id, err := uuid.Parse(strings.TrimSpace(v))
@@ -238,19 +242,21 @@ func (c *MemberController) Update(w http.ResponseWriter, r *http.Request) {
 		r.Context(),
 		scope.AccountActor(r),
 		memberID,
-		core.MemberUpdateParams{
+		member.UpdateParams{
 			Position: req.Data.Attributes.Position,
 			Label:    req.Data.Attributes.Label,
 		},
 	)
 	switch {
-	case errors.Is(err, errx.ErrorMemberNotExists):
+	case errors.Is(err, errx.ErrorMemberNotExists),
+		errors.Is(err, errx.ErrorMemberDeleted):
 		log.WithError(err).Warn("member not found")
 		render.ResponseError(w, problems.NotFound("member not found"))
 	case errors.Is(err, errx.ErrorNotOrganizationHead):
 		log.WithError(err).Warn("not enough rights to update member")
 		render.ResponseError(w, problems.Forbidden("not enough rights to update member"))
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
@@ -283,11 +289,9 @@ func (c *MemberController) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err = c.members.Delete(r.Context(), scope.AccountActor(r), memberID)
 	switch {
-	case errors.Is(err, errx.ErrorMemberNotExists):
+	case errors.Is(err, errx.ErrorMemberNotExists),
+		errors.Is(err, errx.ErrorMemberDeleted):
 		log.WithError(err).Warn("member not found")
-		render.Response(w, http.StatusNoContent, nil)
-	case errors.Is(err, errx.ErrorMemberDeleted):
-		log.WithError(err).Warn("member already deleted")
 		render.Response(w, http.StatusNoContent, nil)
 	case errors.Is(err, errx.ErrorInitiatorNotMemberOfOrganization):
 		log.WithError(err).Warn("membership in organization not found")
@@ -295,7 +299,8 @@ func (c *MemberController) Delete(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, errx.ErrorNotOrganizationHead):
 		log.WithError(err).Warn("not enough rights to delete member")
 		render.ResponseError(w, problems.Forbidden("not enough rights to delete member"))
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):

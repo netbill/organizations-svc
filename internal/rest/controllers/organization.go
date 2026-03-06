@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"context"
@@ -10,9 +10,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/organization"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 	"github.com/netbill/organizations-svc/internal/rest/requests"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
@@ -21,18 +21,18 @@ import (
 	"github.com/netbill/restkit/render"
 )
 
-type organizationModule interface {
+type organizationCore interface {
 	Create(
 		ctx context.Context,
 		actor models.AccountActor,
-		params core.OrganizationCreateParams,
+		params organization.CreateParams,
 	) (models.Organization, error)
 
 	GetByID(ctx context.Context, organizationID uuid.UUID) (models.Organization, error)
 	GetByIDs(ctx context.Context, organizationIDs []uuid.UUID) ([]models.Organization, error)
 	GetList(
 		ctx context.Context,
-		params core.OrganizationFilterParams,
+		params organization.FilterParams,
 		limit, offset uint,
 	) (pagi.Page[[]models.Organization], error)
 
@@ -40,7 +40,7 @@ type organizationModule interface {
 		ctx context.Context,
 		actor models.AccountActor,
 		organizationID uuid.UUID,
-		params core.OrganizationUpdateParams,
+		params organization.UpdateParams,
 	) (models.Organization, error)
 
 	Activate(
@@ -67,37 +67,24 @@ type organizationModule interface {
 		ctx context.Context,
 		actor models.AccountActor,
 		organizationID uuid.UUID,
-		params core.DeleteUploadOrgMediaParams,
+		params organization.DeleteUploaderParams,
 	) error
 }
 
-type organizationMemberModule interface {
-	GetByAccountAndOrgs(
-		ctx context.Context,
-		actor models.AccountActor,
-		organizationIDs []uuid.UUID,
-	) ([]models.Member, error)
-	GetList(
-		ctx context.Context,
-		filter core.MemberFilterParams,
-		limit, offset uint,
-	) (pagi.Page[[]models.Member], error)
-}
-
-type organizationProfileModule interface {
-	GetByIDs(ctx context.Context, accountIDs []uuid.UUID) ([]models.Profile, error)
+type memberGetter interface {
+	GetByID(ctx context.Context, memberID uuid.UUID) (models.Member, error)
 }
 
 type OrganizationController struct {
-	organizations organizationModule
-	members       organizationMemberModule
-	profiles      organizationProfileModule
+	organizations organizationCore
+	members       memberGetter
+	profiles      profileGetter
 }
 
 type OrganizationControllerDeps struct {
-	Organizations organizationModule
-	Members       organizationMemberModule
-	Profiles      organizationProfileModule
+	Organizations organizationCore
+	Members       memberGetter
+	Profiles      profileGetter
 }
 
 func NewOrganizationController(deps OrganizationControllerDeps) *OrganizationController {
@@ -123,7 +110,7 @@ func (c *OrganizationController) Create(w http.ResponseWriter, r *http.Request) 
 	res, err := c.organizations.Create(
 		r.Context(),
 		scope.AccountActor(r),
-		core.OrganizationCreateParams{
+		organization.CreateParams{
 			Name: req.Data.Attributes.Name,
 		},
 	)
@@ -157,7 +144,8 @@ func (c *OrganizationController) Get(w http.ResponseWriter, r *http.Request) {
 
 	org, err := c.organizations.GetByID(r.Context(), organizationID)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case err != nil:
@@ -174,7 +162,7 @@ func (c *OrganizationController) GetList(w http.ResponseWriter, r *http.Request)
 	log := scope.Log(r).WithOperation(operationGetOrganizations)
 
 	q := r.URL.Query()
-	params := core.OrganizationFilterParams{}
+	params := organization.FilterParams{}
 
 	if v := strings.TrimSpace(q.Get("text")); v != "" {
 		params.Text = &v
@@ -222,14 +210,15 @@ func (c *OrganizationController) Update(w http.ResponseWriter, r *http.Request) 
 		r.Context(),
 		scope.AccountActor(r),
 		req.Data.Id,
-		core.OrganizationUpdateParams{
+		organization.UpdateParams{
 			Name:      req.Data.Attributes.Name,
 			IconKey:   req.Data.Attributes.IconKey,
 			BannerKey: req.Data.Attributes.BannerKey,
 		},
 	)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorNotOrganizationHead):
@@ -271,7 +260,8 @@ func (c *OrganizationController) Delete(w http.ResponseWriter, r *http.Request) 
 
 	err = c.organizations.Delete(r.Context(), scope.AccountActor(r), organizationID)
 	switch {
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found")
 		render.ResponseError(w, problems.NotFound("organization not found"))
 	case errors.Is(err, errx.ErrorOrganizationDeleted):

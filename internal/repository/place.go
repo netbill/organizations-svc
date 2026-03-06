@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/core/place"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 )
 
 type PlaceRow struct {
@@ -54,7 +54,7 @@ func NewPlaceRepo(query PlacesQ) *PlaceRepo {
 	}
 }
 
-func (r *PlaceRepo) Create(ctx context.Context, params core.PlaceCreateParams) error {
+func (r *PlaceRepo) Create(ctx context.Context, params place.CreateParams) error {
 	return r.query.New().Insert(ctx, PlaceRow{
 		ID:              params.ID,
 		OrganizationID:  params.OrganizationID,

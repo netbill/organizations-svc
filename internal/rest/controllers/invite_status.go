@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
-	"github.com/netbill/organizations-svc/internal/core/errx"
+	"github.com/netbill/organizations-svc/internal/errx"
 	"github.com/netbill/organizations-svc/internal/rest/responses"
 	"github.com/netbill/organizations-svc/internal/rest/scope"
 	"github.com/netbill/restkit/problems"
@@ -45,7 +45,8 @@ func (c *InviteController) Accept(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, errx.ErrorInviteExpired):
 		log.WithError(err).Warn("invite has expired")
 		render.ResponseError(w, problems.Forbidden("invite has expired"))
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found for invite")
 		render.ResponseError(w, problems.NotFound("organization not found for invite"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):
@@ -89,7 +90,8 @@ func (c *InviteController) Decline(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, errx.ErrorInviteExpired):
 		log.WithError(err).Warn("invite has expired")
 		render.ResponseError(w, problems.Forbidden("invite has expired"))
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found for invite")
 		render.ResponseError(w, problems.NotFound("organization not found for invite"))
 	case err != nil:
@@ -130,7 +132,8 @@ func (c *InviteController) Cancelled(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, errx.ErrorInviteAlreadyAnswered):
 		log.WithError(err).Warn("invite already answered")
 		render.ResponseError(w, problems.Forbidden("invite already answered"))
-	case errors.Is(err, errx.ErrorOrganizationNotExists):
+	case errors.Is(err, errx.ErrorOrganizationNotExists),
+		errors.Is(err, errx.ErrorOrganizationDeleted):
 		log.WithError(err).Warn("organization not found for invite")
 		render.ResponseError(w, problems.NotFound("organization not found for invite"))
 	case errors.Is(err, errx.ErrorOrganizationIsSuspended):

@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/netbill/awsx"
-	"github.com/netbill/organizations-svc/internal/core/errx"
-	"github.com/netbill/organizations-svc/internal/core/models"
+	"github.com/netbill/organizations-svc/internal/errx"
+	"github.com/netbill/organizations-svc/internal/models"
 )
 
 func (u *Uploader) CreateOrganizationIconUploadMediaLinks(
