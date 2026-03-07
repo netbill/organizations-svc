@@ -12,14 +12,7 @@ patch:
     - invites
   summary: Accept invite
   description: >
-    Accepts an invite for the authenticated account.
-
-    **400 Bad Request** is returned when the invite ID is not a valid UUID.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **403 Forbidden** is returned when the account has no rights to accept this invite, the invite has expired, or the organization is suspend.
-    **404 Not Found** is returned when the invite or organization does not exist.
-    **409 Conflict** is returned when the invite has already been answered.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
+    Accepts an invitation to become part of an organisation
   security:
     - BearerAuth: [ ]
   responses:

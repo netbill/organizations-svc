@@ -1,5 +1,5 @@
 /*
-NetBill organizations-svc API
+netbill organizations-svc API
 
 API documentation for organizations-svc
 
@@ -79,7 +79,6 @@ func (r ApiOrganizationsSvcV1MembersGetRequest) Execute() (*MembersCollection, *
 OrganizationsSvcV1MembersGet Get members
 
 Returns a paginated list of members with optional filters.
-**400 Bad Request** is returned when any filter parameter is not a valid UUID or pagination limit exceeds 100. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -220,7 +219,6 @@ func (r ApiOrganizationsSvcV1MembersMemberIdDeleteRequest) Execute() (*http.Resp
 OrganizationsSvcV1MembersMemberIdDelete Delete member
 
 Deletes a member by ID. Only the organization head can delete members. The organization head member cannot be deleted.
-**400 Bad Request** is returned when the member ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator cannot perform this action. **404 Not Found** is returned when the member or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -375,7 +373,6 @@ func (r ApiOrganizationsSvcV1MembersMemberIdGetRequest) Execute() (*Member, *htt
 OrganizationsSvcV1MembersMemberIdGet Get member
 
 Returns a member by ID.
-**400 Bad Request** is returned when the member ID is not a valid UUID. **404 Not Found** is returned when the member or any included resource is not found. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -521,7 +518,6 @@ func (r ApiOrganizationsSvcV1MembersMemberIdPatchRequest) Execute() (*Member, *h
 OrganizationsSvcV1MembersMemberIdPatch Update member
 
 Updates a member by ID. Only the organization head can perform this action.
-**400 Bad Request** is returned when the member ID is not a valid UUID or request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not the organization head or the organization is suspended. **404 Not Found** is returned when the member or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().

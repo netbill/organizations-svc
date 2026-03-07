@@ -13,10 +13,6 @@ get:
   summary: Get organization
   description: >
     Returns an organization by ID.
-
-    **400 Bad Request** is returned when the organization ID is not a valid UUID.
-    **404 Not Found** is returned when the organization does not exist.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   responses:
     '200':
       description: Organization successfully retrieved
@@ -51,10 +47,6 @@ patch:
   summary: Update organization
   description: >
     Updates an organization by ID.
-
-    **400 Bad Request** is returned when the organization ID is not a valid UUID or request body is invalid.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   security:
     - BearerAuth: [ ]
   requestBody:
@@ -98,13 +90,6 @@ delete:
   summary: Delete organization
   description: >
     Deletes an organization by ID.
-
-    **400 Bad Request** is returned when the organization ID is not a valid UUID.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **403 Forbidden** is returned when the organization is suspended, the initiator is not a member,
-    does not have enough rights, or the organization has an active place.
-    **404 Not Found** is returned when the organization does not exist.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   security:
     - BearerAuth: [ ]
   responses:

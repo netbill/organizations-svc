@@ -1,5 +1,5 @@
 /*
-NetBill organizations-svc API
+netbill organizations-svc API
 
 API documentation for organizations-svc
 
@@ -74,7 +74,6 @@ OrganizationsSvcV1InvitesGet Get invites
 Returns a paginated list of invites.
 By default returns invites for the authenticated account. Can be filtered by `account_id` or `organization_id`.
 When filtering by `organization_id`, the initiator must be a member of that organization. When filtering by `account_id`, the initiator must match the requested account.
-**400 Bad Request** is returned when query parameters are invalid or pagination limit exceeds 100. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member of the organization or requests invites for another account. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -233,8 +232,7 @@ func (r ApiOrganizationsSvcV1InvitesInviteIdAcceptPatchRequest) Execute() (*Invi
 /*
 OrganizationsSvcV1InvitesInviteIdAcceptPatch Accept invite
 
-Accepts an invite for the authenticated account.
-**400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the account has no rights to accept this invite, the invite has expired, or the organization is suspend. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
+Accepts an invitation to become part of an organisation
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -404,7 +402,6 @@ func (r ApiOrganizationsSvcV1InvitesInviteIdCancelledPatchRequest) Execute() (*I
 OrganizationsSvcV1InvitesInviteIdCancelledPatch Cancel invite
 
 Cancels an invite by ID. Only the organization head can cancel invites.
-**400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, the invite has already been answered, or the organization is suspended. **404 Not Found** is returned when the invite or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -563,7 +560,6 @@ func (r ApiOrganizationsSvcV1InvitesInviteIdDeclinePatchRequest) Execute() (*Inv
 OrganizationsSvcV1InvitesInviteIdDeclinePatch Decline invite
 
 Declines an invite for the authenticated account.
-**400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the invite is not for this account, the invite has expired. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -740,7 +736,6 @@ func (r ApiOrganizationsSvcV1InvitesInviteIdGetRequest) Execute() (*Invite, *htt
 OrganizationsSvcV1InvitesInviteIdGet Get invite
 
 Returns an invite by ID for the authenticated account.
-**400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **404 Not Found** is returned when the invite, profile, or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -896,7 +891,6 @@ func (r ApiOrganizationsSvcV1InvitesPostRequest) Execute() (*Invite, *http.Respo
 OrganizationsSvcV1InvitesPost Create invite
 
 Creates an invite for an account to join an organization. Only the organization head can create invites. The invite expires in 24 hours.
-**400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member or not the organization head. **404 Not Found** is returned when the organization or account profile does not exist. **409 Conflict** is returned when the account is already a member or an active invite already exists. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().

@@ -2,8 +2,6 @@ services:
   organizations-svc:
     build: .
     container_name: organizations-svc
-    environment:
-      - KV_VIPER_FILE=./config_docker.yaml
     ports:
       - "8003:8000"
     networks:

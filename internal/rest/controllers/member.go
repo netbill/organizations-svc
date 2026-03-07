@@ -78,7 +78,7 @@ func (c *MemberController) Get(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("member_id", memberID)
 
-	member, err := c.members.GetByID(r.Context(), memberID)
+	res, err := c.members.GetByID(r.Context(), memberID)
 	switch {
 	case errors.Is(err, errx.ErrorMemberNotExists),
 		errors.Is(err, errx.ErrorMemberDeleted):
@@ -95,40 +95,26 @@ func (c *MemberController) Get(w http.ResponseWriter, r *http.Request) {
 	opts := make([]responses.MemberOption, 0)
 
 	if slices.Contains(includes, "profile") {
-		profile, err := c.profiles.GetByID(r.Context(), member.AccountID)
-		switch {
-		case errors.Is(err, errx.ErrorProfileNotExists),
-			errors.Is(err, errx.ErrorProfileDeleted):
-			log.WithField("account_id", member.AccountID).Warn("profile not found")
-			render.ResponseError(w, problems.NotFound("profile not found"))
-			return
-		case err != nil:
-			log.WithError(err).WithField("account_id", member.AccountID).Error("failed to get profile")
-			render.ResponseError(w, problems.InternalError())
-			return
-		default:
-			opts = append(opts, responses.WithMemberProfile(r, profile))
+		profile, err := c.profiles.GetByID(r.Context(), res.AccountID)
+		if err != nil {
+			log.WithError(err).WithField("account_id", res.AccountID).
+				Error("failed to get profile for member")
 		}
+
+		opts = append(opts, responses.WithMemberProfile(r, profile))
 	}
 
 	if slices.Contains(includes, "organizations") {
-		org, err := c.organizations.GetByID(r.Context(), member.OrganizationID)
-		switch {
-		case errors.Is(err, errx.ErrorOrganizationNotExists),
-			errors.Is(err, errx.ErrorOrganizationDeleted):
-			log.WithError(err).Warn("organization not found")
-			render.ResponseError(w, problems.NotFound("organization not found"))
-			return
-		case err != nil:
-			log.WithError(err).Error("failed to get organization")
-			render.ResponseError(w, problems.InternalError())
-			return
-		default:
-			opts = append(opts, responses.WithMemberOrganization(r, org))
+		org, err := c.organizations.GetByID(r.Context(), res.OrganizationID)
+		if err != nil {
+			log.WithError(err).WithField("organization_id", res.OrganizationID).
+				Error("failed to get organization for member")
 		}
+
+		opts = append(opts, responses.WithMemberOrganization(r, org))
 	}
 
-	render.Response(w, http.StatusOK, responses.Member(r, member, opts...))
+	render.Response(w, http.StatusOK, responses.Member(r, res, opts...))
 }
 
 const operationGetOrganizationMembers = "get_organization_members"
@@ -196,9 +182,8 @@ func (c *MemberController) GetList(w http.ResponseWriter, r *http.Request) {
 		profiles, err := c.profiles.GetByIDs(r.Context(), profileIDs)
 		if err != nil {
 			log.WithError(err).Error("failed to get profiles for members")
-			render.ResponseError(w, problems.InternalError())
-			return
 		}
+
 		opts = append(opts, responses.WithCollectionMembersProfiles(r, profiles))
 	}
 
@@ -206,9 +191,8 @@ func (c *MemberController) GetList(w http.ResponseWriter, r *http.Request) {
 		organization, err := c.organizations.GetByID(r.Context(), *params.OrganizationID)
 		if err != nil {
 			log.WithError(err).Error("failed to get organization for members")
-			render.ResponseError(w, problems.InternalError())
-			return
 		}
+
 		opts = append(opts, responses.WithCollectionMembersOrganization(r, organization))
 	}
 

@@ -4,9 +4,6 @@ get:
   summary: Get organizations
   description: >
     Returns a paginated list of organizations with optional filters.
-
-    **400 Bad Request** is returned when pagination limit is out of allowed range.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   parameters:
     - in: query
       name: text
@@ -64,10 +61,6 @@ post:
   summary: Create organization
   description: >
     Creates a new organization on behalf of the authenticated account.
-
-    **400 Bad Request** is returned when the request body is invalid.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   security:
     - BearerAuth: [ ]
   requestBody:

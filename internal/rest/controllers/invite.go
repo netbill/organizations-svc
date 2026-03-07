@@ -133,7 +133,7 @@ func (c *InviteController) Get(w http.ResponseWriter, r *http.Request) {
 
 	log = log.WithField("invite_id", inviteID)
 
-	invite, err := c.invites.GetForAccount(r.Context(), scope.AccountActor(r), inviteID)
+	res, err := c.invites.GetForAccount(r.Context(), scope.AccountActor(r), inviteID)
 	switch {
 	case errors.Is(err, errx.ErrorInviteNotExists):
 		log.Info("invite not found")
@@ -149,38 +149,24 @@ func (c *InviteController) Get(w http.ResponseWriter, r *http.Request) {
 	includes := restkit.ParseIncludes(r)
 
 	if slices.Contains(includes, "profile") {
-		profile, err := c.profiles.GetByID(r.Context(), invite.AccountID)
-		switch {
-		case errors.Is(err, errx.ErrorProfileNotExists):
-			log.WithError(err).WithField("account_id", invite.AccountID).Warn("profile not found")
-			render.ResponseError(w, problems.NotFound("profile not found"))
-			return
-		case err != nil:
-			log.WithError(err).WithField("account_id", invite.AccountID).Error("failed to get profile")
-			render.ResponseError(w, problems.InternalError())
-			return
-		default:
-			opts = append(opts, responses.WithInviteProfile(r, profile))
+		profile, err := c.profiles.GetByID(r.Context(), res.AccountID)
+		if err != nil {
+			log.WithError(err).Error("failed to get profile for invite")
 		}
+
+		opts = append(opts, responses.WithInviteProfile(r, profile))
 	}
 
 	if slices.Contains(includes, "organizations") {
-		org, err := c.organizations.GetByID(r.Context(), invite.OrganizationID)
-		switch {
-		case errors.Is(err, errx.ErrorOrganizationNotExists):
-			log.WithError(err).Warn("organization not found")
-			render.ResponseError(w, problems.NotFound("organization not found"))
-			return
-		case err != nil:
-			log.WithError(err).Error("failed to get organization")
-			render.ResponseError(w, problems.InternalError())
-			return
-		default:
-			opts = append(opts, responses.WithInviteOrganization(r, org))
+		org, err := c.organizations.GetByID(r.Context(), res.OrganizationID)
+		if err != nil {
+			log.WithError(err).Error("failed to get organization for invite")
 		}
+
+		opts = append(opts, responses.WithInviteOrganization(r, org))
 	}
 
-	render.Response(w, http.StatusOK, responses.Invite(r, invite, opts...))
+	render.Response(w, http.StatusOK, responses.Invite(r, res, opts...))
 }
 
 const operationGetInvites = "get_invites"
@@ -247,34 +233,31 @@ func (c *InviteController) GetList(w http.ResponseWriter, r *http.Request) {
 
 	if slices.Contains(includes, "organizations") {
 		organizationIDs := make([]uuid.UUID, 0, len(invites.Data))
-		for _, invite := range invites.Data {
-			if !slices.Contains(organizationIDs, invite.OrganizationID) {
-				organizationIDs = append(organizationIDs, invite.OrganizationID)
+		for _, i := range invites.Data {
+			if !slices.Contains(organizationIDs, i.OrganizationID) {
+				organizationIDs = append(organizationIDs, i.OrganizationID)
 			}
 		}
 
 		organization, err := c.organizations.GetByIDs(r.Context(), organizationIDs)
 		if err != nil {
 			log.WithError(err).Error("failed to get organizations for invites")
-			render.ResponseError(w, problems.InternalError())
-			return
 		}
+
 		opts = append(opts, responses.WithCollectionInvitesOrganizations(r, organization))
 	}
 
 	if slices.Contains(includes, "profiles") {
 		accountIDs := make([]uuid.UUID, 0, len(invites.Data))
-		for _, invite := range invites.Data {
-			if !slices.Contains(accountIDs, invite.AccountID) {
-				accountIDs = append(accountIDs, invite.AccountID)
+		for _, i := range invites.Data {
+			if !slices.Contains(accountIDs, i.AccountID) {
+				accountIDs = append(accountIDs, i.AccountID)
 			}
 		}
 
 		profiles, err := c.profiles.GetByIDs(r.Context(), accountIDs)
 		if err != nil {
 			log.WithError(err).Error("failed to get profiles for invites")
-			render.ResponseError(w, problems.InternalError())
-			return
 		}
 
 		opts = append(opts, responses.WithCollectionInvitesProfiles(r, profiles))

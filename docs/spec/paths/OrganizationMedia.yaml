@@ -14,12 +14,6 @@ post:
   description: >
     Creates upload media links for the organization's avatar.
     Only the organization head can perform this action.
-
-    **400 Bad Request** is returned when the organization ID is not a valid UUID.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended.
-    **404 Not Found** is returned when the organization does not exist.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   security:
     - BearerAuth: [ ]
   responses:
@@ -72,12 +66,6 @@ delete:
   description: >
     Deletes an uploaded media for the organization.
     Only the organization head can perform this action.
-
-    **400 Bad Request** is returned when the request body is invalid.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended.
-    **404 Not Found** is returned when the organization does not exist.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   security:
     - BearerAuth: [ ]
   requestBody:

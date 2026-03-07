@@ -13,13 +13,6 @@ patch:
   summary: Decline invite
   description: >
     Declines an invite for the authenticated account.
-
-    **400 Bad Request** is returned when the invite ID is not a valid UUID.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **403 Forbidden** is returned when the invite is not for this account, the invite has expired.
-    **404 Not Found** is returned when the invite or organization does not exist.
-    **409 Conflict** is returned when the invite has already been answered.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   security:
     - BearerAuth: [ ]
   responses:

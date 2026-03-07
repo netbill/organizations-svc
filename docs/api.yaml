@@ -1,6 +1,6 @@
 openapi: 3.1.1
 info:
-  title: NetBill organizations-svc API
+  title: netbill organizations-svc API
   description: API documentation for organizations-svc
   version: 0.1.0
 

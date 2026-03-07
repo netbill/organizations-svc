@@ -6,13 +6,6 @@ post:
     Creates an invite for an account to join an organization.
     Only the organization head can create invites.
     The invite expires in 24 hours.
-
-    **400 Bad Request** is returned when the request body is invalid.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **403 Forbidden** is returned when the initiator is not a member or not the organization head.
-    **404 Not Found** is returned when the organization or account profile does not exist.
-    **409 Conflict** is returned when the account is already a member or an active invite already exists.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   security:
     - BearerAuth: [ ]
   requestBody:
@@ -83,11 +76,6 @@ get:
 
     When filtering by `organization_id`, the initiator must be a member of that organization.
     When filtering by `account_id`, the initiator must match the requested account.
-
-    **400 Bad Request** is returned when query parameters are invalid or pagination limit exceeds 100.
-    **401 Unauthorized** is returned when the authorization token is missing or invalid.
-    **403 Forbidden** is returned when the initiator is not a member of the organization or requests invites for another account.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   security:
     - BearerAuth: [ ]
   parameters:

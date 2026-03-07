@@ -1,5 +1,5 @@
 /*
-NetBill organizations-svc API
+netbill organizations-svc API
 
 API documentation for organizations-svc
 
@@ -65,7 +65,6 @@ func (r ApiOrganizationsSvcV1OrganizationsGetRequest) Execute() (*OrganizationsC
 OrganizationsSvcV1OrganizationsGet Get organizations
 
 Returns a paginated list of organizations with optional filters.
-**400 Bad Request** is returned when pagination limit is out of allowed range. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -200,7 +199,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdActivatePostRequest) Exe
 OrganizationsSvcV1OrganizationsOrganizationIdActivatePost Activate organization
 
 Activates an organization by ID. Only the organization head can perform this action.
-**400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -359,7 +357,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdDeactivatePostRequest) E
 OrganizationsSvcV1OrganizationsOrganizationIdDeactivatePost Deactivate organization
 
 Deactivates an organization by ID. Only the organization head can perform this action.
-**400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -518,7 +515,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdDeleteRequest) Execute()
 OrganizationsSvcV1OrganizationsOrganizationIdDelete Delete organization
 
 Deletes an organization by ID.
-**400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the organization is suspended, the initiator is not a member, does not have enough rights, or the organization has an active place. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -666,7 +662,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdGetRequest) Execute() (*
 OrganizationsSvcV1OrganizationsOrganizationIdGet Get organization
 
 Returns an organization by ID.
-**400 Bad Request** is returned when the organization ID is not a valid UUID. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -809,7 +804,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaDeleteRequest) Exec
 OrganizationsSvcV1OrganizationsOrganizationIdMediaDelete Delete organization upload media
 
 Deletes an uploaded media for the organization. Only the organization head can perform this action.
-**400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -962,7 +956,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdMediaPostRequest) Execut
 OrganizationsSvcV1OrganizationsOrganizationIdMediaPost Create organization upload media link
 
 Creates upload media links for the organization's avatar. Only the organization head can perform this action.
-**400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -1127,7 +1120,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdPatchRequest) Execute() 
 OrganizationsSvcV1OrganizationsOrganizationIdPatch Update organization
 
 Updates an organization by ID.
-**400 Bad Request** is returned when the organization ID is not a valid UUID or request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -1269,7 +1261,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdSuspendPostRequest) Exec
 OrganizationsSvcV1OrganizationsOrganizationIdSuspendPost Suspend organization
 
 Suspends an organization by ID. Requires sysadmin privileges.
-**400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator does not have sysadmin privileges. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -1417,7 +1408,6 @@ func (r ApiOrganizationsSvcV1OrganizationsOrganizationIdUnsuspendPostRequest) Ex
 OrganizationsSvcV1OrganizationsOrganizationIdUnsuspendPost Unsuspend organization
 
 Unsuspends an organization by ID. Requires sysadmin privileges.
-**400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator does not have sysadmin privileges. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -1570,7 +1560,6 @@ func (r ApiOrganizationsSvcV1OrganizationsPostRequest) Execute() (*Organization,
 OrganizationsSvcV1OrganizationsPost Create organization
 
 Creates a new organization on behalf of the authenticated account.
-**400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **500 Internal Server Error** is returned when an unexpected error occurs.
 
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().

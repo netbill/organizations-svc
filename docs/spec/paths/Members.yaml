@@ -4,9 +4,6 @@ get:
   summary: Get members
   description: >
     Returns a paginated list of members with optional filters.
-
-    **400 Bad Request** is returned when any filter parameter is not a valid UUID or pagination limit exceeds 100.
-    **500 Internal Server Error** is returned when an unexpected error occurs.
   parameters:
     - in: query
       name: organization_id

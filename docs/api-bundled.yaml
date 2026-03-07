@@ -1,6 +1,6 @@
 openapi: 3.1.1
 info:
-  title: NetBill organizations-svc API
+  title: netbill organizations-svc API
   description: API documentation for organizations-svc
   version: 0.1.0
 servers:
@@ -13,7 +13,6 @@ paths:
       summary: Get organizations
       description: |
         Returns a paginated list of organizations with optional filters.
-        **400 Bad Request** is returned when pagination limit is out of allowed range. **500 Internal Server Error** is returned when an unexpected error occurs.
       parameters:
         - in: query
           name: text
@@ -70,7 +69,6 @@ paths:
       summary: Create organization
       description: |
         Creates a new organization on behalf of the authenticated account.
-        **400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       requestBody:
@@ -121,7 +119,6 @@ paths:
       summary: Get organization
       description: |
         Returns an organization by ID.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       responses:
         '200':
           description: Organization successfully retrieved
@@ -155,7 +152,6 @@ paths:
       summary: Update organization
       description: |
         Updates an organization by ID.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID or request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       requestBody:
@@ -197,7 +193,6 @@ paths:
       summary: Delete organization
       description: |
         Deletes an organization by ID.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the organization is suspended, the initiator is not a member, does not have enough rights, or the organization has an active place. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -252,7 +247,6 @@ paths:
       summary: Create organization upload media link
       description: |
         Creates upload media links for the organization's avatar. Only the organization head can perform this action.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -302,7 +296,6 @@ paths:
       summary: Delete organization upload media
       description: |
         Deletes an uploaded media for the organization. Only the organization head can perform this action.
-        **400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       requestBody:
@@ -363,7 +356,6 @@ paths:
       summary: Activate organization
       description: |
         Activates an organization by ID. Only the organization head can perform this action.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -422,7 +414,6 @@ paths:
       summary: Deactivate organization
       description: |
         Deactivates an organization by ID. Only the organization head can perform this action.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, or the organization is suspended. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -481,7 +472,6 @@ paths:
       summary: Suspend organization
       description: |
         Suspends an organization by ID. Requires sysadmin privileges.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator does not have sysadmin privileges. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -536,7 +526,6 @@ paths:
       summary: Unsuspend organization
       description: |
         Unsuspends an organization by ID. Requires sysadmin privileges.
-        **400 Bad Request** is returned when the organization ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator does not have sysadmin privileges. **404 Not Found** is returned when the organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -583,7 +572,6 @@ paths:
       summary: Get members
       description: |
         Returns a paginated list of members with optional filters.
-        **400 Bad Request** is returned when any filter parameter is not a valid UUID or pagination limit exceeds 100. **500 Internal Server Error** is returned when an unexpected error occurs.
       parameters:
         - in: query
           name: organization_id
@@ -670,7 +658,6 @@ paths:
       summary: Get member
       description: |
         Returns a member by ID.
-        **400 Bad Request** is returned when the member ID is not a valid UUID. **404 Not Found** is returned when the member or any included resource is not found. **500 Internal Server Error** is returned when an unexpected error occurs.
       parameters:
         - in: query
           name: include
@@ -719,7 +706,6 @@ paths:
       summary: Update member
       description: |
         Updates a member by ID. Only the organization head can perform this action.
-        **400 Bad Request** is returned when the member ID is not a valid UUID or request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not the organization head or the organization is suspended. **404 Not Found** is returned when the member or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       requestBody:
@@ -775,7 +761,6 @@ paths:
       summary: Delete member
       description: |
         Deletes a member by ID. Only the organization head can delete members. The organization head member cannot be deleted.
-        **400 Bad Request** is returned when the member ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator cannot perform this action. **404 Not Found** is returned when the member or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -822,7 +807,6 @@ paths:
       summary: Create invite
       description: |
         Creates an invite for an account to join an organization. Only the organization head can create invites. The invite expires in 24 hours.
-        **400 Bad Request** is returned when the request body is invalid. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member or not the organization head. **404 Not Found** is returned when the organization or account profile does not exist. **409 Conflict** is returned when the account is already a member or an active invite already exists. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       requestBody:
@@ -887,7 +871,6 @@ paths:
         Returns a paginated list of invites.
         By default returns invites for the authenticated account. Can be filtered by `account_id` or `organization_id`.
         When filtering by `organization_id`, the initiator must be a member of that organization. When filtering by `account_id`, the initiator must match the requested account.
-        **400 Bad Request** is returned when query parameters are invalid or pagination limit exceeds 100. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member of the organization or requests invites for another account. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       parameters:
@@ -985,7 +968,6 @@ paths:
       summary: Get invite
       description: |
         Returns an invite by ID for the authenticated account.
-        **400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **404 Not Found** is returned when the invite, profile, or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       parameters:
@@ -1051,8 +1033,7 @@ paths:
         - invites
       summary: Accept invite
       description: |
-        Accepts an invite for the authenticated account.
-        **400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the account has no rights to accept this invite, the invite has expired, or the organization is suspend. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
+        Accepts an invitation to become part of an organisation
       security:
         - BearerAuth: []
       responses:
@@ -1118,7 +1099,6 @@ paths:
       summary: Decline invite
       description: |
         Declines an invite for the authenticated account.
-        **400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the invite is not for this account, the invite has expired. **404 Not Found** is returned when the invite or organization does not exist. **409 Conflict** is returned when the invite has already been answered. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
@@ -1184,7 +1164,6 @@ paths:
       summary: Cancel invite
       description: |
         Cancels an invite by ID. Only the organization head can cancel invites.
-        **400 Bad Request** is returned when the invite ID is not a valid UUID. **401 Unauthorized** is returned when the authorization token is missing or invalid. **403 Forbidden** is returned when the initiator is not a member, not the organization head, the invite has already been answered, or the organization is suspended. **404 Not Found** is returned when the invite or organization does not exist. **500 Internal Server Error** is returned when an unexpected error occurs.
       security:
         - BearerAuth: []
       responses:
